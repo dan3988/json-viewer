@@ -1,0 +1,23 @@
+{
+  "name": "ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/main.js",
+  "scripts": {
+    "prepack": "DEL /S /Q lib & npx tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dan3988/node-ts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dan3988/node-ts/issues"
+  },
+  "homepage": "https://github.com/dan3988/node-ts#readme",
+  "devDependencies": {
+    "@types/node": "^18.7.23",
+    "typescript": "^4.8.3"
+  }
+}
