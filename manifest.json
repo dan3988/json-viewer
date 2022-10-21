@@ -14,11 +14,15 @@
 		// "service_worker": "lib/background.js"
 		// "scripts": [ "lib/background.js" ]
 	},
+	"web_accessible_resources": [
+		"lib/html.js",
+		"lib/content.js",
+		"lib/json-viewer.js",
+		"res/*"
+	],
 	"permissions": [
 		"tabs",
 		"activeTab",
-		"webNavigation",
-		"webRequest",
-		"<all_urls>"
+		"webNavigation"
 	]
 }

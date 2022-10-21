@@ -1,0 +1,74 @@
+body {
+	--json-key-fg: #8CF;
+	--json-str-fg: #C75;
+	--json-num-fg: #3AF;
+	--json-bln-fg: #38F;
+
+	font-family: monospace;
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.json-key {
+	color: var(--json-key-fg);
+}
+
+.json-string {
+	color: var(--json-str-fg);
+}
+
+.json-number {
+	color: var(--json-num-fg);
+}
+
+.json-boolean {
+	color: var(--json-bln-fg);
+}
+
+.json-prop > .json-key::after {
+	content: ":";
+	color: white;
+	padding-right: 5px;
+}
+
+.json-object::before {
+	content: "{"
+}
+
+.json-object::after {
+	content: "}"
+}
+
+.json-array::before {
+	content: "["
+}
+
+.json-array::after {
+	content: "]"
+}
+
+.json-object,
+.json-array {
+}
+
+.json-object > div,
+.json-array > div {
+	padding-left: 1rem;
+}
+
+.json-prop {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-rows: auto auto;
+}
+
+.json-prop > .json-value {
+	grid-area: 1 / 2 / span 1 / span 1;
+}
+
+.json-prop > .json-array,
+.json-prop > .json-object {
+	grid-area: 2 / 1 / span 1 / span 1;
+}

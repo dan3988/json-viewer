@@ -14,11 +14,9 @@
 		"sourceMap": true,
 		"declaration": true,
 		"outDir": "lib",
-		"stripInternal": true,
-		"allowJs": true
+		"stripInternal": true
 	},
 	"include": [
-		"src/**/*.ts",
-		"src/**/*.js"
+		"src/**/*.ts"
 	]
 }
