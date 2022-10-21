@@ -1,4 +1,4 @@
-import HTML from "./html.js";
+import HTML, { ElementInit } from "./html.js";
 
 HTML(document.head).append('link', {
 	props: {
@@ -51,28 +51,74 @@ function buildUnknown(parent: HTML, item: any): void {
 	if (Array.isArray(item)) {
 		buildArray(parent, item);
 	} else {
-		buildObject(parent, item);
+		buildObject(parent, Object.entries(item));
+	}
+}
+
+function buildSummary(parent: HTML, count: number, isObject: boolean): void {
+	parent.append("span", {
+		class: "summary",
+		children: [
+			isObject ? `{ ${count} }` : `[ ${count} ]`
+		]
+	})
+}
+
+function buildProperty(parent: HTML, key: any, value: any) {
+	const li = parent.append("div", { class: "json-prop" });
+	const type = typeof value;
+	if (type !== "object") {
+		buildKey(li, key);
+		buildPrimitive(li, value, type);
+	} else {
+		if (Array.isArray(value)) {
+			buildKey(li, key);
+			buildSummary(li, value.length, false);
+
+			if (value.length !== 0) {
+				buildExpander(li);
+				buildArray(li, value);
+			}
+		} else {
+			const entries = Object.entries(value);
+			buildKey(li, key);
+			buildSummary(li, entries.length, true);
+
+			if (entries.length !== 0) {
+				buildExpander(li);
+				buildObject(li, entries);
+			}
+		}
 	}
 }
 
 function buildArray(parent: HTML, item: any[]): void {
 	const element = parent.append("div", {
-		class: `json-array`
+		class: "json-container json-array",
 	});
 
-	const children = element.append("div");
-	for (let child of item)
-		buildUnknown(children, child);
+	for (let i = 0; i < item.length; i++)
+		buildProperty(element, i, item[i]);
 }
 
-function buildObject(parent: HTML, item: object): void {
+function buildExpander(parent: HTML) {
+	parent.append("span", {
+		class: "expander",
+		events: {
+			click: toggleExpanded
+		}
+	})
+}
+
+function buildObject(parent: HTML, entries: [string, any][]): void {
 	const element = parent.append("div", {
-		class: `json-object`
+		class: "json-container json-object",
 	});
 
-	for (let [key, value] of Object.entries(item)) {
-		const li = element.append("div", { class: "json-prop" });
-		buildKey(li, key);
-		buildUnknown(li, value);
-	}
+	for (const [key, value] of entries)
+		buildProperty(element, key, value);
+}
+
+function toggleExpanded(this: HTMLElement) {
+	this.parentElement?.classList.toggle("expanded");
 }
