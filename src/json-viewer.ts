@@ -65,7 +65,7 @@ function buildArray(parent: HTML, item: any[]): void {
 		buildUnknown(children, child);
 }
 
-function buildObject(parent: HTML, item: objecting): void {
+function buildObject(parent: HTML, item: object): void {
 	const element = parent.append("div", {
 		class: `json-object`
 	});
