@@ -24,6 +24,34 @@ body.append("div", {
 					filters.update(text);
 				}
 			}
+		}),
+		new ElementInit("button", {
+			class: "btn",
+			props: {
+				"type": "button"
+			},
+			children: [
+				"Expand All"
+			],
+			events: {
+				click() {
+					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.add("expanded"))
+				}
+			}
+		}),
+		new ElementInit("button", {
+			class: "btn",
+			props: {
+				"type": "button"
+			},
+			children: [
+				"Collapse All"
+			],
+			events: {
+				click() {
+					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.remove("expanded"))
+				}
+			}
 		})
 	]
 });
