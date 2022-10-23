@@ -168,7 +168,7 @@ function buildSummary(parent: HTML, count: number, isObject: boolean): void {
 	parent.append("span", {
 		class: "summary",
 		children: [
-			isObject ? `{ ${count} }` : `[ ${count} ]`
+			isObject ? `Object(${count})` : `Array(${count})`
 		]
 	})
 }
