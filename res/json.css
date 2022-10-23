@@ -9,6 +9,22 @@ body {
 	inset: 0;
 	margin: 0;
 	padding: 0;
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-template-rows: 2em 1fr;
+}
+
+[hidden] {
+	display: none !important;
+}
+
+.header {
+	display: flex;
+	align-items: stretch;
+}
+
+.header > .filter {
+	flex: 0px 1 1;
 }
 
 .json-key {
