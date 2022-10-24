@@ -1,4 +1,4 @@
-import DOM, { ElementInit } from "./html.js";
+import DOM from "./html.js";
 
 DOM(document.head).append('link', {
 	props: {
@@ -155,7 +155,7 @@ function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: 
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: boolean, type: "boolean"): void;
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: any, type: any): void
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: any, type: any): void {
-	const { element } = parent.append("div", {
+	const { element } = parent.append("span", {
 		class: `json-value json-${type}`,
 		children: [
 			JSON.stringify(item)
@@ -166,7 +166,7 @@ function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: 
 }
 
 function buildKey(html: DOM, item: string) {
-	html.append("div", {
+	html.append("span", {
 		class: `json-key`,
 		children: [
 			item
@@ -232,14 +232,14 @@ function buildProperty(parent: DOM<HTMLElement>, parentFilter: FilterHelperConta
 }
 
 function buildArray(parent: DOM, parentFilter: FilterHelperContainer, item: any[]): void {
-	const element = parent.append("div", {
+	const container = parent.append("div", {
 		class: "json-container json-array",
 	});
 
-	const fh = parentFilter.addContainer(element.element);
+	const fh = parentFilter.addContainer(container.element);
 
 	for (let i = 0; i < item.length; i++)
-		buildProperty(element, fh, i, item[i]);
+		buildProperty(container, fh, i, item[i]);
 }
 
 function buildExpander(parent: DOM) {
@@ -252,14 +252,14 @@ function buildExpander(parent: DOM) {
 }
 
 function buildObject(parent: DOM, parentFilter: FilterHelperContainer, entries: [string, any][]): void {
-	const element = parent.append("div", {
+	const container = parent.append("div", {
 		class: "json-container json-object",
 	});
 
-	const fh = parentFilter.addContainer(element.element);
+	const fh = parentFilter.addContainer(container.element);
 
 	for (const [key, value] of entries)
-		buildProperty(element, fh, key, value);
+		buildProperty(container, fh, key, value);
 }
 
 function toggleExpanded(this: HTMLElement) {
