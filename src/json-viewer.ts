@@ -25,19 +25,6 @@ body.append("div", {
 				}
 			}
 		}),
-		DOM("input", {
-			class: "filter",
-			props: {
-				type: "search",
-				placeholder: "Filter"
-			},
-			events: {
-				input(e) {
-					const text = this.value.toLowerCase();
-					filters.update(text);
-				}
-			}
-		}),
 		DOM("button", {
 			class: "btn",
 			props: {
