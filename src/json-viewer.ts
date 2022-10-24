@@ -1,18 +1,18 @@
-import HTML, { ElementInit } from "./html.js";
+import DOM, { ElementInit } from "./html.js";
 
-HTML(document.head).append('link', {
+DOM(document.head).append('link', {
 	props: {
 		href: chrome.extension.getURL("res/json.css"),
 		rel: "stylesheet"
 	}
 });
 
-const body = HTML(document.body);
+const body = DOM(document.body);
 
 body.append("div", {
 	class: "header",
 	children: [
-		HTML("input", {
+		DOM("input", {
 			class: "filter",
 			props: {
 				type: "search",
@@ -25,7 +25,7 @@ body.append("div", {
 				}
 			}
 		}),
-		HTML("input", {
+		DOM("input", {
 			class: "filter",
 			props: {
 				type: "search",
@@ -38,7 +38,7 @@ body.append("div", {
 				}
 			}
 		}),
-		HTML("button", {
+		DOM("button", {
 			class: "btn",
 			props: {
 				"type": "button"
@@ -52,7 +52,7 @@ body.append("div", {
 				}
 			}
 		}),
-		HTML("button", {
+		DOM("button", {
 			class: "btn",
 			props: {
 				"type": "button"
@@ -162,12 +162,12 @@ export function load(json: any) {
 	current = json;
 }
 
-function buildPrimitive(parent: HTML, parentFilter: FilterHelperContainer, item: string, type: "string"): void;
-function buildPrimitive(parent: HTML, parentFilter: FilterHelperContainer, item: number, type: "number"): void;
-function buildPrimitive(parent: HTML, parentFilter: FilterHelperContainer, item: bigint, type: "bigint"): void;
-function buildPrimitive(parent: HTML, parentFilter: FilterHelperContainer, item: boolean, type: "boolean"): void;
-function buildPrimitive(parent: HTML, parentFilter: FilterHelperContainer, item: any, type: any): void
-function buildPrimitive(parent: HTML, parentFilter: FilterHelperContainer, item: any, type: any): void {
+function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: string, type: "string"): void;
+function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: number, type: "number"): void;
+function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: bigint, type: "bigint"): void;
+function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: boolean, type: "boolean"): void;
+function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: any, type: any): void
+function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: any, type: any): void {
 	const { element } = parent.append("div", {
 		class: `json-value json-${type}`,
 		children: [
@@ -178,7 +178,7 @@ function buildPrimitive(parent: HTML, parentFilter: FilterHelperContainer, item:
 	parentFilter.addTextFilter(element, item);
 }
 
-function buildKey(html: HTML, item: string) {
+function buildKey(html: DOM, item: string) {
 	html.append("div", {
 		class: `json-key`,
 		children: [
@@ -187,7 +187,7 @@ function buildKey(html: HTML, item: string) {
 	});
 }
 
-function buildUnknown(parent: HTML, parentFilter: FilterHelperContainer, item: any): void {
+function buildUnknown(parent: DOM, parentFilter: FilterHelperContainer, item: any): void {
 	const type = typeof item;
 	switch (type) {
 		case "string":
@@ -205,7 +205,7 @@ function buildUnknown(parent: HTML, parentFilter: FilterHelperContainer, item: a
 	}
 }
 
-function buildSummary(parent: HTML, count: number, isObject: boolean): void {
+function buildSummary(parent: DOM, count: number, isObject: boolean): void {
 	parent.append("span", {
 		class: "summary",
 		children: [
@@ -214,7 +214,7 @@ function buildSummary(parent: HTML, count: number, isObject: boolean): void {
 	})
 }
 
-function buildProperty(parent: HTML<HTMLElement>, parentFilter: FilterHelperContainer, key: any, value: any) {
+function buildProperty(parent: DOM<HTMLElement>, parentFilter: FilterHelperContainer, key: any, value: any) {
 	const li = parent.append("div", { class: "json-prop" });
 	const group = parentFilter.addContainer(li.element);
 	group.addTextFilter(undefined, key);
@@ -244,7 +244,7 @@ function buildProperty(parent: HTML<HTMLElement>, parentFilter: FilterHelperCont
 	}
 }
 
-function buildArray(parent: HTML, parentFilter: FilterHelperContainer, item: any[]): void {
+function buildArray(parent: DOM, parentFilter: FilterHelperContainer, item: any[]): void {
 	const element = parent.append("div", {
 		class: "json-container json-array",
 	});
@@ -255,7 +255,7 @@ function buildArray(parent: HTML, parentFilter: FilterHelperContainer, item: any
 		buildProperty(element, fh, i, item[i]);
 }
 
-function buildExpander(parent: HTML) {
+function buildExpander(parent: DOM) {
 	parent.append("span", {
 		class: "expander",
 		events: {
@@ -264,7 +264,7 @@ function buildExpander(parent: HTML) {
 	})
 }
 
-function buildObject(parent: HTML, parentFilter: FilterHelperContainer, entries: [string, any][]): void {
+function buildObject(parent: DOM, parentFilter: FilterHelperContainer, entries: [string, any][]): void {
 	const element = parent.append("div", {
 		class: "json-container json-object",
 	});

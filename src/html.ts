@@ -4,7 +4,7 @@ type ElementType<K extends string> = K extends keyof HTMLElementTagNameMap ? HTM
 type OptionsType<K extends string> = HTMLElementCreationOptions<ElementType<K>>
 
 export type ElementInitArgs<K extends string = string> = [tagName: K, options?: OptionsType<K>];
-export type ElementChild = Node | HTML | string | ElementInit<any>;
+export type ElementChild = Node | DOM | string | ElementInit<any>;
 
 export interface HTMLElementCreationOptions<T extends Element = Element> extends ElementCreationOptions {
 	id?: string;
@@ -90,7 +90,7 @@ let initHandlers: InitHandlers = {
 				node = createElement(e.ownerDocument, child.tagName, child.init);
 			} else if (child instanceof Node) {
 				node = child;
-			} else if (child instanceof HTML) {
+			} else if (child instanceof DOM) {
 				node = child.element;
 			} else {
 				let factory = cache.tf ??= createTextFactory(options);
@@ -147,11 +147,11 @@ export interface ElementInitConstructor {
 	new(tagName: string, init?: HTMLElementCreationOptions): ElementInit<string>;
 }
 
-export interface HTML<T extends Element = Element> {
+export interface DOM<T extends Element = Element> {
 	readonly element: T;
 
-	append<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): HTML<ElementType<K>>;
-	append<N extends Element>(node: N): HTML<N>;
+	append<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
+	append<N extends Element>(node: N): DOM<N>;
 
 	removeAll(): void;
 
@@ -165,18 +165,18 @@ export var ElementInit: ElementInitConstructor = <any>function (this: ElementIni
 	this.init = init;
 }
 
-interface HTMLFunction {
-	readonly prototype: HTML;
-	<T extends Element>(element: T): HTML<T>;
-	<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): HTML<ElementType<K>>;
+interface DOMFunction {
+	readonly prototype: DOM;
+	<T extends Element>(element: T): DOM<T>;
+	<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
 }
 
-export interface HTMLConstructor extends HTMLFunction {
+export interface DOMConstructor extends DOMFunction {
 	createElement<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): ElementType<K>;
 }
 
 const onceArg = { once: true };
-const html: HTMLFunction = function HTML(element: string | Element, options?: HTMLElementCreationOptions): HTML {
+const dom: DOMFunction = function HTML(element: string | Element, options?: HTMLElementCreationOptions): DOM {
 	if (typeof element == "string")
 		element = createElement(document, element, options);
 
@@ -197,7 +197,7 @@ function def<T, K extends keyof T>(self: T, key: K, func: T[K] extends Fn<infer 
 }
 
 function createHtml(e: Element) {
-	const result = Object.create(html.prototype);
+	const result = Object.create(dom.prototype);
 
 	Object.defineProperty(result, "element", {
 		enumerable: true,
@@ -207,32 +207,32 @@ function createHtml(e: Element) {
 	return result;
 }
 
-export var HTML: HTMLConstructor = <any>html;
-export default HTML;
+export var DOM: DOMConstructor = <any>dom;
+export default DOM;
 
-def(HTML, 'createElement', createElement);
+def(DOM, 'createElement', createElement);
 
-def(html.prototype, 'append', function(arg0: any, arg1?: any) {
+def(dom.prototype, 'append', function(arg0: any, arg1?: any) {
 	const e = createElement(document, arg0, arg1);
 	this.element.appendChild(e);
 	return createHtml(e);
 })
 
-def(html.prototype, 'removeAll', function() {
+def(dom.prototype, 'removeAll', function() {
 	this.element.innerHTML = "";
 })
 
-def(html.prototype, 'on', function(type, listener) {
+def(dom.prototype, 'on', function(type, listener) {
 	this.element.addEventListener(type, listener);
 	return this;
 })
 
-def(html.prototype, 'once', function(type, listener) {
+def(dom.prototype, 'once', function(type, listener) {
 	this.element.addEventListener(type, listener, onceArg);
 	return this;
 })
 
-def(html.prototype, 'off', function(type, listener) {
+def(dom.prototype, 'off', function(type, listener) {
 	this.element.removeEventListener(type, listener);
 	return this;
 })
