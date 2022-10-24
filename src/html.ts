@@ -153,7 +153,11 @@ export interface DOM<T extends Element = Element> {
 	append<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
 	append<N extends Element>(node: N): DOM<N>;
 
-	removeAll(): void;
+	appendText(text: any): this;
+	appendText(tagName: string, text: any): this;
+	appendText(tagName: string, className: string, text: any): this;
+
+	removeAll(): this;
 
 	on<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: this, event: HTMLElementEventMap[K]) => any): this;
 	once<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: this, event: HTMLElementEventMap[K]) => any): this;
@@ -218,8 +222,26 @@ def(dom.prototype, 'append', function(arg0: any, arg1?: any) {
 	return createHtml(e);
 })
 
+def(dom.prototype, 'appendText', function(tagName, className, text) {
+	if (text == null)
+		[text, tagName = undefined!] = className == null ? [tagName] : [className, tagName];
+
+	if (tagName == null) {
+		const node = this.element.ownerDocument.createTextNode(text);
+		this.element.appendChild(node);
+	} else {
+		const e = this.element.ownerDocument.createElement(tagName);
+		e.innerText = text;
+		e.className = className;
+		this.element.appendChild(e);
+	}
+
+	return this;
+})
+
 def(dom.prototype, 'removeAll', function() {
 	this.element.innerHTML = "";
+	return this;
 })
 
 def(dom.prototype, 'on', function(type, listener) {

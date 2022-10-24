@@ -95,30 +95,15 @@ abstract class FilterHelper {
 			dom.removeAll();
 
 			while (true) {
-				if (ix > last) {
-					dom.append("span", {
-						children: [
-							text.substring(last, ix)
-						]
-					});
-				}
+				if (ix > last)
+					dom.appendText("span", text.substring(last, ix))
 
-				dom.append("span", {
-					class: "match",
-					children: [
-						text.substring(ix, ix + filterText.length)
-					]
-				});
+				dom.appendText("span", "match", text.substring(ix, ix + filterText.length));
 
 				ix = text.indexOf(filterText, last = ix + filterText.length);
 
 				if (ix < 0) {
-					dom.append("span", {
-						children: [
-							text.substring(last)
-						]
-					});
-
+					dom.appendText("span", text.substring(last));
 					break;
 				}
 			}
