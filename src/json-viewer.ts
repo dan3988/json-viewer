@@ -61,25 +61,69 @@ const root = body.append("div", {
 });
 
 interface FilterHelperContainer extends FilterHelper {
-	addTextFilter(element: undefined | HTMLElement, text: string): FilterHelper;
+	addTextFilter(element: HTMLElement, text: any): FilterHelper;
 	addContainer(element?: HTMLElement): FilterHelperContainer;
 }
 
 abstract class FilterHelper {
 	static readonly #TextFilter = class TextFilter extends FilterHelper {
-		readonly #text: string;
+		readonly #text: [normal: string, lower: string];
 
-		constructor(parent: undefined | FilterHelper, element: undefined | HTMLElement, text: any) {
+		constructor(parent: undefined | FilterHelper, element: HTMLElement, text: any) {
 			super(parent, element);
-			this.#text = String.prototype.toLowerCase.call(text);
+			const str = String(text);
+			this.#text = [str, str.toLowerCase()];
 		}
 
 		protected __show(filterText: string): boolean {
-			let text = this.#text;
-			if (text == "additionalProperties")
-				console.log();
+			let [text, lower] = this.#text;
+			let e = this.#element!;
 
-			return !filterText || this.#text.includes(filterText);
+			if (!filterText) {
+				e.innerText = text;
+				return true;
+			}
+
+			let ix = lower.indexOf(filterText);
+			if (ix < 0) {
+				e.innerText = text;
+				return false;
+			}
+
+			let last = 0;
+			let dom = DOM(e);
+			dom.removeAll();
+
+			while (true) {
+				if (ix > last) {
+					dom.append("span", {
+						children: [
+							text.substring(last, ix)
+						]
+					});
+				}
+
+				dom.append("span", {
+					class: "match",
+					children: [
+						text.substring(ix, ix + filterText.length)
+					]
+				});
+
+				ix = text.indexOf(filterText, last = ix + filterText.length);
+
+				if (ix < 0) {
+					dom.append("span", {
+						children: [
+							text.substring(last)
+						]
+					});
+
+					break;
+				}
+			}
+
+			return true;
 		}
 	}
 
@@ -91,7 +135,7 @@ abstract class FilterHelper {
 			this.#children = [];
 		}
 
-		addTextFilter(element: undefined | HTMLElement, text: string): FilterHelper {
+		addTextFilter(element: HTMLElement, text: string): FilterHelper {
 			const f = new FilterHelper.#TextFilter(this, element, text);
 			this.#children.push(f);
 			return f;
@@ -145,7 +189,7 @@ export function load(json: any) {
 	current = null;
 	filters = FilterHelper.root(root.element);
 	root.removeAll();
-	buildUnknown(root, filters, json);
+	buildProperty(root, filters, "root", json, 0);
 	current = json;
 }
 
@@ -165,31 +209,13 @@ function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: 
 	parentFilter.addTextFilter(element, item);
 }
 
-function buildKey(html: DOM, item: string) {
-	html.append("span", {
+function buildKey(html: DOM, item: string): DOM<HTMLSpanElement> {
+	return html.append("span", {
 		class: `json-key`,
 		children: [
 			item
 		]
 	});
-}
-
-function buildUnknown(parent: DOM, parentFilter: FilterHelperContainer, item: any): void {
-	const type = typeof item;
-	switch (type) {
-		case "string":
-		case "number":
-		case "bigint":
-		case "boolean":
-			buildPrimitive(parent, parentFilter, item, type);
-			return;
-	}
-
-	if (Array.isArray(item)) {
-		buildArray(parent, parentFilter, item);
-	} else {
-		buildObject(parent, parentFilter, Object.entries(item));
-	}
 }
 
 function buildSummary(parent: DOM, count: number, isObject: boolean): void {
@@ -201,45 +227,46 @@ function buildSummary(parent: DOM, count: number, isObject: boolean): void {
 	})
 }
 
-function buildProperty(parent: DOM<HTMLElement>, parentFilter: FilterHelperContainer, key: any, value: any) {
+function buildProperty(parent: DOM<HTMLElement>, parentFilter: FilterHelperContainer, key: any, value: any, depth: number) {
 	const li = parent.append("div", { class: "json-prop" });
 	const group = parentFilter.addContainer(li.element);
-	group.addTextFilter(undefined, key);
+	const keyItem = buildKey(li, key);
+	if (depth > 0)
+		group.addTextFilter(keyItem.element, key);
+
 	const type = typeof value;
 	if (type !== "object") {
-		buildKey(li, key);
 		buildPrimitive(li, group, value, type);
 	} else {
 		if (Array.isArray(value)) {
-			buildKey(li, key);
 			buildSummary(li, value.length, false);
 
 			if (value.length !== 0) {
 				buildExpander(li);
-				buildArray(li, group, value);
+				buildArray(li, group, value, depth);
 			}
 		} else {
 			const entries = Object.entries(value);
-			buildKey(li, key);
 			buildSummary(li, entries.length, true);
 
 			if (entries.length !== 0) {
 				buildExpander(li);
-				buildObject(li, group, entries);
+				buildObject(li, group, entries, depth);
 			}
 		}
 	}
 }
 
-function buildArray(parent: DOM, parentFilter: FilterHelperContainer, item: any[]): void {
+function buildArray(parent: DOM, parentFilter: FilterHelperContainer, item: any[], depth: number): void {
 	const container = parent.append("div", {
 		class: "json-container json-array",
 	});
 
+	depth++;
 	const fh = parentFilter.addContainer(container.element);
 
 	for (let i = 0; i < item.length; i++)
-		buildProperty(container, fh, i, item[i]);
+		buildProperty(container, fh, i, item[i], depth);
 }
 
 function buildExpander(parent: DOM) {
@@ -251,15 +278,16 @@ function buildExpander(parent: DOM) {
 	})
 }
 
-function buildObject(parent: DOM, parentFilter: FilterHelperContainer, entries: [string, any][]): void {
+function buildObject(parent: DOM, parentFilter: FilterHelperContainer, entries: [string, any][], depth: number): void {
 	const container = parent.append("div", {
 		class: "json-container json-object",
 	});
 
+	depth++;
 	const fh = parentFilter.addContainer(container.element);
 
 	for (const [key, value] of entries)
-		buildProperty(container, fh, key, value);
+		buildProperty(container, fh, key, value, depth);
 }
 
 function toggleExpanded(this: HTMLElement) {

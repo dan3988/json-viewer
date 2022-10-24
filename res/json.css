@@ -15,7 +15,16 @@ body {
 	overflow-y: scroll;
 }
 
-[hidden] {
+span.match {
+	background-color: #FF0;
+	color: #000;
+}
+
+.json-key {
+	display: unset !important;
+}
+
+[hidden]:not(.json-key) {
 	display: none !important;
 }
 
