@@ -186,9 +186,7 @@ function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: 
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: any, type: any): void {
 	const { element } = parent.append("span", {
 		class: `json-value json-${type}`,
-		children: [
-			JSON.stringify(item)
-		]
+		children: [ item ]
 	});
 
 	parentFilter.addTextFilter(element, item);

@@ -55,6 +55,11 @@ span.match {
 	color: var(--json-str-fg);
 }
 
+.json-string::before,
+.json-string::after {
+	content: '"';
+}
+
 .json-number {
 	color: var(--json-num-fg);
 }
