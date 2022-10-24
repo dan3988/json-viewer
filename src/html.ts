@@ -4,7 +4,7 @@ type ElementType<K extends string> = K extends keyof HTMLElementTagNameMap ? HTM
 type OptionsType<K extends string> = HTMLElementCreationOptions<ElementType<K>>
 
 export type ElementInitArgs<K extends string = string> = [tagName: K, options?: OptionsType<K>];
-export type ElementChild = Node | string | ElementInit<any>;
+export type ElementChild = Node | HTML | string | ElementInit<any>;
 
 export interface HTMLElementCreationOptions<T extends Element = Element> extends ElementCreationOptions {
 	id?: string;
@@ -90,6 +90,8 @@ let initHandlers: InitHandlers = {
 				node = createElement(e.ownerDocument, child.tagName, child.init);
 			} else if (child instanceof Node) {
 				node = child;
+			} else if (child instanceof HTML) {
+				node = child.element;
 			} else {
 				let factory = cache.tf ??= createTextFactory(options);
 				node = factory.call(e.ownerDocument, child);

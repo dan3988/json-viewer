@@ -12,7 +12,7 @@ const body = HTML(document.body);
 body.append("div", {
 	class: "header",
 	children: [
-		new ElementInit("input", {
+		HTML("input", {
 			class: "filter",
 			props: {
 				type: "search",
@@ -25,7 +25,20 @@ body.append("div", {
 				}
 			}
 		}),
-		new ElementInit("button", {
+		HTML("input", {
+			class: "filter",
+			props: {
+				type: "search",
+				placeholder: "Filter"
+			},
+			events: {
+				input(e) {
+					const text = this.value.toLowerCase();
+					filters.update(text);
+				}
+			}
+		}),
+		HTML("button", {
 			class: "btn",
 			props: {
 				"type": "button"
@@ -39,7 +52,7 @@ body.append("div", {
 				}
 			}
 		}),
-		new ElementInit("button", {
+		HTML("button", {
 			class: "btn",
 			props: {
 				"type": "button"
