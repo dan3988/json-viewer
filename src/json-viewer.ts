@@ -174,7 +174,8 @@ export function load(json: any) {
 	current = null;
 	filters = FilterHelper.root(root.element);
 	root.removeAll();
-	buildProperty(root, filters, "root", json, 0);
+	const rootProp = buildProperty(root, filters, "root", json, 0);
+	rootProp.element.classList.add("expanded");
 	current = json;
 }
 
@@ -210,34 +211,36 @@ function buildSummary(parent: DOM, count: number, isObject: boolean): void {
 	})
 }
 
-function buildProperty(parent: DOM<HTMLElement>, parentFilter: FilterHelperContainer, key: any, value: any, depth: number) {
-	const li = parent.append("div", { class: "json-prop" });
-	const group = parentFilter.addContainer(li.element);
-	const keyItem = buildKey(li, key);
+function buildProperty(parent: DOM<HTMLElement>, parentFilter: FilterHelperContainer, key: any, value: any, depth: number): DOM {
+	const prop = parent.append("div", { class: "json-prop" });
+	const group = parentFilter.addContainer(prop.element);
+	const keyItem = buildKey(prop, key);
 	if (depth > 0)
 		group.addTextFilter(keyItem.element, key);
 
 	const type = typeof value;
 	if (type !== "object") {
-		buildPrimitive(li, group, value, type);
+		buildPrimitive(prop, group, value, type);
 	} else {
 		if (Array.isArray(value)) {
-			buildSummary(li, value.length, false);
+			buildSummary(prop, value.length, false);
 
 			if (value.length !== 0) {
-				buildExpander(li);
-				buildArray(li, group, value, depth);
+				buildExpander(prop);
+				buildArray(prop, group, value, depth);
 			}
 		} else {
 			const entries = Object.entries(value);
-			buildSummary(li, entries.length, true);
+			buildSummary(prop, entries.length, true);
 
 			if (entries.length !== 0) {
-				buildExpander(li);
-				buildObject(li, group, entries, depth);
+				buildExpander(prop);
+				buildObject(prop, group, entries, depth);
 			}
 		}
 	}
+
+	return prop;
 }
 
 function buildArray(parent: DOM, parentFilter: FilterHelperContainer, item: any[], depth: number): void {
