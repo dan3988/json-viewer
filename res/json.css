@@ -11,7 +11,8 @@ body {
 	padding: 0;
 	display: grid;
 	grid-template-columns: 1fr;
-	grid-template-rows: 2em 1fr;
+	grid-template-rows: 3em 1fr;
+	overflow-y: scroll;
 }
 
 [hidden] {
@@ -20,11 +21,21 @@ body {
 
 .header {
 	display: flex;
+	gap: 5px;
+	padding: 5px;
 	align-items: stretch;
+}
+
+.header > * {
+	vertical-align: middle;
 }
 
 .header > .filter {
 	flex: 0px 1 1;
+}
+
+.header > .btn {
+	flex: 6rem 0 0;
 }
 
 .json-key {
