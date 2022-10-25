@@ -19,9 +19,8 @@ body.append("div", {
 				placeholder: "Filter"
 			},
 			events: {
-				input(e) {
-					const text = this.value.toLowerCase();
-					filters.update(text);
+				input() {
+					filters.update(this.value);
 				}
 			}
 		}),
@@ -63,6 +62,10 @@ const root = body.append("div", {
 interface FilterHelperContainer extends FilterHelper {
 	addTextFilter(element: HTMLElement, text: any): FilterHelper;
 	addContainer(element?: HTMLElement): FilterHelperContainer;
+}
+
+interface RootFilter extends FilterHelperContainer {
+	update(filter: string): void;
 }
 
 abstract class FilterHelper {
@@ -132,10 +135,10 @@ abstract class FilterHelper {
 			return f;
 		}
 
-		protected __show(filterText: string): boolean {
+		protected __show(filterText: string, isAppend: boolean): boolean {
 			let any = false;
 			for (let child of this.#children) {
-				let shown = child.update(filterText)
+				let shown = child.#update(filterText, isAppend)
 				any ||= shown;
 			}
 
@@ -143,32 +146,55 @@ abstract class FilterHelper {
 		}
 	}
 
-	static root(element: HTMLElement): FilterHelperContainer {
-		return new FilterHelper.#ContainerFilter(undefined, element,);
+	static readonly #RootFilter = class RootFilter extends this.#ContainerFilter {
+		#filter: string;
+
+		constructor(parent: undefined | FilterHelper, element: undefined | HTMLElement) {
+			super(parent, element);
+			this.#filter = "";
+		}
+
+		update(filter: string) {
+			filter = (filter ?? "").toLowerCase();
+
+			if (this.#filter === filter)
+				return;
+
+			const isAppend = filter.startsWith(this.#filter)
+			this.#update(filter, isAppend);
+			this.#filter = filter;
+		}
+	}
+
+	static root(element: HTMLElement): RootFilter {
+		return new FilterHelper.#RootFilter(undefined, element);
 	}
 
 	readonly #parent: undefined | FilterHelper;
 	readonly #element: undefined | HTMLElement;
+	#shown: boolean;
 
 	constructor(parent: undefined | FilterHelper, element: undefined | HTMLElement) {
 		this.#parent = parent;
 		this.#element = element;
+		this.#shown = true;
 	}
 
-	protected abstract __show(filterText: string): boolean;
+	protected abstract __show(filterText: string, isAppend: boolean): boolean;
 
-	update(filterText: string): boolean {
-		let show = this.__show(filterText);
+	#update(filterText: string, isAppend: boolean): boolean {
+		let show = (!isAppend || this.#shown) && this.__show(filterText, isAppend);
 		let e = this.#element;
 		if (e != null)
 			e.hidden = !show;
 
+		this.#shown = show;
 		return show;
 	}
 }
 
 let current: any;
-let filters: FilterHelperContainer;
+let filters: RootFilter;
 
 export function load(json: any) {
 	current = null;
