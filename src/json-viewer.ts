@@ -209,8 +209,12 @@ function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: 
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: number, type: "number"): void;
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: bigint, type: "bigint"): void;
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: boolean, type: "boolean"): void;
+function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: null, type: "null"): void;
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: any, type: any): void
 function buildPrimitive(parent: DOM, parentFilter: FilterHelperContainer, item: any, type: any): void {
+	if (item == null)
+		item = String(item);
+
 	const { element } = parent.append("span", {
 		class: `json-value json-${type}`,
 		children: [ item ]
@@ -244,7 +248,7 @@ function buildProperty(parent: DOM<HTMLElement>, parentFilter: FilterHelperConta
 	if (depth > 0)
 		group.addTextFilter(keyItem.element, key);
 
-	const type = typeof value;
+	let type = value === null ? "null" : typeof value;
 	if (type !== "object") {
 		buildPrimitive(prop, group, value, type);
 	} else {

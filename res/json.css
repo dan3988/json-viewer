@@ -3,6 +3,7 @@ body {
 	--json-str-fg: #C75;
 	--json-num-fg: #3AF;
 	--json-bln-fg: #38F;
+	--json-null-fg: #95F;
 
 	font-family: monospace;
 	position: absolute;
@@ -66,6 +67,10 @@ span.match {
 
 .json-boolean {
 	color: var(--json-bln-fg);
+}
+
+.json-null {
+	color: var(--json-null-fg);
 }
 
 .json-prop > .json-key::after {
