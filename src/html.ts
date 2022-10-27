@@ -217,7 +217,7 @@ export default DOM;
 def(DOM, 'createElement', createElement);
 
 def(dom.prototype, 'append', function(arg0: any, arg1?: any) {
-	const e = createElement(document, arg0, arg1);
+	const e = arg0 instanceof Element ? arg0 : createElement(document, arg0, arg1);
 	this.element.appendChild(e);
 	return createHtml(e);
 })
