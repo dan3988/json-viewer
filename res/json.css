@@ -1,7 +1,7 @@
 body {
 	--json-key-fg: #8CF;
 	--json-str-fg: #C75;
-	--json-num-fg: #3AF;
+	--json-num-fg: #FF8;
 	--json-bln-fg: #38F;
 	--json-null-fg: #95F;
 
@@ -91,6 +91,28 @@ span.match {
 
 .json-prop:not(.expanded) > .expander::before {
 	rotate: -90deg;
+}
+
+.summary-count {
+	color: var(--json-num-fg);
+}
+
+.summary-count::before,
+.summary-count::after {
+	color: white;
+}
+
+.summary-object::before {
+	content: "Object(";
+}
+
+.summary-array::before {
+	content: "Array(";
+}
+
+.summary-object::after,
+.summary-array::after {
+	content: ")";
 }
 
 .expander {
