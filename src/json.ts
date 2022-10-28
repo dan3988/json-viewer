@@ -3,7 +3,6 @@ import DOM from "./html.js";
 export interface JsonTokenTypeMap {
 	"object": JsonObject;
 	"array": JsonArray;
-	"property": JsonProperty;
 	"string": JsonValue<string>;
 	"number": JsonValue<number>;
 	"boolean": JsonValue<boolean>;
@@ -29,7 +28,36 @@ export const enum JsonTokenFilterFlags {
 	Both = Keys | Values
 }
 
-export abstract class JsonToken<T = unknown> {
+abstract class JsonBase {
+	#element: null | HTMLElement;
+
+	get element(): HTMLElement {
+		return this.#element ??= this.createElement();
+	}
+
+	protected constructor() {
+		this.#element = null;
+	}
+
+	protected abstract show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean;
+	protected abstract createElement(): HTMLElement;
+
+	protected elementLoaded(): boolean {
+		return this.#element !== null;
+	}
+	
+	filter(text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean): boolean {
+		const e = this.#element;
+		if (e == null || (e.hidden && isAppend))
+			return false;
+
+		const shown = this.show(text, isAppend, flags);
+		e.hidden = !forceVisible && !shown;
+		return shown;
+	}
+}
+
+export abstract class JsonToken<T = unknown> extends JsonBase {
 	static from<T extends string | number | boolean | null>(value: string): JsonValue<T>;
 	static from<T extends object>(value: T): JsonObject<T>;
 	static from<T>(value: T[]): JsonArray<T>;
@@ -45,34 +73,11 @@ export abstract class JsonToken<T = unknown> {
 		}
 	}
 
-	#element: null | HTMLElement;
-
-	get element(): HTMLElement {
-		return this.#element ??= this.createElement();
-	}
-
 	abstract get type(): keyof JsonTokenTypeMap;
 
 	protected constructor() {
-		this.#element = null;
+		super();
 	}
-
-	protected elementLoaded(): boolean {
-		return this.#element !== null;
-	}
-
-	filter(text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean): boolean {
-		const e = this.#element;
-		if (e == null || (e.hidden && isAppend))
-			return false;
-
-		const shown = this.show(text, isAppend, flags);
-		e.hidden = !forceVisible && !shown;
-		return shown;
-	}
-
-	protected abstract createElement(): HTMLElement;
-	protected abstract show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean;
 
 	abstract toJSON(): T;
 
@@ -106,6 +111,7 @@ export abstract class JsonContainer<T, TKey extends string | number> extends Jso
 
 	abstract properties(): Iterable<JsonProperty<TKey>>;
 	abstract get(key: TKey): undefined | JsonToken;
+	abstract getProperty(key: TKey): undefined | JsonProperty<TKey>;
 	abstract keys(): Iterable<TKey>;
 }
 
@@ -139,6 +145,10 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	}
 
 	get(key: number): undefined | JsonToken {
+		return this.#items[key]?.value;
+	}
+
+	getProperty(key: number): undefined | JsonProperty<number, any> {
 		return this.#items[key];
 	}
 
@@ -160,7 +170,7 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	}
 }
 
-export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonToken<never> {
+export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
 	readonly #key: TKey;
 	readonly #keyText: [key: string, lower?: string];
 	readonly #value: JsonToken<TValue>;
@@ -172,10 +182,6 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 
 	get value(): JsonToken<TValue> {
 		return this.#value;
-	}
-
-	get type() {
-		return "property" as const;
 	}
 
 	get expanded(): boolean {
@@ -275,14 +281,6 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		prop.appendChild(child);
 		return prop;
 	}
-
-	toJSON(): never {
-		throw new TypeError("Cannot serialize a JsonProperty directly.");
-	}
-	
-	is(type: string): boolean {
-		return type === "property";
-	}
 }
 
 export class JsonObject<T extends object = any> extends JsonContainer<T, string> {
@@ -311,8 +309,12 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 		return this.#props.keys();
 	}
 
-	get(key: string): undefined | JsonToken {
+	getProperty(key: string): undefined | JsonProperty<string> {
 		return this.#props.get(key);
+	}
+
+	get(key: string): undefined | JsonToken {
+		return this.#props.get(key)?.value;
 	}
 
 	properties(): Iterable<JsonProperty<string>> {
