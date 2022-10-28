@@ -1,12 +1,12 @@
 export type HTMLTagName = string & keyof HTMLElementTagNameMap;
 
-type ElementType<K extends string> = K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : Element;
+type ElementType<K extends string> = K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement;
 type OptionsType<K extends string> = HTMLElementCreationOptions<ElementType<K>>
 
 export type ElementInitArgs<K extends string = string> = [tagName: K, options?: OptionsType<K>];
 export type ElementChild = Node | DOM | string | ElementInit<any>;
 
-export interface HTMLElementCreationOptions<T extends Element = Element> extends ElementCreationOptions {
+export interface HTMLElementCreationOptions<T extends HTMLElement = HTMLElement> extends ElementCreationOptions {
 	id?: string;
 	class?: string | string[];
 	html?: string;
@@ -27,7 +27,7 @@ interface Cache {
 	dp: DOMParser;
 }
 
-type OptionHandler<E extends Element, K extends string & keyof HTMLElementCreationOptions<E>> = (e: E, value: Exclude<HTMLElementCreationOptions<E>[K], undefined>, cache: Cache, options: HTMLElementCreationOptions<E>) => void;
+type OptionHandler<E extends HTMLElement, K extends string & keyof HTMLElementCreationOptions<E>> = (e: E, value: Exclude<HTMLElementCreationOptions<E>[K], undefined>, cache: Cache, options: HTMLElementCreationOptions<E>) => void;
 
 let createTextFactory = function (options: HTMLElementCreationOptions): TextNodeFactory {
 	let { textNodeOptions } = options;
@@ -50,7 +50,7 @@ let createTextFactory = function (options: HTMLElementCreationOptions): TextNode
 }
 
 type InitHandlers = {
-	[P in keyof HTMLElementCreationOptions]: OptionHandler<Element, P>
+	[P in keyof HTMLElementCreationOptions]: OptionHandler<HTMLElement, P>
 }
 
 let initHandlers: InitHandlers = {
@@ -159,9 +159,9 @@ export interface DOM<T extends Element = Element> {
 
 	removeAll(): this;
 
-	on<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: this, event: HTMLElementEventMap[K]) => any): this;
-	once<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: this, event: HTMLElementEventMap[K]) => any): this;
-	off<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: this, event: HTMLElementEventMap[K]) => any): this;
+	on<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: T, event: HTMLElementEventMap[K]) => any): this;
+	once<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: T, event: HTMLElementEventMap[K]) => any): this;
+	off<K extends string & keyof HTMLElementEventMap>(type: K, listener: (this: T, event: HTMLElementEventMap[K]) => any): this;
 }
 
 export var ElementInit: ElementInitConstructor = <any>function (this: ElementInit, tagName: string, init?: HTMLElementCreationOptions) {
@@ -172,11 +172,11 @@ export var ElementInit: ElementInitConstructor = <any>function (this: ElementIni
 interface DOMFunction {
 	readonly prototype: DOM;
 	<T extends Element>(element: T): DOM<T>;
-	<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
+	<K extends string>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
 }
 
 export interface DOMConstructor extends DOMFunction {
-	createElement<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): ElementType<K>;
+	createElement<K extends string>(tagName: K, options?: OptionsType<K>): ElementType<K>;
 }
 
 const onceArg = { once: true };
