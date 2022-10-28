@@ -16,6 +16,25 @@ body {
 	overflow-y: scroll;
 }
 
+.img-btn {
+	cursor: pointer;
+	position: relative;
+}
+
+.img-btn::before {
+	content: "";
+	position: absolute;
+	inset: 2px;
+	-webkit-mask-image: var(--mask-image);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+	-webkit-mask-position: center;
+	mask-image: var(--mask-image);
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	mask-position: center;
+}
+
 span.match {
 	background-color: #FF0;
 	color: #000;
@@ -78,7 +97,6 @@ span.match {
 .json-prop > .json-key::after {
 	content: ":";
 	color: white;
-	padding-right: 5px;
 }
 
 .json-prop:not(.expanded) > .json-container {
@@ -97,6 +115,7 @@ span.match {
 
 .summary-count {
 	color: var(--json-num-fg);
+	padding: 0 5px;
 }
 
 .summary-count::before,
@@ -117,39 +136,29 @@ span.match {
 	content: ")";
 }
 
-.expander {
-	cursor: pointer;
-	position: relative;
+.expander::before {
+	background-color: #999;
+	--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/arrow.svg");
 }
 
-.expander::before {
-	content: "";
-	position: absolute;
-	inset: 2px;
-	background-color: #999;
-	-webkit-mask-image: url("chrome-extension://__MSG_@@extension_id__/res/arrow.svg");
-	-webkit-mask-repeat: no-repeat;
-	-webkit-mask-size: contain;
-	-webkit-mask-position: center;
-	mask-image: url("chrome-extension://__MSG_@@extension_id__/res/arrow.svg");
-	mask-repeat: no-repeat;
-	mask-size: contain;
-	mask-position: center;
+.copy-btn::before {
+	inset: 0;
+	background-color: #333;
+	--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/copy.svg");
 }
 
 .json-prop {
 	display: grid;
-	grid-template-columns: 1em auto 1fr;
+	grid-template-columns: 1em min-content min-content min-content 1fr;
 	grid-template-rows: auto auto;
 }
 
-.json-prop > .summary {
+.json-prop > .summary-count {
 	grid-area: 1 / 3 / span 1 / span 1;
 }
 
 .json-prop > .expander {
 	grid-area: 1 / 1 / span 1 / span 1;
-	min-width: 0;
 }
 
 .json-prop > .json-key {
@@ -157,12 +166,24 @@ span.match {
 }
 
 .json-prop > .json-value {
-	grid-area: 1 / 3 / span 1 / span 1;
+	grid-area: 1 / 3 / span 1 / -1;
+}
+
+.json-prop > .copy-btn {
+	height: 0.75rem;
+	width: 0.75rem;
+	margin: auto 0;
+	grid-area: 1 / 4 / span 1 / span 1;
+	display: none;
+}
+
+.json-prop.hv:not(.hv-child) > .copy-btn {
+	display: unset;
 }
 
 .json-prop > .json-array,
 .json-prop > .json-object {
-	grid-area: 2 / 2 / span 1 / span 2;
+	grid-area: 2 / 2 / span 1 / -1;
 }
 
 .btn {

@@ -86,7 +86,7 @@ export abstract class JsonContainer<T, TKey extends string | number> extends Jso
 
 	protected createElement(): HTMLElement {
 		const container = DOM.createElement("div", {
-			class: "json-container json-" + this.type,
+			class: "json-container json-" + this.type
 		});
 
 		for (var child of this.properties())
@@ -150,7 +150,7 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 		const elements = this.#items;
 		const value = Array(elements.length);
 		for (let i = 0; i < value.length; i++)
-			value[i] = elements[i].toJSON();
+			value[i] = elements[i].value.toJSON();
 
 		return value;
 	}
@@ -227,7 +227,17 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 					class: `json-key`,
 					children: [ key ]
 				})
-			]
+			],
+			events: {
+				mouseenter() {
+					this.parentElement?.closest(".json-prop")?.classList.add("hv-child");
+					this.classList.add("hv");
+				},
+				mouseleave() {
+					this.parentElement?.closest(".json-prop")?.classList.remove("hv-child");
+					this.classList.remove("hv");
+				}
+			}
 		});
 
 		if (this.#expanded)
@@ -235,7 +245,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	
 		if (value instanceof JsonContainer) {
 			const expander = DOM.createElement("span", {
-				class: "expander",
+				class: "expander img-btn",
 				events: {
 					click: this.#toggleExpanded.bind(this)
 				}
@@ -245,8 +255,21 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 				class: "summary-count summary-" + value.type,
 				children: [ String(value.count) ]
 			});
-	
-			prop.append(expander, count);
+
+			const copyBtn = DOM.createElement("span", {
+				props: {
+					title: "Copy JSON"
+				},
+				class: "btn copy-btn img-btn",
+				events: {
+					click() {
+						const json = JSON.stringify(value, undefined, "\t");
+						navigator.clipboard.writeText(json);
+					}
+				}
+			})
+
+			prop.append(expander, count, copyBtn);
 		}
 	
 		prop.appendChild(child);
@@ -298,7 +321,7 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 
 	toJSON(): T {
 		const obj: any = {};
-		for (let [key, value] of this.#props)
+		for (let { key, value } of this.#props.values())
 			obj[key] = value.toJSON();
 
 		return obj;
