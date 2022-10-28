@@ -179,13 +179,14 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 		if (value === null || typeof value != "object")
 			return new JsonValue(value);
 
-		if (Array.isArray(value)) {
+		if (value instanceof Array) {
 			return new JsonArray(value);
 		} else {
 			return new JsonObject(value);
 		}
 	}
 
+	abstract get proxy(): any;
 	abstract get type(): keyof JsonTokenTypeMap;
 
 	protected constructor() {
@@ -199,8 +200,19 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 }
 
 export abstract class JsonContainer<T, TKey extends string | number> extends JsonToken<T> {
+	readonly #proxy: any;
+
 	abstract get type(): "object" | "array";
 	abstract get count(): number;
+
+	get proxy() {
+		return this.#proxy;
+	}
+
+	protected constructor(handler: ProxyHandler<JsonContainer<T, TKey>>) {
+		super();
+		this.#proxy = new Proxy(this, handler);
+	}
 
 	protected createElement(): HTMLElement {
 		const container = DOM.createElement("div", {
@@ -229,6 +241,35 @@ export abstract class JsonContainer<T, TKey extends string | number> extends Jso
 }
 
 export class JsonArray<T = any> extends JsonContainer<T[], number> {
+	static readonly #proxyHandler: ProxyHandler<JsonArray> = {
+		has(target, p) {
+			return p in target.#items;
+		},
+		ownKeys(target) {
+			return Array.prototype.map.call(target.keys(), String) as string[];
+		},
+		getOwnPropertyDescriptor(target, p) {
+			let desc = Reflect.getOwnPropertyDescriptor(target.#items, p);
+			if (desc === undefined)
+				return;
+
+			if (desc.value instanceof JsonProperty)
+				desc.value = desc.value.value.proxy;
+
+			return desc;
+		},
+		getPrototypeOf() {
+			return Array.prototype;
+		},
+		get(target, p) {
+			let value = Reflect.get(target.#items, p);
+			if (value instanceof JsonProperty)
+				value = value.value.proxy;
+
+			return value;
+		}
+	}
+
 	readonly #items: JsonProperty<number>[];
 
 	get type() {
@@ -240,7 +281,7 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	}
 
 	constructor(value?: T[]) {
-		super();
+		super(JsonArray.#proxyHandler);
 		if (value && value.length) {
 			this.#items = Array(value.length);
 			for (let i = 0; i < value.length; i++) {
@@ -284,6 +325,32 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 }
 
 export class JsonObject<T extends object = any> extends JsonContainer<T, string> {
+	static readonly #proxyHandler: ProxyHandler<JsonObject> = {
+		has(target, p) {
+			return typeof p === "string" && target.#props.has(p);
+		},
+		ownKeys(target) {
+			return Array.from(target.#props.keys());
+		},
+		getOwnPropertyDescriptor(target, p) {
+			const value = target.#props.get(p as any);
+			if (value == null)
+				return;
+
+			return {
+				configurable: true,
+				enumerable: true,
+				value
+			}
+		},
+		getPrototypeOf() {
+			return Array.prototype;
+		},
+		get(target, p) {
+			return target.#props.get(p as any)?.value.proxy;
+		}
+	}
+
 	readonly #props: Map<string, JsonProperty<string>>;
 
 	get count(): number {
@@ -295,7 +362,7 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 	}
 
 	constructor(value?: T) {
-		super();
+		super(JsonObject.#proxyHandler);
 		this.#props = new Map();
 		if (value) {
 			for (const key in value) {
@@ -340,6 +407,10 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 	readonly #value: T;
 	readonly #text: Filterable;
 	readonly #type: "string" | "number" | "boolean" | "null";
+
+	get proxy() {
+		return this.#value;
+	}
 
 	get value() {
 		return this.#value;

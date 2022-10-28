@@ -12,7 +12,8 @@
 	],
 	"web_accessible_resources": [
 		"lib/*.js",
-		"res/*"
+		"res/*",
+		"node_modules/jsonpath-plus/**/*.js"
 	],
 	"permissions": [
 		"tabs",

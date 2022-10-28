@@ -1,4 +1,5 @@
 import DOM from "./html.js";
+import { JSONPath } from "./json-path.js";
 import { JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json.js";
 
 DOM(document.head).append('link', {
@@ -9,7 +10,9 @@ DOM(document.head).append('link', {
 });
 
 const body = DOM(document.body);
-let filterFlags = JsonTokenFilterFlags.Both;
+const pathExpr = body.append("input", {
+	class: "jpath"
+});
 
 body.append("div", {
 	class: "header",
@@ -94,7 +97,38 @@ body.append("div", {
 					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.remove("expanded"))
 				}
 			}
-		})
+		}),
+		pathExpr,
+		DOM.createElement("button", {
+			class: "btn",
+			props: {
+				"type": "button"
+			},
+			children: [
+				"Evaluate"
+			],
+			events: {
+				click() {
+					const curr = current;
+					if (curr == null)
+						return;
+
+					let prop: JsonProperty;
+					let path = pathExpr.element.value;
+					if (!path) {
+						prop = curr;
+					} else {
+						const result = JSONPath({ path, json: curr.value.proxy });
+						const token = JsonToken.from(result);
+						prop = new JsonProperty("results", token);
+						prop.expanded = true;
+					}
+
+					root.removeAll();
+					root.append(prop.element);
+				}
+			}
+		}),
 	]
 });
 
@@ -104,6 +138,7 @@ const root = body.append("div", {
 
 let current: null | JsonProperty<string>;
 let currentSearch: string = "";
+let filterFlags = JsonTokenFilterFlags.Both;
 
 export function load(json: any) {
 	current = null;
