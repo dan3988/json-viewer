@@ -57,119 +57,6 @@ abstract class JsonBase {
 	}
 }
 
-export abstract class JsonToken<T = unknown> extends JsonBase {
-	static from<T extends string | number | boolean | null>(value: string): JsonValue<T>;
-	static from<T extends object>(value: T): JsonObject<T>;
-	static from<T>(value: T[]): JsonArray<T>;
-	static from<T>(value: T): JsonToken<T>;
-	static from(value: any): JsonToken {
-		if (value === null || typeof value != "object")
-			return new JsonValue(value);
-
-		if (Array.isArray(value)) {
-			return new JsonArray(value);
-		} else {
-			return new JsonObject(value);
-		}
-	}
-
-	abstract get type(): keyof JsonTokenTypeMap;
-
-	protected constructor() {
-		super();
-	}
-
-	abstract toJSON(): T;
-
-	abstract is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
-	abstract is(type: string): boolean;
-}
-
-export abstract class JsonContainer<T, TKey extends string | number> extends JsonToken<T> {
-	abstract get type(): "object" | "array";
-	abstract get count(): number;
-
-	protected createElement(): HTMLElement {
-		const container = DOM.createElement("div", {
-			class: "json-container json-" + this.type
-		});
-
-		for (var child of this.properties())
-			container.appendChild(child.element);
-
-		return container;
-	}
-
-	protected show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
-		let any = false;
-		for (let prop of this.properties())
-			if (prop.filter(filterText, isAppend, flags, false))
-				any = true;
-
-		return any;
-	}
-
-	abstract properties(): Iterable<JsonProperty<TKey>>;
-	abstract get(key: TKey): undefined | JsonToken;
-	abstract getProperty(key: TKey): undefined | JsonProperty<TKey>;
-	abstract keys(): Iterable<TKey>;
-}
-
-export class JsonArray<T = any> extends JsonContainer<T[], number> {
-	readonly #items: JsonProperty<number>[];
-
-	get type() {
-		return "array" as const;
-	}
-
-	get count(): number {
-		return this.#items.length;
-	}
-
-	constructor(value?: T[]) {
-		super();
-		if (value && value.length) {
-			this.#items = Array(value.length);
-			for (let i = 0; i < value.length; i++) {
-				const token = JsonToken.from(value[i]);
-				this.#items[i] = new JsonProperty(i, token, false);
-			}
-		} else {
-			this.#items = [];
-		}
-	}
-
-	*keys(): Iterable<number> {
-		for (let i = 0; i < this.#items.length; i++)
-			yield i;
-	}
-
-	get(key: number): undefined | JsonToken {
-		return this.#items[key]?.value;
-	}
-
-	getProperty(key: number): undefined | JsonProperty<number, any> {
-		return this.#items[key];
-	}
-
-	properties(): Iterable<JsonProperty<number>> {
-		return this.#items;
-	}
-
-	toJSON(): T[] {
-		const elements = this.#items;
-		const value = Array(elements.length);
-		for (let i = 0; i < value.length; i++)
-			value[i] = elements[i].value.toJSON();
-
-		return value;
-	}
-	
-	is(type: string): boolean {
-		return type === "array";
-	}
-}
-
 export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
 	readonly #key: TKey;
 	readonly #keyText: [key: string, lower?: string];
@@ -280,6 +167,119 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	
 		prop.appendChild(child);
 		return prop;
+	}
+}
+
+export abstract class JsonToken<T = unknown> extends JsonBase {
+	static from<T extends string | number | boolean | null>(value: string): JsonValue<T>;
+	static from<T extends object>(value: T): JsonObject<T>;
+	static from<T>(value: T[]): JsonArray<T>;
+	static from<T>(value: T): JsonToken<T>;
+	static from(value: any): JsonToken {
+		if (value === null || typeof value != "object")
+			return new JsonValue(value);
+
+		if (Array.isArray(value)) {
+			return new JsonArray(value);
+		} else {
+			return new JsonObject(value);
+		}
+	}
+
+	abstract get type(): keyof JsonTokenTypeMap;
+
+	protected constructor() {
+		super();
+	}
+
+	abstract toJSON(): T;
+
+	abstract is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
+	abstract is(type: string): boolean;
+}
+
+export abstract class JsonContainer<T, TKey extends string | number> extends JsonToken<T> {
+	abstract get type(): "object" | "array";
+	abstract get count(): number;
+
+	protected createElement(): HTMLElement {
+		const container = DOM.createElement("div", {
+			class: "json-container json-" + this.type
+		});
+
+		for (var child of this.properties())
+			container.appendChild(child.element);
+
+		return container;
+	}
+
+	protected show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
+		let any = false;
+		for (let prop of this.properties())
+			if (prop.filter(filterText, isAppend, flags, false))
+				any = true;
+
+		return any;
+	}
+
+	abstract properties(): Iterable<JsonProperty<TKey>>;
+	abstract get(key: TKey): undefined | JsonToken;
+	abstract getProperty(key: TKey): undefined | JsonProperty<TKey>;
+	abstract keys(): Iterable<TKey>;
+}
+
+export class JsonArray<T = any> extends JsonContainer<T[], number> {
+	readonly #items: JsonProperty<number>[];
+
+	get type() {
+		return "array" as const;
+	}
+
+	get count(): number {
+		return this.#items.length;
+	}
+
+	constructor(value?: T[]) {
+		super();
+		if (value && value.length) {
+			this.#items = Array(value.length);
+			for (let i = 0; i < value.length; i++) {
+				const token = JsonToken.from(value[i]);
+				this.#items[i] = new JsonProperty(i, token, false);
+			}
+		} else {
+			this.#items = [];
+		}
+	}
+
+	*keys(): Iterable<number> {
+		for (let i = 0; i < this.#items.length; i++)
+			yield i;
+	}
+
+	get(key: number): undefined | JsonToken {
+		return this.#items[key]?.value;
+	}
+
+	getProperty(key: number): undefined | JsonProperty<number, any> {
+		return this.#items[key];
+	}
+
+	properties(): Iterable<JsonProperty<number>> {
+		return this.#items;
+	}
+
+	toJSON(): T[] {
+		const elements = this.#items;
+		const value = Array(elements.length);
+		for (let i = 0; i < value.length; i++)
+			value[i] = elements[i].value.toJSON();
+
+		return value;
+	}
+	
+	is(type: string): boolean {
+		return type === "array";
 	}
 }
 
