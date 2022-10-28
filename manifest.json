@@ -10,14 +10,8 @@
 			"run_at": "document_end"
 		}
 	],
-	"background": {
-		// "service_worker": "lib/background.js"
-		// "scripts": [ "lib/background.js" ]
-	},
 	"web_accessible_resources": [
-		"lib/html.js",
-		"lib/content.js",
-		"lib/json-viewer.js",
+		"lib/*.js",
 		"res/*"
 	],
 	"permissions": [
