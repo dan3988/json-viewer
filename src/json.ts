@@ -10,6 +10,25 @@ export interface JsonTokenTypeMap {
 	"null": JsonValue<null>;
 }
 
+// export enum JsonTokenType {
+// 	None		= 0,
+// 	Null		= 1 << 0,
+// 	String		= 1 << 1,
+// 	Number 		= 1 << 2,
+// 	Boolean		= 1 << 3,
+// 	Array		= 1 << 4,
+// 	Object		= 1 << 5,
+// 	Value		= Null | String | Number | Boolean,
+// 	Container	= Array | Object,
+// }
+
+export const enum JsonTokenFilterFlags {
+	None,
+	Keys = 1,
+	Values = 2,
+	Both = Keys | Values
+}
+
 export abstract class JsonToken<T = unknown> {
 	static from<T extends string | number | boolean | null>(value: string): JsonValue<T>;
 	static from<T extends object>(value: T): JsonObject<T>;
@@ -42,18 +61,18 @@ export abstract class JsonToken<T = unknown> {
 		return this.#element !== null;
 	}
 
-	filter(text: string, isAppend: boolean): boolean {
+	filter(text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean): boolean {
 		const e = this.#element;
 		if (e == null || (e.hidden && isAppend))
 			return false;
 
-		const shown = this.show(text, isAppend);
-		e.hidden = !shown;
+		const shown = this.show(text, isAppend, flags);
+		e.hidden = !forceVisible && !shown;
 		return shown;
 	}
 
 	protected abstract createElement(): HTMLElement;
-	protected abstract show(filterText: string, isAppend: boolean): boolean;
+	protected abstract show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean;
 
 	abstract toJSON(): T;
 
@@ -76,10 +95,10 @@ export abstract class JsonContainer<T, TKey extends string | number> extends Jso
 		return container;
 	}
 
-	protected show(filterText: string, isAppend: boolean): boolean {
+	protected show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
 		let any = false;
 		for (let prop of this.properties())
-			if (prop.filter(filterText, isAppend))
+			if (prop.filter(filterText, isAppend, flags, false))
 				any = true;
 
 		return any;
@@ -180,10 +199,14 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		this.#expanded = false;
 	}
 
-	protected show(filterText: string, isAppend: boolean): boolean {
+	protected show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
 		const kt = this.#keyText;
-		const showKey = kt.length == 2 && showMatches(this.element.querySelector(".json-key")!, kt[0], kt[1]!, filterText);
-		const showValue = this.#value.filter(filterText, isAppend);
+		const keyElement = this.element.querySelector(".json-key") as HTMLElement;
+		const showKey = (flags & JsonTokenFilterFlags.Keys) !== 0 && kt.length == 2 && showMatches(keyElement, kt[0], kt[1]!, filterText);
+		const showValue = this.#value.filter(filterText, isAppend, flags, showKey);
+		if (!showKey)
+			keyElement.innerText = kt[0];
+
 		return showKey || showValue;
 	}
 
@@ -320,8 +343,13 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 		});
 	}
 
-	protected show(filterText: string): boolean {
+	protected show(filterText: string, _isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
 		const [text, lower] = this.#text;
+		if ((flags & JsonTokenFilterFlags.Values) === 0) {
+			this.element.innerText = text;
+			return false;
+		}
+
 		return showMatches(this.element, text, lower, filterText);
 	}
 
@@ -332,13 +360,6 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 	is(type: string): boolean {
 		return type === this.#type;
 	}
-}
-
-function toggleExpanded(this: HTMLElement) {
-	this.parentElement?.classList.toggle("expanded");
-}
-
-function createPropElement(key: string, value: JsonToken) {
 }
 
 function showMatches(e: HTMLElement, text: string, lower: string, filterText: string): boolean {

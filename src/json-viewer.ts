@@ -1,5 +1,5 @@
 import DOM from "./html.js";
-import { JsonProperty, JsonToken } from "./json.js";
+import { JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json.js";
 
 DOM(document.head).append('link', {
 	props: {
@@ -9,11 +9,12 @@ DOM(document.head).append('link', {
 });
 
 const body = DOM(document.body);
+let filterFlags = JsonTokenFilterFlags.Both;
 
 body.append("div", {
 	class: "header",
 	children: [
-		DOM("input", {
+		DOM.createElement("input", {
 			class: "filter",
 			props: {
 				type: "search",
@@ -25,13 +26,48 @@ body.append("div", {
 					const isAppend = value.startsWith(currentSearch);
 					if (isAppend && value.length === currentSearch.length)
 						return;
-
-					current?.filter(value, isAppend);
+					
+					current?.filter(value, isAppend, filterFlags, false);
 					currentSearch = value;
 				}
 			}
 		}),
-		DOM("button", {
+		DOM.createElement("select", {
+			events: {
+				input() {
+					let isAppend = filterFlags === JsonTokenFilterFlags.Both;
+					filterFlags = parseInt(this.value);
+					current?.filter(currentSearch, isAppend, filterFlags, false);
+				}
+			},
+			children: [
+				DOM.createElement("option", {
+					props: {
+						value: String(JsonTokenFilterFlags.Both)
+					},
+					children: [
+						"All"
+					]
+				}),
+				DOM.createElement("option", {
+					props: {
+						value: String(JsonTokenFilterFlags.Keys)
+					},
+					children: [
+						"Keys"
+					]
+				}),
+				DOM.createElement("option", {
+					props: {
+						value: String(JsonTokenFilterFlags.Values)
+					},
+					children: [
+						"Values"
+					]
+				})
+			]
+		}),
+		DOM.createElement("button", {
 			class: "btn",
 			props: {
 				"type": "button"
@@ -45,7 +81,7 @@ body.append("div", {
 				}
 			}
 		}),
-		DOM("button", {
+		DOM.createElement("button", {
 			class: "btn",
 			props: {
 				"type": "button"
