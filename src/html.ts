@@ -150,8 +150,11 @@ export interface ElementInitConstructor {
 export interface DOM<T extends Element = Element> {
 	readonly element: T;
 
-	append<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
-	append<N extends Element>(node: N): DOM<N>;
+	create<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
+	create<N extends Element>(node: N): DOM<N>;
+
+	append<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): this;
+	append(node: Node | DOM<any>): this;
 
 	appendText(text: any): this;
 	appendText(tagName: string, text: any): this;
@@ -184,7 +187,7 @@ const dom: DOMFunction = function HTML(element: string | Element, options?: HTML
 	if (typeof element == "string")
 		element = createElement(document, element, options);
 
-	return createHtml(element);
+	return createDom(element);
 }
 
 function def<T, K extends keyof T>(self: T, key: K, func: T[K] extends Fn<infer A, infer R> ? Fn<A, R, T> : never): void {
@@ -200,7 +203,7 @@ function def<T, K extends keyof T>(self: T, key: K, func: T[K] extends Fn<infer 
 	});
 }
 
-function createHtml(e: Element) {
+function createDom(e: Element) {
 	const result = Object.create(dom.prototype);
 
 	Object.defineProperty(result, "element", {
@@ -211,15 +214,25 @@ function createHtml(e: Element) {
 	return result;
 }
 
+function append(self: DOM, arg0: any, arg1?: any) {
+	const e = arg0 instanceof Element ? arg0 : createElement(document, arg0, arg1);
+	self.element.appendChild(e);
+	return e;
+}
+
 export var DOM: DOMConstructor = <any>dom;
 export default DOM;
 
 def(DOM, 'createElement', createElement);
 
+def(dom.prototype, 'create', function(arg0: any, arg1?: any) {
+	const e = append(this, arg0, arg1);
+	return createDom(e);
+})
+
 def(dom.prototype, 'append', function(arg0: any, arg1?: any) {
-	const e = arg0 instanceof Element ? arg0 : createElement(document, arg0, arg1);
-	this.element.appendChild(e);
-	return createHtml(e);
+	append(this, arg0, arg1);
+	return this;
 })
 
 def(dom.prototype, 'appendText', function(tagName, className, text) {

@@ -10,7 +10,7 @@ DOM(document.head).append('link', {
 });
 
 const body = DOM(document.body);
-const pathExpr = body.append("input", {
+const pathExpr = body.create("input", {
 	class: "jpath",
 	props: {
 		type: "search",
@@ -130,14 +130,14 @@ body.append("div", {
 					}
 
 					root.removeAll();
-					root.append(prop.element);
+					root.create(prop.element);
 				}
 			}
 		}),
 	]
 });
 
-const root = body.append("div", {
+const root = body.create("div", {
 	class: "json-root"
 });
 
