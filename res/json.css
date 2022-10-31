@@ -5,7 +5,7 @@ body {
 	--json-bln-fg: #38F;
 	--json-null-fg: #95F;
 
-	font-family: monospace;
+	font-family: 'Arial';
 	position: absolute;
 	inset: 0;
 	margin: 0;
@@ -40,6 +40,7 @@ span.match {
 }
 
 .json-root {
+	font-family: monospace;
 	grid-area: 1 / 1 / span 1 / span 1;
 	overflow-y: scroll;
 }
@@ -54,52 +55,28 @@ span.match {
 
 .controls {
 	grid-area: 1 / 2 / span 1 / span 1;
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	width: 30rem;
-	grid-template-columns: 1fr 1fr 1fr 1fr;
-	grid-template-rows: 1.8rem 1.8rem 1.8rem 1fr;
-	grid-gap: 5px;
-	grid-template-areas:
-		"btn-expand btn-expand btn-collapse btn-collapse"
-		"filter filter filter filter-type"
-		"jpath jpath jpath btn-jpath"
-		"json-results json-results json-results json-results";
+	gap: 5px;
 	padding: 5px;
-}
-
-.controls > .btn-expand {
-	grid-area: btn-expand;
-}
-
-.btn-collapse {
-	grid-area: btn-collapse;
-}
-
-.controls > .filter {
-	grid-area: filter;
-}
-
-.controls > .filter-type {
-	grid-area: filter-type;
-}
-
-.controls > .jpath {
-	grid-area: jpath;
-}
-
-.controls > .btn-jpath {
-	grid-area: btn-jpath;
-}
-
-.controls > .json-results {
-	grid-area: json-results;
 }
 
 .controls > * {
 	vertical-align: middle;
 }
 
+.controls .filter-type,
+.controls .btn-jpath {
+	flex: 7rem 0 0;
+}
+
+.controls .group > .label {
+	flex: 3rem 0 0;
+}
+
 .json-results {
+	flex: 0px 1 1;
 	border: solid 1px #444;
 	border-radius: 5px;
 }
@@ -220,12 +197,4 @@ span.match {
 .json-prop > .json-array,
 .json-prop > .json-object {
 	grid-area: 2 / 2 / span 1 / -1;
-}
-
-.btn {
-	cursor: pointer;
-	background-color: #6b6b6b;
-	color: #FFF;
-	border: solid 1px #444;
-	border-radius: 5px;
 }

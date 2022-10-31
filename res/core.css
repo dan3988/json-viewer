@@ -1,0 +1,68 @@
+.group {
+	display: flex;
+	height: 1.8rem;
+	justify-content: center;
+	align-content: stretch;
+	align-items: stretch;
+}
+
+.group > input {
+	background-color: #444;
+}
+
+.group > * {
+	outline: none;
+	flex: 0px 1 1;
+	border: solid 1px #444;
+	border-radius: 0;
+}
+
+.group > *:hover {
+	z-index: 1;
+}
+
+.group > .label {
+	background-color: #6b6b6b;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 5px;
+	font: inherit;
+	font-size: small;
+	font-weight: bold;
+}
+
+.group > select,
+.group > button {
+	cursor: pointer;
+	background-color: #6b6b6b;
+	color: #FFF;
+}
+
+.group > select:hover,
+.group > button:hover {
+	z-index: 1;
+	background-color: #777;
+	border-color: #999;
+}
+
+.group > *:focus {
+	z-index: 1;
+	border-color: #999;
+}
+
+.group > :not(:first-child) {
+	margin-left: -1px;
+}
+
+.group > :first-child {
+	border-radius: 5px 0 0 5px;
+}
+
+.group > :last-child {
+	border-radius: 0 5px 5px 0;
+}
+
+input:hover, input:focus {
+	background-color: #555;
+}
