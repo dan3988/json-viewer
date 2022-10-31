@@ -344,7 +344,7 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 			}
 		},
 		getPrototypeOf() {
-			return Array.prototype;
+			return Object.prototype;
 		},
 		get(target, p) {
 			return target.#props.get(p as any)?.value.proxy;
