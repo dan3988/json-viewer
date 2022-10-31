@@ -62,7 +62,8 @@ span.match {
 	grid-template-areas:
 		"btn-expand btn-expand btn-collapse btn-collapse"
 		"filter filter filter filter-type"
-		"jpath jpath jpath btn-jpath";
+		"jpath jpath jpath btn-jpath"
+		"json-results json-results json-results json-results";
 	padding: 5px;
 }
 
@@ -90,8 +91,17 @@ span.match {
 	grid-area: btn-jpath;
 }
 
+.controls > .json-results {
+	grid-area: json-results;
+}
+
 .controls > * {
 	vertical-align: middle;
+}
+
+.json-results {
+	border: solid 1px #444;
+	border-radius: 5px;
 }
 
 .json-key {

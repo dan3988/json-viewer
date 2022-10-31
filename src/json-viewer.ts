@@ -10,13 +10,11 @@ DOM(document.head).append('link', {
 });
 
 const body = DOM(document.body);
-const pathExpr = body.create("input", {
-	class: "jpath",
-	props: {
-		type: "search",
-		placeholder: "JSON Path Expression"
-	}
-});
+const pathResult = body.create("div", {
+	class: "json-root json-results"
+})
+
+let pathExpr = "";
 
 body.append("div", {
 	class: "controls",
@@ -103,7 +101,18 @@ body.append("div", {
 				})
 			]
 		}),
-		pathExpr,
+		DOM.createElement("input", {
+			class: "jpath",
+			props: {
+				type: "search",
+				placeholder: "JSON Path Expression"
+			},
+			events: {
+				input() {
+					pathExpr = this.value;
+				}
+			}
+		}),
 		DOM.createElement("button", {
 			class: "btn btn-jpath",
 			props: {
@@ -118,22 +127,21 @@ body.append("div", {
 					if (curr == null)
 						return;
 
-					let prop: JsonProperty;
-					let path = pathExpr.element.value;
-					if (!path) {
-						prop = curr;
-					} else {
+					pathResult.removeAll();
+
+					let path = pathExpr;
+					if (path) {
 						const result = JSONPath({ path, json: curr.value.proxy });
 						const token = JsonToken.from(result);
-						prop = new JsonProperty("results", token);
+						const prop = new JsonProperty("results", token);
 						prop.expanded = true;
+						pathResult.removeAll();
+						pathResult.append(prop.element);
 					}
-
-					root.removeAll();
-					root.create(prop.element);
 				}
 			}
 		}),
+		pathResult
 	]
 });
 
