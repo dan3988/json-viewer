@@ -1,3 +1,67 @@
+.img-btn {
+	cursor: pointer;
+	position: relative;
+}
+
+.img-btn::before {
+	content: "";
+	position: absolute;
+	inset: 2px;
+	-webkit-mask-image: var(--mask-image);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+	-webkit-mask-position: center;
+	mask-image: var(--mask-image);
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.cr .btn {
+	border: solid 1px #444;
+	border-radius: 5px;
+}
+
+.cr input {
+	background-color: #444;
+}
+
+.cr select,
+.cr button,
+.cr input {
+	outline: none;
+	border: solid 1px #444;
+	border-radius: 0;
+}
+
+.cr .btn,
+.cr select,
+.cr button {
+	cursor: pointer;
+	background-color: #6b6b6b;
+	color: #FFF;
+}
+
+.cr .btn:hover,
+.cr select:hover,
+.cr button:hover {
+	background-color: #777;
+}
+
+.cr .btn:hover,
+.cr select:hover,
+.cr button:hover,
+.cr input:hover {
+	z-index: 1;
+	border-color: #666;
+}
+
+.cr *:focus,
+.cr *:focus:hover {
+	z-index: 1;
+	border-color: #888;
+}
+
 .group {
 	display: flex;
 	height: 1.8rem;
@@ -6,19 +70,8 @@
 	align-items: stretch;
 }
 
-.group > input {
-	background-color: #444;
-}
-
 .group > * {
-	outline: none;
 	flex: 0px 1 1;
-	border: solid 1px #444;
-	border-radius: 0;
-}
-
-.group > *:hover {
-	z-index: 1;
 }
 
 .group > .label {
@@ -30,25 +83,6 @@
 	font: inherit;
 	font-size: small;
 	font-weight: bold;
-}
-
-.group > select,
-.group > button {
-	cursor: pointer;
-	background-color: #6b6b6b;
-	color: #FFF;
-}
-
-.group > select:hover,
-.group > button:hover {
-	z-index: 1;
-	background-color: #777;
-	border-color: #999;
-}
-
-.group > *:focus {
-	z-index: 1;
-	border-color: #999;
 }
 
 .group > :not(:first-child) {

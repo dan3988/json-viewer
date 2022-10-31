@@ -23,7 +23,7 @@ const pathResult = body.create("div", {
 
 let pathExpr = "";
 
-body.create("div", { class: "controls" })
+body.create("div", { class: "controls cr" })
 	.append("div", {
 		class: "group",
 		children: [
@@ -169,7 +169,7 @@ body.create("div", { class: "controls" })
 	.append(pathResult)
 
 const root = body.create("div", {
-	class: "json-root"
+	class: "json-root cr"
 });
 
 let current: null | JsonProperty<string>;

@@ -15,25 +15,6 @@ body {
 	grid-template-rows: 1fr;
 }
 
-.img-btn {
-	cursor: pointer;
-	position: relative;
-}
-
-.img-btn::before {
-	content: "";
-	position: absolute;
-	inset: 2px;
-	-webkit-mask-image: var(--mask-image);
-	-webkit-mask-repeat: no-repeat;
-	-webkit-mask-size: contain;
-	-webkit-mask-position: center;
-	mask-image: var(--mask-image);
-	mask-repeat: no-repeat;
-	mask-size: contain;
-	mask-position: center;
-}
-
 span.match {
 	background-color: #FF0;
 	color: #000;
