@@ -11,12 +11,44 @@ DOM(document.head).append('link', {
 
 const body = DOM(document.body);
 const pathExpr = body.append("input", {
-	class: "jpath"
+	class: "jpath",
+	props: {
+		type: "search",
+		placeholder: "JSON Path Expression"
+	}
 });
 
 body.append("div", {
-	class: "header",
+	class: "controls",
 	children: [
+		DOM.createElement("button", {
+			class: "btn btn-collapse",
+			props: {
+				"type": "button"
+			},
+			children: [
+				"Collapse All"
+			],
+			events: {
+				click() {
+					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.remove("expanded"))
+				}
+			}
+		}),
+		DOM.createElement("button", {
+			class: "btn btn-expand",
+			props: {
+				"type": "button"
+			},
+			children: [
+				"Expand All"
+			],
+			events: {
+				click() {
+					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.add("expanded"))
+				}
+			}
+		}),
 		DOM.createElement("input", {
 			class: "filter",
 			props: {
@@ -36,6 +68,7 @@ body.append("div", {
 			}
 		}),
 		DOM.createElement("select", {
+			class: "filter-type",
 			events: {
 				input() {
 					let isAppend = filterFlags === JsonTokenFilterFlags.Both;
@@ -70,37 +103,9 @@ body.append("div", {
 				})
 			]
 		}),
-		DOM.createElement("button", {
-			class: "btn",
-			props: {
-				"type": "button"
-			},
-			children: [
-				"Expand All"
-			],
-			events: {
-				click() {
-					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.add("expanded"))
-				}
-			}
-		}),
-		DOM.createElement("button", {
-			class: "btn",
-			props: {
-				"type": "button"
-			},
-			children: [
-				"Collapse All"
-			],
-			events: {
-				click() {
-					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.remove("expanded"))
-				}
-			}
-		}),
 		pathExpr,
 		DOM.createElement("button", {
-			class: "btn",
+			class: "btn btn-jpath",
 			props: {
 				"type": "button"
 			},

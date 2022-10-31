@@ -11,9 +11,8 @@ body {
 	margin: 0;
 	padding: 0;
 	display: grid;
-	grid-template-columns: 1fr;
-	grid-template-rows: 3em 1fr;
-	overflow-y: scroll;
+	grid-template-columns: 1fr auto;
+	grid-template-rows: 1fr;
 }
 
 .img-btn {
@@ -40,6 +39,11 @@ span.match {
 	color: #000;
 }
 
+.json-root {
+	grid-area: 1 / 1 / span 1 / span 1;
+	overflow-y: scroll;
+}
+
 .json-key {
 	display: unset !important;
 }
@@ -48,25 +52,46 @@ span.match {
 	display: none !important;
 }
 
-.header {
-	display: flex;
-	gap: 5px;
+.controls {
+	grid-area: 1 / 2 / span 1 / span 1;
+	display: grid;
+	width: 30rem;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	grid-template-rows: 1.8rem 1.8rem 1.8rem 1fr;
+	grid-gap: 5px;
+	grid-template-areas:
+		"btn-expand btn-expand btn-collapse btn-collapse"
+		"filter filter filter filter-type"
+		"jpath jpath jpath btn-jpath";
 	padding: 5px;
-	align-items: stretch;
 }
 
-.header > * {
+.controls > .btn-expand {
+	grid-area: btn-expand;
+}
+
+.btn-collapse {
+	grid-area: btn-collapse;
+}
+
+.controls > .filter {
+	grid-area: filter;
+}
+
+.controls > .filter-type {
+	grid-area: filter-type;
+}
+
+.controls > .jpath {
+	grid-area: jpath;
+}
+
+.controls > .btn-jpath {
+	grid-area: btn-jpath;
+}
+
+.controls > * {
 	vertical-align: middle;
-}
-
-.header > .filter {
-	flex: 0px 1 1;
-}
-
-.header > .btn {
-	flex: 6rem 0 0;
-	min-width: 0;
-	padding: 5px;
 }
 
 .json-key {
@@ -167,6 +192,7 @@ span.match {
 
 .json-prop > .json-value {
 	grid-area: 1 / 3 / span 1 / -1;
+	padding: 0 5px;
 }
 
 .json-prop > .copy-btn {
