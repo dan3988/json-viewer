@@ -215,7 +215,15 @@ function createDom(e: Element) {
 }
 
 function append(self: DOM, arg0: any, arg1?: any) {
-	const e = arg0 instanceof Element ? arg0 : createElement(document, arg0, arg1);
+	let e: Element;
+	if (arg0 instanceof DOM) {
+		e = arg0.element;
+	} else if (arg0 instanceof Element) {
+		e = arg0;
+	} else {
+		e = createElement(arg0, arg1);
+	}
+
 	self.element.appendChild(e);
 	return e;
 }

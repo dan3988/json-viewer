@@ -16,134 +16,130 @@ const pathResult = body.create("div", {
 
 let pathExpr = "";
 
-body.append("div", {
-	class: "controls",
-	children: [
-		DOM.createElement("button", {
-			class: "btn btn-collapse",
-			props: {
-				"type": "button"
-			},
-			children: [
-				"Collapse All"
-			],
-			events: {
-				click() {
-					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.remove("expanded"))
-				}
+body.create("div", { class: "controls" })
+	.append("button", {
+		class: "btn btn-collapse",
+		props: {
+			"type": "button"
+		},
+		children: [
+			"Collapse All"
+		],
+		events: {
+			click() {
+				body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.remove("expanded"))
 			}
-		}),
-		DOM.createElement("button", {
-			class: "btn btn-expand",
-			props: {
-				"type": "button"
-			},
-			children: [
-				"Expand All"
-			],
-			events: {
-				click() {
-					body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.add("expanded"))
-				}
+		}
+	})
+	.append("button", {
+		class: "btn btn-expand",
+		props: {
+			"type": "button"
+		},
+		children: [
+			"Expand All"
+		],
+		events: {
+			click() {
+				body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.add("expanded"))
 			}
-		}),
-		DOM.createElement("input", {
-			class: "filter",
-			props: {
-				type: "search",
-				placeholder: "Filter"
-			},
-			events: {
-				input() {
-					const value = this.value.toLowerCase();
-					const isAppend = value.startsWith(currentSearch);
-					if (isAppend && value.length === currentSearch.length)
-						return;
-					
-					current?.filter(value, isAppend, filterFlags, false);
-					currentSearch = value;
-				}
+		}
+	})
+	.append("input", {
+		class: "filter",
+		props: {
+			type: "search",
+			placeholder: "Filter"
+		},
+		events: {
+			input() {
+				const value = this.value.toLowerCase();
+				const isAppend = value.startsWith(currentSearch);
+				if (isAppend && value.length === currentSearch.length)
+					return;
+				
+				current?.filter(value, isAppend, filterFlags, false);
+				currentSearch = value;
 			}
-		}),
-		DOM.createElement("select", {
-			class: "filter-type",
-			events: {
-				input() {
-					let isAppend = filterFlags === JsonTokenFilterFlags.Both;
-					filterFlags = parseInt(this.value);
-					current?.filter(currentSearch, isAppend, filterFlags, false);
-				}
-			},
-			children: [
-				DOM.createElement("option", {
-					props: {
-						value: String(JsonTokenFilterFlags.Both)
-					},
-					children: [
-						"All"
-					]
-				}),
-				DOM.createElement("option", {
-					props: {
-						value: String(JsonTokenFilterFlags.Keys)
-					},
-					children: [
-						"Keys"
-					]
-				}),
-				DOM.createElement("option", {
-					props: {
-						value: String(JsonTokenFilterFlags.Values)
-					},
-					children: [
-						"Values"
-					]
-				})
-			]
-		}),
-		DOM.createElement("input", {
-			class: "jpath",
-			props: {
-				type: "search",
-				placeholder: "JSON Path Expression"
-			},
-			events: {
-				input() {
-					pathExpr = this.value;
-				}
+		}
+	})
+	.append("select", {
+		class: "filter-type",
+		events: {
+			input() {
+				let isAppend = filterFlags === JsonTokenFilterFlags.Both;
+				filterFlags = parseInt(this.value);
+				current?.filter(currentSearch, isAppend, filterFlags, false);
 			}
-		}),
-		DOM.createElement("button", {
-			class: "btn btn-jpath",
-			props: {
-				"type": "button"
-			},
-			children: [
-				"Evaluate"
-			],
-			events: {
-				click() {
-					const curr = current;
-					if (curr == null)
-						return;
+		},
+		children: [
+			DOM.createElement("option", {
+				props: {
+					value: String(JsonTokenFilterFlags.Both)
+				},
+				children: [
+					"All"
+				]
+			}),
+			DOM.createElement("option", {
+				props: {
+					value: String(JsonTokenFilterFlags.Keys)
+				},
+				children: [
+					"Keys"
+				]
+			}),
+			DOM.createElement("option", {
+				props: {
+					value: String(JsonTokenFilterFlags.Values)
+				},
+				children: [
+					"Values"
+				]
+			})
+		]
+	})
+	.append("input", {
+		class: "jpath",
+		props: {
+			type: "search",
+			placeholder: "JSON Path Expression"
+		},
+		events: {
+			input() {
+				pathExpr = this.value;
+			}
+		}
+	})
+	.append("button", {
+		class: "btn btn-jpath",
+		props: {
+			"type": "button"
+		},
+		children: [
+			"Evaluate"
+		],
+		events: {
+			click() {
+				const curr = current;
+				if (curr == null)
+					return;
 
+				pathResult.removeAll();
+
+				let path = pathExpr;
+				if (path) {
+					const result = JSONPath({ path, json: curr.value.proxy });
+					const token = JsonToken.from(result);
+					const prop = new JsonProperty("results", token);
+					prop.expanded = true;
 					pathResult.removeAll();
-
-					let path = pathExpr;
-					if (path) {
-						const result = JSONPath({ path, json: curr.value.proxy });
-						const token = JsonToken.from(result);
-						const prop = new JsonProperty("results", token);
-						prop.expanded = true;
-						pathResult.removeAll();
-						pathResult.append(prop.element);
-					}
+					pathResult.append(prop.element);
 				}
 			}
-		}),
-		pathResult
-	]
-});
+		}
+	})
+	.append(pathResult)
 
 const root = body.create("div", {
 	class: "json-root"
