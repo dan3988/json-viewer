@@ -112,11 +112,13 @@ ul {
 	transition-timing-function: ease-in-out;
 }
 
-.cr *:focus,
-.cr *:focus:hover {
+.cr input:focus,
+.cr textarea:focus,
+.cr button:focus,
+.cr select:focus {
 	z-index: 1;
 	border-color: var(--col-border-focus);
-	box-shadow: 0px 0px 10px 0px var(--col-shadow);
+	box-shadow: 0px 0px 2px 1px var(--col-shadow);
 }
 
 .group {
