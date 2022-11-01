@@ -16,13 +16,15 @@ DOM(document.head)
 		}
 	})
 
-function setVisibleExpanded(token: JsonProperty, expanded: boolean) {
-	if (token.shown) {
-		token.expanded = expanded;
+function setVisibleExpanded(token: JsonToken, expanded: boolean) {
+	if (!token.shown)
+		return;
 
-		for (let prop of token.value.properties())
-			setVisibleExpanded(prop, expanded);
-	}
+	if (token.parentProperty != null)
+		token.parentProperty.expanded = expanded;
+		
+	for (let prop of token.properties())
+		setVisibleExpanded(prop.value, expanded);
 }
 
 const body = DOM(document.body);
@@ -181,10 +183,10 @@ body.create("div", { class: "controls cr" })
 							return;
 		
 						pathResult.removeAll();
-		
+
 						let path = pathExpr;
 						if (path) {
-							const token = curr.root.value;
+							const token = curr.root;
 							const result: string[] = JSONPath({ path, json: token.proxy, resultType: 'pointer' });
 							for (const path of result) {
 								const parts = path.split("/");
