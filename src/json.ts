@@ -28,6 +28,25 @@ export const enum JsonTokenFilterFlags {
 	Both = Keys | Values
 }
 
+function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [parent: null | JsonProperty, value: T]>
+function resolveConstructor(value: any): Constructor<JsonToken, [parent: null | JsonProperty, value: any]> {
+	if (value == null)
+		return JsonValue;
+
+	const type = typeof value;
+
+	switch (type) {
+		case "string":
+		case "number":
+		case "boolean":
+			return JsonValue;
+		case "object":
+			return value instanceof Array ? JsonArray : JsonObject;
+	}
+
+	throw new TypeError("Values of type \"" + type + "\" are not supported in JSON.");
+}
+
 abstract class JsonBase {
 	#element: null | HTMLElement;
 
@@ -58,24 +77,29 @@ abstract class JsonBase {
 }
 
 export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
+	readonly #parent: null | JsonContainer<any, TKey>;
 	readonly #key: TKey;
 	readonly #keyText: [key: string, lower?: string];
 	readonly #value: JsonToken<TValue>;
 	#expanded: boolean;
 
-	get key(): TKey {
+	get parent() {
+		return this.#parent;
+	}
+
+	get key() {
 		return this.#key;
 	}
 
-	get value(): JsonToken<TValue> {
+	get value() {
 		return this.#value;
 	}
 
-	get expanded(): boolean {
+	get expanded() {
 		return this.#expanded;
 	}
 
-	set expanded(value: boolean) {
+	set expanded(value) {
 		if (this.#expanded !== (value = Boolean(value))) {
 			this.#expanded = value;
 			if (this.elementLoaded())
@@ -83,12 +107,14 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		}
 	}
 
-	constructor(key: TKey, value: JsonToken<TValue>, filterableKey?: boolean) {
+	constructor(parent: null | JsonContainer<any, TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
 		super();
 		const keyText = String(key);
+		const ctor = resolveConstructor(value);
+		this.#parent = parent;
 		this.#key = key;
 		this.#keyText = filterableKey ? [keyText, keyText.toLowerCase()] : [keyText];
-		this.#value = value;
+		this.#value = new ctor(this, value);
 		this.#expanded = false;
 	}
 
@@ -176,30 +202,44 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 	static from<T>(value: T[]): JsonArray<T>;
 	static from<T>(value: T): JsonToken<T>;
 	static from(value: any): JsonToken {
-		if (value === null || typeof value != "object")
-			return new JsonValue(value);
+		const ctor = resolveConstructor(value);
+		return new ctor(null, value);
+	}
 
-		if (value instanceof Array) {
-			return new JsonArray(value);
-		} else {
-			return new JsonObject(value);
-		}
+	readonly #root: null | JsonContainer;
+	readonly #prop: null | JsonProperty;
+
+	get root() {
+		return this.#root;
+	}
+
+	get parent(): null | JsonContainer {
+		return this.#prop?.parent ?? null;
+	}
+
+	get parentProperty() {
+		return this.#prop;
 	}
 
 	abstract get proxy(): any;
 	abstract get type(): keyof JsonTokenTypeMap;
 
-	protected constructor() {
+	protected constructor(prop: null | JsonProperty) {
 		super();
+		let root = prop?.parent?.root;
+		this.#prop = prop;
+		this.#root = root != null ? root : (this instanceof JsonContainer ? this : null);
 	}
 
 	abstract toJSON(): T;
+
+	abstract resolve(path: string[]): null | JsonToken;
 
 	abstract is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
 	abstract is(type: string): boolean;
 }
 
-export abstract class JsonContainer<T, TKey extends string | number> extends JsonToken<T> {
+export abstract class JsonContainer<T = any, TKey extends string | number = string | number> extends JsonToken<T> {
 	readonly #proxy: any;
 
 	abstract get type(): "object" | "array";
@@ -209,8 +249,8 @@ export abstract class JsonContainer<T, TKey extends string | number> extends Jso
 		return this.#proxy;
 	}
 
-	protected constructor(handler: ProxyHandler<JsonContainer<T, TKey>>) {
-		super();
+	protected constructor(prop: null | JsonProperty, handler: ProxyHandler<JsonContainer<T, TKey>>) {
+		super(prop);
 		this.#proxy = new Proxy(this, handler);
 	}
 
@@ -232,6 +272,25 @@ export abstract class JsonContainer<T, TKey extends string | number> extends Jso
 				any = true;
 
 		return any;
+	}
+
+	resolve(path: string[]) {
+		let container: JsonContainer = this;
+		let i = 0;
+		while (true) {
+			const key = path[i];
+			const child = container.get(key);
+			if (child == null)
+				return null;
+
+			if (++i === path.length)
+				return child;
+
+			if (!(child instanceof JsonContainer))
+				return null;
+			
+			container = child;
+		}
 	}
 
 	abstract properties(): Iterable<JsonProperty<TKey>>;
@@ -280,14 +339,12 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 		return this.#items.length;
 	}
 
-	constructor(value?: T[]) {
-		super(JsonArray.#proxyHandler);
+	constructor(prop: null | JsonProperty, value: T[]) {
+		super(prop, JsonArray.#proxyHandler);
 		if (value && value.length) {
 			this.#items = Array(value.length);
-			for (let i = 0; i < value.length; i++) {
-				const token = JsonToken.from(value[i]);
-				this.#items[i] = new JsonProperty(i, token, false);
-			}
+			for (let i = 0; i < value.length; i++)
+				this.#items[i] = new JsonProperty(this, i, value[i], false);
 		} else {
 			this.#items = [];
 		}
@@ -299,11 +356,11 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	}
 
 	get(key: number): undefined | JsonToken {
-		return this.#items[key]?.value;
+		return this.#items.at(key)?.value;
 	}
 
 	getProperty(key: number): undefined | JsonProperty<number, any> {
-		return this.#items[key];
+		return this.#items.at(key);
 	}
 
 	properties(): Iterable<JsonProperty<number>> {
@@ -361,13 +418,14 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 		return "object" as const;
 	}
 
-	constructor(value?: T) {
-		super(JsonObject.#proxyHandler);
+	constructor(prop: null | JsonProperty, value: T) {
+		super(prop, JsonObject.#proxyHandler);
 		this.#props = new Map();
 		if (value) {
 			for (const key in value) {
-				const token = JsonToken.from(value[key]);
-				this.#props.set(key, new JsonProperty(key, token, true));
+				const item = value[key];
+				const prop = new JsonProperty(this, key, item, true);
+				this.#props.set(key, prop);
 			}
 		}
 	}
@@ -420,8 +478,8 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 		return this.#type;
 	}
 
-	constructor(value: T) {
-		super();
+	constructor(prop: null | JsonProperty, value: T) {
+		super(prop);
 		const text = String(value);
 		this.#value = value;
 		this.#text = [text, text.toLowerCase()];
@@ -447,6 +505,10 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 		}
 
 		return showMatches(this.element, text, lower, filterText);
+	}
+
+	resolve(): JsonToken<unknown> | null {
+		return null;
 	}
 
 	toJSON(): T {
