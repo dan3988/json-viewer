@@ -509,10 +509,25 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 		if (value == null)
 			value = String(value);
 	
-		return DOM.createElement("span", {
-			class: `json-value json-${this.#type}`,
-			children: [ value ]
+		const span = DOM("span", {
+			class: `json-value json-${this.#type}`
 		});
+
+		if (this.#type === "string" && (value.startsWith("http://") || value.startsWith("https://"))) {
+			span.append("a", {
+				props: {
+					href: value,
+					target: "_blank"
+				},
+				children: [
+					value
+				]
+			})
+		} else {
+			span.appendText(value);
+		}
+
+		return span.element;
 	}
 
 	protected show(filterText: string, _isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
