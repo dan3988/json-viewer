@@ -17,7 +17,7 @@ DOM(document.head)
 	})
 
 const body = DOM(document.body);
-const pathResult = body.create("div", {
+const pathResult = body.create("ul", {
 	class: "json-root json-results"
 })
 
@@ -155,11 +155,25 @@ body.create("div", { class: "controls cr" })
 		
 						let path = pathExpr;
 						if (path) {
-							const result = JSONPath({ path, json: curr.value.proxy });
-							const token = JsonToken.from(result);
-							const prop = new JsonProperty("results", token);
-							prop.expanded = true;
-							pathResult.append(prop.element);
+							const result: string[] = JSONPath({ path, json: curr.value.proxy, resultType: 'pointer' });
+							for (const path of result) {
+								const parts = path.split("/");
+								parts.shift();
+								const token = curr.value.resolve(parts)!;
+								pathResult.append("li", {
+									children: [ path ],
+									events: {
+										click() {
+											for (let t: null | JsonToken = token; t != null && t.parentProperty != null; ) {
+												t.parentProperty.expanded = true;
+												t = t.parent;
+											}
+
+											token.element.scrollIntoView({ block: 'center' });
+										}
+									}
+								});
+							}
 						}
 					}
 				}
@@ -181,8 +195,7 @@ export function load(json: any) {
 	currentSearch = "";
 	root.removeAll();
 
-	const token = JsonToken.from(json);
-	const rootProp = new JsonProperty("root", token);
+	const rootProp = new JsonProperty(null, "root", json);
 	rootProp.expanded = true;
 	root.append(rootProp.element);
 	current = rootProp;

@@ -23,6 +23,8 @@ span.match {
 	font-family: monospace;
 	grid-area: 1 / 1 / span 1 / span 1;
 	overflow-y: scroll;
+	padding: 5px;
+	padding-bottom: 10rem;
 }
 
 .json-key {
@@ -59,16 +61,31 @@ span.match {
 	flex: 0px 1 1;
 	border: solid 1px #444;
 	border-radius: 5px;
+	padding: 5px;
 }
 
 .json-results:empty::before {
-	margin: 5px;
-	content: "JSON Path Results";
+	content: "No Results";
 	color: #888;
 	font-size: small;
 	font-style: italic;
 	display: flex;
 	justify-content: center;
+}
+
+.json-results > li {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	transition: none;
+	cursor: pointer;
+	border: solid transparent 2px;
+	border-radius: 5px;
+	padding: 2px;
+}
+
+.json-results > li:hover {
+	border-color: #444;
+	background-color: #666;
 }
 
 .json-key {

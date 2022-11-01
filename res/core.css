@@ -3,6 +3,12 @@ body, button, input, select {
 	font-size: medium;
 }
 
+ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
 .img-btn {
 	cursor: pointer;
 	position: relative;
