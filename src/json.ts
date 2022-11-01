@@ -49,13 +49,24 @@ function resolveConstructor(value: any): Constructor<JsonToken, [parent: null | 
 
 abstract class JsonBase {
 	#element: null | HTMLElement;
+	#shown: boolean;
+
+	get shown() {
+		return this.#shown;
+	}
 
 	get element(): HTMLElement {
-		return this.#element ??= this.createElement();
+		if (this.#element == null) {
+			this.#element = this.createElement();
+			this.#element.hidden = !this.#shown;
+		}
+
+		return this.#element;
 	}
 
 	protected constructor() {
 		this.#element = null;
+		this.#shown = true;
 	}
 
 	protected abstract show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean;
@@ -64,14 +75,17 @@ abstract class JsonBase {
 	protected elementLoaded(): boolean {
 		return this.#element !== null;
 	}
-	
-	filter(text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean): boolean {
-		const e = this.#element;
-		if (e == null || (e.hidden && isAppend))
-			return false;
 
-		const shown = this.show(text, isAppend, flags);
-		e.hidden = !forceVisible && !shown;
+	filter(text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean): boolean {
+		if (!this.#shown && isAppend)
+			return false;
+		
+		const shown = this.show(text, isAppend, flags) || forceVisible;
+		const e = this.#element;
+		if (e != null)
+			e.hidden = !shown;
+
+		this.#shown = shown;
 		return shown;
 	}
 }
@@ -251,6 +265,11 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 
 	abstract is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
 	abstract is(type: string): boolean;
+
+	abstract properties(): Iterable<JsonProperty>;
+	abstract get(key: number | string): undefined | JsonToken;
+	abstract getProperty(key: number | string): undefined | JsonProperty;
+	abstract keys(): Iterable<number | string>;
 }
 
 export abstract class JsonContainer<T = any, TKey extends string | number = string | number> extends JsonToken<T> {
@@ -550,6 +569,22 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 	
 	is(type: string): boolean {
 		return type === this.#type;
+	}
+
+	keys(): Iterable<never> {
+		return Array.prototype as any;
+	}
+
+	properties(): Iterable<never> {
+		return Array.prototype as any;
+	}
+
+	get(): undefined {
+		return undefined;
+	}
+
+	getProperty(): undefined {
+		return undefined;
 	}
 }
 
