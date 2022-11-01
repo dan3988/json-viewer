@@ -13,7 +13,8 @@
 	"web_accessible_resources": [
 		"lib/*.js",
 		"res/*",
-		"node_modules/jsonpath-plus/**/*.js"
+		"node_modules/jsonpath-plus/**/*.js",
+		"node_modules/vm-browserify/*.js"
 	],
 	"permissions": [
 		"tabs",
