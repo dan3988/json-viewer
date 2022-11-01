@@ -1,4 +1,3 @@
-console.debug(document.contentType);
 if (document.contentType === "application/json") {
 	const pre = document.body.querySelector("pre")!;
 	const text = pre.innerText;
