@@ -1,6 +1,6 @@
 import DOM from "./html.js";
 import { JSONPath } from "./json-path.js";
-import { JsonProperty, JsonScope, JsonToken, JsonTokenFilterFlags } from "./json.js";
+import { JsonScope, JsonScopeSelectedChangedEvent, JsonToken, JsonTokenFilterFlags } from "./json.js";
 
 DOM(document.head)
 	.append('link', {
@@ -28,12 +28,38 @@ function setVisibleExpanded(token: JsonToken, expanded: boolean) {
 }
 
 const body = DOM(document.body);
+const breadcrumb = body.create("ul", { class: "breadcrumb cr" })
 const pathResult = body.create("ul", {
 	class: "json-root json-results"
 })
 
 let pathExpr = "";
 let blink: null | HTMLElement = null;
+
+function onSelectionChanged(evt: JsonScopeSelectedChangedEvent) {
+	const prop = evt.newValue;
+	
+	breadcrumb.removeAll();
+	for (let p = prop; p != null; p = p.parent.parentProperty) {
+		const current = p;
+
+		breadcrumb.create("li", { at: "start" })
+			.append("span", {
+				class: "json-" + typeof current.key,
+				children: [ current.key ],
+				events: {
+					click() {
+						for (let c = prop; c != null && c != current; c = c.parent.parentProperty)
+							c.expanded = false;
+
+						current.select();
+						current.element.querySelector(":scope > .json-key")?.scrollIntoView({ block: "center" });
+					}
+				}
+			})
+	}
+}
+
 
 body.create("div", { class: "controls cr" })
 	.append("div", {
@@ -227,6 +253,7 @@ let current: JsonScope = new JsonScope(null);
 
 export function load(json: any) {
 	current = new JsonScope(json);
+	current.on("selectedchanged", onSelectionChanged);
 	root.removeAll();
-	root.append(current.root.element);
+	root.append(current.element);
 }

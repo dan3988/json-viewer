@@ -1,10 +1,11 @@
 export type HTMLTagName = string & keyof HTMLElementTagNameMap;
 
+type Primitive = string | number | null | undefined | bigint | boolean;
 type ElementType<K extends string> = K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement;
-type OptionsType<K extends string> = HTMLElementCreationOptions<ElementType<K>>
+type OptionsType<K extends string> = HTMLElementCreationOptions<ElementType<K>>;
 
 export type ElementInitArgs<K extends string = string> = [tagName: K, options?: OptionsType<K>];
-export type ElementChild = Node | DOM | string | ElementInit<any>;
+export type ElementChild = Node | DOM | Primitive | ElementInit<any>;
 
 export interface HTMLElementCreationOptions<T extends HTMLElement = HTMLElement> extends ElementCreationOptions {
 	id?: string;
@@ -14,7 +15,10 @@ export interface HTMLElementCreationOptions<T extends HTMLElement = HTMLElement>
 	props?: { [P in keyof T]?: T[P] };
 	children?: ElementChild[];
 	events?: EventsObject<T>;
+	at?: HTMLElementAppendPosition;
 }
+
+export type HTMLElementAppendPosition = "start" | "end";
 
 export type EventsObject<T extends Element> = {
 	[P in keyof HTMLElementEventMap]?: (this: T, e: HTMLElementEventMap[P]) => void;
@@ -94,7 +98,7 @@ let initHandlers: InitHandlers = {
 				node = child.element;
 			} else {
 				let factory = cache.tf ??= createTextFactory(options);
-				node = factory.call(e.ownerDocument, child);
+				node = factory.call(e.ownerDocument, String(child));
 			}
 
 			e.appendChild(node);
@@ -151,10 +155,10 @@ export interface DOM<T extends Element = Element> {
 	readonly element: T;
 
 	create<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
-	create<N extends Element>(node: N): DOM<N>;
+	create<N extends Element>(node: N, at?: HTMLElementAppendPosition): DOM<N>;
 
 	append<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): this;
-	append(node: Node | DOM<any>): this;
+	append(node: Node | DOM<any>, at?: HTMLElementAppendPosition): this;
 
 	appendText(text: any): this;
 	appendText(tagName: string, text: any): this;
@@ -216,15 +220,24 @@ function createDom(e: Element) {
 
 function append(self: DOM, arg0: any, arg1?: any) {
 	let e: Element;
+	let pos: HTMLElementAppendPosition = "end";
 	if (arg0 instanceof DOM) {
 		e = arg0.element;
+		pos = arg1;
 	} else if (arg0 instanceof Element) {
 		e = arg0;
+		pos = arg1;
 	} else {
 		e = createElement(arg0, arg1);
+		pos = arg1?.at || pos;
 	}
 
-	self.element.appendChild(e);
+	if (pos === "start") {
+		self.element.insertBefore(e, self.element.firstChild);
+	} else {
+		self.element.appendChild(e);
+	}
+
 	return e;
 }
 

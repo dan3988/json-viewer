@@ -53,7 +53,7 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 		class: "json-prop",
 		children: [
 			DOM.createElement("span", {
-				class: `json-key`,
+				class: "json-key",
 				children: [ key ],
 				events: {
 					click: onPropClick
@@ -186,6 +186,14 @@ abstract class JsonBase {
 	}
 }
 
+export class ChangeEvent<V = any> extends Event {
+	constructor(type: string, readonly oldValue: V, readonly newValue: V) {
+		super(type)
+	}
+}
+
+export type JsonScopeSelectedChangedEvent = ChangeEvent<null | JsonProperty>;
+
 export class JsonScope<V = unknown> {
 	static {
 		setSelected = function (p) {
@@ -201,9 +209,11 @@ export class JsonScope<V = unknown> {
 				p.element.classList.add("selected");
 
 			scope.#selected = p;
+			scope.#raise("selectedchanged", new ChangeEvent("selectedchanged", old, p));
 		}
 	}
 
+	readonly #events: Map<string, Function[]>;
 	readonly #root: JsonToken<V>;
 
 	#element: null | HTMLElement;
@@ -249,11 +259,30 @@ export class JsonScope<V = unknown> {
 
 	constructor(value: V) {
 		const ctor = resolveConstructor(value);
+		this.#events = new Map();
 		this.#root = new ctor(this, null, value);
 		this.#element = null;
 		this.#selected = null;
 		this.#filter = "";
 		this.#filterFlag = JsonTokenFilterFlags.Both;
+	}
+
+	#raise(type: string, ...args: any[]) {
+		let arr = this.#events.get(type);
+		if (arr != null)
+			for (let fn of arr)
+				fn.apply(this, args);
+	}
+
+	on(type: "selectedchanged", eventHandler: Fn<[evt: ChangeEvent<JsonProperty>], any, this>): this;
+	on(type: string, eventHandler: Fn<[evt: Event], any, this>): this;
+	on(type: string, eventHandler: Function): this {
+		let arr = this.#events.get(type);
+		if (arr == null)
+			this.#events.set(type, arr = []);
+
+		arr.push(eventHandler);
+		return this;
 	}
 
 	protected createElement(): HTMLElement {
