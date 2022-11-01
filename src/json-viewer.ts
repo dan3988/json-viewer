@@ -22,6 +22,7 @@ const pathResult = body.create("ul", {
 })
 
 let pathExpr = "";
+let blink: null | HTMLElement = null;
 
 body.create("div", { class: "controls cr" })
 	.append("div", {
@@ -169,7 +170,10 @@ body.create("div", { class: "controls cr" })
 												t = t.parent;
 											}
 
-											token.element.scrollIntoView({ block: 'center' });
+											blink?.classList.remove("blink");
+											blink = token.element;
+											blink.classList.add("blink");
+											blink.scrollIntoView({ block: 'center' });
 										}
 									}
 								});
