@@ -189,9 +189,23 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 			})
 
 			prop.append(expander, count, copyBtn);
+		} else if (value instanceof JsonValue) {
+			const copyBtn = DOM.createElement("span", {
+				props: {
+					title: "Copy Value"
+				},
+				class: "btn copy-btn img-btn",
+				events: {
+					click() {
+						navigator.clipboard.writeText(value.value);
+					}
+				}
+			});
+
+			prop.append(copyBtn);
 		}
 	
-		prop.appendChild(child);
+		prop.append(child);
 		return prop;
 	}
 }

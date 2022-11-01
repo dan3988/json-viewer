@@ -197,10 +197,10 @@ let filterFlags = JsonTokenFilterFlags.Both;
 export function load(json: any) {
 	current = null;
 	currentSearch = "";
-	root.removeAll();
 
 	const rootProp = new JsonProperty(null, "root", json);
 	rootProp.expanded = true;
+	root.removeAll();
 	root.append(rootProp.element);
 	current = rootProp;
 }
