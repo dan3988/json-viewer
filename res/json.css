@@ -1,9 +1,11 @@
 body {
-	--json-key-fg: #8CF;
-	--json-str-fg: #C75;
-	--json-num-fg: #FF8;
-	--json-bln-fg: #38F;
+	--json-key-fg: #18F;
+	--json-str-fg: #854;
+	--json-num-fg: #992;
+	--json-bln-fg: #14A;
 	--json-null-fg: #95F;
+	--match-fg: #000;
+	--match-bg: #CC3;
 
 	position: absolute;
 	inset: 0;
@@ -14,9 +16,21 @@ body {
 	grid-template-rows: 1fr;
 }
 
+@media (prefers-color-scheme: dark) {
+	body {
+		--json-key-fg: #8CF;
+		--json-str-fg: #C75;
+		--json-num-fg: #FF8;
+		--json-bln-fg: #38F;
+		--json-null-fg: #95F;
+		--match-fg: #000;
+		--match-bg: #FF0;
+	}
+}
+
 span.match {
-	background-color: #FF0;
-	color: #000;
+	background-color: var(--match-bg);
+	color: var(--match-fg);
 }
 
 .json-root {
@@ -59,7 +73,7 @@ span.match {
 
 .json-results {
 	flex: 0px 1 1;
-	border: solid 1px #444;
+	border: solid 1px var(--col-border);
 	border-radius: 5px;
 	padding: 5px;
 }
@@ -84,8 +98,8 @@ span.match {
 }
 
 .json-results > li:hover {
-	border-color: #444;
-	background-color: #666;
+	border-color: var(--col-border-hv);
+	background-color: var(--col-bg-lt-hv);
 }
 
 .json-key {
@@ -115,7 +129,7 @@ span.match {
 
 .json-prop > .json-key::after {
 	content: ":";
-	color: white;
+	color: var(--col-fg);
 }
 
 .json-prop:not(.expanded) > .json-container {
@@ -139,7 +153,7 @@ span.match {
 
 .summary-count::before,
 .summary-count::after {
-	color: white;
+	color: var(--col-fg);
 }
 
 .summary-object::before {
