@@ -191,6 +191,14 @@ span.match {
 	display: grid;
 	grid-template-columns: 1em auto auto 1fr;
 	grid-template-rows: auto auto;
+	margin: 1px;
+	padding: 1px;
+	border: 1px transparent solid;
+	border-radius: 5px;
+}
+
+.json-prop.selected {
+	border-color: var(--col-bg-border);
 }
 
 .json-prop > .summary-count {
@@ -203,6 +211,7 @@ span.match {
 
 .json-prop > .json-key {
 	grid-area: 1 / 2 / span 1 / span 1;
+	cursor: pointer;
 }
 
 .json-prop > .json-value {

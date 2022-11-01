@@ -199,6 +199,8 @@ body.create("div", { class: "controls cr" })
 												t = t.parent;
 											}
 
+											result.parentProperty?.select();
+
 											blink?.classList.remove("blink");
 											blink = result.element;
 											blink.classList.add("blink");

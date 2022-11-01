@@ -239,14 +239,16 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 			children: [
 				DOM.createElement("span", {
 					class: `json-key`,
-					children: [ key ]
+					children: [ key ],
+					events: {
+						click: e => {
+							setSelected(this);
+							e.stopPropagation();
+						}
+					}
 				})
 			],
 			events: {
-				click: e => {
-					setSelected(this)
-					e.stopPropagation();
-				},
 				mouseenter() {
 					this.parentElement?.closest(".json-prop")?.classList.add("hv-child");
 					this.classList.add("hv");
