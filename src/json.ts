@@ -319,7 +319,11 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 			return p in target.#items;
 		},
 		ownKeys(target) {
-			return Array.prototype.map.call(target.keys(), String) as string[];
+			const keys: string[] = [];
+			for (let i = 0; i < target.#items.length; i++)
+				keys[i] = String(i);
+
+			return keys;
 		},
 		getOwnPropertyDescriptor(target, p) {
 			let desc = Reflect.getOwnPropertyDescriptor(target.#items, p);
