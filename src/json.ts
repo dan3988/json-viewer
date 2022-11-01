@@ -372,7 +372,7 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 		return "array" as const;
 	}
 
-	get count(): number {
+	get count() {
 		return this.#items.length;
 	}
 
@@ -447,7 +447,7 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 
 	readonly #props: Map<string, JsonProperty<string>>;
 
-	get count(): number {
+	get count() {
 		return this.#props.size;
 	}
 

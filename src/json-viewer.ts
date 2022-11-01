@@ -1,6 +1,6 @@
 import DOM from "./html.js";
 import { JSONPath } from "./json-path.js";
-import { JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json.js";
+import { JsonContainer, JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json.js";
 
 DOM(document.head)
 	.append('link', {
@@ -15,6 +15,15 @@ DOM(document.head)
 			rel: "stylesheet"
 		}
 	})
+
+function setVisibleExpanded(token: JsonProperty, expanded: boolean) {
+	if (token.shown) {
+		token.expanded = expanded;
+
+		for (let prop of token.value.properties())
+			setVisibleExpanded(prop, expanded);
+	}
+}
 
 const body = DOM(document.body);
 const pathResult = body.create("ul", {
@@ -38,7 +47,8 @@ body.create("div", { class: "controls cr" })
 				],
 				events: {
 					click() {
-						body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.remove("expanded"))
+						if (current != null)
+							setVisibleExpanded(current, false);
 					}
 				}
 			}),
@@ -52,7 +62,8 @@ body.create("div", { class: "controls cr" })
 				],
 				events: {
 					click() {
-						body.element.querySelectorAll(".json-prop:not([hidden])").forEach(e => e.classList.add("expanded"))
+						if (current != null)
+							setVisibleExpanded(current, true);
 					}
 				}
 			})
@@ -76,7 +87,7 @@ body.create("div", { class: "controls cr" })
 						const isAppend = value.startsWith(currentSearch);
 						if (isAppend && value.length === currentSearch.length)
 							return;
-						
+
 						current?.filter(value, isAppend, filterFlags, false);
 						currentSearch = value;
 					}
