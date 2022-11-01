@@ -16,8 +16,8 @@ body {
 	body {
 		--col-fg: #FFF;
 		--col-border: #444;
-		--col-border-hv: #666;
-		--col-border-focus: #888;
+		--col-border-hv: #555;
+		--col-border-focus: #666;
 		--col-bg-dk: #333;
 		--col-bg-dk-hv: #555;
 		--col-bg-dk-focus: #555;
@@ -57,6 +57,17 @@ ul {
 	mask-repeat: no-repeat;
 	mask-size: contain;
 	mask-position: center;
+	transition-property: background-color;
+	transition-duration: 200ms;
+	transition-timing-function: ease-in-out;
+}
+
+.btn.img-btn::before {
+	background-color: var(--col-border);
+}
+
+.btn.img-btn:hover::before {
+	background-color: var(--col-border-hv);
 }
 
 .cr .btn,
@@ -106,7 +117,8 @@ ul {
 	border-color: var(--col-border-hv);
 }
 
-.cr * {
+.cr *,
+.cr *::before {
 	transition-property: box-shadow, border-color, background-color, color;
 	transition-duration: 200ms;
 	transition-timing-function: ease-in-out;
@@ -131,6 +143,7 @@ ul {
 
 .group > * {
 	flex: 0px 1 1;
+	border-radius: 0 !important;
 }
 
 .group > .label {
@@ -147,9 +160,9 @@ ul {
 }
 
 .group > :first-child {
-	border-radius: 5px 0 0 5px;
+	border-radius: 5px 0 0 5px !important;
 }
 
 .group > :last-child {
-	border-radius: 0 5px 5px 0;
+	border-radius: 0 5px 5px 0 !important;
 }

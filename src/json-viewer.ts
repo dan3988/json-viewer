@@ -40,7 +40,7 @@ body.create("div", { class: "controls cr" })
 			DOM("button", {
 				class: "btn btn-collapse",
 				props: {
-					"type": "button"
+					type: "button"
 				},
 				children: [
 					"Collapse All"
@@ -55,7 +55,7 @@ body.create("div", { class: "controls cr" })
 			DOM("button", {
 				class: "btn btn-expand",
 				props: {
-					"type": "button"
+					type: "button"
 				},
 				children: [
 					"Expand All"
@@ -78,9 +78,6 @@ body.create("div", { class: "controls cr" })
 			}),
 			DOM("input", {
 				class: "filter",
-				props: {
-					type: "search"
-				},
 				events: {
 					input() {
 						const value = this.value.toLowerCase();
@@ -90,6 +87,22 @@ body.create("div", { class: "controls cr" })
 
 						current?.filter(value, isAppend, filterFlags, false);
 						currentSearch = value;
+					}
+				}
+			}),
+			DOM("span", {
+				class: "btn img-btn btn-clear",
+				props: {
+					title: "Clear",
+				},
+				events: {
+					click() {
+						const e = this.previousElementSibling as HTMLInputElement;
+						if (e.value) {
+							e.value = "";
+							current?.filter("", false, filterFlags, false);
+							currentSearch = "";
+						}
 					}
 				}
 			}),
@@ -140,19 +153,31 @@ body.create("div", { class: "controls cr" })
 			}),
 			DOM("input", {
 				class: "jpath",
-				props: {
-					type: "search"
-				},
 				events: {
 					input() {
 						pathExpr = this.value;
 					}
 				}
 			}),
+			DOM("span", {
+				class: "btn img-btn btn-clear",
+				props: {
+					title: "Clear",
+				},
+				events: {
+					click() {
+						const e = this.previousElementSibling as HTMLInputElement;
+						if (e.value) {
+							e.value = "";
+							pathExpr = "";
+						}
+					}
+				}
+			}),
 			DOM("button", {
 				class: "btn btn-jpath group-end",
 				props: {
-					"type": "button"
+					type: "button"
 				},
 				children: [
 					"Evaluate"

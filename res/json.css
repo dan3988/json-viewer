@@ -67,6 +67,10 @@ span.match {
 	flex: 7rem 0 0;
 }
 
+.controls .group > .btn-clear {
+	flex: 1.5rem 0 0;
+}
+
 .controls .group > .label {
 	flex: 3rem 0 0;
 }
@@ -174,9 +178,12 @@ span.match {
 	--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/arrow.svg");
 }
 
+.btn-clear::before {
+	--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/clear.svg");
+}
+
 .copy-btn::before {
 	inset: 0;
-	background-color: #333;
 	--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/copy.svg");
 }
 
