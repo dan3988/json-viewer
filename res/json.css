@@ -226,8 +226,6 @@ span.match {
 
 @keyframes blink {
 	0% {
-		background-color: unset;
-		color: unset;
 	}
 
 	50% {
@@ -236,7 +234,5 @@ span.match {
 	}
 
 	100% {
-		background-color: unset;
-		color: unset;
 	}
 }
