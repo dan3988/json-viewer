@@ -21,6 +21,72 @@ export interface JsonTokenTypeMap {
 // 	Container	= Array | Object,
 // }
 
+let setSelected: (prop: JsonProperty) => void;
+
+export class JsonScope<T extends JsonToken = any> {
+	static {
+		setSelected = function (p) {
+			const scope = p.scope;
+			const old = scope.#selected;
+			if (old === p)
+				return;
+
+			if (old != null && old.elementLoaded())
+				old.element.classList.remove("selected");
+			
+			if (p != null && p.elementLoaded())
+				p.element.classList.add("selected");
+
+			scope.#selected = p;
+		}
+	}
+
+	#selected: null | JsonProperty;
+	#root: JsonProperty<any, T>;
+	#filter: string;
+	#filterFlag: JsonTokenFilterFlags;
+
+	get selected() {
+		return this.#selected;
+	}
+
+	get root() {
+		return this.#root;
+	}
+
+	get filter() {
+		return this.#filter;
+	}
+
+	set filter(value) {
+		if (this.#filter !== (value = String(value))) {
+			const isAppend = value.startsWith(this.#filter);
+			this.#filter = value;
+			this.#root.filter(value, isAppend, this.#filterFlag, false);
+		}
+	}
+
+	get filterFlag() {
+		return this.#filterFlag;
+	}
+
+	set filterFlag(value) {
+		if (this.#filterFlag !== (value = Number(value))) {
+			const isAppend = this.filterFlag === JsonTokenFilterFlags.Both;
+			this.#filterFlag = value;
+			this.#root.filter(this.#filter, isAppend, value, false);
+		}
+	}
+
+	constructor(value: any) {
+		this.#root = new JsonProperty(this, null, "$", value);
+		this.#root.expanded = true;
+		this.#selected = null;
+		this.#filter = "";
+		this.#filterFlag = JsonTokenFilterFlags.Both;
+	}
+}
+
 export const enum JsonTokenFilterFlags {
 	None,
 	Keys = 1,
@@ -28,8 +94,8 @@ export const enum JsonTokenFilterFlags {
 	Both = Keys | Values
 }
 
-function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [parent: null | JsonProperty, value: T]>
-function resolveConstructor(value: any): Constructor<JsonToken, [parent: null | JsonProperty, value: any]> {
+function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [scope: JsonScope, prop: null | JsonProperty, value: T]>
+function resolveConstructor(value: any): Constructor<JsonToken, [scope: JsonScope, prop: null | JsonProperty, value: any]> {
 	if (value == null)
 		return JsonValue;
 
@@ -48,8 +114,13 @@ function resolveConstructor(value: any): Constructor<JsonToken, [parent: null | 
 }
 
 abstract class JsonBase {
+	readonly #scope: JsonScope;
 	#element: null | HTMLElement;
 	#shown: boolean;
+
+	get scope() {
+		return this.#scope;
+	}
 
 	get shown() {
 		return this.#shown;
@@ -64,7 +135,8 @@ abstract class JsonBase {
 		return this.#element;
 	}
 
-	protected constructor() {
+	protected constructor(scope: JsonScope) {
+		this.#scope = scope;
 		this.#element = null;
 		this.#shown = true;
 	}
@@ -72,10 +144,11 @@ abstract class JsonBase {
 	protected abstract show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean;
 	protected abstract createElement(): HTMLElement;
 
-	protected elementLoaded(): boolean {
+	elementLoaded(): boolean {
 		return this.#element !== null;
 	}
 
+	/** @internal */
 	filter(text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean): boolean {
 		if (!this.#shown && isAppend)
 			return false;
@@ -121,15 +194,23 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		}
 	}
 
-	constructor(parent: null | JsonContainer<any, TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
-		super();
+	get selected(): boolean {
+		return this.scope.selected === this;
+	}
+
+	constructor(scope: JsonScope, parent: null | JsonContainer<any, TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
+		super(scope);
 		const keyText = String(key);
 		const ctor = resolveConstructor(value);
 		this.#parent = parent;
 		this.#key = key;
 		this.#keyText = filterableKey ? [keyText, keyText.toLowerCase()] : [keyText];
-		this.#value = new ctor(this, value);
+		this.#value = new ctor(scope, this, value);
 		this.#expanded = false;
+	}
+
+	select() {
+		setSelected(this);
 	}
 
 	protected show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
@@ -162,6 +243,10 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 				})
 			],
 			events: {
+				click: e => {
+					setSelected(this)
+					e.stopPropagation();
+				},
 				mouseenter() {
 					this.parentElement?.closest(".json-prop")?.classList.add("hv-child");
 					this.classList.add("hv");
@@ -225,15 +310,6 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 }
 
 export abstract class JsonToken<T = unknown> extends JsonBase {
-	static from<T extends string | number | boolean | null>(value: string): JsonValue<T>;
-	static from<T extends object>(value: T): JsonObject<T>;
-	static from<T>(value: T[]): JsonArray<T>;
-	static from<T>(value: T): JsonToken<T>;
-	static from(value: any): JsonToken {
-		const ctor = resolveConstructor(value);
-		return new ctor(null, value);
-	}
-
 	readonly #root: null | JsonContainer;
 	readonly #prop: null | JsonProperty;
 
@@ -252,8 +328,8 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 	abstract get proxy(): any;
 	abstract get type(): keyof JsonTokenTypeMap;
 
-	protected constructor(prop: null | JsonProperty) {
-		super();
+	protected constructor(scope: JsonScope, prop: null | JsonProperty) {
+		super(scope);
 		let root = prop?.parent?.root;
 		this.#prop = prop;
 		this.#root = root != null ? root : (this instanceof JsonContainer ? this : null);
@@ -282,8 +358,8 @@ export abstract class JsonContainer<T = any, TKey extends string | number = stri
 		return this.#proxy;
 	}
 
-	protected constructor(prop: null | JsonProperty, handler: ProxyHandler<JsonContainer<T, TKey>>) {
-		super(prop);
+	protected constructor(scope: JsonScope, prop: null | JsonProperty, handler: ProxyHandler<JsonContainer<T, TKey>>) {
+		super(scope, prop);
 		this.#proxy = new Proxy(this, handler);
 	}
 
@@ -376,12 +452,12 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 		return this.#items.length;
 	}
 
-	constructor(prop: null | JsonProperty, value: T[]) {
-		super(prop, JsonArray.#proxyHandler);
+	constructor(scope: JsonScope, prop: null | JsonProperty, value: T[]) {
+		super(scope, prop, JsonArray.#proxyHandler);
 		if (value && value.length) {
 			this.#items = Array(value.length);
 			for (let i = 0; i < value.length; i++)
-				this.#items[i] = new JsonProperty(this, i, value[i], false);
+				this.#items[i] = new JsonProperty(scope, this, i, value[i], false);
 		} else {
 			this.#items = [];
 		}
@@ -455,13 +531,13 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 		return "object" as const;
 	}
 
-	constructor(prop: null | JsonProperty, value: T) {
-		super(prop, JsonObject.#proxyHandler);
+	constructor(scope: JsonScope, prop: null | JsonProperty, value: T) {
+		super(scope, prop, JsonObject.#proxyHandler);
 		this.#props = new Map();
 		if (value) {
 			for (const key in value) {
 				const item = value[key];
-				const prop = new JsonProperty(this, key, item, true);
+				const prop = new JsonProperty(scope, this, key, item, true);
 				this.#props.set(key, prop);
 			}
 		}
@@ -515,8 +591,8 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 		return this.#type;
 	}
 
-	constructor(prop: null | JsonProperty, value: T) {
-		super(prop);
+	constructor(scope: JsonScope, prop: null | JsonProperty, value: T) {
+		super(scope, prop);
 		const text = String(value);
 		this.#value = value;
 		this.#text = [text, text.toLowerCase()];

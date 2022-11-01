@@ -1,6 +1,6 @@
 import DOM from "./html.js";
 import { JSONPath } from "./json-path.js";
-import { JsonContainer, JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json.js";
+import { JsonProperty, JsonScope, JsonToken, JsonTokenFilterFlags } from "./json.js";
 
 DOM(document.head)
 	.append('link', {
@@ -48,7 +48,7 @@ body.create("div", { class: "controls cr" })
 				events: {
 					click() {
 						if (current != null)
-							setVisibleExpanded(current, false);
+							setVisibleExpanded(current.root, false);
 					}
 				}
 			}),
@@ -63,7 +63,7 @@ body.create("div", { class: "controls cr" })
 				events: {
 					click() {
 						if (current != null)
-							setVisibleExpanded(current, true);
+							setVisibleExpanded(current.root, true);
 					}
 				}
 			})
@@ -81,12 +81,7 @@ body.create("div", { class: "controls cr" })
 				events: {
 					input() {
 						const value = this.value.toLowerCase();
-						const isAppend = value.startsWith(currentSearch);
-						if (isAppend && value.length === currentSearch.length)
-							return;
-
-						current?.filter(value, isAppend, filterFlags, false);
-						currentSearch = value;
+						current.filter = value;
 					}
 				}
 			}),
@@ -100,8 +95,7 @@ body.create("div", { class: "controls cr" })
 						const e = this.previousElementSibling as HTMLInputElement;
 						if (e.value) {
 							e.value = "";
-							current?.filter("", false, filterFlags, false);
-							currentSearch = "";
+							current.filter = "";
 						}
 					}
 				}
@@ -110,9 +104,7 @@ body.create("div", { class: "controls cr" })
 				class: "filter-type group-end",
 				events: {
 					input() {
-						let isAppend = filterFlags === JsonTokenFilterFlags.Both;
-						filterFlags = parseInt(this.value);
-						current?.filter(currentSearch, isAppend, filterFlags, false);
+						current.filterFlag = parseInt(this.value);
 					}
 				},
 				children: [
@@ -192,22 +184,23 @@ body.create("div", { class: "controls cr" })
 		
 						let path = pathExpr;
 						if (path) {
-							const result: string[] = JSONPath({ path, json: curr.value.proxy, resultType: 'pointer' });
+							const token = curr.root.value;
+							const result: string[] = JSONPath({ path, json: token.proxy, resultType: 'pointer' });
 							for (const path of result) {
 								const parts = path.split("/");
 								parts.shift();
-								const token = curr.value.resolve(parts)!;
+								const result = token.resolve(parts)!;
 								pathResult.append("li", {
 									children: [ path ],
 									events: {
 										click() {
-											for (let t: null | JsonToken = token; t != null && t.parentProperty != null; ) {
+											for (let t: null | JsonToken = result; t != null && t.parentProperty != null; ) {
 												t.parentProperty.expanded = true;
 												t = t.parent;
 											}
 
 											blink?.classList.remove("blink");
-											blink = token.element;
+											blink = result.element;
 											blink.classList.add("blink");
 											blink.scrollIntoView({ block: 'center' });
 										}
@@ -226,17 +219,10 @@ const root = body.create("div", {
 	class: "json-root cr"
 });
 
-let current: null | JsonProperty<string>;
-let currentSearch: string = "";
-let filterFlags = JsonTokenFilterFlags.Both;
+let current: JsonScope = new JsonScope(null);
 
 export function load(json: any) {
-	current = null;
-	currentSearch = "";
-
-	const rootProp = new JsonProperty(null, "root", json);
-	rootProp.expanded = true;
+	current = new JsonScope(json);
 	root.removeAll();
-	root.append(rootProp.element);
-	current = rootProp;
+	root.append(current.root.element);
 }
