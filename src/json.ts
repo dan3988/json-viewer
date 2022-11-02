@@ -125,17 +125,7 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 					click: onPropClick
 				}
 			})
-		],
-		events: {
-			mouseenter() {
-				this.parentElement?.closest(".json-prop")?.classList.add("hv-child");
-				this.classList.add("hv");
-			},
-			mouseleave() {
-				this.parentElement?.closest(".json-prop")?.classList.remove("hv-child");
-				this.classList.remove("hv");
-			}
-		}
+		]
 	});
 
 	if (selected)
@@ -157,34 +147,7 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 			children: [ value.count ]
 		});
 
-		const copyBtn = DOM.createElement("span", {
-			props: {
-				title: "Copy JSON"
-			},
-			class: "btn copy-btn img-btn",
-			events: {
-				click() {
-					const json = JSON.stringify(value, undefined, "\t");
-					navigator.clipboard.writeText(json);
-				}
-			}
-		});
-
-		prop.append(expander, count, copyBtn);
-	} else if (value instanceof JsonValue) {
-		const copyBtn = DOM.createElement("span", {
-			props: {
-				title: "Copy Value"
-			},
-			class: "btn copy-btn img-btn",
-			events: {
-				click() {
-					navigator.clipboard.writeText(value.value);
-				}
-			}
-		});
-
-		prop.append(copyBtn);
+		prop.append(expander, count);
 	}
 
 	prop.append(child);

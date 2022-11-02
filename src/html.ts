@@ -151,11 +151,11 @@ export interface ElementInitConstructor {
 	new(tagName: string, init?: HTMLElementCreationOptions): ElementInit<string>;
 }
 
-export interface DOM<T extends Element = Element> {
+export interface DOM<T extends HTMLElement = HTMLElement> {
 	readonly element: T;
 
 	create<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
-	create<N extends Element>(node: N, at?: HTMLElementAppendPosition): DOM<N>;
+	create<N extends HTMLElement>(node: N, at?: HTMLElementAppendPosition): DOM<N>;
 
 	append<K extends HTMLTagName>(tagName: K, options?: OptionsType<K>): this;
 	append(node: Node | DOM<any>, at?: HTMLElementAppendPosition): this;
@@ -178,8 +178,9 @@ export var ElementInit: ElementInitConstructor = <any>function (this: ElementIni
 
 interface DOMFunction {
 	readonly prototype: DOM;
-	<T extends Element>(element: T): DOM<T>;
-	<K extends string>(tagName: K, options?: OptionsType<K>): DOM<ElementType<K>>;
+	<T extends HTMLElement>(element: T): DOM<T>;
+	<K extends HTMLTagName>(tagName: K, options?: HTMLElementCreationOptions<HTMLElementTagNameMap[K]>): DOM<HTMLElementTagNameMap[K]>;
+	(tagName: string, options?: HTMLElementCreationOptions): DOM<HTMLElement>;
 }
 
 export interface DOMConstructor extends DOMFunction {
@@ -187,7 +188,7 @@ export interface DOMConstructor extends DOMFunction {
 }
 
 const onceArg = { once: true };
-const dom: DOMFunction = function HTML(element: string | Element, options?: HTMLElementCreationOptions): DOM {
+const dom: DOMFunction = function HTML(element: string | HTMLElement, options?: HTMLElementCreationOptions): DOM {
 	if (typeof element == "string")
 		element = createElement(document, element, options);
 

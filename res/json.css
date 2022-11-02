@@ -214,7 +214,7 @@ span.match {
 
 .json-prop {
 	display: grid;
-	grid-template-columns: 1em auto auto 1fr;
+	grid-template-columns: 1em auto 1fr;
 	grid-template-rows: auto auto;
 	margin: 1px;
 	padding: 1px;
@@ -250,10 +250,6 @@ span.match {
 	margin: auto 0;
 	grid-area: 1 / 4 / span 1 / span 1;
 	display: none;
-}
-
-.json-prop.hv:not(.hv-child) > .copy-btn {
-	display: unset;
 }
 
 .json-prop > .json-array,

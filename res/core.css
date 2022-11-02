@@ -168,6 +168,10 @@ ul {
 	margin-left: -1px;
 }
 
+.group > :first-child:last-child {
+	border-radius: 5px !important;
+}
+
 .group > :first-child {
 	border-radius: 5px 0 0 5px !important;
 }

@@ -59,6 +59,21 @@ function onSelectionChanged(evt: JsonScopeSelectedChangedEvent) {
 	}
 }
 
+function copy(format: boolean) {
+	const selected = current.selected;
+	const value = selected == null ? current.root : selected.value;
+	let text: string;
+	if (value.is("value")) {
+		text = String(value.value);
+	} else if (format) {
+		text = JSON.stringify(value, undefined, "\t");
+	} else {
+		text = JSON.stringify(value);
+	}
+
+	return navigator.clipboard.writeText(text);
+}
+
 
 body.create("div", { class: "controls cr" })
 	.append("div", {
@@ -92,6 +107,35 @@ body.create("div", { class: "controls cr" })
 						if (current != null)
 							setVisibleExpanded(current.root, true);
 					}
+				}
+			})
+		]
+	})
+	.append("div", {
+		class: "group",
+		children: [
+			DOM("button", {
+				props: {
+					type: "button",
+					title: "Copy the selected value or the whole document without whitespace"
+				},
+				children: [
+					"Copy"
+				],
+				events: {
+					click: () => copy(false)
+				}
+			}),
+			DOM("button", {
+				props: {
+					type: "button",
+					title: "Copy the selected value or the whole document with whitespace"
+				},
+				children: [
+					"Copy (Formatted)"
+				],
+				events: {
+					click: () => copy(true)
 				}
 			})
 		]
@@ -279,16 +323,22 @@ document.addEventListener("keydown", (e) => {
 		case "ArrowDown":
 		{
 			const selected = current.selected;
-			if (selected)
+			if (selected != null) {
 				(selected.next ?? selected.parent.first)?.select(true);
+			} else if (current.root.is("container")) {
+				current.root.first?.select(true);
+			}
 
 			break;
 		}
 		case "ArrowUp":
 		{
 			const selected = current.selected;
-			if (selected)
+			if (selected != null) {
 				(selected.previous ?? selected.parent.last)?.select(true);
+			} else if (current.root.is("container")) {
+				current.root.first?.select(true);
+			}
 
 			break;
 		}
@@ -303,10 +353,8 @@ document.addEventListener("keydown", (e) => {
 		}
 		case "ArrowLeft": {
 			const selected = current.selected;
-			if (selected && selected.parent) {
-				selected.expanded = false;
+			if (selected && selected.parent)
 				selected.parent.parentProperty?.select(true);
-			}
 
 			break;
 		}
