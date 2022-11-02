@@ -42,23 +42,23 @@ const enum JsonIteratorMode {
 }
 
 class JsonIterator<TKey extends string | number, TResult> implements Iterable<TResult>, Iterator<TResult, void> {
-	static properties<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, JsonProperty<TKey>> {
+	static properties<TKey extends string | number>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonProperty<TKey>> {
 		return new JsonIterator(container, JsonIteratorMode.Property);
 	}
 
-	static keys<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, TKey> {
+	static keys<TKey extends string | number>(container: JsonContainer<TKey, any>): JsonIterator<TKey, TKey> {
 		return new JsonIterator(container, JsonIteratorMode.Key);
 	}
 
-	static values<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, JsonToken> {
+	static values<TKey extends string | number>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonToken> {
 		return new JsonIterator(container, JsonIteratorMode.Value);
 	}
 
-	readonly #container: JsonContainer<any, TKey>;
+	readonly #container: JsonContainer<TKey, any>;
 	readonly #mode: JsonIteratorMode;
 	#current: null | JsonProperty<TKey>;
 
-	constructor(container: JsonContainer<any, TKey>, mode: JsonIteratorMode) {
+	constructor(container: JsonContainer<TKey, any>, mode: JsonIteratorMode) {
 		this.#container = container;
 		this.#mode = mode;
 		this.#current = null;
@@ -330,7 +330,7 @@ export class JsonScope<V = unknown> {
 }
 
 export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
-	readonly #parent: JsonContainer<any, TKey>;
+	readonly #parent: JsonContainer<TKey, any>;
 	#prev: null | JsonProperty<TKey>;
 	#next: null | JsonProperty<TKey>;
 	readonly #key: TKey;
@@ -374,7 +374,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.scope.selected === this;
 	}
 
-	constructor(parent: JsonContainer<any, TKey>, prev: null | JsonProperty<TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
+	constructor(parent: JsonContainer<TKey, any>, prev: null | JsonProperty<TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
 		super(parent.scope);
 		const keyText = String(key);
 		const ctor = resolveConstructor(value);
@@ -466,7 +466,7 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 	abstract keys(): Iterable<number | string>;
 }
 
-export abstract class JsonContainer<T = any, TKey extends string | number = string | number> extends JsonToken<T> {
+export abstract class JsonContainer<TKey extends string | number = string | number, T = any> extends JsonToken<T> {
 	readonly #proxy: any;
 
 	abstract get type(): "object" | "array";
@@ -478,7 +478,7 @@ export abstract class JsonContainer<T = any, TKey extends string | number = stri
 		return this.#proxy;
 	}
 
-	protected constructor(scope: JsonScope, prop: null | JsonProperty, handler: ProxyHandler<JsonContainer<T, TKey>>) {
+	protected constructor(scope: JsonScope, prop: null | JsonProperty, handler: ProxyHandler<JsonContainer<TKey, T>>) {
 		super(scope, prop);
 		this.#proxy = new Proxy(this, handler);
 	}
@@ -538,7 +538,7 @@ export abstract class JsonContainer<T = any, TKey extends string | number = stri
 	abstract getProperty(key: TKey): undefined | JsonProperty<TKey>;
 }
 
-export class JsonArray<T = any> extends JsonContainer<T[], number> {
+export class JsonArray<T = any> extends JsonContainer<number, T[]> {
 	static readonly #proxyHandler: ProxyHandler<JsonArray> = {
 		has(target, p) {
 			return p in target.#items;
@@ -632,7 +632,7 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	}
 }
 
-export class JsonObject<T extends object = any> extends JsonContainer<T, string> {
+export class JsonObject<T extends object = any> extends JsonContainer<string, T> {
 	static readonly #proxyHandler: ProxyHandler<JsonObject> = {
 		has(target, p) {
 			return typeof p === "string" && target.#props.has(p);
