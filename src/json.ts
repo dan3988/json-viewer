@@ -90,7 +90,7 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 
 		const count = DOM.createElement("span", {
 			class: "summary-count summary-" + value.type,
-			children: [ String(value.count) ]
+			children: [ value.count ]
 		});
 
 		const copyBtn = DOM.createElement("span", {
@@ -104,7 +104,7 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 					navigator.clipboard.writeText(json);
 				}
 			}
-		})
+		});
 
 		prop.append(expander, count, copyBtn);
 	} else if (value instanceof JsonValue) {
@@ -128,7 +128,7 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 }
 
 //internal functions that we don't want to be accessible outside of this file, but need to be declared inside classes to access private members
-let setSelected: (prop: JsonProperty) => void;
+let setSelected: (prop: JsonProperty, scroll?: boolean) => void;
 let jsonFilter: (this: JsonBase, text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean) => boolean;
 let jsonShow: (this: JsonBase, filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags) => boolean;
 
@@ -198,8 +198,8 @@ export type JsonScopeSelectedChangedEvent = ChangeEvent<null | JsonProperty>;
 
 export class JsonScope<V = unknown> {
 	static {
-		setSelected = function (p) {
-			p.scope.#setSelected(p);
+		setSelected = function (p, scroll) {
+			p.scope.#setSelected(p, scroll);
 		}
 	}
 
@@ -257,7 +257,7 @@ export class JsonScope<V = unknown> {
 		this.#filterFlag = JsonTokenFilterFlags.Both;
 	}
 
-	#setSelected(prop: null | JsonProperty) {
+	#setSelected(prop: null | JsonProperty, scroll?: boolean) {
 		const old = this.#selected;
 		if (old === prop)
 			return;
@@ -265,8 +265,11 @@ export class JsonScope<V = unknown> {
 		if (old != null && old.elementLoaded())
 			old.element.classList.remove("selected");
 		
-		if (prop != null && prop.elementLoaded())
+		if (prop != null && prop.elementLoaded()) {
 			prop.element.classList.add("selected");
+			if (scroll) 
+				prop.element.scrollIntoView({ inline: "center" });
+		}
 
 		this.#selected = prop;
 		this.#raise("selectedchanged", new ChangeEvent("selectedchanged", old, prop));
@@ -301,6 +304,8 @@ export class JsonScope<V = unknown> {
 
 export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
 	readonly #parent: JsonContainer<any, TKey>;
+	#prev: null | JsonProperty<TKey>;
+	#next: null | JsonProperty<TKey>;
 	readonly #key: TKey;
 	readonly #keyText: [key: string, lower?: string];
 	readonly #value: JsonToken<TValue>;
@@ -308,6 +313,14 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 
 	get parent() {
 		return this.#parent;
+	}
+	
+	get previous() {
+		return this.#prev;
+	}
+
+	get next() {
+		return this.#next;
 	}
 
 	get key() {
@@ -334,19 +347,24 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.scope.selected === this;
 	}
 
-	constructor(parent: JsonContainer<any, TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
+	constructor(parent: JsonContainer<any, TKey>, prev: null | JsonProperty<TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
 		super(parent.scope);
 		const keyText = String(key);
 		const ctor = resolveConstructor(value);
 		this.#parent = parent;
+		this.#prev = prev;
+		this.#next = null;
 		this.#key = key;
 		this.#keyText = filterableKey ? [keyText, keyText.toLowerCase()] : [keyText];
 		this.#value = new ctor(parent.scope, this, value);
 		this.#expanded = false;
+
+		if (prev != null)
+			prev.#next = this;
 	}
 
-	select() {
-		setSelected(this);
+	select(scroll?: boolean) {
+		setSelected(this, scroll);
 	}
 
 	protected __show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
@@ -421,6 +439,8 @@ export abstract class JsonContainer<T = any, TKey extends string | number = stri
 
 	abstract get type(): "object" | "array";
 	abstract get count(): number;
+	abstract get first(): null | JsonProperty<TKey>;
+	abstract get last(): null | JsonProperty<TKey>;
 
 	get proxy() {
 		return this.#proxy;
@@ -511,6 +531,16 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	}
 
 	readonly #items: JsonProperty<number>[];
+	readonly #first: null | JsonProperty<number>;
+	readonly #last: null | JsonProperty<number>;
+
+	get first() {
+		return this.#first;
+	}
+
+	get last() {
+		return this.#last;
+	}
 
 	get type() {
 		return "array" as const;
@@ -523,11 +553,18 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	constructor(scope: JsonScope, prop: null | JsonProperty, value: T[]) {
 		super(scope, prop, JsonArray.#proxyHandler);
 		if (value && value.length) {
+			let prop = new JsonProperty(this, null, 0, value[0], false);
 			this.#items = Array(value.length);
-			for (let i = 0; i < value.length; i++)
-				this.#items[i] = new JsonProperty(this, i, value[i], false);
+			this.#items[0] = prop;
+			this.#first = prop;
+			for (let i = 1; i < value.length; i++)
+				this.#items[i] = prop = new JsonProperty(this, prop, i, value[i], false);
+
+			this.#last = prop;
 		} else {
 			this.#items = [];
+			this.#first = null;
+			this.#last = null;
 		}
 	}
 
@@ -590,6 +627,16 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 	}
 
 	readonly #props: Map<string, JsonProperty<string>>;
+	readonly #first: null | JsonProperty<string>;
+	readonly #last: null | JsonProperty<string>;
+
+	get first() {
+		return this.#first;
+	}
+
+	get last() {
+		return this.#last;
+	}
 
 	get count() {
 		return this.#props.size;
@@ -603,12 +650,34 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 		super(scope, prop, JsonObject.#proxyHandler);
 		this.#props = new Map();
 		if (value) {
+			const keys = Object.keys(value);
+			if (keys.length) {
+				let key = keys[0];
+				let item = (value as any)[key];
+				let prop = new JsonProperty(this, null, key, item, true);
+
+				this.#props.set(key, prop);
+				this.#first = prop;
+				for (let i = 1; i < keys.length; i++) {
+					key = keys[i];
+					item = (value as any)[key];
+					prop = new JsonProperty(this, prop, key, item, true);
+					this.#props.set(key, prop);
+				}
+
+				this.#last = prop;
+				return;
+			}
+			let prop: null | JsonProperty<string> = null;
 			for (const key in value) {
 				const item = value[key];
-				const prop = new JsonProperty(this, key, item, true);
+				prop = new JsonProperty(this, prop, key, item, true);
 				this.#props.set(key, prop);
 			}
 		}
+
+		this.#first = null;
+		this.#last = null;
 	}
 
 	keys(): Iterable<string> {

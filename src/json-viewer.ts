@@ -273,10 +273,44 @@ document.addEventListener("keydown", (e) => {
 				const value = current.selected?.value;
 				if (value != null) {
 					e.preventDefault();
-					const text = value.is("value") ? String(value.value) : JSON.stringify(value);
+					const text = value.is("value") ? String(value.value) : JSON.stringify(value, undefined, "\t");
 					navigator.clipboard.writeText(text);
 				}
 			}
 			break;
+		case "ArrowDown":
+		{
+			const selected = current.selected;
+			if (selected)
+				(selected.next ?? selected.parent.first)?.select(true);
+
+			break;
+		}
+		case "ArrowUp":
+		{
+			const selected = current.selected;
+			if (selected)
+				(selected.previous ?? selected.parent.last)?.select(true);
+
+			break;
+		}
+		case "ArrowRight": {
+			const selected = current.selected;
+			if (selected && selected.value.is("container")) {
+				selected.expanded = true;
+				selected.value.first?.select(true);
+			}
+
+			break;
+		}
+		case "ArrowLeft": {
+			const selected = current.selected;
+			if (selected && selected.parent) {
+				selected.expanded = false;
+				selected.parent.parentProperty?.select(true);
+			}
+
+			break;
+		}
 	}
 });
