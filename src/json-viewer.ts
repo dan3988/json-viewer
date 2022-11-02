@@ -52,8 +52,7 @@ function onSelectionChanged(evt: JsonScopeSelectedChangedEvent) {
 						for (let c = prop; c != null && c != current; c = c.parent.parentProperty)
 							c.expanded = false;
 
-						current.select();
-						current.element.querySelector(":scope > .json-key")?.scrollIntoView({ block: "center" });
+						current.select(true);
 					}
 				}
 			})
@@ -227,12 +226,11 @@ body.create("div", { class: "controls cr" })
 												t = t.parent;
 											}
 
-											result.parentProperty?.select();
+											result.parentProperty?.select(true);
 
 											blink?.classList.remove("blink");
 											blink = result.element;
 											blink.classList.add("blink");
-											blink.scrollIntoView({ block: 'center' });
 										}
 									}
 								});

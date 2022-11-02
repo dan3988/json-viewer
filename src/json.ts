@@ -268,7 +268,7 @@ export class JsonScope<V = unknown> {
 		if (prop != null && prop.elementLoaded()) {
 			prop.element.classList.add("selected");
 			if (scroll) 
-				prop.element.scrollIntoView({ inline: "center" });
+				prop.scrollIntoView();
 		}
 
 		this.#selected = prop;
@@ -361,6 +361,11 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 
 		if (prev != null)
 			prev.#next = this;
+	}
+
+	scrollIntoView() {
+		if (this.elementLoaded())
+			this.element.querySelector(".json-key")?.scrollIntoView({ block: "center" });
 	}
 
 	select(scroll?: boolean) {
