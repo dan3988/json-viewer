@@ -50,7 +50,7 @@ class JsonIterator<TKey extends string | number, TResult> implements Iterable<TR
 		return new JsonIterator(container, JsonIteratorMode.Key);
 	}
 
-	static values<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, any> {
+	static values<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, JsonToken> {
 		return new JsonIterator(container, JsonIteratorMode.Value);
 	}
 
@@ -522,15 +522,15 @@ export abstract class JsonContainer<T = any, TKey extends string | number = stri
 		}
 	}
 
-	properties() {
+	properties(): IterableIterator<JsonProperty<TKey>> {
 		return JsonIterator.properties(this);
 	}
 
-	keys() {
+	keys(): IterableIterator<TKey> {
 		return JsonIterator.keys(this);
 	}
 
-	values() {
+	values(): IterableIterator<JsonToken> {
 		return JsonIterator.values(this);
 	}
 
