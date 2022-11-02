@@ -257,3 +257,26 @@ export function load(json: any) {
 	root.removeAll();
 	root.append(current.element);
 }
+
+document.addEventListener("keydown", (e) => {
+	console.log(JSON.stringify(e.key));
+	switch (e.key) {
+		case "Escape":
+			current.deselect();
+			break;
+		case " ":
+			current.selected?.toggleExpanded();
+			break;
+		case "C":
+		case "c":
+			if (e.ctrlKey) {
+				const value = current.selected?.value;
+				if (value != null) {
+					e.preventDefault();
+					const text = value.is("value") ? String(value.value) : JSON.stringify(value);
+					navigator.clipboard.writeText(text);
+				}
+			}
+			break;
+	}
+});

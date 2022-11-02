@@ -220,19 +220,19 @@ function createDom(e: Element) {
 
 function append(self: DOM, arg0: any, arg1?: any) {
 	let e: Element;
-	let pos: HTMLElementAppendPosition = "end";
+	let start = false;
 	if (arg0 instanceof DOM) {
 		e = arg0.element;
-		pos = arg1;
+		start = arg1 === "start";
 	} else if (arg0 instanceof Element) {
 		e = arg0;
-		pos = arg1;
+		start = arg1 === "start";
 	} else {
 		e = createElement(arg0, arg1);
-		pos = arg1?.at || pos;
+		start = arg1?.at === "start";
 	}
 
-	if (pos === "start") {
+	if (start) {
 		self.element.insertBefore(e, self.element.firstChild);
 	} else {
 		self.element.appendChild(e);

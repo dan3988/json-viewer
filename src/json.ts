@@ -3,6 +3,8 @@ import DOM from "./html.js";
 export interface JsonTokenTypeMap {
 	"object": JsonObject;
 	"array": JsonArray;
+	"container": JsonContainer;
+	"value": JsonValue;
 	"string": JsonValue<string>;
 	"number": JsonValue<number>;
 	"boolean": JsonValue<boolean>;
@@ -197,19 +199,7 @@ export type JsonScopeSelectedChangedEvent = ChangeEvent<null | JsonProperty>;
 export class JsonScope<V = unknown> {
 	static {
 		setSelected = function (p) {
-			const scope = p.scope;
-			const old = scope.#selected;
-			if (old === p)
-				return;
-
-			if (old != null && old.elementLoaded())
-				old.element.classList.remove("selected");
-			
-			if (p != null && p.elementLoaded())
-				p.element.classList.add("selected");
-
-			scope.#selected = p;
-			scope.#raise("selectedchanged", new ChangeEvent("selectedchanged", old, p));
+			p.scope.#setSelected(p);
 		}
 	}
 
@@ -267,6 +257,25 @@ export class JsonScope<V = unknown> {
 		this.#filterFlag = JsonTokenFilterFlags.Both;
 	}
 
+	#setSelected(prop: null | JsonProperty) {
+		const old = this.#selected;
+		if (old === prop)
+			return;
+
+		if (old != null && old.elementLoaded())
+			old.element.classList.remove("selected");
+		
+		if (prop != null && prop.elementLoaded())
+			prop.element.classList.add("selected");
+
+		this.#selected = prop;
+		this.#raise("selectedchanged", new ChangeEvent("selectedchanged", old, prop));
+	}
+
+	deselect() {
+		this.#setSelected(null);
+	}
+
 	#raise(type: string, ...args: any[]) {
 		let arr = this.#events.get(type);
 		if (arr != null)
@@ -274,7 +283,7 @@ export class JsonScope<V = unknown> {
 				fn.apply(this, args);
 	}
 
-	on(type: "selectedchanged", eventHandler: Fn<[evt: ChangeEvent<JsonProperty>], any, this>): this;
+	on(type: "selectedchanged", eventHandler: Fn<[evt: JsonScopeSelectedChangedEvent], any, this>): this;
 	on(type: string, eventHandler: Fn<[evt: Event], any, this>): this;
 	on(type: string, eventHandler: Function): this {
 		let arr = this.#events.get(type);
@@ -351,14 +360,14 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return showKey || showValue;
 	}
 
-	#toggleExpanded() {
+	toggleExpanded() {
 		const expanded = !this.#expanded;
 		this.#expanded = expanded;
 		this.element.classList.toggle("expanded", expanded);
 	}
 
 	protected __createElement(): HTMLElement {
-		const onExpanderClick = this.#toggleExpanded.bind(this);
+		const onExpanderClick = this.toggleExpanded.bind(this);
 		const onKeyClick = (e: Event) => {
 			this.select();
 			e.stopPropagation();
@@ -549,7 +558,7 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 	}
 	
 	is(type: string): boolean {
-		return type === "array";
+		return type === "container" || type === "array";
 	}
 }
 
@@ -627,13 +636,14 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 	}
 	
 	is(type: string): boolean {
-		return type === "object";
+		return type === "container" || type === "object";
 	}
 }
 
 type Filterable = [text: string, lower: string];
+type JsonValueType = string | number | boolean | null;
 
-export class JsonValue<T extends string | number | boolean | null> extends JsonToken<T> {
+export class JsonValue<T extends JsonValueType = JsonValueType> extends JsonToken<T> {
 	readonly #value: T;
 	readonly #text: Filterable;
 	readonly #type: "string" | "number" | "boolean" | "null";
@@ -703,7 +713,7 @@ export class JsonValue<T extends string | number | boolean | null> extends JsonT
 	}
 	
 	is(type: string): boolean {
-		return type === this.#type;
+		return type === "value" || type === this.#type;
 	}
 
 	keys(): Iterable<never> {
