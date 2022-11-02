@@ -30,6 +30,70 @@ export const enum JsonTokenFilterFlags {
 	Both = Keys | Values
 }
 
+function iterres<T>(done: true, value?: T): IteratorReturnResult<T>;
+function iterres<T>(done: false, value: T): IteratorYieldResult<T>;
+function iterres<T>(done: boolean, value: T): IteratorResult<T>;
+function iterres(done: boolean, value?: any): IteratorResult<any> {
+	return { done, value };
+}
+
+const enum JsonIteratorMode {
+	Property, Key, Value
+}
+
+class JsonIterator<TKey extends string | number, TResult> implements Iterable<TResult>, Iterator<TResult, void> {
+	static properties<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, JsonProperty<TKey>> {
+		return new JsonIterator(container, JsonIteratorMode.Property);
+	}
+
+	static keys<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, TKey> {
+		return new JsonIterator(container, JsonIteratorMode.Key);
+	}
+
+	static values<TKey extends string | number>(container: JsonContainer<any, TKey>): JsonIterator<TKey, any> {
+		return new JsonIterator(container, JsonIteratorMode.Value);
+	}
+
+	readonly #container: JsonContainer<any, TKey>;
+	readonly #mode: JsonIteratorMode;
+	#current: null | JsonProperty<TKey>;
+
+	constructor(container: JsonContainer<any, TKey>, mode: JsonIteratorMode) {
+		this.#container = container;
+		this.#mode = mode;
+		this.#current = null;
+	}
+
+	next(): IteratorResult<TResult> {
+		let next: null | JsonProperty<TKey>
+		if (this.#current == null) {
+			next = this.#container.first;
+		} else {
+			next = this.#current.next;
+		}
+
+		this.#current = next;
+		if (next == null)
+			return iterres(true);
+
+		switch (this.#mode) {
+			case JsonIteratorMode.Property:
+				return iterres(false, <any>next);
+			case JsonIteratorMode.Key:
+				return iterres(false, <any>next.key);
+			case JsonIteratorMode.Key:
+				return iterres(false, <any>next.value);
+		}
+		
+		throw null;
+	}
+
+	[Symbol.iterator](): this {
+		return this;
+	}
+
+}
+
 function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [scope: JsonScope, prop: null | JsonProperty, value: T]>
 function resolveConstructor(value: any): Constructor<JsonToken, [scope: JsonScope, prop: null | JsonProperty, value: any]> {
 	if (value == null)
@@ -495,10 +559,20 @@ export abstract class JsonContainer<T = any, TKey extends string | number = stri
 		}
 	}
 
-	abstract properties(): Iterable<JsonProperty<TKey>>;
+	properties() {
+		return JsonIterator.properties(this);
+	}
+
+	keys() {
+		return JsonIterator.keys(this);
+	}
+
+	values() {
+		return JsonIterator.values(this);
+	}
+
 	abstract get(key: TKey): undefined | JsonToken;
 	abstract getProperty(key: TKey): undefined | JsonProperty<TKey>;
-	abstract keys(): Iterable<TKey>;
 }
 
 export class JsonArray<T = any> extends JsonContainer<T[], number> {
@@ -573,21 +647,12 @@ export class JsonArray<T = any> extends JsonContainer<T[], number> {
 		}
 	}
 
-	*keys(): Iterable<number> {
-		for (let i = 0; i < this.#items.length; i++)
-			yield i;
-	}
-
 	get(key: number): undefined | JsonToken {
 		return this.#items.at(key)?.value;
 	}
 
 	getProperty(key: number): undefined | JsonProperty<number, any> {
 		return this.#items.at(key);
-	}
-
-	properties(): Iterable<JsonProperty<number>> {
-		return this.#items;
 	}
 
 	toJSON(): T[] {
@@ -685,20 +750,12 @@ export class JsonObject<T extends object = any> extends JsonContainer<T, string>
 		this.#last = null;
 	}
 
-	keys(): Iterable<string> {
-		return this.#props.keys();
-	}
-
 	getProperty(key: string): undefined | JsonProperty<string> {
 		return this.#props.get(key);
 	}
 
 	get(key: string): undefined | JsonToken {
 		return this.#props.get(key)?.value;
-	}
-
-	properties(): Iterable<JsonProperty<string>> {
-		return this.#props.values();
 	}
 
 	toJSON(): T {
