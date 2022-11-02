@@ -217,14 +217,15 @@ span.match {
 	display: grid;
 	grid-template-columns: 1em auto 1fr;
 	grid-template-rows: auto auto;
-	margin: 1px;
-	padding: 1px;
+	margin: 1px 0;
+	padding: 1px 0;
 	border: 1px transparent solid;
 	border-radius: 5px;
 }
 
 .json-prop.selected {
-	border-color: var(--col-bg-border);
+	border-color: var(--col-border);
+	background-color: var(--col-bg-dk);
 }
 
 .json-prop > .summary-count {
