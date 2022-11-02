@@ -61,6 +61,7 @@ span.match {
 .json-root {
 	font-family: monospace;
 	grid-area: 1 / 1 / span 1 / span 1;
+	outline: none;
 	overflow-y: scroll;
 	padding: 5px;
 	padding-bottom: 10rem;

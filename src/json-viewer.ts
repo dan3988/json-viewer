@@ -288,7 +288,72 @@ body.create("div", { class: "controls cr" })
 	.append(pathResult)
 
 const root = body.create("div", {
-	class: "json-root cr"
+	class: "json-root cr",
+	props: {
+		tabIndex: 0
+	},
+	events: {
+		keydown(e) {
+			console.log(JSON.stringify(e.key));
+			switch (e.key) {
+				case "Escape":
+					current.deselect();
+					break;
+				case " ":
+					current.selected?.toggleExpanded();
+					break;
+				case "C":
+				case "c":
+					if (e.ctrlKey) {
+						const value = current.selected?.value;
+						if (value != null) {
+							e.preventDefault();
+							const text = value.is("value") ? String(value.value) : JSON.stringify(value, undefined, "\t");
+							navigator.clipboard.writeText(text);
+						}
+					}
+					break;
+				case "ArrowDown":
+				{
+					const selected = current.selected;
+					if (selected != null) {
+						(selected.next ?? selected.parent.first)?.select(true);
+					} else if (current.root.is("container")) {
+						current.root.first?.select(true);
+					}
+
+					break;
+				}
+				case "ArrowUp":
+				{
+					const selected = current.selected;
+					if (selected != null) {
+						(selected.previous ?? selected.parent.last)?.select(true);
+					} else if (current.root.is("container")) {
+						current.root.first?.select(true);
+					}
+
+					break;
+				}
+				case "ArrowRight": {
+					const selected = current.selected;
+					if (selected && selected.value.is("container")) {
+						selected.expanded = true;
+						selected.value.first?.select(true);
+					}
+
+					break;
+				}
+				case "ArrowLeft": {
+					const selected = current.selected;
+					if (selected && selected.parent)
+						selected.parent.parentProperty?.select(true);
+
+					break;
+				}
+			}
+		}
+	}
 });
 
 let current: JsonScope = new JsonScope(null);
@@ -299,64 +364,3 @@ export function load(json: any) {
 	root.removeAll();
 	root.append(current.element);
 }
-
-document.addEventListener("keydown", (e) => {
-	console.log(JSON.stringify(e.key));
-	switch (e.key) {
-		case "Escape":
-			current.deselect();
-			break;
-		case " ":
-			current.selected?.toggleExpanded();
-			break;
-		case "C":
-		case "c":
-			if (e.ctrlKey) {
-				const value = current.selected?.value;
-				if (value != null) {
-					e.preventDefault();
-					const text = value.is("value") ? String(value.value) : JSON.stringify(value, undefined, "\t");
-					navigator.clipboard.writeText(text);
-				}
-			}
-			break;
-		case "ArrowDown":
-		{
-			const selected = current.selected;
-			if (selected != null) {
-				(selected.next ?? selected.parent.first)?.select(true);
-			} else if (current.root.is("container")) {
-				current.root.first?.select(true);
-			}
-
-			break;
-		}
-		case "ArrowUp":
-		{
-			const selected = current.selected;
-			if (selected != null) {
-				(selected.previous ?? selected.parent.last)?.select(true);
-			} else if (current.root.is("container")) {
-				current.root.first?.select(true);
-			}
-
-			break;
-		}
-		case "ArrowRight": {
-			const selected = current.selected;
-			if (selected && selected.value.is("container")) {
-				selected.expanded = true;
-				selected.value.first?.select(true);
-			}
-
-			break;
-		}
-		case "ArrowLeft": {
-			const selected = current.selected;
-			if (selected && selected.parent)
-				selected.parent.parentProperty?.select(true);
-
-			break;
-		}
-	}
-});
