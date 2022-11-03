@@ -5,13 +5,13 @@ import { JsonScope, JsonScopeSelectedChangedEvent, JsonToken, JsonTokenFilterFla
 DOM(document.head)
 	.append('link', {
 		props: {
-			href: chrome.extension.getURL("res/json.css"),
+			href: chrome.runtime.getURL("res/json.css"),
 			rel: "stylesheet"
 		}
 	})
 	.append('link', {
 		props: {
-			href: chrome.extension.getURL("res/core.css"),
+			href: chrome.runtime.getURL("res/core.css"),
 			rel: "stylesheet"
 		}
 	})
