@@ -1,5 +1,6 @@
 body {
 	--col-fg: #000;
+	--col-body: #FFF;
 	--col-border: #999;
 	--col-border-hv: #669;
 	--col-border-focus: #888;
@@ -15,6 +16,7 @@ body {
 @media (prefers-color-scheme: dark) {
 	body {
 		--col-fg: #FFF;
+		--col-body: #111;
 		--col-border: #444;
 		--col-border-hv: #555;
 		--col-border-focus: #666;
@@ -30,6 +32,7 @@ body {
 
 body, button, input, select {
 	color: var(--col-fg);
+	background-color: var(--col-body);
 	font-family: Calibri;
 	font-size: medium;
 }

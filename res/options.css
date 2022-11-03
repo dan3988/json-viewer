@@ -1,0 +1,15 @@
+.base {
+	display: flex;
+	gap: 5px;
+	flex-direction: column;
+	width: 100%;
+}
+
+.group > .label {
+	flex: 6rem 0 0;
+}
+
+.group > #indent-count {
+	flex: 3rem 0 0;
+	min-width: 0;
+}

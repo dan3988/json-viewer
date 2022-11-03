@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>JSON Viewer Settings</title>
+		<link href="core.css" rel="stylesheet" />
+		<link href="options.css" rel="stylesheet" />
+	</head>
+	<body>
+		<div class="base cr">
+			<label>
+				<input id="enabled" type="checkbox"/>
+				Enabled
+			</label>
+			<label>
+				Size limit
+				<div class="group">
+					<input id="limit" type="number" inputmode="numeric"/>
+					<select id="limit-unit">
+						<option value="0">Disabled</option>
+						<option value="1">B</option>
+						<option value="2">KB</option>
+						<option value="3">MB</option>
+						<option value="4">GB</option>
+					</select>
+				</div>
+			</label>
+			<button id="save" class="btn">Save</button>
+		</div>
+		<script src="/lib/options.js" type="module"></script>
+	</body>
+</html>
