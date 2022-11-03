@@ -3,3 +3,7 @@ declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 	readonly prototype: TValue;
 	new(...args: TArgs): TValue;
 }
+
+declare interface Array<T> {
+	at(index: number): undefined | T
+}
