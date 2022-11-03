@@ -701,12 +701,6 @@ export class JsonObject<T extends object = any> extends JsonContainer<string, T>
 				this.#last = prop;
 				return;
 			}
-			let prop: null | JsonProperty<string> = null;
-			for (const key in value) {
-				const item = value[key];
-				prop = new JsonProperty(this, prop, key, item, true);
-				this.#props.set(key, prop);
-			}
 		}
 
 		this.#first = null;
