@@ -87,6 +87,31 @@ export namespace settings {
 		return bag;
 	}
 
+	export interface SettingChange<T = any> {
+		oldValue: undefined | T;
+		newValue: T;
+	}
+
+	export interface SettingChangeEvent {
+		changes: { [P in SettingKey]?: SettingChange<Settings[P]> };
+		synced: boolean;
+	}
+
+	type ChangeHandler = (arg: SettingChangeEvent) => any;
+
+	export function addListener(handler: ChangeHandler) {
+		chrome.storage.onChanged.addListener((changes, area) => {
+			let synced = false;
+			if (area === "sync") {
+				synced = true;
+			} else if (area !== "local") {
+				return;
+			}
+
+			handler({ synced, changes });
+		});
+	}
+
 	export async function get<K extends SettingKey[]>(): Promise<GetSettingsResult>;
 	export async function get<K extends SettingKey[]>(...keys: K): Promise<GetSettingsResult<K[number]>>;
 	export async function get(...keys: string[]) {

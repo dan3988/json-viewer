@@ -13,7 +13,6 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"declaration": true,
-		"isolatedModules": true,
 		"outDir": "lib",
 		"stripInternal": true,
 		"allowJs": true,

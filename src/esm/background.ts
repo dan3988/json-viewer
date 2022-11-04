@@ -2,33 +2,61 @@ import settings from "./settings.js";
 
 console.log('launch');
 
+const bag = settings.getDefault();
 const filter: chrome.webRequest.RequestFilter = {
 	urls: [ "<all_urls>" ],
 	types: [ "main_frame", "sub_frame" ]
 }
 
-const bag = settings.getDefault();
-
 settings.get().then(v => Object.assign(bag, v));
+settings.addListener(det => {
+	for (let [key, change] of Object.entries(det.changes))
+		(bag as any)[key] = change.newValue;
+});
 
 function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): void {
 	if (!bag.enabled)
 		return;
 
-	const headers = det.responseHeaders;
-	if (headers == null)
+	if (det.responseHeaders == null)
 		return;
 
-	let ct = headers.find(v => v.name.toLowerCase() === "content-type")?.value;
-	if (ct == null)
+	let contentType: undefined | string = undefined;
+	let contentLength: undefined | string = undefined;
+
+	for (let { name, value } of det.responseHeaders) {
+		if (value == null)
+			return;
+
+		name = name.toLowerCase();
+		switch (name = name.toLowerCase()) {
+			case "content-type":
+				contentType = value;
+				break;
+			case "content-length":
+				contentLength = value;
+				break;
+		}
+	}
+
+	if (typeof contentType === "undefined")
 		return;
 
-	const i = ct.indexOf(";");
+	const i = contentType.indexOf(";");
 	if (i > 0)
-		ct = ct.substring(0, i);
+		contentType = contentType.substring(0, i);
 
-	if (ct !== "application/json" && ct !== "text/plain")
+	if (contentType !== "application/json" && contentType !== "text/plain")
 		return;
+
+	if (bag.limitType !== settings.LimitUnit.Disabled && typeof contentLength !== "undefined") {
+		const len = parseInt(contentLength);
+		const max = settings.getByteSize(bag.limit, bag.limitType);
+		if (len > max) {
+			console.info("JSON is over size limit.", det.url);
+			return;
+		}
+	}
 
 	chrome.scripting.executeScript({
 		target: { tabId: det.tabId, frameIds: [det.frameId] },
@@ -46,3 +74,4 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 }
 
 chrome.webRequest.onHeadersReceived.addListener(onHeadersRecieved, filter, [ "responseHeaders" ]);
+
