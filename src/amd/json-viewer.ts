@@ -28,6 +28,42 @@ export function load(document: Document, json: any) {
 		for (let prop of token.properties())
 			setVisibleExpanded(prop.value, expanded);
 	}
+
+	function evaluateJpath() {
+		const curr = scope;
+		if (curr == null)
+			return;
+
+		pathResult.removeAll();
+
+		let path = pathExpr;
+		if (path) {
+			const token = curr.root;
+			const result: string[] = JSONPath({ path, json: token.proxy, resultType: 'pointer' });
+			for (const path of result) {
+				const parts = path.split("/");
+				parts.shift();
+				const result = token.resolve(parts)!;
+				pathResult.append("li", {
+					children: [ path ],
+					events: {
+						click() {
+							for (let t: null | JsonToken = result; t != null && t.parentProperty != null; ) {
+								t.parentProperty.expanded = true;
+								t = t.parent;
+							}
+
+							result.parentProperty?.select(true);
+
+							blink?.classList.remove("blink");
+							blink = result.element;
+							blink.classList.add("blink");
+						}
+					}
+				});
+			}
+		}
+	}
 	
 	const body = DOM(document.body);
 	const breadcrumb = body.create("ul", { class: "breadcrumb cr" })
@@ -221,6 +257,10 @@ export function load(document: Document, json: any) {
 					events: {
 						input() {
 							pathExpr = this.value;
+						},
+						keypress(e) {
+							if (e.key === "Enter")
+								evaluateJpath();
 						}
 					}
 				}),
@@ -248,41 +288,7 @@ export function load(document: Document, json: any) {
 						"Evaluate"
 					],
 					events: {
-						click() {
-							const curr = scope;
-							if (curr == null)
-								return;
-			
-							pathResult.removeAll();
-	
-							let path = pathExpr;
-							if (path) {
-								const token = curr.root;
-								const result: string[] = JSONPath({ path, json: token.proxy, resultType: 'pointer' });
-								for (const path of result) {
-									const parts = path.split("/");
-									parts.shift();
-									const result = token.resolve(parts)!;
-									pathResult.append("li", {
-										children: [ path ],
-										events: {
-											click() {
-												for (let t: null | JsonToken = result; t != null && t.parentProperty != null; ) {
-													t.parentProperty.expanded = true;
-													t = t.parent;
-												}
-	
-												result.parentProperty?.select(true);
-	
-												blink?.classList.remove("blink");
-												blink = result.element;
-												blink.classList.add("blink");
-											}
-										}
-									});
-								}
-							}
-						}
+						click: evaluateJpath
 					}
 				})
 			]
