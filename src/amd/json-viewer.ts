@@ -308,6 +308,10 @@ export function load(document: Document, json: any) {
 					case "C":
 					case "c":
 						if (e.ctrlKey) {
+							const selection = window.getSelection();
+							if (selection != null && selection.type !== "Caret")
+								break;
+
 							const value = scope.selected?.value;
 							if (value != null) {
 								e.preventDefault();
