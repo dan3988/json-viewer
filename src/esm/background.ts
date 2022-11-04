@@ -46,10 +46,11 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 	if (i > 0)
 		contentType = contentType.substring(0, i);
 
-	if (contentType !== "application/json" && contentType !== "text/plain")
+	const isJson = contentType === "application/json";
+	if (!isJson && contentType !== "text/plain")
 		return;
 
-	if (bag.limitType !== settings.LimitUnit.Disabled && typeof contentLength !== "undefined") {
+	if (bag.limitType !== settings.LimitUnit.Disabled && contentLength !== undefined) {
 		const len = parseInt(contentLength);
 		const max = settings.getByteSize(bag.limit, bag.limitType);
 		if (len > max) {
@@ -58,19 +59,22 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 		}
 	}
 
-	chrome.scripting.executeScript({
-		target: { tabId: det.tabId, frameIds: [det.frameId] },
-		files: [
-			"lib/amd/amd.js",
-			"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
-			"lib/amd/html.js",
-			"lib/amd/json.js",
-			"lib/amd/json-path.js",
-			"lib/amd/json-viewer.js",
-			"lib/amd/content.js" 
-		],
-		world: "ISOLATED"
-	})
+	const target = { tabId: det.tabId, frameIds: [det.frameId] }
+	const files = [
+		"lib/amd/amd.js",
+		"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
+		"lib/amd/html.js",
+		"lib/amd/json.js",
+		"lib/amd/json-path.js",
+		"lib/amd/json-viewer.js",
+		"lib/amd/content.js" 
+	]
+
+	if (!isJson)
+		//use less restrictive json parser if content-type is plain text
+		files.unshift("node_modules/jsonic/jsonic.js");
+
+	chrome.scripting.executeScript({ target, files, world: "ISOLATED" });
 }
 
 chrome.webRequest.onHeadersReceived.addListener(onHeadersRecieved, filter, [ "responseHeaders" ]);

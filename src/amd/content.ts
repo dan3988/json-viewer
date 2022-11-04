@@ -7,7 +7,8 @@ function loadContent() {
 	console.log("DOMContentLoaded");
 	const pre = document.body.querySelector(":scope > pre") as HTMLPreElement;
 	const text = pre.innerText;
-	const json = JSON.parse(text);
+	// @ts-ignore
+	const json = (typeof jsonic === "undefined" ? JSON.parse : jsonic)(text);
 	pre.remove();
 	load(document, json);
 }
