@@ -296,13 +296,14 @@ export function load(document: Document, json: any) {
 		},
 		events: {
 			keydown(e) {
-				console.log(JSON.stringify(e.key));
 				switch (e.key) {
 					case "Escape":
 						scope.deselect();
+						e.preventDefault();
 						break;
 					case " ":
 						scope.selected?.toggleExpanded();
+						e.preventDefault();
 						break;
 					case "C":
 					case "c":
@@ -316,41 +317,49 @@ export function load(document: Document, json: any) {
 						}
 						break;
 					case "ArrowDown":
-					{
-						const selected = scope.selected;
-						if (selected != null) {
-							(selected.next ?? selected.parent.first)?.select(true);
-						} else if (scope.root.is("container")) {
-							scope.root.first?.select(true);
+						if (!e.shiftKey) {
+							const selected = scope.selected;
+							if (selected != null) {
+								(selected.next ?? selected.parent.first)?.select(true);
+							} else if (scope.root.is("container")) {
+								scope.root.first?.select(true);
+							}
+		
+							e.preventDefault();
 						}
-	
 						break;
-					}
 					case "ArrowUp":
-					{
-						const selected = scope.selected;
-						if (selected != null) {
-							(selected.previous ?? selected.parent.last)?.select(true);
-						} else if (scope.root.is("container")) {
-							scope.root.first?.select(true);
+						if (!e.shiftKey) {
+							const selected = scope.selected;
+							if (selected != null) {
+								(selected.previous ?? selected.parent.last)?.select(true);
+							} else if (scope.root.is("container")) {
+								scope.root.first?.select(true);
+							}
+		
+							e.preventDefault();
 						}
-	
 						break;
-					}
 					case "ArrowRight": {
-						const selected = scope.selected;
-						if (selected && selected.value.is("container")) {
-							selected.expanded = true;
-							selected.value.first?.select(true);
+						if (!e.shiftKey) {
+							const selected = scope.selected;
+							if (selected && selected.value.is("container")) {
+								selected.expanded = true;
+								selected.value.first?.select(true);
+							}
+		
+							e.preventDefault();
 						}
-	
 						break;
 					}
 					case "ArrowLeft": {
-						const selected = scope.selected;
-						if (selected && selected.parent)
-							selected.parent.parentProperty?.select(true);
-	
+						if (!e.shiftKey) {
+							const selected = scope.selected;
+							if (selected && selected.parent)
+								selected.parent.parentProperty?.select(true);
+		
+							e.preventDefault();
+						}
 						break;
 					}
 				}
