@@ -8,24 +8,24 @@
 	</head>
 	<body>
 		<div class="base cr">
-			<label>
-				<input id="enabled" type="checkbox"/>
-				Enabled
-			</label>
-			<label>
-				Size limit
-				<div class="group">
-					<input id="limit" type="number" inputmode="numeric"/>
-					<select id="limit-unit">
-						<option value="0">Disabled</option>
-						<option value="1">B</option>
-						<option value="2">KB</option>
-						<option value="3">MB</option>
-						<option value="4">GB</option>
-					</select>
-				</div>
-			</label>
-			<button id="save" class="btn">Save</button>
+			<div class="group">
+				<label class="check cr-border cr-control">
+					<input id="enabled" class="control cr-border check" type="checkbox"/>
+					Enabled
+				</label>
+			</div>
+			<div class="group">
+				<span class="label cr-border">Size limit</span>
+				<input id="limit" class="cr-control cr-border hv" type="number" inputmode="numeric"/>
+				<select id="limit-unit" class="cr-control cr-border hv">
+					<option value="0">Disabled</option>
+					<option value="1">B</option>
+					<option value="2">KB</option>
+					<option value="3">MB</option>
+					<option value="4">GB</option>
+				</select>
+			</div>
+			<button id="save" class="btn cr-border cr-control lt">Save</button>
 		</div>
 		<script src="/lib/esm/options.js" type="module"></script>
 	</body>

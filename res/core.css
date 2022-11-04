@@ -11,6 +11,8 @@ body {
 	--col-bg-lt-hv: #9DF;
 	--col-bg-lt-focus: #777;
 	--col-shadow: #999;
+
+	--border-w: 1px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,10 +23,10 @@ body {
 		--col-border-hv: #555;
 		--col-border-focus: #666;
 		--col-bg-dk: #333;
-		--col-bg-dk-hv: #555;
+		--col-bg-dk-hv: #444;
 		--col-bg-dk-focus: #555;
-		--col-bg-lt: #6b6b6b;
-		--col-bg-lt-hv: #777;
+		--col-bg-lt: #555;
+		--col-bg-lt-hv: #666;
 		--col-bg-lt-focus: #777;
 		--col-shadow: #999;
 	}
@@ -73,76 +75,92 @@ ul {
 	background-color: var(--col-border-hv);
 }
 
-.cr .btn,
-.cr .label {
-	border: solid 1px var(--col-border);
-	border-radius: 5px;
+select.cr-control {
+	cursor: pointer;
 }
 
-.cr input {
-	background-color: var(--col-bg-dk);
+.btn,
+.check {
+	cursor: pointer;
+	padding: 5px;
+	user-select: none;
 }
 
-.cr input:hover {
-	background-color: var(--col-bg-dk-hv);
+.label,
+.check {
+	display: flex;
+	gap: 5px;
+	align-items: center;
 }
 
-.cr input:focus {
-	background-color: var(--col-bg-dk-focus);
-}
-
-.cr .btn,
-.cr select,
-.cr button,
-.cr input {
+.btn,
+.btn::before,
+.cr-control,
+.cr-border {
 	transition-property: box-shadow, border-color, background-color, color;
 	transition-duration: 200ms;
 	transition-timing-function: ease-in-out;
 }
 
-.cr select,
-.cr button,
-.cr input {
-	outline: none;
-	border: solid 1px var(--col-border);
-	border-radius: 0;
+.btn,
+.cr-border {
+	border: solid var(--border-w) var(--col-border);
+	border-radius: 5px;
 }
 
-.cr .btn,
-.cr select,
-.cr button {
-	cursor: pointer;
-	background-color: var(--col-bg-lt);
-}
-
-.cr .btn:hover,
-.cr select:hover,
-.cr button:hover {
-	background-color: var(--col-bg-lt-hv);
-}
-
-.cr .btn:hover,
-.cr select:hover,
-.cr button:hover,
-.cr input:hover {
+.cr-border.hv:hover {
 	z-index: 1;
 	border-color: var(--col-border-hv);
 }
 
-.cr *,
-.cr *::before {
-	transition-property: box-shadow, border-color, background-color, color;
-	transition-duration: 200ms;
-	transition-timing-function: ease-in-out;
+.cr-control {
+	outline: none;
 }
 
-.cr input:focus,
-.cr textarea:focus,
-.cr button:focus,
-.cr select:focus {
+.cr-control.cr-border:focus {
 	z-index: 1;
 	border-color: var(--col-border-focus);
 	box-shadow: 0px 0px 2px 1px var(--col-shadow);
+}
+
+.btn,
+.cr-control {
+	background-color: var(--col-bg-lt);
+}
+
+.btn:hover,
+.cr-control.hv:hover {
+	background-color: var(--col-bg-lt-hv);
+}
+
+.btn:hover,
+.cr-border.hv:hover {
+	border-color: var(--col-border-hv);
+}
+
+.btn:hover,
+.cr-border.hv:focus {
+	border-color: var(--col-border-focus);
+}
+
+.btn:focus,
+.btn:focus:hover,
+.cr-control:focus,
+.cr-control:focus:hover {
+	background-color: var(--col-bg-lt-focus);
+}
+
+input:not([type="checkbox"]).cr-control {
+	background-color: var(--col-bg-dk);
+}
+
+input:not([type="checkbox"]).cr-control.hv:hover {
+	background-color: var(--col-bg-dk-hv);
+}
+
+input:not([type="checkbox"]).cr-control:focus,
+input:not([type="checkbox"]).cr-control:focus:hover {
+	background-color: var(--col-bg-dk-focus);
 }
 
 .group {
@@ -158,6 +176,10 @@ ul {
 	border-radius: 0 !important;
 }
 
+.group > .check {
+	flex: auto 0 0;
+}
+
 .group > .label {
 	background-color: var(--col-bg-lt);
 	display: flex;
@@ -167,8 +189,12 @@ ul {
 	font: inherit;
 }
 
+.group > *:hover {
+	z-index: 1;
+}
+
 .group > :not(:first-child) {
-	margin-left: -1px;
+	margin-left: calc(var(--border-w) * -1);
 }
 
 .group > :first-child:last-child {

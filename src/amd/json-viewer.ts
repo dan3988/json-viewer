@@ -66,7 +66,7 @@ export function load(document: Document, json: any) {
 	}
 	
 	const body = DOM(document.body);
-	const breadcrumb = body.create("ul", { class: "breadcrumb cr" })
+	const breadcrumb = body.create("ul", { class: "breadcrumb" })
 	const pathResult = body.create("ul", {
 		class: "json-root json-results"
 	})
@@ -113,7 +113,7 @@ export function load(document: Document, json: any) {
 	}
 	
 	
-	body.create("div", { class: "controls cr" })
+	body.create("div", { class: "controls" })
 		.append("div", {
 			class: "group",
 			children: [
@@ -153,6 +153,7 @@ export function load(document: Document, json: any) {
 			class: "group",
 			children: [
 				DOM("button", {
+					class: "btn",
 					props: {
 						type: "button",
 						title: "Copy the selected value or the whole document without whitespace"
@@ -165,6 +166,7 @@ export function load(document: Document, json: any) {
 					}
 				}),
 				DOM("button", {
+					class: "btn",
 					props: {
 						type: "button",
 						title: "Copy the selected value or the whole document with whitespace"
@@ -186,7 +188,7 @@ export function load(document: Document, json: any) {
 					children: [ "Filter" ]
 				}),
 				DOM("input", {
-					class: "filter",
+					class: "filter cr-border cr-control",
 					events: {
 						input() {
 							const value = this.value.toLowerCase();
@@ -210,7 +212,7 @@ export function load(document: Document, json: any) {
 					}
 				}),
 				DOM("select", {
-					class: "filter-type group-end",
+					class: "filter-type group-end cr-control cr-border hv",
 					events: {
 						input() {
 							scope.filterFlag = parseInt(this.value);
@@ -253,7 +255,7 @@ export function load(document: Document, json: any) {
 					children: [ "Path" ]
 				}),
 				DOM("input", {
-					class: "jpath",
+					class: "jpath cr-border cr-control",
 					events: {
 						input() {
 							pathExpr = this.value;

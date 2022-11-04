@@ -9,6 +9,10 @@
 	flex: 6rem 0 0;
 }
 
+.group > .check {
+	flex: 0px 1 1;
+}
+
 .group > #indent-count {
 	flex: 3rem 0 0;
 	min-width: 0;
