@@ -6,7 +6,8 @@
 			"DOM.Iterable"
 		],
 		"target": "ESNext",
-		"module": "ESNext",
+		"module": "AMD",
+		"moduleResolution": "classic",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"useDefineForClassFields": true,
@@ -15,7 +16,15 @@
 		"sourceMap": true,
 		"declaration": true,
 		"outDir": "lib",
-		"stripInternal": true
+		"stripInternal": true,
+		"allowJs": true,
+		"baseUrl": ".",
+		"paths": {
+			"html": ["/src/html"],
+			"json": ["/src/json"],
+			"json-path": ["/src/json-path"],
+			"json-viewer": ["/src/json-viewer"]
+		}
 	},
 	"include": [
 		"src/**/*.ts"

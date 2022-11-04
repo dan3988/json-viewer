@@ -1,16 +1,6 @@
+/// <amd-module name="json-path"/>
+/// <reference path="../node_modules/jsonpath-plus/src/jsonpath.d.ts"/>
 // @ts-ignore
-import * as jp from "../node_modules/jsonpath-plus/src/jsonpath.js";
+import * as jp from "jsonpath-plus";
 
-let url = chrome.runtime.getURL("node_modules/vm-browserify/index.js");
-let exports = {};
-Reflect.defineProperty(window, "exports", {
-	value: exports,
-	enumerable: true,
-	configurable: true
-});
-await import(url);
-Reflect.deleteProperty(window, "exports");
-
-jp.JSONPath.prototype.vm = exports;
-
-export var { JSONPath, JSONPathClass }: typeof import("jsonpath-plus") = jp;
+export var {  JSONPath, JSONPathClass }: typeof import("jsonpath-plus") = jp;

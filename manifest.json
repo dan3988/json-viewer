@@ -3,13 +3,10 @@
 	"manifest_version": 3,
 	"name": "Json Explorer",
 	"version": "1.0.0",
-	"content_scripts": [
-		{
-			"matches": [ "*://*/*" ],
-			"js": [ "lib/content.js" ],
-			"run_at": "document_start"
-		}
-	],
+	"background": {
+		"service_worker": "lib/background.js",
+		"type": "module"
+	},
 	"options_page": "res/options.html",
 	"web_accessible_resources": [
 		{
@@ -17,12 +14,15 @@
 			"resources": [
 				"lib/*.js",
 				"res/*",
-				"node_modules/jsonpath-plus/**/*.js",
+				"node_modules/jsonpath-plus/**/*.*",
 				"node_modules/vm-browserify/*.js"
 			]
 		}
 	],
+	"host_permissions": [ "<all_urls>" ],
 	"permissions": [
-		"storage"
+		"scripting",
+		"storage",
+		"webRequest"
 	]
 }

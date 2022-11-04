@@ -1,21 +1,19 @@
-if (document.contentType === "application/json") {
-	loadJson();
+/// <amd-module name="content"/>
+import { load } from "./json-viewer.js";
+
+console.log(location.toString());
+
+function loadContent() {
+	console.log("DOMContentLoaded");
+	const pre = document.body.querySelector(":scope > pre") as HTMLPreElement;
+	const text = pre.innerText;
+	const json = JSON.parse(text);
+	pre.remove();
+	load(document, json);
 }
 
-async function loadJson() {
-	const { settings } = await import("./settings.js");
-	const { enabled, limit, limitType } = await settings.get("enabled", "limit", "limitType");
-	if (!enabled)
-		return;
-
-	const pre = document.body.querySelector("pre")!;
-	const text = pre.innerText;
-	const limitBytes = settings.getByteSize(limit, limitType);
-	if (text.length > limitBytes)
-		return;
-
-	pre.remove();
-	const json = JSON.parse(text);
-	const module = await import("./json-viewer.js");
-	module.load(json);
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", loadContent);
+} else {
+	loadContent();
 }

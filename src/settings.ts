@@ -1,3 +1,4 @@
+/// <amd-module name="settings" />
 export namespace settings {
 	type SettingKey = string & keyof Settings;
 	type GetSettingsResult<K extends SettingKey = SettingKey> = { [P in K]: Settings[P] };
