@@ -1,3 +1,5 @@
+import settings from "./settings.js";
+
 console.log('launch');
 
 const filter: chrome.webRequest.RequestFilter = {
@@ -5,11 +7,14 @@ const filter: chrome.webRequest.RequestFilter = {
 	types: [ "main_frame", "sub_frame" ]
 }
 
-function getDocument() {
-	return window.document;
-}
+const bag = settings.getDefault();
+
+settings.get().then(v => Object.assign(bag, v));
 
 function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): void {
+	if (!bag.enabled)
+		return;
+
 	const headers = det.responseHeaders;
 	if (headers == null)
 		return;
@@ -28,13 +33,13 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 	chrome.scripting.executeScript({
 		target: { tabId: det.tabId, frameIds: [det.frameId] },
 		files: [
-			"lib/amd.js",
+			"lib/amd/amd.js",
 			"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
-			"lib/html.js",
-			"lib/json.js",
-			"lib/json-path.js",
-			"lib/json-viewer.js",
-			"lib/content.js" 
+			"lib/amd/html.js",
+			"lib/amd/json.js",
+			"lib/amd/json-path.js",
+			"lib/amd/json-viewer.js",
+			"lib/amd/content.js" 
 		],
 		world: "ISOLATED"
 	})

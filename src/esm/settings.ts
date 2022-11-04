@@ -1,4 +1,3 @@
-/// <amd-module name="settings" />
 export namespace settings {
 	type SettingKey = string & keyof Settings;
 	type GetSettingsResult<K extends SettingKey = SettingKey> = { [P in K]: Settings[P] };
@@ -78,6 +77,14 @@ export namespace settings {
 		limitType: LimitUnit;
 		indentType: number;
 		indentTabs: boolean;
+	}
+
+	export function getDefault(): GetSettingsResult {
+		const bag: any = {};
+		for (let setting of list)
+			bag[setting.key] = setting.defaultValue;
+
+		return bag;
 	}
 
 	export async function get<K extends SettingKey[]>(): Promise<GetSettingsResult>;

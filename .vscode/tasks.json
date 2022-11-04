@@ -3,22 +3,44 @@
 	"tasks": [
 		{
 			"type": "typescript",
-			"tsconfig": "tsconfig.json",
+			"tsconfig": "tsconfig.esm.json",
 			"problemMatcher": [
 				"$tsc"
 			],
 			"group": "build",
-			"label": "tsc: build"
+			"label": "build (esm)"
 		},
 		{
 			"type": "typescript",
-			"tsconfig": "tsconfig.json",
+			"tsconfig": "tsconfig.amd.json",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build",
+			"label": "build (amd)"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.esm.json",
 			"option": "watch",
 			"problemMatcher": [
 				"$tsc-watch"
 			],
 			"group": "build",
-			"label": "tsc: watch",
+			"label": "watch (esm)",
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.amd.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": "build",
+			"label": "watch (amd)",
 			"runOptions": {
 				"runOn": "folderOpen"
 			}
