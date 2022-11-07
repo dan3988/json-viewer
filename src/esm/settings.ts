@@ -1,7 +1,8 @@
 export namespace settings {
+	export type SettingsBag<K extends SettingKey = SettingKey> = { [P in K]: Settings[P] };
+	export type SaveType = { [P in keyof Settings]?: Settings[P] };
+
 	type SettingKey = string & keyof Settings;
-	type GetSettingsResult<K extends SettingKey = SettingKey> = { [P in K]: Settings[P] };
-	type SaveType = { [P in keyof Settings]?: Settings[P] };
 
 	function _get(store: chrome.storage.StorageArea, output: any, settings: Setting[]): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -79,7 +80,7 @@ export namespace settings {
 		indentTabs: boolean;
 	}
 
-	export function getDefault(): GetSettingsResult {
+	export function getDefault(): SettingsBag {
 		const bag: any = {};
 		for (let setting of list)
 			bag[setting.key] = setting.defaultValue;
@@ -112,8 +113,18 @@ export namespace settings {
 		});
 	}
 
-	export async function get<K extends SettingKey[]>(): Promise<GetSettingsResult>;
-	export async function get<K extends SettingKey[]>(...keys: K): Promise<GetSettingsResult<K[number]>>;
+	export function getSetting<K extends keyof Settings>(key: K, required: true): Setting<Settings[K]>
+	export function getSetting<K extends keyof Settings>(key: K, required?: false): undefined | Setting<Settings[K]>
+	export function getSetting<K extends keyof Settings>(key: K, required?: boolean): undefined | Setting {
+		const setting = map.get(key);
+		if (setting == null && required)
+			throw new TypeError(`Unknown setting: '${key}'`);
+		
+		return setting;
+	}
+
+	export async function get<K extends SettingKey[]>(): Promise<SettingsBag>;
+	export async function get<K extends SettingKey[]>(...keys: K): Promise<SettingsBag<K[number]>>;
 	export async function get(...keys: string[]) {
 		let local: Setting[] = [];
 		let synced: Setting[] = [];

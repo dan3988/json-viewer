@@ -1,3 +1,17 @@
+body {
+	--col-dirty: #FFD;
+	--col-dirty-hv: #FFC;
+	--col-dirty-focus: #FFB;
+}
+
+@media (prefers-color-scheme: dark) {
+	body {
+		--col-dirty: #441;
+		--col-dirty-hv: #552;
+		--col-dirty-focus: #662;
+	}
+}
+
 .base {
 	display: flex;
 	gap: 5px;
@@ -16,4 +30,17 @@
 .group > #indent-count {
 	flex: 3rem 0 0;
 	min-width: 0;
+}
+
+.dirty {
+	background-color: var(--col-dirty) !important;
+}
+
+.dirty:hover {
+	background-color: var(--col-dirty-hv) !important;
+}
+
+.dirty:focus,
+.dirty:focus:hover {
+	background-color: var(--col-dirty-focus) !important;
 }
