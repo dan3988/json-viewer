@@ -636,27 +636,43 @@ export class JsonArray<T = any> extends JsonContainer<number, T[]> {
 export class JsonObject<T extends object = any> extends JsonContainer<string, T> {
 	static readonly #proxyHandler: ProxyHandler<JsonObject> = {
 		has(target, p) {
-			return typeof p === "string" && target.#props.has(p);
+			return typeof p === "string" ? target.#props.has(p) : p === Symbol.toPrimitive;
 		},
 		ownKeys(target) {
-			return Array.from(target.#props.keys());
+			const keys: (string | symbol)[] = Array.from(target.#props.keys());
+			keys.push(Symbol.toPrimitive);
+			return keys;
 		},
 		getOwnPropertyDescriptor(target, p) {
-			const value = target.#props.get(p as any);
-			if (value == null)
+			const value = target.#reflectGet(p, true);
+			if (value === undefined)
 				return;
 
 			return {
 				configurable: true,
-				enumerable: true,
-				value
+				enumerable: value[1],
+				value: value[0]
 			}
 		},
 		getPrototypeOf() {
 			return Object.prototype;
 		},
 		get(target, p) {
-			return target.#props.get(p as any)?.value.proxy;
+			return target.#reflectGet(p);
+		}
+	}
+
+	#reflectGet(key: string | symbol, wrap: true): undefined | [value: any, enumerable: boolean]
+	#reflectGet(key: string | symbol, wrap?: false): any 
+	#reflectGet(key: string | symbol, wrap?: boolean): any {
+		if (typeof key === "string") {
+			const prop = this.#props.get(key);
+			if (prop == null)
+				return undefined;
+
+			return wrap ? [prop.value.proxy, true] : prop.value.proxy;
+		} else if (key === Symbol.toPrimitive) {
+			return wrap ? [Object.prototype.toString, false] : Object.prototype.toString;
 		}
 	}
 

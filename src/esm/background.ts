@@ -62,6 +62,7 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 	const target = { tabId: det.tabId, frameIds: [det.frameId] }
 	const files = [
 		"lib/amd/amd.js",
+		"node_modules/esprima/dist/esprima.js",
 		"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
 		"lib/amd/html.js",
 		"lib/amd/json.js",

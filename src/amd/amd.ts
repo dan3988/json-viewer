@@ -12,8 +12,8 @@
 			name = undefined;
 		}
 
-		const args: any[] = [];
-		const exports: any = {};
+		let args: any[] = [];
+		let exports: any = {};
 		exports[Symbol.toStringTag] = "Module";
 
 		for (let dep of deps) {
@@ -33,11 +33,15 @@
 			args.push(value);
 		}
 
-		fn.apply(undefined, args);
+		const result = fn.apply(undefined, args);
+		if (typeof result === "object")
+			exports = result;
 
 		if (name == null) {
 			if ("JSONPath" in exports) {
 				name = "jsonpath-plus";
+			} else if ("Syntax" in exports) {
+				name = "esprima";
 			} else {
 				console.error("Failed to resolve name of module.");
 				return;
