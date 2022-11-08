@@ -37,6 +37,50 @@ function evaluate(context: any, token: estree.BaseNode) {
 type Handler<N extends estree.BaseNode = estree.BaseExpression> = (context: any, token: N) => any;
 type HandlerLookup = { [P in keyof estree.ExpressionMap]?: Handler<estree.ExpressionMap[P]> }
 
+type UnaryLookup = { [P in estree.UnaryOperator]?: Fn<[v: any], any> };
+type BinaryLookup = { [P in estree.BinaryOperator]: Fn<[x: any, y: any], any> };
+type LogicalLookup = { [P in estree.LogicalOperator]: Fn<[x: any, y: any], any> };
+
+const unary: UnaryLookup = {
+	"!":		v => !v,
+	"+":		v => +v,
+	"-":		v => -v,
+	"~":		v => ~v,
+	"void":		<any>Function.prototype,
+	"typeof":	v => typeof v
+}
+
+const logical: LogicalLookup = {
+	"&&": (x, y) => x && y,
+	"||": (x, y) => x || y,
+	"??": (x, y) => x ?? y
+}
+
+const binary: BinaryLookup = {
+	"==":			(x, y) => x == y,
+	"===":			(x, y) => x === y,
+	"!=":			(x, y) => x != y,
+	"!==":			(x, y) => x !== y,
+	"<":			(x, y) => x < y,
+	"<=":			(x, y) => x <= y,
+	">":			(x, y) => x > y,
+	">=":			(x, y) => x >= y,
+	"+":			(x, y) => x + y,
+	"-":			(x, y) => x - y,
+	"*":			(x, y) => x * y,
+	"/":			(x, y) => x / y,
+	"%":			(x, y) => x % y,
+	"**":			(x, y) => x ** y,
+	"|":			(x, y) => x | y,
+	"&":			(x, y) => x & y,
+	"^":			(x, y) => x ^ y,
+	"<<":			(x, y) => x << y,
+	">>":			(x, y) => x >> y,
+	">>>":			(x, y) => x >>> y,
+	"in":			(x, y) => Array.prototype.includes.call(y, x),
+	"instanceof":	(x, y) => x instanceof y
+}
+
 const handlers: HandlerLookup = {
 	MemberExpression(context, token) {
 		const object = evaluate(context, token.object);
@@ -51,82 +95,29 @@ const handlers: HandlerLookup = {
 	},
 	UnaryExpression(context, token) {
 		let argument = evaluate(context, token.argument);
-		switch (token.operator) {
-			case "!":
-				return !argument;
-			case "-":
-				return -argument;
-			case "+":
-				return +argument;
-			case "~":
-				return ~argument;
-			case "void":
-				return undefined;
-			case "typeof":
-				return typeof argument;
-		}
+		let handler = unary[token.operator];
+		if (handler == null)
+			throw new TypeError("Unsupported operator: " + token.operator);
 
-		throw new TypeError("Unsupported operator: " + token.operator);
+		return handler(argument);
 	},
 	BinaryExpression(context, token) {
 		let left = evaluate(context, token.left);
 		let right = evaluate(context, token.right);
+		let handler = binary[token.operator];
+		if (handler == null)
+			throw new TypeError("Unsupported operator: " + token.operator);
 
-		switch (token.operator) {
-			case "==":
-				return left == right;
-			case "===":
-				return left === right;
-			case "!=":
-				return left != right;
-			case "!==":
-				return left !== right;
-			case "+":
-				return left + right;
-			case "-":
-				return left - right;
-			case "*":
-				return left * right;
-			case "/":
-				return left / right;
-			case "&":
-				return left & right;
-			case "|":
-				return left | right;
-			case "<":
-				return left < right;
-			case "<=":
-				return left <= right;
-			case ">":
-				return left > right;
-			case ">=":
-				return left >= right;
-			case "<<":
-				return left << right;
-			case ">>":
-				return left >> right;
-			case ">>>":
-				return left >>> right;
-			case "instanceof":
-				return left instanceof right;
-			case "in":
-				return Array.prototype.includes.call(right, left);
-		}
-
-		throw new TypeError("Unsupported operator: " + token.operator);
+		return handler(left, right);
 	},
 	LogicalExpression(context, token) {
 		let left = evaluate(context, token.left);
 		let right = evaluate(context, token.right);
+		let handler = logical[token.operator];
+		if (handler == null)
+			throw new TypeError("Unsupported operator: " + token.operator);
 
-		switch (token.operator) {
-			case "&&":
-				return left && right;
-			case "||":
-				return left || right;
-		}
-
-		throw new TypeError("Unsupported operator: " + token.operator);
+		return handler(left, right);
 	},
 	ArrayExpression(context, token) {
 		let result = Array(token.elements.length);
