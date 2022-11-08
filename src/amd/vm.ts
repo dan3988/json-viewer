@@ -23,10 +23,10 @@ export class Script {
 export default Script;
 
 type InstructionHandler = (stack: EvaluatorStack, arg: any) => void;
-type InstructionToken = [code: Instruction, arg: any];
-type InstructionList = InstructionToken[number][];
+type Instruction = [code: InstructionCode, arg: any];
+type InstructionList = Instruction[number][];
 
-enum Instruction {
+enum InstructionCode {
 	Nil = 0,
 	Dup,
 	Literal,
@@ -84,46 +84,46 @@ class EvaluatorStack {
 
 const instructionHandlers: InstructionHandler[] = [];
 
-instructionHandlers[Instruction.Dup] = (stack, arg) => {
+instructionHandlers[InstructionCode.Dup] = (stack, arg) => {
 	stack.dupe(arg);
 }
 
-instructionHandlers[Instruction.Literal] = (stack, arg) => stack.push(arg);
-instructionHandlers[Instruction.Identifier] = (stack, arg) => {
+instructionHandlers[InstructionCode.Literal] = (stack, arg) => stack.push(arg);
+instructionHandlers[InstructionCode.Identifier] = (stack, arg) => {
 	if (!(arg in stack.context))
 		throw new ReferenceError(`${arg} is not defined.`);
 
 	stack.push(stack.context[arg])
 }
 
-instructionHandlers[Instruction.Member] = (stack, arg) => {
+instructionHandlers[InstructionCode.Member] = (stack, arg) => {
 	const obj = stack.pop();
 	const key = arg ?? stack.pop();
 	stack.push(obj[key]);
 }
 
-instructionHandlers[Instruction.ArraySpread] = (stack) => {
+instructionHandlers[InstructionCode.ArraySpread] = (stack) => {
 	const arr = stack.pop();
 	for (let value of arr)
 		stack.push(value);
 }
 
-instructionHandlers[Instruction.Container] = (stack) => {
+instructionHandlers[InstructionCode.Container] = (stack) => {
 	stack.startContainer();
 }
 
-instructionHandlers[Instruction.Array] = (stack) => {
+instructionHandlers[InstructionCode.Array] = (stack) => {
 	const arr = stack.endContainer();
 	stack.push(arr);
 }
 
-instructionHandlers[Instruction.ObjectSpread] = (stack) => {
+instructionHandlers[InstructionCode.ObjectSpread] = (stack) => {
 	const obj = stack.pop();
 	for (let key in obj)
 		stack.push(key, obj[key]);
 }
 
-instructionHandlers[Instruction.Object] = (stack) => {
+instructionHandlers[InstructionCode.Object] = (stack) => {
 	const res: any = {};
 	const props = stack.endContainer();
 	for (let i = 0; i < props.length; ) {
@@ -135,7 +135,7 @@ instructionHandlers[Instruction.Object] = (stack) => {
 	stack.push(res);
 }
 
-instructionHandlers[Instruction.Call] = (stack, arg) => {
+instructionHandlers[InstructionCode.Call] = (stack, arg) => {
 	let args = stack.endContainer();
 	let fn = stack.pop();
 	let member: any = undefined;
@@ -146,7 +146,7 @@ instructionHandlers[Instruction.Call] = (stack, arg) => {
 	stack.push(result);
 }
 
-instructionHandlers[Instruction.Unary] = (stack, arg) => {
+instructionHandlers[InstructionCode.Unary] = (stack, arg) => {
 	const handler = unary[arg];
 	if (handler == null)
 		throw new TypeError("Unsupported operator: " + arg);
@@ -156,7 +156,7 @@ instructionHandlers[Instruction.Unary] = (stack, arg) => {
 	stack.push(result);
 }
 
-instructionHandlers[Instruction.Logical] = (stack, arg) => {
+instructionHandlers[InstructionCode.Logical] = (stack, arg) => {
 	const handler = logical[arg];
 	if (handler == null)
 		throw new TypeError("Unsupported operator: " + arg);
@@ -167,7 +167,7 @@ instructionHandlers[Instruction.Logical] = (stack, arg) => {
 	stack.push(result);
 }
 
-instructionHandlers[Instruction.Binary] = (stack, arg) => {
+instructionHandlers[InstructionCode.Binary] = (stack, arg) => {
 	const handler = binary[arg];
 	if (handler == null)
 		throw new TypeError("Unsupported operator: " + arg);
@@ -197,7 +197,7 @@ function execute(instructions: InstructionList, context: any) {
 	let i = 2;
 
 	while (inst.length > 0) {
-		const [code, arg]: InstructionToken = inst as any;
+		const [code, arg]: Instruction = inst as any;
 		const handler = instructionHandlers[code];
 		handler(stack, arg);
 		inst = instructions.slice(i, i += 2);
@@ -221,7 +221,7 @@ type LogicalObj = { [P in estree.LogicalOperator]: BinaryFn };
 
 interface ExpressionBuilder {
 	readonly length: number;
-	push(...args: InstructionToken): void;
+	push(...args: Instruction): void;
 }
 
 const unary: UnaryLookup = {
@@ -278,10 +278,10 @@ const handlers: HandlerLookup = {
 		if (token.callee.type === "MemberExpression") {
 			member = true;
 			build(b, token.callee.object);
-			b.push(Instruction.Dup, undefined);
+			b.push(InstructionCode.Dup, undefined);
 
 			if (token.callee.property.type === "Identifier") {
-				b.push(Instruction.Member, token.callee.property.name);
+				b.push(InstructionCode.Member, token.callee.property.name);
 			} else {
 				build(b, token.callee.property);
 			}
@@ -289,75 +289,75 @@ const handlers: HandlerLookup = {
 			build(b, token.callee);
 		}
 		
-		b.push(Instruction.Container, undefined);
+		b.push(InstructionCode.Container, undefined);
 		for (let arg of token.arguments) {
 			if (arg.type === "SpreadElement") {
 				build(b, arg.argument);
-				b.push(Instruction.ArraySpread, undefined);
+				b.push(InstructionCode.ArraySpread, undefined);
 			} else {
 				build(b, arg);
 			}
 		}
 
-		b.push(Instruction.Call, member);
+		b.push(InstructionCode.Call, member);
 	},
 	MemberExpression(b, token) {
 		build(b, token.object);
 		if (token.computed) {
 			build(b, token.property);
-			b.push(Instruction.Member, undefined);
+			b.push(InstructionCode.Member, undefined);
 		} else if (token.property.type === "Identifier") {
-			b.push(Instruction.Member, token.property.name);
+			b.push(InstructionCode.Member, token.property.name);
 		} else {
 			build(b, token.property);
 		}
 	},
 	Literal(b, token) {
-		b.push(Instruction.Literal, token.value);
+		b.push(InstructionCode.Literal, token.value);
 	},
 	Identifier(b, token) {
-		b.push(Instruction.Identifier, token.name);
+		b.push(InstructionCode.Identifier, token.name);
 	},
 	UnaryExpression(b, token) {
 		build(b, token.argument);
-		b.push(Instruction.Unary, token.operator);
+		b.push(InstructionCode.Unary, token.operator);
 	},
 	BinaryExpression(b, token) {
 		build(b, token.left);
 		build(b, token.right);
-		b.push(Instruction.Binary, token.operator);
+		b.push(InstructionCode.Binary, token.operator);
 	},
 	LogicalExpression(b, token) {
 		build(b, token.left);
 		build(b, token.right);
-		b.push(Instruction.Logical, token.operator);
+		b.push(InstructionCode.Logical, token.operator);
 	},
 	ArrayExpression(b, token) {
-		b.push(Instruction.Container, undefined);
+		b.push(InstructionCode.Container, undefined);
 		const { elements } = token;
 		for (let i = 0; i < elements.length; i++) {
 			const e = elements[i]!;
 			if (e.type === "SpreadElement") {
 				build(b, e.argument);
-				b.push(Instruction.ArraySpread, undefined);
+				b.push(InstructionCode.ArraySpread, undefined);
 			} else {
 				build(b, e);
 			}
 		}
 
-		b.push(Instruction.Array, undefined);
+		b.push(InstructionCode.Array, undefined);
 	},
 	ObjectExpression(b, token) {
 		const { properties } = token;
-		b.push(Instruction.Container, undefined);
+		b.push(InstructionCode.Container, undefined);
 		for (let i = 0; i < properties.length; i++) {
 			const prop = properties[i];
 			if (prop.type === "SpreadElement") {
 				build(b, prop.argument);
-				b.push(Instruction.ObjectSpread, undefined);
+				b.push(InstructionCode.ObjectSpread, undefined);
 			} else {
 				if (!prop.computed && prop.key.type === "Identifier") {
-					b.push(Instruction.Literal, prop.key.name);
+					b.push(InstructionCode.Literal, prop.key.name);
 				} else {
 					build(b, prop.key);
 				}
@@ -366,14 +366,14 @@ const handlers: HandlerLookup = {
 			}
 		}
 
-		b.push(Instruction.Object, undefined);
+		b.push(InstructionCode.Object, undefined);
 	}
 }
 
 for (let i = 0; i < instructionHandlers.length; i++) {
 	const handler = instructionHandlers[i];
 	if (handler != null)
-		Object.defineProperty(handler, "name", { configurable: true, value: Instruction[i] });
+		Object.defineProperty(handler, "name", { configurable: true, value: InstructionCode[i] });
 }
 
 Reflect.set(window, "a", "a-property-key");
