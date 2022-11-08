@@ -8,7 +8,7 @@ import type * as estree from "estree";
  */
 export class Script {
 	readonly #script: string;
-	readonly #instructions: [...InstructionToken[]];
+	readonly #instructions: InstructionList;
 
 	constructor(script: string) {
 		this.#script = script;
@@ -21,6 +21,27 @@ export class Script {
 }
 
 export default Script;
+
+type InstructionHandler = (stack: EvaluatorStack, arg: any) => void;
+type InstructionToken = [code: Instruction, arg: any];
+type InstructionList = InstructionToken[number][];
+
+enum Instruction {
+	Nil = 0,
+	Dup,
+	Literal,
+	Identifier,
+	Member,
+	Container,
+	ArraySpread,
+	Array,
+	ObjectSpread,
+	Object,
+	Call,
+	Unary,
+	Logical,
+	Binary
+}
 
 class EvaluatorStack {
 	readonly context: any;
@@ -60,8 +81,6 @@ class EvaluatorStack {
 		return this.#stack.pop();
 	}
 }
-
-type InstructionHandler = (stack: EvaluatorStack, arg: any) => void;
 
 const instructionHandlers: InstructionHandler[] = [];
 
@@ -199,26 +218,6 @@ type BinaryLookup = Record<string, BinaryFn>;
 type BinaryObj = { [P in estree.BinaryOperator]: BinaryFn };
 type LogicalLookup = Record<string, BinaryFn>;
 type LogicalObj = { [P in estree.LogicalOperator]: BinaryFn };
-
-const enum Instruction {
-	Nil = 0,
-	Dup,
-	Literal,
-	Identifier,
-	Member,
-	Container,
-	ArraySpread,
-	Array,
-	ObjectSpread,
-	Object,
-	Call,
-	Unary,
-	Logical,
-	Binary
-}
-
-type InstructionToken = [code: Instruction, arg: any];
-type InstructionList = InstructionToken[number][];
 
 interface ExpressionBuilder {
 	readonly length: number;
@@ -369,6 +368,12 @@ const handlers: HandlerLookup = {
 
 		b.push(Instruction.Object, undefined);
 	}
+}
+
+for (let i = 0; i < instructionHandlers.length; i++) {
+	const handler = instructionHandlers[i];
+	if (handler != null)
+		Object.defineProperty(handler, "name", { configurable: true, value: Instruction[i] });
 }
 
 Reflect.set(window, "a", "a-property-key");
