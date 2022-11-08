@@ -6,7 +6,7 @@
 			"type": "chrome",
 			"userDataDir": "${workspaceFolder}\\.chrome",
 			"request": "launch",
-			"url": "chrome://extensions/"
+			//"url": "chrome://extensions/"
 		}
 	]
 }
