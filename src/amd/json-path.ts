@@ -51,8 +51,8 @@ class EvaluatorStack {
 			this.#stack.unshift(value);
 	}
 
-	push(value: any) {
-		this.#stack.push(value);
+	push(...values: any[]) {
+		Array.prototype.push.apply(this.#stack, values);
 	}
 
 	pop(): any {
@@ -82,20 +82,33 @@ instructionHandlers[Instruction.Member] = (stack, arg) => {
 	stack.push(obj[key]);
 }
 
-instructionHandlers[Instruction.ArrayMarker] = (stack, arg) => {
+instructionHandlers[Instruction.ArraySpread] = (stack) => {
+	const arr = stack.pop();
+	for (let value of arr)
+		stack.push(value);
+}
+
+instructionHandlers[Instruction.Container] = (stack) => {
 	stack.startContainer();
 }
 
-instructionHandlers[Instruction.Array] = (stack, arg) => {
+instructionHandlers[Instruction.Array] = (stack) => {
 	const arr = stack.endContainer();
 	stack.push(arr);
 }
 
-instructionHandlers[Instruction.Object] = (stack, arg) => {
+instructionHandlers[Instruction.ObjectSpread] = (stack) => {
+	const obj = stack.pop();
+	for (let key in obj)
+		stack.push(key, obj[key]);
+}
+
+instructionHandlers[Instruction.Object] = (stack) => {
 	const res: any = {};
-	for (let i = 0; i < arg; i++) {
-		const value = stack.pop();
-		const key = stack.pop();
+	const props = stack.endContainer();
+	for (let i = 0; i < props.length; ) {
+		const key = props[i++];
+		const value = props[i++];
 		res[key] = value;
 	}
 
@@ -181,8 +194,10 @@ const enum Instruction {
 	Literal,
 	Identifier,
 	Member,
-	ArrayMarker,
+	Container,
+	ArraySpread,
 	Array,
+	ObjectSpread,
 	Object,
 	Unary,
 	Logical,
@@ -278,29 +293,40 @@ const handlers: HandlerLookup = {
 		b.push(Instruction.Logical, token.operator);
 	},
 	ArrayExpression(b, token) {
-		b.push(Instruction.ArrayMarker, undefined);
+		b.push(Instruction.Container, undefined);
 		const { elements } = token;
-		for (let i = 0; i < elements.length; i++)
-			build(b, elements[i]!);
+		for (let i = 0; i < elements.length; i++) {
+			const e = elements[i]!;
+			if (e.type === "SpreadElement") {
+				build(b, e.argument);
+				b.push(Instruction.ArraySpread, undefined);
+			} else {
+				build(b, e);
+			}
+		}
 
 		b.push(Instruction.Array, undefined);
 	},
 	ObjectExpression(b, token) {
 		const { properties } = token;
+		b.push(Instruction.Container, undefined);
 		for (let i = 0; i < properties.length; i++) {
 			const prop = properties[i];
-			if (prop.type === "Property") {
-				if (prop.computed) {
-					build(b, prop.key);
+			if (prop.type === "SpreadElement") {
+				build(b, prop.argument);
+				b.push(Instruction.ObjectSpread, undefined);
+			} else {
+				if (!prop.computed && prop.key.type === "Identifier") {
+					b.push(Instruction.Literal, prop.key.name);
 				} else {
-					b.push(Instruction.Literal, (prop.key as estree.Identifier).name)
+					build(b, prop.key);
 				}
 
 				build(b, prop.value);
 			}
 		}
 
-		b.push(Instruction.Object, properties.length);
+		b.push(Instruction.Object, undefined);
 	}
 }
 
