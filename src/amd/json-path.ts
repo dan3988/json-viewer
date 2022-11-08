@@ -115,6 +115,17 @@ instructionHandlers[Instruction.Object] = (stack) => {
 	stack.push(res);
 }
 
+instructionHandlers[Instruction.Call] = (stack, arg) => {
+	let args = stack.endContainer();
+	let fn = stack.pop();
+	let member: any = undefined;
+	if (arg)
+		member = stack.pop();
+
+	const result = Function.prototype.apply.call(fn, member, args);
+	stack.push(result);
+}
+
 instructionHandlers[Instruction.Unary] = (stack, arg) => {
 	const handler = unary[arg];
 	if (handler == null)
@@ -199,6 +210,7 @@ const enum Instruction {
 	Array,
 	ObjectSpread,
 	Object,
+	Call,
 	Unary,
 	Logical,
 	Binary
@@ -261,6 +273,34 @@ const build: Handler = (b, token) => {
 }
 
 const handlers: HandlerLookup = {
+	CallExpression(b, token) {
+		let member = false;
+		if (token.callee.type === "MemberExpression") {
+			member = true;
+			build(b, token.callee.object);
+			b.push(Instruction.Dup, undefined);
+
+			if (token.callee.property.type === "Identifier") {
+				b.push(Instruction.Member, token.callee.property.name);
+			} else {
+				build(b, token.callee.property);
+			}
+		} else {
+			build(b, token.callee);
+		}
+		
+		b.push(Instruction.Container, undefined);
+		for (let arg of token.arguments) {
+			if (arg.type === "SpreadElement") {
+				build(b, arg.argument);
+				b.push(Instruction.ArraySpread, undefined);
+			} else {
+				build(b, arg);
+			}
+		}
+
+		b.push(Instruction.Call, member);
+	},
 	MemberExpression(b, token) {
 		build(b, token.object);
 		if (token.computed) {
