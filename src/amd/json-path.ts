@@ -91,7 +91,11 @@ const handlers: HandlerLookup = {
 		return token.value;
 	},
 	Identifier(context, token) {
-		return context[token.name];
+		const desc = token.name;
+		if (desc in context)
+			return context[desc];
+
+		throw new TypeError(`${token.name} is not defined.`);
 	},
 	UnaryExpression(context, token) {
 		let argument = evaluate(context, token.argument);
