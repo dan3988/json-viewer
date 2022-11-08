@@ -65,6 +65,7 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 		"node_modules/esprima/dist/esprima.js",
 		"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
 		"lib/amd/html.js",
+		"lib/amd/vm.js",
 		"lib/amd/json.js",
 		"lib/amd/json-path.js",
 		"lib/amd/json-viewer.js",
