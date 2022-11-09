@@ -10,6 +10,9 @@ body {
 	--col-bg-lt: #CCC;
 	--col-bg-lt-hv: #9DF;
 	--col-bg-lt-focus: #777;
+	--col-bg-err: #F99;
+	--col-bg-err-hv: #F88;
+	--col-bg-err-focus: #F77;
 	--col-shadow: #999;
 
 	--border-w: 1px;
@@ -28,6 +31,9 @@ body {
 		--col-bg-lt: #555;
 		--col-bg-lt-hv: #666;
 		--col-bg-lt-focus: #777;
+		--col-bg-err: #933;
+		--col-bg-err-hv: #944;
+		--col-bg-err-focus: #A55;
 		--col-shadow: #999;
 	}
 }
@@ -150,11 +156,24 @@ select.cr-control {
 	background-color: var(--col-bg-lt-focus);
 }
 
+input:not([type="checkbox"]).cr-control:invalid {
+	background-color: var(--col-bg-err);
+}
+
+input:not([type="checkbox"]).hv.cr-control:invalid:hover {
+	background-color: var(--col-bg-err-hv);
+}
+
+input:not([type="checkbox"]).cr-control:invalid:focus,
+input:not([type="checkbox"]).cr-control:invalid:focus:hover {
+	background-color: var(--col-bg-err-focus);
+}
+
 input:not([type="checkbox"]).cr-control {
 	background-color: var(--col-bg-dk);
 }
 
-input:not([type="checkbox"]).cr-control.hv:hover {
+input:not([type="checkbox"]).cr-control:hover {
 	background-color: var(--col-bg-dk-hv);
 }
 

@@ -38,25 +38,36 @@ export function load(document: Document, json: any) {
 
 		let path = pathExpr;
 		if (path) {
-			const token = curr.root;
-			const result: string[] = JSONPath({ path, json: token.proxy, resultType: 'pointer' });
-			for (const path of result) {
-				const parts = path.split("/");
-				parts.shift();
-				const result = token.resolve(parts)!;
-				pathResult.append("li", {
-					children: [ path ],
-					events: {
-						click() {
-							for (let t: null | JsonToken = result; t != null && t.parentProperty != null; ) {
-								t.parentProperty.expanded = true;
-								t = t.parent;
+			try {
+				const token = curr.root;
+				const result: string[] = JSONPath({ path, json: token.proxy, resultType: 'pointer' });
+				for (const path of result) {
+					const parts = path.split("/");
+					parts.shift();
+					const result = token.resolve(parts)!;
+					pathResult.append("li", {
+						children: [ path ],
+						events: {
+							click() {
+								for (let t: null | JsonToken = result; t != null && t.parentProperty != null; ) {
+									t.parentProperty.expanded = true;
+									t = t.parent;
+								}
+	
+								result.parentProperty?.select(true, true);
 							}
-
-							result.parentProperty?.select(true, true);
 						}
-					}
-				});
+					});
+				}
+			} catch (e) {
+				console.error("JSON path evaluation error: ", e);
+				if (e instanceof Error) {
+					const error = e;
+					document.querySelectorAll("input.jpath").forEach((v) => {
+						(v as HTMLInputElement).setCustomValidity(error.message);
+						(v as HTMLInputElement).reportValidity();
+					});
+				}
 			}
 		}
 	}
@@ -254,6 +265,7 @@ export function load(document: Document, json: any) {
 					events: {
 						input() {
 							pathExpr = this.value;
+							this.setCustomValidity("");
 						},
 						keypress(e) {
 							if (e.key === "Enter")
@@ -271,6 +283,7 @@ export function load(document: Document, json: any) {
 							const e = this.previousElementSibling as HTMLInputElement;
 							if (e.value) {
 								e.value = "";
+								e.setCustomValidity("");
 								pathExpr = "";
 							}
 						}
