@@ -114,7 +114,7 @@ select.cr-control {
 	border-radius: 5px;
 }
 
-.cr-border.hv:hover {
+.cr-border:hover {
 	z-index: 1;
 	border-color: var(--col-border-hv);
 }
@@ -135,17 +135,17 @@ select.cr-control {
 }
 
 .btn:hover,
-.cr-control.hv:hover {
+.cr-control:hover {
 	background-color: var(--col-bg-lt-hv);
 }
 
 .btn:hover,
-.cr-border.hv:hover {
+.cr-border:hover {
 	border-color: var(--col-border-hv);
 }
 
 .btn:hover,
-.cr-border.hv:focus {
+.cr-border:focus {
 	border-color: var(--col-border-focus);
 }
 
@@ -160,7 +160,7 @@ input:not([type="checkbox"]).cr-control:invalid {
 	background-color: var(--col-bg-err);
 }
 
-input:not([type="checkbox"]).hv.cr-control:invalid:hover {
+input:not([type="checkbox"]).cr-control:invalid:hover {
 	background-color: var(--col-bg-err-hv);
 }
 

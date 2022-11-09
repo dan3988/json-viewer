@@ -218,7 +218,7 @@ export function load(document: Document, json: any) {
 					}
 				}),
 				DOM("select", {
-					class: "filter-type group-end cr-control cr-border hv",
+					class: "filter-type group-end cr-control cr-border",
 					events: {
 						input() {
 							scope.filterFlag = parseInt(this.value);
