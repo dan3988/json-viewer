@@ -375,8 +375,3 @@ for (let i = 0; i < instructionHandlers.length; i++) {
 	if (handler != null)
 		Object.defineProperty(handler, "name", { configurable: true, value: InstructionCode[i] });
 }
-
-Reflect.set(window, "a", "a-property-key");
-const a = test("({ a: 5, ['b']: 6, [a]: 'a-property-value' })");
-Reflect.set(window, "a", a);
-const b = test("Object.keys(a)");
