@@ -94,7 +94,7 @@ class JsonIterator<TKey extends string | number, TResult> implements Iterable<TR
 	}
 }
 
-function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [scope: JsonScope, prop: null | JsonProperty, value: T]>
+function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [scope: JsonScope<any>, prop: null | JsonProperty, value: T]>
 function resolveConstructor(value: any): Constructor<JsonToken, [scope: JsonScope, prop: null | JsonProperty, value: any]> {
 	if (value == null)
 		return JsonValue;
@@ -229,6 +229,7 @@ export class ChangeEvent<V = any> extends Event {
 }
 
 export type JsonScopeSelectedChangedEvent = ChangeEvent<null | JsonProperty>;
+export type ToToken<T> = T extends readonly any[] ? JsonArray<T> : (T extends object ? JsonObject<T> : (T extends JsonValueType ? JsonValue<T> : JsonToken))
 
 export class JsonScope<V = unknown> {
 	static {
@@ -245,8 +246,8 @@ export class JsonScope<V = unknown> {
 	#filter: string;
 	#filterFlag: JsonTokenFilterFlags;
 
-	get root() {
-		return this.#root;
+	get root(): ToToken<V> {
+		return this.#root as any;
 	}
 
 	get element() {
@@ -365,8 +366,8 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.#key;
 	}
 
-	get value() {
-		return this.#value;
+	get value(): ToToken<TValue> {
+		return this.#value as any;
 	}
 
 	get expanded() {
@@ -437,7 +438,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	}
 }
 
-export abstract class JsonToken<T = unknown> extends JsonBase {
+export abstract class JsonToken<T = any> extends JsonBase {
 	readonly #root: null | JsonContainer;
 	readonly #prop: null | JsonProperty;
 
@@ -453,7 +454,7 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 		return this.#prop;
 	}
 
-	abstract get proxy(): any;
+	abstract get proxy(): T;
 	abstract get type(): keyof JsonTokenTypeMap;
 
 	protected constructor(scope: JsonScope, prop: null | JsonProperty) {
@@ -468,7 +469,6 @@ export abstract class JsonToken<T = unknown> extends JsonBase {
 	abstract resolve(path: string[]): null | JsonToken;
 
 	abstract is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
-	abstract is(type: string): boolean;
 
 	abstract properties(): Iterable<JsonProperty>;
 	abstract get(key: number | string): undefined | JsonToken;
@@ -550,7 +550,7 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 	abstract getProperty(key: TKey): undefined | JsonProperty<TKey>;
 }
 
-export class JsonArray<T = any> extends JsonContainer<number, T[]> {
+export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonContainer<number & keyof T, T> {
 	static readonly #proxyHandler: ProxyHandler<JsonArray> = {
 		has(target, p) {
 			return p in target.#items;
@@ -605,7 +605,7 @@ export class JsonArray<T = any> extends JsonContainer<number, T[]> {
 	}
 
 	constructor(scope: JsonScope, prop: null | JsonProperty, value: T[]) {
-		super(scope, prop, JsonArray.#proxyHandler);
+		super(scope, prop, JsonArray.#proxyHandler as any);
 		if (value && value.length) {
 			let prop = new JsonProperty(this, null, 0, value[0], false);
 			this.#items = Array(value.length);
@@ -622,30 +622,35 @@ export class JsonArray<T = any> extends JsonContainer<number, T[]> {
 		}
 	}
 
+	getProperty<K extends number & keyof T>(key: K): JsonProperty<K, JsonToken<T[K]>>;
+	getProperty(key: number): undefined | JsonProperty<number & keyof T>;
+	getProperty(key: number): undefined | JsonProperty<number & keyof T> {
+		return this.#items.at(key);
+	}
+
+	get<K extends number & keyof T>(key: K): ToToken<T[K]>;
+	get(key: number): undefined | JsonToken;
 	get(key: number): undefined | JsonToken {
 		return this.#items.at(key)?.value;
 	}
 
-	getProperty(key: number): undefined | JsonProperty<number, any> {
-		return this.#items.at(key);
-	}
-
-	toJSON(): T[] {
+	toJSON(): T {
 		const elements = this.#items;
 		const value = Array(elements.length);
 		for (let i = 0; i < value.length; i++)
 			value[i] = elements[i].value.toJSON();
 
-		return value;
+		return value as any;
 	}
-	
+
+	is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
 	is(type: string): boolean {
 		return type === "container" || type === "array";
 	}
 }
 
-export class JsonObject<T extends object = any> extends JsonContainer<string, T> {
-	static readonly #proxyHandler: ProxyHandler<JsonObject> = {
+export class JsonObject<T extends object = any> extends JsonContainer<string & keyof T, T> {
+	static readonly #proxyHandler: ProxyHandler<JsonObject<any>> = {
 		has(target, p) {
 			return typeof p === "string" ? target.#props.has(p) : p === Symbol.toPrimitive;
 		},
@@ -687,9 +692,9 @@ export class JsonObject<T extends object = any> extends JsonContainer<string, T>
 		}
 	}
 
-	readonly #props: Map<string, JsonProperty<string>>;
-	readonly #first: null | JsonProperty<string>;
-	readonly #last: null | JsonProperty<string>;
+	readonly #props: Map<string, JsonProperty<string & keyof T>>;
+	readonly #first: null | JsonProperty<string & keyof T>;
+	readonly #last: null | JsonProperty<string & keyof T>;
 
 	get first() {
 		return this.#first;
@@ -708,21 +713,23 @@ export class JsonObject<T extends object = any> extends JsonContainer<string, T>
 	}
 
 	constructor(scope: JsonScope, prop: null | JsonProperty, value: T) {
-		super(scope, prop, JsonObject.#proxyHandler);
+		super(scope, prop, JsonObject.#proxyHandler as any);
 		this.#props = new Map();
 		if (value) {
-			const keys = Object.keys(value);
+			type Key = string & keyof T;
+
+			const keys = Object.keys(value) as Array<Key>;
 			if (keys.length) {
 				let key = keys[0];
 				let item = (value as any)[key];
-				let prop = new JsonProperty(this, null, key, item, true);
+				let prop = new JsonProperty<Key>(this, null, key, item, true);
 
 				this.#props.set(key, prop);
 				this.#first = prop;
 				for (let i = 1; i < keys.length; i++) {
 					key = keys[i];
 					item = (value as any)[key];
-					prop = new JsonProperty(this, prop, key, item, true);
+					prop = new JsonProperty<Key>(this, prop, key, item, true);
 					this.#props.set(key, prop);
 				}
 
@@ -735,10 +742,14 @@ export class JsonObject<T extends object = any> extends JsonContainer<string, T>
 		this.#last = null;
 	}
 
-	getProperty(key: string): undefined | JsonProperty<string> {
+	getProperty<K extends string & keyof T>(key: K): JsonProperty<K, JsonToken<T[K]>>;
+	getProperty(key: string): undefined | JsonProperty<string & keyof T>;
+	getProperty(key: string): undefined | JsonProperty<string & keyof T> {
 		return this.#props.get(key);
 	}
 
+	get<K extends string & keyof T>(key: K): ToToken<T[K]>;
+	get(key: string): undefined | JsonToken;
 	get(key: string): undefined | JsonToken {
 		return this.#props.get(key)?.value;
 	}
@@ -750,7 +761,8 @@ export class JsonObject<T extends object = any> extends JsonContainer<string, T>
 
 		return obj;
 	}
-	
+
+	is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
 	is(type: string): boolean {
 		return type === "container" || type === "object";
 	}
@@ -821,14 +833,15 @@ export class JsonValue<T extends JsonValueType = JsonValueType> extends JsonToke
 		return showMatches(e, text, lower, filterText);
 	}
 
-	resolve(): JsonToken<unknown> | null {
+	resolve(): JsonToken<any> | null {
 		return null;
 	}
 
 	toJSON(): T {
 		return this.#value;
 	}
-	
+
+	is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
 	is(type: string): boolean {
 		return type === "value" || type === this.#type;
 	}
