@@ -53,11 +53,7 @@ export function load(document: Document, json: any) {
 								t = t.parent;
 							}
 
-							result.parentProperty?.select(true);
-
-							blink?.classList.remove("blink");
-							blink = result.element;
-							blink.classList.add("blink");
+							result.parentProperty?.select(true, true);
 						}
 					}
 				});
@@ -72,7 +68,6 @@ export function load(document: Document, json: any) {
 	})
 	
 	let pathExpr = "";
-	let blink: null | HTMLElement = null;
 	
 	function onSelectionChanged(evt: JsonScopeSelectedChangedEvent) {
 		const prop = evt.newValue;

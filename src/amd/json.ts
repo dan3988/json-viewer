@@ -92,7 +92,6 @@ class JsonIterator<TKey extends string | number, TResult> implements Iterable<TR
 	[Symbol.iterator](): this {
 		return this;
 	}
-
 }
 
 function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [scope: JsonScope, prop: null | JsonProperty, value: T]>
@@ -115,7 +114,7 @@ function resolveConstructor(value: any): Constructor<JsonToken, [scope: JsonScop
 }
 
 function createPropertyElement(key: string, value: JsonToken, selected: boolean, expanded: boolean, onPropClick?: (evt: MouseEvent) => any, onExpanderClick?: (evt: MouseEvent) => any): HTMLElement {
-	const child = value.element;
+	const child = loadElement(value);
 	const prop = DOM.createElement("div", {
 		class: "json-prop",
 		children: [
@@ -155,10 +154,15 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 	return prop;
 }
 
-//internal functions that we don't want to be accessible outside of this file, but need to be declared inside classes to access private members
-let setSelected: (prop: JsonProperty, scroll?: boolean) => void;
+//internal functions that we don't want to be accessible outside of this file, but need to be declared inside classes to access private fields
+let setSelected: (prop: JsonProperty, scroll?: boolean, blink?: boolean) => void;
 let jsonFilter: (this: JsonBase, text: string, isAppend: boolean, flags: JsonTokenFilterFlags, forceVisible: boolean) => boolean;
 let jsonShow: (this: JsonBase, filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags) => boolean;
+let loadElement: (json: JsonBase) => HTMLElement;
+let getElement: {
+	(json: JsonBase): HTMLElement;
+	(json: JsonBase | null): null | HTMLElement;
+}
 
 abstract class JsonBase {
 	static {
@@ -178,6 +182,17 @@ abstract class JsonBase {
 			this.#shown = shown;
 			return shown;
 		}
+
+		loadElement = function(json) {
+			if (json.#element == null)
+				json.#element = json.__createElement();
+			
+			return json.#element;
+		}
+
+		getElement = function(json) {
+			return (json == null ? null : json.#element)!;
+		}
 	}
 
 	readonly #scope: JsonScope;
@@ -193,15 +208,6 @@ abstract class JsonBase {
 		return this.#shown;
 	}
 
-	get element(): HTMLElement {
-		if (this.#element == null) {
-			this.#element = this.__createElement();
-			this.#element.hidden = !this.#shown;
-		}
-
-		return this.#element;
-	}
-
 	protected constructor(scope: JsonScope) {
 		this.#scope = scope;
 		this.#element = null;
@@ -211,7 +217,7 @@ abstract class JsonBase {
 	protected abstract __createElement(): HTMLElement;
 	protected abstract __show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean;
 
-	elementLoaded(): boolean {
+	protected elementLoaded(): boolean {
 		return this.#element !== null;
 	}
 }
@@ -226,8 +232,8 @@ export type JsonScopeSelectedChangedEvent = ChangeEvent<null | JsonProperty>;
 
 export class JsonScope<V = unknown> {
 	static {
-		setSelected = function (p, scroll) {
-			p.scope.#setSelected(p, scroll);
+		setSelected = function (p, scroll, blink) {
+			p.scope.#setSelected(p, scroll, blink);
 		}
 	}
 
@@ -244,7 +250,7 @@ export class JsonScope<V = unknown> {
 	}
 
 	get element() {
-		return this.#element ??= this.createElement();
+		return this.#element ??= this.#createElement();
 	}
 
 	get selected() {
@@ -285,16 +291,20 @@ export class JsonScope<V = unknown> {
 		this.#filterFlag = JsonTokenFilterFlags.Both;
 	}
 
-	#setSelected(prop: null | JsonProperty, scroll?: boolean) {
+	#setSelected(prop: null | JsonProperty, scroll?: boolean, blink?: boolean) {
 		const old = this.#selected;
 		if (old === prop)
 			return;
 
-		if (old != null && old.elementLoaded())
-			old.element.classList.remove("selected");
+		if (old != null)
+			getElement(old).classList.remove("selected", "blink");
 		
-		if (prop != null && prop.elementLoaded()) {
-			prop.element.classList.add("selected");
+		if (prop != null) {
+			const e = getElement(prop);
+			e.classList.add("selected");
+			if (blink)
+				e.classList.add("blink");
+
 			if (scroll) 
 				prop.scrollIntoView();
 		}
@@ -325,7 +335,7 @@ export class JsonScope<V = unknown> {
 		return this;
 	}
 
-	protected createElement(): HTMLElement {
+	#createElement(): HTMLElement {
 		return createPropertyElement("$", this.#root, false, true);
 	}
 }
@@ -366,8 +376,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	set expanded(value) {
 		if (this.#expanded !== (value = Boolean(value))) {
 			this.#expanded = value;
-			if (this.elementLoaded())
-				this.element.classList.toggle("expanded", value);
+			getElement(this).classList.toggle("expanded", value);
 		}
 	}
 
@@ -392,17 +401,17 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	}
 
 	scrollIntoView() {
-		if (this.elementLoaded())
-			this.element.querySelector(".json-key")?.scrollIntoView({ block: "center" });
+		getElement(this).scrollIntoView({ block: "center" });
+		//getElement(this).querySelector(".json-key")?.scrollIntoView({ block: "center" });
 	}
 
-	select(scroll?: boolean) {
-		setSelected(this, scroll);
+	select(scroll?: boolean, blink?: boolean) {
+		setSelected(this, scroll, blink);
 	}
 
 	protected __show(filterText: string, isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
 		const kt = this.#keyText;
-		const keyElement = this.element.querySelector(".json-key") as HTMLElement;
+		const keyElement = getElement(this).querySelector(".json-key") as HTMLElement;
 		const showKey = (flags & JsonTokenFilterFlags.Keys) !== 0 && kt.length == 2 && showMatches(keyElement, kt[0], kt[1]!, filterText);
 		const showValue = jsonFilter.call(this.#value, filterText, isAppend, flags, showKey);
 		if (!showKey)
@@ -414,7 +423,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	toggleExpanded() {
 		const expanded = !this.#expanded;
 		this.#expanded = expanded;
-		this.element.classList.toggle("expanded", expanded);
+		getElement(this).classList.toggle("expanded", expanded);
 	}
 
 	protected __createElement(): HTMLElement {
@@ -489,8 +498,10 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 			class: "json-container json-" + this.type
 		});
 
-		for (var child of this.properties())
-			container.appendChild(child.element);
+		for (var child of this.properties()) {
+			const e = loadElement(child);
+			container.appendChild(e);
+		}
 
 		return container;
 	}
@@ -801,12 +812,13 @@ export class JsonValue<T extends JsonValueType = JsonValueType> extends JsonToke
 
 	protected __show(filterText: string, _isAppend: boolean, flags: JsonTokenFilterFlags): boolean {
 		const [text, lower] = this.#text;
+		const e = getElement(this);
 		if ((flags & JsonTokenFilterFlags.Values) === 0) {
-			this.element.innerText = text;
+			e.innerText = text;
 			return false;
 		}
 
-		return showMatches(this.element, text, lower, filterText);
+		return showMatches(e, text, lower, filterText);
 	}
 
 	resolve(): JsonToken<unknown> | null {
