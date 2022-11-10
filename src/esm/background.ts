@@ -69,7 +69,8 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 		"lib/amd/json.js",
 		"lib/amd/json-path.js",
 		"lib/amd/json-viewer.js",
-		"lib/amd/content.js" 
+		"lib/amd/content.js", 
+		"lib/amd/content.amd.js"
 	]
 
 	if (!isJson)
