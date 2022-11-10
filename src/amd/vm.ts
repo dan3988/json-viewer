@@ -16,15 +16,46 @@ export class Script {
 	}
 
 	runInNewContext(context: any) {
-		return execute(this.#instructions, context);
+		return this.#instructions.execute(context);
 	}
 }
 
 export default Script;
 
+class InstructionList {
+	readonly #values: any[];
+	#length: number;
+
+	get length() {
+		return this.#length;
+	}
+
+	constructor() {
+		this.#values = [];
+		this.#length = 0;
+	}
+
+	execute(context: any) {
+		const v = this.#values;
+		const stack = new EvaluatorStack(context);
+		for (let i = 0; i < v.length;) {
+			const [code, arg]: Instruction = [v[i++], v[i++]]
+			const handler = instructionHandlers[code];
+			handler(stack, arg);
+		}
+	
+		const result = stack.pop();
+		return result;
+	}
+
+	push(code: InstructionCode, arg?: any) {
+		this.#values.push(code, arg);
+		this.#length++;
+	}
+}
+
 type InstructionHandler = (stack: EvaluatorStack, arg: any) => void;
 type Instruction = [code: InstructionCode, arg: any];
-type InstructionList = Instruction[number][];
 
 enum InstructionCode {
 	Nil = 0,
@@ -180,13 +211,13 @@ instructionHandlers[InstructionCode.Binary] = (stack, arg) => {
 
 function test(expr: string) {
 	const compiled = compile(expr);
-	const value = execute(compiled, globalThis);
+	const value = compiled.execute(globalThis);
 	return value;
 }
 
 function compile(scriptText: string): InstructionList {
 	const script = es.parseScript(scriptText, { tolerant: true });
-	const instructions: any[] = [];
+	const instructions = new InstructionList();
 	const body = script.body as estree.Directive[];
 	if (body.length !== 1)
 		throw new Error("JSON path expression must have one statement.");
@@ -195,22 +226,7 @@ function compile(scriptText: string): InstructionList {
 	return instructions;
 }
 
-function execute(instructions: InstructionList, context: any) {
-	const stack = new EvaluatorStack(context);
-	let inst = instructions.slice(0, 2);
-	let i = 2;
-
-	while (inst.length > 0) {
-		const [code, arg]: Instruction = inst as any;
-		const handler = instructionHandlers[code];
-		handler(stack, arg);
-		inst = instructions.slice(i, i += 2);
-	}
-
-	return stack.pop();
-}
-
-type Handler<N extends estree.BaseNode = estree.BaseExpression> = (builder: ExpressionBuilder, token: N) => void;
+type Handler<N extends estree.BaseNode = estree.BaseExpression> = (builder: InstructionList, token: N) => void;
 type HandlerLookup = { [P in keyof estree.ExpressionMap]?: Handler<estree.ExpressionMap[P]> }
 
 type UnaryFn = Fn<[v: any]>;
@@ -222,11 +238,6 @@ type BinaryLookup = Record<string, BinaryFn>;
 type BinaryObj = { [P in estree.BinaryOperator]: BinaryFn };
 type LogicalLookup = Record<string, BinaryFn>;
 type LogicalObj = { [P in estree.LogicalOperator]: BinaryFn };
-
-interface ExpressionBuilder {
-	readonly length: number;
-	push(...args: Instruction): void;
-}
 
 const unary: UnaryLookup = {
 	"!":		v => !v,
@@ -282,7 +293,7 @@ const handlers: HandlerLookup = {
 		if (token.callee.type === "MemberExpression") {
 			member = true;
 			build(b, token.callee.object);
-			b.push(InstructionCode.Dup, undefined);
+			b.push(InstructionCode.Dup);
 
 			if (token.callee.property.type === "Identifier") {
 				b.push(InstructionCode.Member, token.callee.property.name);
@@ -293,11 +304,11 @@ const handlers: HandlerLookup = {
 			build(b, token.callee);
 		}
 		
-		b.push(InstructionCode.Container, undefined);
+		b.push(InstructionCode.Container);
 		for (let arg of token.arguments) {
 			if (arg.type === "SpreadElement") {
 				build(b, arg.argument);
-				b.push(InstructionCode.ArraySpread, undefined);
+				b.push(InstructionCode.ArraySpread);
 			} else {
 				build(b, arg);
 			}
@@ -309,7 +320,7 @@ const handlers: HandlerLookup = {
 		build(b, token.object);
 		if (token.computed) {
 			build(b, token.property);
-			b.push(InstructionCode.Member, undefined);
+			b.push(InstructionCode.Member);
 		} else if (token.property.type === "Identifier") {
 			b.push(InstructionCode.Member, token.property.name);
 		} else {
@@ -337,28 +348,28 @@ const handlers: HandlerLookup = {
 		b.push(InstructionCode.Logical, token.operator);
 	},
 	ArrayExpression(b, token) {
-		b.push(InstructionCode.Container, undefined);
+		b.push(InstructionCode.Container);
 		const { elements } = token;
 		for (let i = 0; i < elements.length; i++) {
 			const e = elements[i]!;
 			if (e.type === "SpreadElement") {
 				build(b, e.argument);
-				b.push(InstructionCode.ArraySpread, undefined);
+				b.push(InstructionCode.ArraySpread);
 			} else {
 				build(b, e);
 			}
 		}
 
-		b.push(InstructionCode.Array, undefined);
+		b.push(InstructionCode.Array);
 	},
 	ObjectExpression(b, token) {
 		const { properties } = token;
-		b.push(InstructionCode.Container, undefined);
+		b.push(InstructionCode.Container);
 		for (let i = 0; i < properties.length; i++) {
 			const prop = properties[i];
 			if (prop.type === "SpreadElement") {
 				build(b, prop.argument);
-				b.push(InstructionCode.ObjectSpread, undefined);
+				b.push(InstructionCode.ObjectSpread);
 			} else {
 				if (!prop.computed && prop.key.type === "Identifier") {
 					b.push(InstructionCode.Literal, prop.key.name);
@@ -370,7 +381,7 @@ const handlers: HandlerLookup = {
 			}
 		}
 
-		b.push(InstructionCode.Object, undefined);
+		b.push(InstructionCode.Object);
 	}
 }
 
