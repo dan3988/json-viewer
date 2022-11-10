@@ -6,6 +6,7 @@
 			"html": ["/src/amd/html"],
 			"json": ["/src/amd/json"],
 			"json-path": ["/src/amd/json-path"],
-			"json-viewer": ["/src/amd/json-viewer"]
+			"json-viewer": ["/src/amd/json-viewer"],
+			"vm": ["/src/amd/vm"]
 		}}
 }

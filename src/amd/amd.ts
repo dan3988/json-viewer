@@ -13,8 +13,7 @@
 		}
 
 		let args: any[] = [];
-		let exports: any = {};
-		exports[Symbol.toStringTag] = "Module";
+		let exports: any = undefined;
 
 		for (let dep of deps) {
 			let value: any;
@@ -23,7 +22,7 @@
 					value = require;
 					break;
 				case "exports":
-					value = exports;
+					value = exports = {};
 					break;
 				default:
 					value = modules.get(dep);
@@ -33,9 +32,12 @@
 			args.push(value);
 		}
 
-		const result = fn.apply(undefined, args);
-		if (typeof result === "object")
-			exports = result;
+		if (exports === undefined) {
+			exports = fn.apply(undefined, args);
+		} else {
+			exports[Symbol.toStringTag] = "Module";
+			fn.apply(undefined, args);
+		}
 
 		if (name == null) {
 			if ("JSONPath" in exports) {
