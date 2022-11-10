@@ -52,6 +52,22 @@ class InstructionList {
 		this.#values.push(code, arg);
 		this.#length++;
 	}
+
+	debug() {
+		console.debug(this.debugInfo());
+	}
+	
+	debugInfo() {
+		const v = this.#values;
+		const values: any[] = [];
+
+		for (let i = 0; i < v.length;) {
+			const [code, arg]: Instruction = [v[i++], v[i++]]
+			values.push({ arg, code: InstructionCode[code] });
+		}
+
+		return values;
+	}
 }
 
 type InstructionHandler = (stack: EvaluatorStack, arg: any) => void;
