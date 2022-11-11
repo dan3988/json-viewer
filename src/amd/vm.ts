@@ -3,10 +3,63 @@
 import * as es from "esprima";
 import type * as estree from "estree";
 
+export interface JPathExpression extends Script {
+	readonly expression: string;
+	readonly usesPath: boolean;
+}
+
+const identifier = "_$_";
+
 /**
  * Override for the default jsonpath-plus script class, which uses eval(), as it is forbidden in extensions using manifest V3.
  */
-export class Script {
+ export class Script {
+	/**
+	 * Replaces all '@' identifiers, since they will result in an illegal syntax error, then searches all literal expressions and replaces the identifier with '@'
+	 */
+	static readonly JPath = class JPathExpression extends Script {
+		static #fixJPath(list: InstructionList, args: [usesPath: boolean]) {
+			for (let i = 0; i < list.count; i++) {
+				let [code, arg] = list.get(i)!;
+				switch (code) {
+					case InstructionCode.Literal: {
+						if (typeof arg === "string") {
+							if (arg.includes("_$_")) {
+								arg = arg.replace("_$_", "@");
+								list.setArg(i, arg);
+							}
+						}
+					}
+					case InstructionCode.Identifier:
+						args[0] ||= arg === "_$_path";
+						break;
+					case InstructionCode.LogicalAnd:
+					case InstructionCode.LogicalOr:
+					case InstructionCode.LogicalCoalesce:
+						this.#fixJPath(arg, args);
+						break;
+				}
+			}
+		}
+		
+		readonly expression: string;
+		readonly usesPath: boolean;
+
+		constructor(script: string) {
+			let text = script.replaceAll("@", identifier);
+			super(text);
+
+			const args: [boolean] = [false];
+			JPathExpression.#fixJPath(this.#instructions, args);
+			this.expression = script;
+			this.usesPath = args[0];
+		}
+	}
+
+	static jpath(script: string): JPathExpression {
+		return new Script.JPath(script);
+	}
+
 	readonly #script: string;
 	readonly #instructions: InstructionList;
 
@@ -24,15 +77,15 @@ export default Script;
 
 class InstructionList {
 	readonly #values: any[];
-	#length: number;
+	#count: number;
 
-	get length() {
-		return this.#length;
+	get count() {
+		return this.#count;
 	}
 
 	constructor() {
 		this.#values = [];
-		this.#length = 0;
+		this.#count = 0;
 	}
 
 	execute(context: any) {
@@ -48,9 +101,19 @@ class InstructionList {
 		return result;
 	}
 
+	get(index: number): Instruction | undefined {
+		const v = this.#values;
+		const i = index * 2;
+		return i < v.length ? [v[i], v[i + 1]] : undefined;
+	}
+
+	setArg(index: number, arg: any) {
+		this.#values[(index * 2) + 1] = arg;
+	}
+
 	push(code: InstructionCode, arg?: any) {
 		this.#values.push(code, arg);
-		this.#length++;
+		this.#count++;
 	}
 
 	debug() {
@@ -75,6 +138,7 @@ type Instruction = [code: InstructionCode, arg: any];
 
 enum InstructionCode {
 	Nil = 0,
+	Jump,
 	Dup,
 	Literal,
 	Identifier,
@@ -86,8 +150,10 @@ enum InstructionCode {
 	Object,
 	Call,
 	Unary,
-	Logical,
-	Binary
+	Binary,
+	LogicalAnd,
+	LogicalOr,
+	LogicalCoalesce
 }
 
 class EvaluatorStack {
@@ -203,15 +269,34 @@ instructionHandlers[InstructionCode.Unary] = (stack, arg) => {
 	stack.push(result);
 }
 
-instructionHandlers[InstructionCode.Logical] = (stack, arg) => {
-	const handler = logical[arg];
-	if (handler == null)
-		throw new TypeError("Unsupported operator: " + arg);
+instructionHandlers[InstructionCode.LogicalAnd] = (stack, arg: InstructionList) => {
+	const first = stack.pop();
+	if (!first) {
+		stack.push(first);
+	} else {
+		const result = arg.execute(stack.context);
+		stack.push(result);
+	}
+}
 
-	const right = stack.pop();
-	const left = stack.pop();
-	const result = handler(left, right);
-	stack.push(result);
+instructionHandlers[InstructionCode.LogicalOr] = (stack, arg: InstructionList) => {
+	const first = stack.pop();
+	if (first) {
+		stack.push(first);
+	} else {
+		const result = arg.execute(stack.context);
+		stack.push(result);
+	}
+}
+
+instructionHandlers[InstructionCode.LogicalCoalesce] = (stack, arg: InstructionList) => {
+	const first = stack.pop();
+	if (first != null) {
+		stack.push(first);
+	} else {
+		const result = arg.execute(stack.context);
+		stack.push(result);
+	}
 }
 
 instructionHandlers[InstructionCode.Binary] = (stack, arg) => {
@@ -248,12 +333,12 @@ type HandlerLookup = { [P in keyof estree.ExpressionMap]?: Handler<estree.Expres
 type UnaryFn = Fn<[v: any]>;
 type BinaryFn = Fn<[x: any, y: any]>;
 
-type UnaryLookup = Record<string, UnaryFn>;
+type UnaryLookup = Record<string, undefined | UnaryFn>;
 type UnaryObj = { [P in estree.UnaryOperator]?: UnaryFn };
-type BinaryLookup = Record<string, BinaryFn>;
+type BinaryLookup = Record<string, undefined | BinaryFn>;
 type BinaryObj = { [P in estree.BinaryOperator]: BinaryFn };
-type LogicalLookup = Record<string, BinaryFn>;
-type LogicalObj = { [P in estree.LogicalOperator]: BinaryFn };
+type LogicalLookup = Record<string, undefined | InstructionCode>;
+type LogicalObj = { [P in estree.LogicalOperator]: InstructionCode };
 
 const unary: UnaryLookup = {
 	"!":		v => !v,
@@ -265,9 +350,9 @@ const unary: UnaryLookup = {
 } satisfies UnaryObj
 
 const logical: LogicalLookup = {
-	"&&": (x, y) => x && y,
-	"||": (x, y) => x || y,
-	"??": (x, y) => x ?? y
+	"&&": InstructionCode.LogicalAnd,
+	"||": InstructionCode.LogicalOr,
+	"??": InstructionCode.LogicalCoalesce
 } satisfies LogicalObj
 
 const binary: BinaryLookup = {
@@ -309,7 +394,7 @@ const handlers: HandlerLookup = {
 		if (token.callee.type === "MemberExpression") {
 			member = true;
 			build(b, token.callee.object);
-			b.push(InstructionCode.Dup);
+			b.push(InstructionCode.Dup, 1);
 
 			if (token.callee.property.type === "Identifier") {
 				b.push(InstructionCode.Member, token.callee.property.name);
@@ -350,18 +435,29 @@ const handlers: HandlerLookup = {
 		b.push(InstructionCode.Identifier, token.name);
 	},
 	UnaryExpression(b, token) {
+		if (!(token.operator in unary))
+			throw new TypeError("Unsupported unary operator: " + token.operator);
+
 		build(b, token.argument);
 		b.push(InstructionCode.Unary, token.operator);
 	},
 	BinaryExpression(b, token) {
+		if (!(token.operator in binary))
+			throw new TypeError("Unsupported binary operator: " + token.operator);
+
 		build(b, token.left);
 		build(b, token.right);
 		b.push(InstructionCode.Binary, token.operator);
 	},
 	LogicalExpression(b, token) {
+		const code = logical[token.operator];
+		if (code == null)
+			throw new TypeError("Unsupported logical operator: " + token.operator);
+		
+		const block = new InstructionList();
 		build(b, token.left);
-		build(b, token.right);
-		b.push(InstructionCode.Logical, token.operator);
+		build(block, token.right);
+		b.push(code, block);
 	},
 	ArrayExpression(b, token) {
 		b.push(InstructionCode.Container);

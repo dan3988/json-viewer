@@ -1,19 +1,38 @@
 /// <amd-module name="json-path"/>
 import * as jp from "jsonpath-plus";
-import Script from "vm";
+import Script, { JPathExpression } from "vm";
 
 jp.JSONPath.prototype.vm.Script = Script;
 
 export var { JSONPath } = jp;
 export default JSONPath;
 
-const old = jp.JSONPath.prototype.evaluate;
-jp.JSONPath.prototype.evaluate = function() {
-	const key = "script eval";
-	console.time(key);
+jp.JSONPath.prototype._eval = function (code: string, value: any, valueName: string, path: string[], parent: any, parentPropName: null | string) {
+	let sandbox = this.currSandbox;
+	let scriptCache: Map<string, JPathExpression> = JSONPath.cache["scripts"];
+	if (scriptCache == null)
+		JSONPath.cache["scripts"] = scriptCache = new Map();
+
+	let script = scriptCache.get(code);
+	if (script == null) {
+		script = Script.jpath(code);
+		scriptCache.set(code, script);
+	}
+
+	sandbox._$_parentProperty = parentPropName;
+	sandbox._$_parent = parent;
+	sandbox._$_property = valueName;
+	sandbox._$_root = this.json;
+	sandbox._$_ = value;
+
+	if (script.usesPath)
+		sandbox._$_path = JSONPath.toPathString(path.concat([valueName]));
+
+	const proto = Object.getPrototypeOf(sandbox)
 	try {
-		return old.apply(this, arguments);
+		Object.setPrototypeOf(sandbox, globalThis);
+		return script.runInNewContext(sandbox);
 	} finally {
-		console.timeEnd(key);
+		Object.setPrototypeOf(sandbox, proto);
 	}
 }
