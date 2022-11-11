@@ -154,7 +154,8 @@ enum InstructionCode {
 	Binary,
 	LogicalAnd,
 	LogicalOr,
-	LogicalCoalesce
+	LogicalCoalesce,
+	Conditional
 }
 
 interface InstructionArg {
@@ -174,6 +175,7 @@ interface InstructionArg {
 	[InstructionCode.LogicalAnd]: InstructionList;
 	[InstructionCode.LogicalOr]: InstructionList;
 	[InstructionCode.LogicalCoalesce]: InstructionList;
+	[InstructionCode.Conditional]: [x: InstructionList, y: InstructionList]
 }
 
 type ArglessInstruction = keyof { [K in keyof InstructionArg as undefined extends InstructionArg[K] ? K : never]: any };
@@ -325,6 +327,12 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 			const result = arg.execute(stack.context);
 			stack.push(result);
 		}
+	},
+	// InstructionCode.Conditional,
+	(stack, [x, y]) => {
+		const condition = stack.pop();
+		const result = (condition ? x : y).execute(stack.context);
+		stack.push(result);
 	}
 ] satisfies InstructionHandlers;
 
@@ -512,6 +520,14 @@ const handlers: HandlerLookup = {
 		}
 
 		b.push(InstructionCode.Object);
+	},
+	ConditionalExpression(b, token) {
+		const x = new InstructionList();
+		const y = new InstructionList();
+		build(x, token.consequent);
+		build(y, token.alternate);
+		build(b, token.test);
+		b.push(InstructionCode.Conditional, [x, y]);
 	}
 }
 
