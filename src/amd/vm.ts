@@ -93,7 +93,7 @@ class InstructionList {
 		const stack = new EvaluatorStack(context);
 		for (let i = 0; i < v.length;) {
 			const [code, arg]: Instruction = [v[i++], v[i++]]
-			const handler = instructionHandlers[code];
+			const handler = instructionHandlers[code]!;
 			handler(stack, arg);
 		}
 	
@@ -111,6 +111,8 @@ class InstructionList {
 		this.#values[(index * 2) + 1] = arg;
 	}
 
+	push<C extends ArglessInstruction>(code: C, arg?: InstructionArg[C]): void
+	push<C extends InstructionCode>(code: C, arg: InstructionArg[C]): void
 	push(code: InstructionCode, arg?: any) {
 		this.#values.push(code, arg);
 		this.#count++;
@@ -133,12 +135,11 @@ class InstructionList {
 	}
 }
 
-type InstructionHandler = (stack: EvaluatorStack, arg: any) => void;
+type InstructionHandler<A = any> = (stack: EvaluatorStack, arg: A) => void;
 type Instruction = [code: InstructionCode, arg: any];
 
 enum InstructionCode {
 	Nil = 0,
-	Jump,
 	Dup,
 	Literal,
 	Identifier,
@@ -155,6 +156,27 @@ enum InstructionCode {
 	LogicalOr,
 	LogicalCoalesce
 }
+
+interface InstructionArg {
+	[InstructionCode.Nil]: never;
+	[InstructionCode.Dup]: number;
+	[InstructionCode.Literal]: number | string | boolean | bigint | RegExp | null | undefined;
+	[InstructionCode.Identifier]: string;
+	[InstructionCode.Member]: string | undefined;
+	[InstructionCode.Container]: undefined;
+	[InstructionCode.ArraySpread]: undefined;
+	[InstructionCode.Array]: undefined;
+	[InstructionCode.ObjectSpread]: undefined;
+	[InstructionCode.Object]: undefined;
+	[InstructionCode.Call]: boolean;
+	[InstructionCode.Unary]: estree.UnaryOperator;
+	[InstructionCode.Binary]: estree.BinaryOperator;
+	[InstructionCode.LogicalAnd]: InstructionList;
+	[InstructionCode.LogicalOr]: InstructionList;
+	[InstructionCode.LogicalCoalesce]: InstructionList;
+}
+
+type ArglessInstruction = keyof { [K in keyof InstructionArg as undefined extends InstructionArg[K] ? K : never]: any };
 
 class EvaluatorStack {
 	readonly context: any;
@@ -195,120 +217,116 @@ class EvaluatorStack {
 	}
 }
 
-const instructionHandlers: InstructionHandler[] = [];
+type InstructionHandlers = ArrayLike<undefined | InstructionHandler> & { [K in keyof InstructionArg]: InstructionArg[K] extends never ? undefined : InstructionHandler<InstructionArg[K]> }
 
-instructionHandlers[InstructionCode.Dup] = (stack, arg) => {
-	stack.dupe(arg);
-}
-
-instructionHandlers[InstructionCode.Literal] = (stack, arg) => stack.push(arg);
-instructionHandlers[InstructionCode.Identifier] = (stack, arg) => {
-	if (!(arg in stack.context))
-		throw new ReferenceError(`${arg} is not defined.`);
-
-	stack.push(stack.context[arg])
-}
-
-instructionHandlers[InstructionCode.Member] = (stack, arg) => {
-	const obj = stack.pop();
-	const key = arg ?? stack.pop();
-	stack.push(obj[key]);
-}
-
-instructionHandlers[InstructionCode.ArraySpread] = (stack) => {
-	const arr = stack.pop();
-	for (let value of arr)
-		stack.push(value);
-}
-
-instructionHandlers[InstructionCode.Container] = (stack) => {
-	stack.startContainer();
-}
-
-instructionHandlers[InstructionCode.Array] = (stack) => {
-	const arr = stack.endContainer();
-	stack.push(arr);
-}
-
-instructionHandlers[InstructionCode.ObjectSpread] = (stack) => {
-	const obj = stack.pop();
-	for (let key in obj)
-		stack.push(key, obj[key]);
-}
-
-instructionHandlers[InstructionCode.Object] = (stack) => {
-	const res: any = {};
-	const props = stack.endContainer();
-	for (let i = 0; i < props.length; ) {
-		const key = props[i++];
-		const value = props[i++];
-		res[key] = value;
-	}
-
-	stack.push(res);
-}
-
-instructionHandlers[InstructionCode.Call] = (stack, arg) => {
-	let args = stack.endContainer();
-	let fn = stack.pop();
-	let member: any = undefined;
-	if (arg)
-		member = stack.pop();
-
-	const result = Function.prototype.apply.call(fn, member, args);
-	stack.push(result);
-}
-
-instructionHandlers[InstructionCode.Unary] = (stack, arg) => {
-	const handler = unary[arg];
-	if (handler == null)
-		throw new TypeError("Unsupported operator: " + arg);
-
-	const argument = stack.pop();
-	const result = handler(argument);
-	stack.push(result);
-}
-
-instructionHandlers[InstructionCode.LogicalAnd] = (stack, arg: InstructionList) => {
-	const first = stack.pop();
-	if (!first) {
-		stack.push(first);
-	} else {
-		const result = arg.execute(stack.context);
+const instructionHandlers: (undefined | InstructionHandler)[] = [
+	// InstructionCode.Nil
+	undefined,
+	// InstructionCode.Dup
+	(stack, arg) => stack.dupe(arg),
+	// InstructionCode.Literal
+	(stack, arg) => stack.push(arg),
+	// InstructionCode.Identifier
+	(stack, arg) => {
+		if (!(arg in stack.context))
+			throw new ReferenceError(`${arg} is not defined.`);
+	
+		stack.push(stack.context[arg])
+	},
+	// InstructionCode.Member
+	(stack, arg) => {
+		const obj = stack.pop();
+		const key = arg ?? stack.pop();
+		stack.push(obj[key]);
+	},
+	// InstructionCode.Container
+	(stack) => stack.startContainer(),
+	// InstructionCode.ArraySpread
+	(stack) => {
+		const arr = stack.pop();
+		for (let value of arr)
+			stack.push(value);
+	},
+	// InstructionCode.Array
+	(stack) => {
+		const arr = stack.endContainer();
+		stack.push(arr);
+	},
+	// InstructionCode.ObjectSpread
+	(stack) => {
+		const obj = stack.pop();
+		for (let key in obj)
+			stack.push(key, obj[key]);
+	},
+	// InstructionCode.Object
+	(stack) => {
+		const res: any = {};
+		const props = stack.endContainer();
+		for (let i = 0; i < props.length; ) {
+			const key = props[i++];
+			const value = props[i++];
+			res[key] = value;
+		}
+	
+		stack.push(res);
+	},
+	// InstructionCode.Call
+	(stack, arg) => {
+		let args = stack.endContainer();
+		let fn = stack.pop();
+		let member: any = undefined;
+		if (arg)
+			member = stack.pop();
+	
+		const result = Function.prototype.apply.call(fn, member, args);
 		stack.push(result);
-	}
-}
-
-instructionHandlers[InstructionCode.LogicalOr] = (stack, arg: InstructionList) => {
-	const first = stack.pop();
-	if (first) {
-		stack.push(first);
-	} else {
-		const result = arg.execute(stack.context);
+	},
+	// InstructionCode.Unary
+	(stack, arg) => {
+		const handler = unary[arg]!;
+		const argument = stack.pop();
+		const result = handler(argument);
 		stack.push(result);
-	}
-}
-
-instructionHandlers[InstructionCode.LogicalCoalesce] = (stack, arg: InstructionList) => {
-	const first = stack.pop();
-	if (first != null) {
-		stack.push(first);
-	} else {
-		const result = arg.execute(stack.context);
+	},
+	// InstructionCode.Binary
+	(stack, arg) => {
+		const handler = binary[arg]!;
+		const right = stack.pop();
+		const left = stack.pop();
+		const result = handler(left, right);
 		stack.push(result);
+	},
+	// InstructionCode.LogicalAnd
+	(stack, arg) => {
+		const first = stack.pop();
+		if (!first) {
+			stack.push(first);
+		} else {
+			const result = arg.execute(stack.context);
+			stack.push(result);
+		}
+	},
+	// InstructionCode.LogicalOr
+	(stack, arg) => {
+		const first = stack.pop();
+		if (first) {
+			stack.push(first);
+		} else {
+			const result = arg.execute(stack.context);
+			stack.push(result);
+		}
+	},
+	// InstructionCode.LogicalCoalesce
+	(stack, arg) => {
+		const first = stack.pop();
+		if (first != null) {
+			stack.push(first);
+		} else {
+			const result = arg.execute(stack.context);
+			stack.push(result);
+		}
 	}
-}
-
-instructionHandlers[InstructionCode.Binary] = (stack, arg) => {
-	const handler = binary[arg];
-	if (handler == null)
-		throw new TypeError("Unsupported operator: " + arg);
-
-	const right = stack.pop();
-	const left = stack.pop();
-	const result = handler(left, right);
-	stack.push(result);
-}
+] satisfies InstructionHandlers;
 
 function test(expr: string) {
 	const compiled = compile(expr);
