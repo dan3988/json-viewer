@@ -345,9 +345,12 @@ function test(expr: string) {
 function compile(scriptText: string): InstructionList {
 	const script = es.parseScript(scriptText, { tolerant: true });
 	const instructions = new InstructionList();
-	const body = script.body as estree.Directive[];
+	const body = script.body;
 	if (body.length !== 1)
 		throw new Error("JSON path expression must have one statement.");
+
+	if (body[0].type !== "ExpressionStatement")
+		throw new Error("Invalid JSON path expression.");
 
 	build(instructions, body[0].expression);
 	return instructions;
