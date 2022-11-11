@@ -69,7 +69,8 @@ const identifier = "_$_";
 	}
 
 	runInNewContext(context: any) {
-		return this.#instructions.execute(context);
+		const stack = new EvaluatorStack(context);
+		return this.#instructions.execute(stack);
 	}
 }
 
@@ -88,9 +89,8 @@ class InstructionList {
 		this.#count = 0;
 	}
 
-	execute(context: any) {
+	execute(stack: EvaluatorStack) {
 		const v = this.#values;
-		const stack = new EvaluatorStack(context);
 		for (let i = 0; i < v.length;) {
 			const [code, arg]: Instruction = [v[i++], v[i++]]
 			const handler = instructionHandlers[code]!;
@@ -279,7 +279,7 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		let member: any = undefined;
 		if (arg)
 			member = stack.pop();
-	
+
 		const result = Function.prototype.apply.call(fn, member, args);
 		stack.push(result);
 	},
@@ -304,7 +304,7 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		if (!first) {
 			stack.push(first);
 		} else {
-			const result = arg.execute(stack.context);
+			const result = arg.execute(stack);
 			stack.push(result);
 		}
 	},
@@ -338,7 +338,8 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 
 function test(expr: string) {
 	const compiled = compile(expr);
-	const value = compiled.execute(globalThis);
+	const stack = new EvaluatorStack(globalThis);
+	const value = compiled.execute(stack);
 	return value;
 }
 
@@ -405,7 +406,7 @@ const binary: BinaryLookup = {
 	"<<":			(x, y) => x << y,
 	">>":			(x, y) => x >> y,
 	">>>":			(x, y) => x >>> y,
-	"in":			(x, y) => Array.prototype.includes.call(y, x),
+	"in":			(x, y) => x in y,
 	"instanceof":	(x, y) => x instanceof y
 } satisfies BinaryObj
 
