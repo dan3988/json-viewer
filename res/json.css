@@ -33,22 +33,38 @@ body {
 	border-top: solid var(--col-border) 1px;
 	display: flex;
 	gap: 0;
-	padding: 5px;
 	align-items: center;
+	padding: 5px;
 }
 
-.breadcrumb > li > span {
+.breadcrumb-input {
+	flex: 0px 1 1;
+}
+
+.breadcrumb-list {
+	display: contents;
+}
+
+.breadcrumb.editing > .breadcrumb-list {
+	display: none;
+}
+
+.breadcrumb:not(.editing) > .breadcrumb-input {
+	opacity: 0;
+}
+
+.breadcrumb-list > li > span {
 	cursor: pointer;
 	border-radius: 5px;
 	padding: 1px 5px;
 }
 
-.breadcrumb > li > span:hover {
+.breadcrumb-list > li > span:hover {
 	background-color: var(--match-bg);
 	color: var(--match-fg);
 }
 
-.breadcrumb > li:not(:last-child)::after {
+.breadcrumb-list > li:not(:last-child)::after {
 	content: ">";
 	margin: 0 5px;
 }

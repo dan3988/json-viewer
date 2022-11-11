@@ -108,6 +108,11 @@ select.cr-control {
 	transition-timing-function: ease-in-out;
 }
 
+.borderless {
+	border: none !important;
+	outline: none !important;
+}
+
 .btn,
 .cr-border {
 	border: solid var(--border-w) var(--col-border);

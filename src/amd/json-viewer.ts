@@ -73,33 +73,97 @@ export function load(document: Document, json: any) {
 	}
 	
 	const body = DOM(document.body);
-	const breadcrumb = body.create("ul", { class: "breadcrumb" })
+	const breadcrumb = body.create("div", { class: "breadcrumb" });
+	const breadcrumbList = breadcrumb.create("ul", { class: "breadcrumb-list" })
+	const breadcrumbInput = breadcrumb.create("input", {
+		class: "breadcrumb-input borderless",
+		props: {
+			type: "text",
+			spellcheck: false
+		},
+		events: {
+			focusin() {
+				this.setSelectionRange(0, this.value.length);
+				breadcrumb.element.classList.add("editing");
+			},
+			focusout() {
+				breadcrumb.element.classList.remove("editing");
+				this.value = selectionPath;
+			},
+			keypress(evt) {
+				if (evt.key === "Enter") {
+					let from: JsonToken;
+					let path = this.value.split("/");
+					if (path[0] === "$") {
+						from = scope.root;
+						path.shift();
+					} else {
+						const { selected } = scope;
+						if (selected == null)
+							return;
+						
+						from = selected.value;
+					}
+
+					path = path.filter(v => v);
+
+					if (path.length === 0) {
+						scope.deselect();
+					} else {
+						let result = from.resolve(path);
+						if (result != null) {
+							for (let t: null | JsonToken = result; t != null && t.parentProperty != null; ) {
+								t.parentProperty.expanded = true;
+								t = t.parent;
+							}
+
+							result.parentProperty?.select(true, true);
+							breadcrumb.element.classList.remove("editing");
+							this.disabled = true;
+							this.disabled = false;
+						}
+					}
+
+				}
+			}
+		}
+	});
+
 	const pathResult = body.create("ul", {
 		class: "json-root json-results"
 	})
 	
+	let selectionPath = "";
 	let pathExpr = "";
 	
 	function onSelectionChanged(evt: JsonScopeSelectedChangedEvent) {
-		const prop = evt.newValue;
+		breadcrumbList.removeAll();
 		
-		breadcrumb.removeAll();
-		for (let p = prop; p != null; p = p.parent.parentProperty) {
-			const current = p;
-	
-			breadcrumb.create("li", { at: "start" })
-				.append("span", {
-					class: "json-" + typeof current.key,
-					children: [ current.key ],
-					events: {
-						click() {
-							for (let c = prop; c != null && c != current; c = c.parent.parentProperty)
-								c.expanded = false;
-	
-							current.select(true);
+		let prop = evt.newValue;
+		if (prop != null) {
+			selectionPath = prop.value.path.join("/");
+			breadcrumbInput.element.value = selectionPath;
+
+			while (true) {
+				const current = prop;
+
+				breadcrumbList.create("li", { at: "start" })
+					.append("span", {
+						class: "json-" + typeof current.key,
+						children: [ current.key ],
+						events: {
+							click() {
+								for (let c = prop; c != null && c != current; c = c.parent.parentProperty)
+									c.expanded = false;
+		
+								current.select(true);
+							}
 						}
-					}
-				})
+					})
+
+				if ((prop = prop.parent.parentProperty) == null)
+					break;
+			}
 		}
 	}
 	
@@ -117,8 +181,7 @@ export function load(document: Document, json: any) {
 	
 		return navigator.clipboard.writeText(text);
 	}
-	
-	
+
 	body.create("div", { class: "controls" })
 		.append("div", {
 			class: "group",

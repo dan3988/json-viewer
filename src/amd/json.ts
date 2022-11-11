@@ -441,6 +441,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 export abstract class JsonToken<T = any> extends JsonBase {
 	readonly #root: null | JsonContainer;
 	readonly #prop: null | JsonProperty;
+	readonly #path: (string | number)[];
 
 	get root() {
 		return this.#root;
@@ -454,11 +455,25 @@ export abstract class JsonToken<T = any> extends JsonBase {
 		return this.#prop;
 	}
 
+	get path(): readonly (string | number)[] {
+		return this.#path;
+	}
+
 	abstract get proxy(): T;
 	abstract get type(): keyof JsonTokenTypeMap;
 
 	protected constructor(scope: JsonScope, prop: null | JsonProperty) {
 		super(scope);
+		if (prop == null) {
+			this.#root = this instanceof JsonContainer ? this : null;
+			this.#prop = null;
+			this.#path = ["$"];
+		} else {
+			this.#root = prop.parent.root;
+			this.#prop = prop;
+			this.#path = Array.from(prop.parent.#path);
+			this.#path.push(prop.key);
+		}
 		let root = prop?.parent?.root;
 		this.#prop = prop;
 		this.#root = root != null ? root : (this instanceof JsonContainer ? this : null);
