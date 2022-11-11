@@ -570,6 +570,8 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 			if (desc.value instanceof JsonProperty)
 				desc.value = desc.value.value.proxy;
 
+			desc.configurable = true;
+			desc.writable = false;
 			return desc;
 		},
 		getPrototypeOf() {
