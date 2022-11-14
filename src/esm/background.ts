@@ -80,10 +80,19 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 			"lib/amd/json-viewer.js",
 			"lib/amd/content.js", 
 			"lib/amd/content.amd.js");
-	
+
 	} else {
 		files.push("lib/amd/content.js");
 	}
+
+	chrome.scripting.insertCSS({
+		target,
+		files: [
+			"res/core.css",
+			"res/json.css"
+		],
+		origin: "AUTHOR"
+	});
 
 	chrome.scripting.executeScript({ target, files, world: "ISOLATED" });
 }

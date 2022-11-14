@@ -4,20 +4,6 @@ import { JSONPath } from "json-path";
 import { JsonScope, JsonScopeSelectedChangedEvent, JsonToken, JsonTokenFilterFlags } from "./json.js";
 
 export function load(document: Document, json: any) {
-	DOM(document.head)
-		.append('link', {
-			props: {
-				href: chrome.runtime.getURL("res/json.css"),
-				rel: "stylesheet"
-			}
-		})
-		.append('link', {
-			props: {
-				href: chrome.runtime.getURL("res/core.css"),
-				rel: "stylesheet"
-			}
-		})
-	
 	function setVisibleExpanded(token: JsonToken, expanded: boolean) {
 		if (!token.shown)
 			return;
