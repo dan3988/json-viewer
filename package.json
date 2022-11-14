@@ -1,7 +1,11 @@
 {
+  "scripts": {
+    "build": "node build.mjs"
+  },
   "devDependencies": {
     "@types/chrome": "^0.0.199",
     "@types/esprima": "^4.0.3",
+    "esbuild": "^0.15.13",
     "typescript": "^4.9.1-beta"
   },
   "dependencies": {

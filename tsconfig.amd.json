@@ -6,6 +6,7 @@
 		"baseUrl": ".",
 		"outDir": "lib/amd",
 		"paths": {
+			"vm": ["/src/amd/vm"],
 			"html": ["/src/amd/html"],
 			"json": ["/src/amd/json"],
 			"json-path": ["/src/amd/json-path"],

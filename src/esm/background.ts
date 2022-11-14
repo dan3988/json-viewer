@@ -8,6 +8,8 @@ const filter: chrome.webRequest.RequestFilter = {
 	types: [ "main_frame", "sub_frame" ]
 }
 
+const manifest = chrome.runtime.getManifest();
+
 settings.get().then(v => Object.assign(bag, v));
 settings.addListener(det => {
 	for (let [key, change] of Object.entries(det.changes))
@@ -60,22 +62,28 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 	}
 
 	const target = { tabId: det.tabId, frameIds: [det.frameId] }
-	const files = [
-		"lib/amd/amd.js",
-		"node_modules/esprima/dist/esprima.js",
-		"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
-		"lib/amd/html.js",
-		"lib/amd/vm.js",
-		"lib/amd/json.js",
-		"lib/amd/json-path.js",
-		"lib/amd/json-viewer.js",
-		"lib/amd/content.js", 
-		"lib/amd/content.amd.js"
-	]
+	const files: string[] = [];
 
-	if (!isJson)
-		//use less restrictive json parser if content-type is plain text
-		files.unshift("node_modules/jsonic/jsonic.js");
+	if (manifest.debug) {
+		if (!isJson)
+			//use less restrictive json parser if content-type is plain text
+			files.unshift("node_modules/jsonic/jsonic.js");
+
+		files.push(
+			"lib/amd/amd.js",
+			"node_modules/esprima/dist/esprima.js",
+			"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
+			"lib/amd/html.js",
+			"lib/amd/vm.js",
+			"lib/amd/json.js",
+			"lib/amd/json-path.js",
+			"lib/amd/json-viewer.js",
+			"lib/amd/content.js", 
+			"lib/amd/content.amd.js");
+	
+	} else {
+		files.push("lib/amd/content.js");
+	}
 
 	chrome.scripting.executeScript({ target, files, world: "ISOLATED" });
 }

@@ -8,5 +8,6 @@
 			"json-path": ["/src/amd/json-path"],
 			"json-viewer": ["/src/amd/json-viewer"],
 			"vm": ["/src/amd/vm"]
-		}}
+		}
+	}
 }

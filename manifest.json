@@ -1,5 +1,6 @@
 {
 	"$schema": "https://json.schemastore.org/chrome-manifest",
+	"debug": true,
 	"manifest_version": 3,
 	"name": "Json Explorer",
 	"version": "1.0.0",
