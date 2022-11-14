@@ -9,5 +9,6 @@
 			"json-viewer": ["/src/amd/json-viewer"],
 			"vm": ["/src/amd/vm"]
 		}
-	}
+	},
+	"include": ["src/**/*.ts"]
 }
