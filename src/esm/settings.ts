@@ -47,7 +47,7 @@ export namespace settings {
 	}
 
 	const list = [
-		makeSetting("enabled", Boolean, false),
+		makeSetting("enabled", Boolean, true),
 		makeSetting("limit", Number, 0),
 		makeSetting("limitType", Number, LimitUnit.Disabled),
 		makeSetting("indentType", Number, 1),
