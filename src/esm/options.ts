@@ -1,13 +1,48 @@
 import settings from "./settings.js";
 
-const eEnabled = document.getElementById("enabled") as HTMLInputElement;
-const eLimitValue = document.getElementById("limit") as HTMLInputElement;
+const ePluginEnabled = document.getElementById("plugin-enabled") as HTMLInputElement;
+const eLimitEnabled = document.getElementById("limit-enabled") as HTMLInputElement;
+const eLimitValue = document.getElementById("limit-value") as HTMLInputElement;
 const eLimitUnit = document.getElementById("limit-unit") as HTMLSelectElement;
 const eSave = document.getElementById("save") as HTMLButtonElement;
+const grpLimitValue = document.getElementById("grp-limit-value")!;
+
+enum LimitUnit {
+	B,
+	KB,
+	MB,
+	GB
+}
+
+const units = [
+	LimitUnit.B,
+	LimitUnit.KB,
+	LimitUnit.MB,
+	LimitUnit.GB
+]
+
+function getByteSize(limit: number, unit: LimitUnit): number {
+	return limit * (1 << (10 * unit));
+}
+
+function getLimitUnit(limit: number): [limit: number, unit: LimitUnit] {
+	let unit = units[0];
+	let i = 0;
+	while (true) {
+		if (limit < 1024 || ++i === units.length)
+			break;
+
+		limit >>= 10;
+		unit = units[i];
+	}
+	
+	return [limit, unit];
+}
 
 async function load() {
 	const bag = await settings.get();
 	const modified: settings.SaveType = {};
+	let [limit, unit] = getLimitUnit(bag.limitSize);
 
 	function setValue<K extends keyof settings.Settings>(e: HTMLElement, key: K, value: settings.Settings[K]) {
 		const setting = settings.getSetting(key, true);
@@ -21,23 +56,27 @@ async function load() {
 		}
 	}
 
-	eEnabled.checked = bag.enabled;
-	eEnabled.addEventListener("input", function() {
+	ePluginEnabled.checked = bag.enabled;
+	ePluginEnabled.addEventListener("input", function() {
 		setValue(this.parentElement!, "enabled", this.checked);
 	});
 
-	eLimitUnit.value = String(bag.limitType);
-	eLimitUnit.addEventListener("input", function() {
-		const value = parseInt(this.value);
-		setValue(this, "limitType", value);
-		eLimitValue.disabled = value === settings.LimitUnit.Disabled;
+	eLimitEnabled.checked = bag.limitEnabled;
+	eLimitEnabled.addEventListener("input", function() {
+		setValue(this.parentElement!, "limitEnabled", this.checked);
+		grpLimitValue.hidden = !this.checked;
 	});
 
-	eLimitValue.disabled = bag.limitType === settings.LimitUnit.Disabled;
-	eLimitValue.valueAsNumber = bag.limit ?? 0;
+	eLimitUnit.value = String(unit);
+	eLimitUnit.addEventListener("input", function() {
+		unit = parseInt(this.value);
+		setValue(this.parentElement!, "limitSize", getByteSize(limit, unit));
+	});
+
+	eLimitValue.valueAsNumber = limit;
 	eLimitValue.addEventListener("input", function() {
-		const value = parseInt(this.value);
-		setValue(this, "limit", value);
+		limit = parseFloat(this.value);
+		setValue(this.parentElement!, "limitSize", getByteSize(limit, unit));
 	});
 
 	eSave.addEventListener("click", async () => {
@@ -48,6 +87,8 @@ async function load() {
 
 		document.querySelectorAll(".dirty").forEach(v => v.classList.remove("dirty"));
 	});
+
+	grpLimitValue.hidden = !bag.limitEnabled;
 }
 
 load();

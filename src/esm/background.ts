@@ -52,10 +52,9 @@ function onHeadersRecieved(det: chrome.webRequest.WebResponseHeadersDetails): vo
 	if (!isJson && contentType !== "text/plain")
 		return;
 
-	if (bag.limitType !== settings.LimitUnit.Disabled && contentLength !== undefined) {
+	if (bag.limitEnabled && contentLength !== undefined) {
 		const len = parseInt(contentLength);
-		const max = settings.getByteSize(bag.limit, bag.limitType);
-		if (len > max) {
+		if (len > bag.limitSize) {
 			console.info("JSON is over size limit.", det.url);
 			return;
 		}

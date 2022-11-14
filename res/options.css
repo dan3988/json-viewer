@@ -20,7 +20,7 @@ body {
 }
 
 .group > .label {
-	flex: 6rem 0 0;
+	flex: 5rem 0 0;
 }
 
 .group > .check {
@@ -32,15 +32,15 @@ body {
 	min-width: 0;
 }
 
-.dirty {
+.group.dirty > .cr-control {
 	background-color: var(--col-dirty) !important;
 }
 
-.dirty:hover {
+.group.dirty > .cr-control:hover {
 	background-color: var(--col-dirty-hv) !important;
 }
 
-.dirty:focus,
-.dirty:focus:hover {
-	background-color: var(--col-dirty-focus) !important;
+.group.dirty > .cr-control:focus
+.group.dirty > .cr-control:focus:hover {
+	background-color: var(--col-dirty-hv) !important;
 }

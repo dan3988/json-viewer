@@ -8,7 +8,7 @@ export namespace settings {
 		return new Promise((resolve, reject) => {
 			const keys = settings.map(v => v.key);
 			store.get(keys, items => {
-				console.debug("settings get:", items)
+				console.debug("settings get:", items);
 				const e = chrome.runtime.lastError;
 				if (e)
 					return reject(e);
@@ -25,6 +25,7 @@ export namespace settings {
 	}
 	
 	function _set(store: chrome.storage.StorageArea, bag: any): Promise<void> {
+		console.debug("settings set:", bag);
 		return new Promise((resolve, reject) => {
 			store.set(bag, () => {
 				const e = chrome.runtime.lastError;
@@ -38,27 +39,15 @@ export namespace settings {
 		return { key, type, synced, defaultValue } as any;
 	}
 
-	export enum LimitUnit {
-		Disabled,
-		B,
-		KB,
-		MB,
-		GB
-	}
-
 	const list = [
 		makeSetting("enabled", Boolean, true),
-		makeSetting("limit", Number, 0),
-		makeSetting("limitType", Number, LimitUnit.Disabled),
+		makeSetting("limitEnabled", Boolean, true),
+		makeSetting("limitSize", Number, 1 << 100),
 		makeSetting("indentType", Number, 1),
 		makeSetting("indentTabs", Boolean, true)
 	]
 
 	const map = list.reduce((map, v) => map.set(v.key, v), new Map<string, settings.Setting>());
-	
-	export function getByteSize(limit: number, unit: LimitUnit): number {
-		return unit === LimitUnit.Disabled ? Infinity : limit << (10 * (unit - 1));
-	}
 
 	export interface SettingType<T = unknown> {
 		readonly name: string;
@@ -74,8 +63,8 @@ export namespace settings {
 
 	export interface Settings {
 		enabled: boolean;
-		limit: number;
-		limitType: LimitUnit;
+		limitEnabled: boolean;
+		limitSize: number;
 		indentType: number;
 		indentTabs: boolean;
 	}

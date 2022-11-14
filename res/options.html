@@ -10,19 +10,24 @@
 		<div class="base cr">
 			<div class="group">
 				<label class="check cr-border cr-control">
-					<input id="enabled" class="control cr-border check" type="checkbox"/>
+					<input id="plugin-enabled" class="control cr-border check" type="checkbox"/>
 					Enabled
 				</label>
 			</div>
-			<div class="group">
+			<div id="grp-limit-enabled" class="group">
+				<label class="check cr-border cr-control">
+					<input id="limit-enabled" class="control cr-border check" type="checkbox"/>
+					JSON Size Limit
+				</label>
+			</div>
+			<div id="grp-limit-value" class="group">
 				<span class="label cr-border">Size limit</span>
-				<input id="limit" class="cr-control cr-border hv" type="number" inputmode="numeric"/>
+				<input id="limit-value" class="cr-control cr-border hv" type="number" inputmode="numeric"/>
 				<select id="limit-unit" class="cr-control cr-border hv">
-					<option value="0">Disabled</option>
-					<option value="1">B</option>
-					<option value="2">KB</option>
-					<option value="3">MB</option>
-					<option value="4">GB</option>
+					<option value="0">B</option>
+					<option value="1">KB</option>
+					<option value="2">MB</option>
+					<option value="3">GB</option>
 				</select>
 			</div>
 			<button id="save" class="btn cr-border cr-control lt">Save</button>
