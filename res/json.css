@@ -192,27 +192,55 @@ span.match {
 	rotate: -90deg;
 }
 
+.json-prop.expanded > .summary-count {
+	display: none;
+}
+
+.json-prop.for-object::before,
+.json-prop.for-object::after,
+.json-prop.for-array::before,
+.json-prop.for-array::after {
+	padding: 0 5px;
+}
+
+.json-prop.for-object::before {
+	content: "{";
+}
+
+.json-prop.for-object::after {
+	content: "}";
+}
+
+.json-prop.for-array::before {
+	content: "[";
+}
+
+.json-prop.for-array::after {
+	content: "]";
+}
+
+.json-prop.for-object::before,
+.json-prop.for-array::before {
+	grid-area: 1 / 3 / span 1 / span 1;
+}
+
+.json-prop.for-object::after,
+.json-prop.for-array::after {
+	grid-area: 1 / 5 / span 1 / span 1;
+}
+
+.json-prop.expanded.for-object::after,
+.json-prop.expanded.for-array::after {
+	grid-area: 3 / 1 / span 1 / span 1;
+}
+
 .summary-count {
 	color: var(--json-num-fg);
-	padding: 0 5px;
 }
 
 .summary-count::before,
 .summary-count::after {
 	color: var(--col-fg);
-}
-
-.summary-object::before {
-	content: "Object(";
-}
-
-.summary-array::before {
-	content: "Array(";
-}
-
-.summary-object::after,
-.summary-array::after {
-	content: ")";
 }
 
 .expander::before {
@@ -231,8 +259,8 @@ span.match {
 
 .json-prop {
 	display: grid;
-	grid-template-columns: 1em auto 1fr;
-	grid-template-rows: auto auto;
+	grid-template-columns: 1em auto auto auto 1fr;
+	grid-template-rows: auto auto auto;
 	border: 1px transparent solid;
 	border-radius: 5px;
 }
@@ -243,7 +271,7 @@ span.match {
 }
 
 .json-prop > .summary-count {
-	grid-area: 1 / 3 / span 1 / span 1;
+	grid-area: 1 / 4 / span 1 / span 1;
 }
 
 .json-prop > .expander {

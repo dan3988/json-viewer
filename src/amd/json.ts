@@ -128,6 +128,9 @@ function createPropertyElement(key: string, value: JsonToken, selected: boolean,
 		]
 	});
 
+	if (value.is("container"))
+		prop.classList.add("for-" + value.type);
+
 	if (selected)
 		prop.classList.add("selected");
 
