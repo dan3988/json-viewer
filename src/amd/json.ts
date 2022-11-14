@@ -82,7 +82,7 @@ class JsonIterator<TKey extends string | number, TResult> implements Iterable<TR
 				return iterres(false, <any>next);
 			case JsonIteratorMode.Key:
 				return iterres(false, <any>next.key);
-			case JsonIteratorMode.Key:
+			case JsonIteratorMode.Value:
 				return iterres(false, <any>next.value);
 		}
 		
