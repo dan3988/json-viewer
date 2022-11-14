@@ -2,20 +2,26 @@
 	"$schema": "https://json.schemastore.org/chrome-manifest",
 	"debug": true,
 	"manifest_version": 3,
-	"name": "Json Explorer",
+	"name": "Json Viewer",
 	"version": "1.0.0",
 	"background": {
 		"service_worker": "lib/esm/background.js",
 		"type": "module"
+	},
+	"icons": {
+		"16": "res/icon16.png",
+		"48": "res/icon48.png",
+		"128": "res/icon128.png",
+		"256": "res/icon256.png"
 	},
 	"options_page": "res/options.html",
 	"web_accessible_resources": [
 		{
 			"matches": ["<all_urls>"],
 			"resources": [
+				"favicon.ico",
 				"lib/*.js",
-				"res/*",
-				"node_modules/jsonpath-plus/**/*.*"
+				"res/*"
 			]
 		}
 	],

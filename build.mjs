@@ -55,6 +55,7 @@ try {
 	delete mf.debug;
 	delete mf["$schema"];
 	await fs.promises.writeFile("dist/manifest.json", JSON.stringify(mf));
+	await fs.promises.cp("favicon.ico", "dist/favicon.ico");
 	await fs.promises.cp("res", "dist/res", { recursive: true });
 } catch (e) {
 	console.error(e);
