@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import * as _esbuild from "esbuild";
 import fs from "fs";
 import path from "path";
@@ -21,6 +22,42 @@ const args = util.parseArgs({
 const esbuild = _esbuild;
 let { watch = false, dist = false, out } = args.values;
 
+/**
+ * @param {import("esbuild").Message} msg
+ * @param {"red" | "yellow"} color
+ * @param {any} type
+ */
+function logMessage(msg, color, type) {
+	/** @type {import("esbuild").Location} */
+	const { file, column, line, lineText, length } = msg.location;
+	const loc = path.resolve(file);
+	const start = lineText.substring(0, column);
+	const mid = lineText.substring(column, column + length);
+	const end = lineText.substring(start.length + mid.length);
+
+	const midf = chalk.underline(chalk[color](mid))
+
+	console.log(`${chalk.blueBright(loc)}:${chalk.yellow(line)}:${chalk.yellow(column)}: ${chalk[color](type)}: ${msg.text}`);
+	console.log();
+	console.log(`${chalk.bgWhite(line)} ${start}${midf}${end}`);
+	console.log();
+}
+
+/** @param {import("esbuild").BuildFailure} error */
+function showBuildError(error) {
+	for (let e of error.errors)
+		logMessage(e, "red", "ERROR");
+}
+
+/** @param {import("esbuild").BuildResult} result */
+function showBuildResult(result) {
+	for (var error of result.errors)
+		logMessage(error, "red", "ERROR");
+
+	for (var warning of result.warnings)
+		logMessage(warning, "yellow", "WARN");
+}
+
 out ??= dist ? "dist" : "lib";
 watch &&= {
 	/**
@@ -28,7 +65,20 @@ watch &&= {
 	 * @param {import("esbuild").BuildResult | null} result 
 	 */
 	onRebuild(error, result) {
-		console.debug("update");
+		console.clear();
+
+		let msg;
+	
+		if (error == null) {
+			showBuildResult(result);
+			msg = chalk.greenBright("Build Successful");
+		} else {
+			showBuildError(error);
+			msg = chalk.redBright("Build Failed. (" + error.errors.length + " error(s))");
+		}
+
+		console.log(msg);
+		console.log();
 	}
 }
 
@@ -75,6 +125,7 @@ const build = async function(dir, arg0, arg1) {
 		sourcemap: !dist,
 		tsconfig: path.join("src", dir, "tsconfig.json"),
 		platform: "browser",
+		logLevel: "silent", 
 		target: "ESNext"
 	});
 }
@@ -86,8 +137,13 @@ try {
 	await fs.promises.mkdir(out);
 	await fs.promises.cp(`./node_modules/jsonic/${dist ? "jsonic-min.js" : "jsonic.js"}`, path.join(out, "js", "jsonic.js"));
 
-	let amd = await build("amd", "content.ts", true);
-	let esm = await build("esm");
+	try {
+		await build("amd", "content.ts", true).then(showBuildResult);
+		await build("esm").then(showBuildResult);
+	} catch (e) {
+		showBuildError(e);
+		process.exit(-1);
+	}
 
 	if (watch) {
 		function stop() {
