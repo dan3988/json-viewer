@@ -2,7 +2,7 @@ import chalk from "chalk";
 /** @type {typeof esbuild} */
 import * as esbuild from "esbuild";
 /** @type {typeof import("glob")} */
-import glob from "./node_modules/glob/glob.js";
+import glob from "glob";
 import fs from "fs";
 import path from "path";
 import * as util from "util";
