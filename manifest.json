@@ -5,7 +5,7 @@
 	"name": "JSON Viewer",
 	"version": "1.0.0",
 	"background": {
-		"service_worker": "lib/esm/background.js",
+		"service_worker": "js/background.js",
 		"type": "module"
 	},
 	"action": {
@@ -23,7 +23,7 @@
 			"matches": ["<all_urls>"],
 			"resources": [
 				"favicon.ico",
-				"lib/*.js",
+				"js/*",
 				"res/*"
 			]
 		}

@@ -8,8 +8,6 @@ const filter: chrome.webRequest.RequestFilter = {
 	types: [ "main_frame", "sub_frame" ]
 }
 
-const manifest = chrome.runtime.getManifest();
-
 settings.get().then(v => Object.assign(bag, v));
 settings.addListener(det => {
 	for (let [key, change] of Object.entries(det.changes))
@@ -27,49 +25,35 @@ async function showSizeLimitOverride(tabId: number): Promise<void> {
 	await chrome.scripting.executeScript({
 		target: { tabId },
 		files: [
-			"lib/esm/size-limit.js"
+			"js/size-limit.js"
 		]
 	});
 }
 
 async function inject(tabId: number, lenientParse: boolean) {
 	const target = { tabId }
-	const files: string[] = [];
+	const files = [ "js/content.js" ];
 
-	if (manifest.debug) {
-		if (lenientParse)
-			//use slower but less strict json parser
-			files.push("node_modules/jsonic/jsonic.js");
-
-		files.push(
-			"lib/amd/amd.js",
-			"node_modules/esprima/dist/esprima.js",
-			"node_modules/jsonpath-plus/dist/index-browser-umd.cjs",
-			"lib/amd/html.js",
-			"lib/amd/vm.js",
-			"lib/amd/json.js",
-			"lib/amd/json-path.js",
-			"lib/amd/json-viewer.js",
-			"lib/amd/content.js", 
-			"lib/amd/content.amd.js");
-
-	} else {
-		files.push("lib/amd/content.js");
-	}
+	if (lenientParse)
+		files.unshift("js/jsonic.js");
 
 	await chrome.scripting.insertCSS({
 		target,
+		origin: "AUTHOR",
 		files: [
 			"res/core.css",
 			"res/json.css"
-		],
-		origin: "AUTHOR"
+		]
 	});
 
-	await chrome.scripting.executeScript({ target, files, world: "ISOLATED" });
+	await chrome.scripting.executeScript({
+		target,
+		files,
+		world: "ISOLATED",
+	});
 }
 
-function onHeadersRecieved({ url, responseHeaders, tabId, frameId }: chrome.webRequest.WebResponseHeadersDetails): void {
+function onHeadersRecieved({ url, responseHeaders, tabId }: chrome.webRequest.WebResponseHeadersDetails): void {
 	if (!bag.enabled)
 		return;
 

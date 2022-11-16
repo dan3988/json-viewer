@@ -42,7 +42,7 @@ export namespace settings {
 	const list = [
 		makeSetting("enabled", Boolean, true),
 		makeSetting("limitEnabled", Boolean, true),
-		makeSetting("limitSize", Number, 1 << 100),
+		makeSetting("limitSize", Number, 1 << 20),
 		makeSetting("indentType", Number, 1),
 		makeSetting("indentTabs", Boolean, true)
 	]

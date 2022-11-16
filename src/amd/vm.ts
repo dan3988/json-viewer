@@ -1,4 +1,3 @@
-/// <amd-module name="vm"/>
 /// <reference path="../../node_modules/jsonpath-plus/src/jsonpath.d.ts"/>
 import * as es from "esprima";
 import type * as estree from "estree";

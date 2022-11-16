@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs -d",
+    "watch": "node build.mjs -w"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.199",

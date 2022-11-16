@@ -1,5 +1,5 @@
 /// <amd-module name="content"/>
-import { load } from "json-viewer";
+import { load } from "./json-viewer.js";
 
 console.log(location.toString());
 

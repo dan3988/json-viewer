@@ -1,5 +1,4 @@
-/// <amd-module name="json"/>
-import DOM from "html";
+import DOM from "./html.js";
 
 export interface JsonTokenTypeMap {
 	"object": JsonObject;

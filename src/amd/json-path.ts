@@ -1,6 +1,5 @@
-/// <amd-module name="json-path"/>
 import * as jp from "jsonpath-plus";
-import Script, { JPathExpression } from "vm";
+import Script, { JPathExpression } from "./vm.js";
 
 jp.JSONPath.prototype.vm.Script = Script;
 

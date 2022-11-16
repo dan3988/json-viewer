@@ -1,6 +1,5 @@
-/// <amd-module name="json-viewer"/>
-import DOM from "html";
-import { JSONPath } from "json-path";
+import DOM from "./html.js";
+import { JSONPath } from "./json-path.js";
 import { JsonScope, JsonScopeSelectedChangedEvent, JsonToken, JsonTokenFilterFlags } from "./json.js";
 
 export function load(document: Document, json: any) {

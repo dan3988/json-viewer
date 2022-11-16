@@ -1,4 +1,3 @@
-/// <amd-module name="html"/>
 export type HTMLTagName = string & keyof HTMLElementTagNameMap;
 
 type Primitive = string | number | null | undefined | bigint | boolean;
