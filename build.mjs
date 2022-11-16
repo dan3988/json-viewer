@@ -1,41 +1,29 @@
 import chalk from "chalk";
-import * as _esbuild from "esbuild";
+/** @type {typeof esbuild} */
+import * as esbuild from "esbuild";
+/** @type {typeof import("glob")} */
+import glob from "./node_modules/glob/glob.js";
 import fs from "fs";
 import path from "path";
 import * as util from "util";
 
-// const args = cla([
-// 	{ name: "minify", alias: "m", type: Boolean },
-// 	{ name: "watch", alias: "w", type: Boolean },
-// ])
-
-const args = util.parseArgs({
-	strict: true,
-	options: {
-		watch: { type: "boolean", short: "w" },
-		out: { type: "string", short: "o" },
-		dist: { type: "boolean", short: "d" }
-	}
-})
-
-/** @type {typeof import("./node_modules/esbuild/lib/main")} */
-const esbuild = _esbuild;
-let { watch = false, dist = false, out } = args.values;
+process
+	.on("uncaughtException", console.error)
+	.on("unhandledRejection", console.error);
 
 /**
- * @param {import("esbuild").Message} msg
+ * @param {esbuild.Message} msg
  * @param {"red" | "yellow"} color
  * @param {any} type
  */
 function logMessage(msg, color, type) {
-	/** @type {import("esbuild").Location} */
+	/** @type {esbuild.Location} */
 	const { file, column, line, lineText, length } = msg.location;
 	const loc = path.resolve(file);
 	const start = lineText.substring(0, column);
 	const mid = lineText.substring(column, column + length);
 	const end = lineText.substring(start.length + mid.length);
-
-	const midf = chalk.underline(chalk[color](mid))
+	const midf = chalk.underline(chalk[color](mid));
 
 	console.log(`${chalk.blueBright(loc)}:${chalk.yellow(line)}:${chalk.yellow(column)}: ${chalk[color](type)}: ${msg.text}`);
 	console.log();
@@ -43,13 +31,13 @@ function logMessage(msg, color, type) {
 	console.log();
 }
 
-/** @param {import("esbuild").BuildFailure} error */
+/** @param {esbuild.BuildFailure} error */
 function showBuildError(error) {
 	for (let e of error.errors)
 		logMessage(e, "red", "ERROR");
 }
 
-/** @param {import("esbuild").BuildResult} result */
+/** @param {esbuild.BuildResult} result */
 function showBuildResult(result) {
 	for (var error of result.errors)
 		logMessage(error, "red", "ERROR");
@@ -58,32 +46,29 @@ function showBuildResult(result) {
 		logMessage(warning, "yellow", "WARN");
 }
 
-out ??= dist ? "dist" : "lib";
-watch &&= {
-	/**
-	 * @param {import("esbuild").BuildFailure | null} error 
-	 * @param {import("esbuild").BuildResult | null} result 
-	 */
-	onRebuild(error, result) {
+/**
+ * @param {esbuild.BuildFailure | null} error 
+ * @param {esbuild.BuildResult | null} result 
+ */
+function onRebuild(error, result) {
+	if (!dist)
 		console.clear();
 
-		let msg;
-	
-		if (error == null) {
-			showBuildResult(result);
-			msg = chalk.greenBright("Build Successful");
-		} else {
-			showBuildError(error);
-			msg = chalk.redBright("Build Failed. (" + error.errors.length + " error(s))");
-		}
+	let msg;
 
-		console.log(msg);
-		console.log();
+	if (error == null) {
+		showBuildResult(result);
+		msg = chalk.greenBright("Build Successful");
+	} else {
+		showBuildError(error);
+		msg = chalk.redBright("Build Failed. (" + error.errors.length + " error(s))");
 	}
+
+	console.log(msg);
+	console.log();
 }
 
 function getFiles(dir) {
-	dir = path.join("src", dir);
 	return fs.promises.readdir(dir).then(files => {
 		for (let i = 0; i < files.length; ) {
 			const file = files[i];
@@ -98,23 +83,23 @@ function getFiles(dir) {
 	});
 }
 
+const globAsync = util.promisify(glob);
+
 /**
  * @type {{
- * 	(dir: string, entry: string, bundle: boolean) => Promise<void>
- * 	(dir: string) => Promise<void>
+ * 	(dir: string, entry: string, bundle: boolean) => Promise<esbuild.BuildResult>
+ * 	(dir: string) => Promise<esbuild.BuildResult>
  * }}
  */
 const build = async function(dir, arg0, arg1) {
 	let entryPoints, bundle;
 	if (typeof arg0 === "string") {
-		entryPoints = [path.join("src", dir, arg0)];
+		entryPoints = [path.join(dir, arg0)];
 		bundle = arg1;
 	} else {
 		entryPoints = await getFiles(dir);
 		bundle = false;
 	}
-
-	const outdir = path.join(out, "js");
 
 	return await esbuild.build({
 		entryPoints,
@@ -123,26 +108,89 @@ const build = async function(dir, arg0, arg1) {
 		watch,
 		minify: dist,
 		sourcemap: !dist,
-		tsconfig: path.join("src", dir, "tsconfig.json"),
+		tsconfig: path.join(dir, "tsconfig.json"),
 		platform: "browser",
-		logLevel: "silent", 
+		logLevel: "silent",
 		target: "ESNext"
 	});
 }
 
-try {
-	if (fs.existsSync(out))
-		await fs.promises.rm(out, { recursive: true });
-
-	await fs.promises.mkdir(out);
-	await fs.promises.cp(`./node_modules/jsonic/${dist ? "jsonic-min.js" : "jsonic.js"}`, path.join(out, "js", "jsonic.js"));
-
+/** @type {typeof build}  */
+const tryBuild = async function() {
 	try {
-		await build("amd", "content.ts", true).then(showBuildResult);
-		await build("esm").then(showBuildResult);
+		const result = await build(...arguments);
+		onRebuild(null, result);
+		return result;
 	} catch (e) {
-		showBuildError(e);
+		if (!("errors" in e))
+			throw e;
+
+		onRebuild(e);
+		return null;
+	}
+}
+
+const recur = { recursive: true };
+
+/**
+ * @param {string} dir
+ * @param {boolean} [clean]
+ */
+ function ensureDir(dir, clean) {
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, recur);
+	} else if (clean) {
+		fs.rmSync(dir, recur);
+		fs.mkdirSync(dir, recur)
+	}
+}
+
+const outdir = "lib";
+const distDir = "dist";
+const args = util.parseArgs({
+	strict: true,
+	options: {
+		watch: { type: "boolean", short: "w" },
+		dist: { type: "boolean", short: "d" },
+		//out: { type: "string", short: "o" },
+	}
+})
+
+let { watch = false, dist = false } = args.values;
+
+watch &&= { onRebuild };
+
+
+try {
+	ensureDir(outdir, true);
+
+	await fs.promises.cp(`./node_modules/jsonic/${dist ? "jsonic-min.js" : "jsonic.js"}`, path.join(outdir, "jsonic.js"));
+
+	let amd = await tryBuild("src/amd", "content.ts", true)
+	let esm = amd && await tryBuild("src/esm");
+	if (!esm)
 		process.exit(-1);
+
+	if (dist) {
+		ensureDir(distDir, true);
+
+		/** @type {chrome.runtime.Manifest} */
+		const mf = await fs.promises.readFile("manifest.json").then(JSON.parse);
+		delete mf.debug;
+		delete mf["$schema"];
+		await fs.promises.writeFile(path.join(distDir, "manifest.json"), JSON.stringify(mf));
+
+		for (const resources of mf.web_accessible_resources) {
+			for (const resource of resources.resources) {
+				const matches = await globAsync(resource);
+				for (const file of matches) {
+					const dst = path.join(distDir, file);
+					const dir = path.dirname(dst);
+					ensureDir(dir);
+					await fs.promises.copyFile(file, dst);
+				}
+			}
+		}
 	}
 
 	if (watch) {
@@ -156,13 +204,6 @@ try {
 		process.addListener("SIGQUIT", stop);
 		process.addListener("SIGTERM", stop);
 	}
-
-	const mf = await fs.promises.readFile("manifest.json").then(JSON.parse);
-	delete mf.debug;
-	delete mf["$schema"];
-	await fs.promises.writeFile(path.join(out, "manifest.json"), JSON.stringify(mf));
-	await fs.promises.cp("favicon.ico", path.join(out, "favicon.ico"));
-	await fs.promises.cp("res", path.join(out, "res"), { recursive: true });
 } catch (e) {
 	console.error(e);
 }

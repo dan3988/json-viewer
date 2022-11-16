@@ -25,17 +25,17 @@ async function showSizeLimitOverride(tabId: number): Promise<void> {
 	await chrome.scripting.executeScript({
 		target: { tabId },
 		files: [
-			"js/size-limit.js"
+			"lib/size-limit.js"
 		]
 	});
 }
 
 async function inject(tabId: number, lenientParse: boolean) {
 	const target = { tabId }
-	const files = [ "js/content.js" ];
+	const files = [ "lib/content.js" ];
 
 	if (lenientParse)
-		files.unshift("js/jsonic.js");
+		files.unshift("lib/jsonic.js");
 
 	await chrome.scripting.insertCSS({
 		target,
