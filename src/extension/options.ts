@@ -83,8 +83,11 @@ async function load() {
 	eSave.addEventListener("click", async () => {
 		await settings.setValues(modified);
 
-		for (let key in modified)
+		for (let key in modified) {
+			// @ts-ignore
+			bag[key] = modified[key];
 			Reflect.deleteProperty(modified, key);
+		}
 
 		document.querySelectorAll(".dirty").forEach(v => v.classList.remove("dirty"));
 	});
