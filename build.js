@@ -158,8 +158,8 @@ try {
 
 	await fs.promises.cp(`./node_modules/jsonic/${dist ? "jsonic-min.js" : "jsonic.js"}`, path.join(outdir, "jsonic.js"));
 
-	let amd = await tryBuild("Content", "src/amd", "content.ts", true)
-	let esm = amd && await tryBuild("Background", "src/esm");
+	let amd = await tryBuild("Content", "src/content", "content.ts", true)
+	let esm = amd && await tryBuild("Background", "src/extension");
 	if (!esm)
 		process.exit(-1);
 
