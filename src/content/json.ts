@@ -296,8 +296,12 @@ export class JsonScope<V = unknown> {
 
 	#setSelected(prop: null | JsonProperty, scroll?: boolean, blink?: boolean) {
 		const old = this.#selected;
-		if (old === prop)
+		if (old === prop) {
+			if (scroll && old != null)
+				old.scrollIntoView();
+
 			return;
+		}
 
 		if (old != null)
 			getElement(old).classList.remove("selected", "blink");
