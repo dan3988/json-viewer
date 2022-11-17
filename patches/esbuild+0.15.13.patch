@@ -1,0 +1,16 @@
+diff --git a/node_modules/esbuild/lib/main.js b/node_modules/esbuild/lib/main.js
+index 63ff5a0..e087b76 100644
+--- a/node_modules/esbuild/lib/main.js
++++ b/node_modules/esbuild/lib/main.js
+@@ -1020,8 +1020,9 @@ function buildOrServeImpl(callName, buildKey, sendRequest, sendResponse, refs, s
+       };
+       copyResponseToResult(response, result);
+       runOnEndCallbacks(result, logPluginError, () => {
+-        if (result.errors.length > 0) {
+-          return callback2(failureErrorWithLog("Build failed", result.errors, result.warnings), null);
++        let error = result.errors.length === 0 ? null : failureErrorWithLog("Build failed", result.errors, result.warnings);
++        if (error && !watch) {
++          return callback2(error, null);
+         }
+         if (response.rebuild) {
+           if (!rebuild) {
