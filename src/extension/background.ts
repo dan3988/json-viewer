@@ -30,8 +30,8 @@ async function showSizeLimitOverride(tabId: number): Promise<void> {
 	});
 }
 
-async function inject(tabId: number, lenientParse: boolean) {
-	const target = { tabId }
+async function inject(tabId: number, frameId: number, lenientParse: boolean) {
+	const target = { tabId, frameId }
 	const files = [ "lib/content.js" ];
 
 	if (lenientParse)
@@ -53,7 +53,7 @@ async function inject(tabId: number, lenientParse: boolean) {
 	});
 }
 
-function onHeadersRecieved({ url, responseHeaders, tabId }: chrome.webRequest.WebResponseHeadersDetails): void {
+function onHeadersRecieved({ url, responseHeaders, tabId, frameId }: chrome.webRequest.WebResponseHeadersDetails): void {
 	if (!bag.enabled)
 		return;
 
@@ -98,7 +98,7 @@ function onHeadersRecieved({ url, responseHeaders, tabId }: chrome.webRequest.We
 		}
 	}
 
-	inject(tabId, !isJson);
+	inject(tabId, frameId, !isJson);
 }
 
 chrome.webRequest.onHeadersReceived.addListener(onHeadersRecieved, filter, [ "responseHeaders" ]);
@@ -107,7 +107,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, respond) => {
 		return;
 
 	if (message === "limit-override") {
-		await inject(sender.tab.id!, true);
+		await inject(sender.tab.id!, sender.frameId!, true);
 		respond();
 	}
 });
