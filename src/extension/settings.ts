@@ -89,17 +89,13 @@ export namespace settings {
 
 	type ChangeHandler = (arg: SettingChangeEvent) => any;
 
-	export function addListener(handler: ChangeHandler) {
-		chrome.storage.onChanged.addListener((changes, area) => {
-			let synced = false;
-			if (area === "sync") {
-				synced = true;
-			} else if (area !== "local") {
-				return;
-			}
+	export function addListener(handler: ChangeHandler, type?: "both" | "sync" | "local") {
+		let [sync, local] = type == null || type === "both" ? [true, true] : [type === "sync", type === "local"];
+		if (local)
+			chrome.storage.sync.onChanged.addListener((changes) => handler({ changes, synced: false }));
 
-			handler({ synced, changes });
-		});
+		if (sync)
+			chrome.storage.local.onChanged.addListener((changes) => handler({ changes, synced: true }));
 	}
 
 	export function getSetting<K extends keyof Settings>(key: K, required: true): Setting<Settings[K]>
