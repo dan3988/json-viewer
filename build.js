@@ -1,7 +1,5 @@
 import chalk from "chalk";
-/** @type {typeof esbuild} */
 import * as esbuild from "esbuild";
-/** @type {typeof import("glob")} */
 import glob from "glob";
 import fs from "fs";
 import path from "path";
@@ -31,38 +29,30 @@ function logMessage(msg, color, type) {
 	console.log();
 }
 
-/** @param {esbuild.BuildFailure} error */
-function showBuildError(error) {
-	for (let e of error.errors)
-		logMessage(e, "red", "ERROR");
-}
-
-/** @param {esbuild.BuildResult} result */
-function showBuildResult(result) {
-	for (var error of result.errors)
-		logMessage(error, "red", "ERROR");
-
-	for (var warning of result.warnings)
-		logMessage(warning, "yellow", "WARN");
-}
-
 /**
- * @param {esbuild.BuildFailure | null} error 
- * @param {esbuild.BuildResult | null} result 
+ * 
+ * @param {string} name 
+ * @param {boolean} clear 
+ * @param {esbuild.Message[]} errors 
+ * @param {esbuild.Message[]} warnings 
  */
-function onRebuild(error, result) {
-	if (!dist)
+function showResult(name, clear, errors, warnings) {
+	if (clear)
 		console.clear();
 
 	let msg;
+	let fail = errors.length > 0;
+	if (fail) {
+		for (var error of errors)
+			logMessage(error, "red", "ERROR");
 
-	if (error == null) {
-		showBuildResult(result);
-		msg = chalk.greenBright("Build Successful");
+		msg = chalk.redBright(`${name}: Build Failed. (${error.length} error${error.length})`);
 	} else {
-		showBuildError(error);
-		msg = chalk.redBright("Build Failed. (" + error.errors.length + " error(s))");
+		msg = chalk.greenBright(name + ": Build Successful");
 	}
+
+	for (var warning of warnings)
+		logMessage(warning, "yellow", "WARN");
 
 	console.log(msg);
 	console.log();
@@ -87,11 +77,11 @@ const globAsync = util.promisify(glob);
 
 /**
  * @type {{
- * 	(dir: string, entry: string, bundle: boolean) => Promise<esbuild.BuildResult>
- * 	(dir: string) => Promise<esbuild.BuildResult>
+ * 	(name: string, dir: string, entry: string, bundle: boolean) => Promise<esbuild.BuildResult>
+ * 	(name: string, dir: string) => Promise<esbuild.BuildResult>
  * }}
  */
-const build = async function(dir, arg0, arg1) {
+const build = async function(name, dir, arg0, arg1) {
 	let entryPoints, bundle;
 	if (typeof arg0 === "string") {
 		entryPoints = [path.join(dir, arg0)];
@@ -105,7 +95,12 @@ const build = async function(dir, arg0, arg1) {
 		entryPoints,
 		bundle,
 		outdir,
-		watch,
+		watch: watch && {
+			onRebuild(error, result) {
+				let { errors, warnings } = error ?? result;
+				showResult(name, true, errors, warnings);
+			}
+		},
 		minify: dist,
 		sourcemap: !dist,
 		tsconfig: path.join(dir, "tsconfig.json"),
@@ -116,16 +111,16 @@ const build = async function(dir, arg0, arg1) {
 }
 
 /** @type {typeof build}  */
-const tryBuild = async function() {
+const tryBuild = async function(name) {
 	try {
 		const result = await build(...arguments);
-		onRebuild(null, result);
+		showResult(name, false, result.errors, result.warnings);
 		return result;
 	} catch (e) {
 		if (!("errors" in e))
 			throw e;
 
-		onRebuild(e);
+		showResult(name, false, e.errors, e.warnings);
 		return null;
 	}
 }
@@ -158,16 +153,13 @@ const args = util.parseArgs({
 
 let { watch = false, dist = false } = args.values;
 
-watch &&= { onRebuild };
-
-
 try {
 	ensureDir(outdir, true);
 
 	await fs.promises.cp(`./node_modules/jsonic/${dist ? "jsonic-min.js" : "jsonic.js"}`, path.join(outdir, "jsonic.js"));
 
-	let amd = await tryBuild("src/amd", "content.ts", true)
-	let esm = amd && await tryBuild("src/esm");
+	let amd = await tryBuild("Content", "src/amd", "content.ts", true)
+	let esm = amd && await tryBuild("Background", "src/esm");
 	if (!esm)
 		process.exit(-1);
 
