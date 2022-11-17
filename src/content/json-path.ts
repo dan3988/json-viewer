@@ -1,8 +1,6 @@
 import * as jp from "jsonpath-plus";
 import Script, { JPathExpression } from "./vm.js";
 
-jp.JSONPath.prototype.vm.Script = Script;
-
 export var { JSONPath } = jp;
 export default JSONPath;
 
@@ -18,14 +16,14 @@ jp.JSONPath.prototype._eval = function (code: string, value: any, valueName: str
 		scriptCache.set(code, script);
 	}
 
-	sandbox._$_parentProperty = parentPropName;
-	sandbox._$_parent = parent;
-	sandbox._$_property = valueName;
-	sandbox._$_root = this.json;
-	sandbox._$_ = value;
+	sandbox["@parentProperty"] = parentPropName;
+	sandbox["@parent"] = parent;
+	sandbox["@property"] = parent;
+	sandbox["@root"] = this.json;
+	sandbox["@"] = value;
 
 	if (script.usesPath)
-		sandbox._$_path = JSONPath.toPathString(path.concat([valueName]));
+		sandbox["@path"] = JSONPath.toPathString(path.concat([valueName]));
 
 	const proto = Object.getPrototypeOf(sandbox)
 	try {

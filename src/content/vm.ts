@@ -23,14 +23,18 @@ const identifier = "_$_";
 				switch (code) {
 					case InstructionCode.Literal: {
 						if (typeof arg === "string") {
-							if (arg.includes("_$_")) {
-								arg = arg.replace("_$_", "@");
+							if (arg.includes(identifier)) {
+								arg = arg.replace(identifier, "@");
 								list.setArg(i, arg);
 							}
 						}
 					}
 					case InstructionCode.Identifier:
-						args[0] ||= arg === "_$_path";
+						if (typeof arg === "string" && arg.includes(identifier)) {
+							arg = arg.replace(identifier, "@");
+							args[0] ||= arg === "@path";
+							list.setArg(i, arg);
+						}
 						break;
 					case InstructionCode.LogicalAnd:
 					case InstructionCode.LogicalOr:
@@ -53,6 +57,10 @@ const identifier = "_$_";
 			this.expression = script;
 			this.usesPath = args[0];
 		}
+
+		toString() {
+			return this.expression;
+		}
 	}
 
 	static jpath(script: string): JPathExpression {
@@ -70,6 +78,10 @@ const identifier = "_$_";
 	runInNewContext(context: any) {
 		const stack = new EvaluatorStack(context);
 		return this.#instructions.execute(stack);
+	}
+
+	toString() {
+		return this.#script;
 	}
 }
 
