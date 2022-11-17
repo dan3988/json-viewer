@@ -47,36 +47,37 @@ async function load() {
 	function setValue<K extends keyof settings.Settings>(e: HTMLElement, key: K, value: settings.Settings[K]) {
 		const setting = settings.getSetting(key, true);
 		const trueValue = setting.type(value);
+		const group = e.closest(".group");
 		if (trueValue === bag[key]) {
 			delete modified[key];
-			e.classList.remove("dirty");
+			group?.classList.remove("dirty");
 		} else {
 			modified[key] = trueValue;
-			e.classList.add("dirty");
+			group?.classList.add("dirty");
 		}
 	}
 
 	ePluginEnabled.checked = bag.enabled;
 	ePluginEnabled.addEventListener("input", function() {
-		setValue(this.parentElement!, "enabled", this.checked);
+		setValue(this, "enabled", this.checked);
 	});
 
 	eLimitEnabled.checked = bag.limitEnabled;
 	eLimitEnabled.addEventListener("input", function() {
-		setValue(this.parentElement!, "limitEnabled", this.checked);
+		setValue(this, "limitEnabled", this.checked);
 		grpLimitValue.hidden = !this.checked;
 	});
 
 	eLimitUnit.value = String(unit);
 	eLimitUnit.addEventListener("input", function() {
 		unit = parseInt(this.value);
-		setValue(this.parentElement!, "limitSize", getByteSize(limit, unit));
+		setValue(this, "limitSize", getByteSize(limit, unit));
 	});
 
 	eLimitValue.valueAsNumber = limit;
 	eLimitValue.addEventListener("input", function() {
 		limit = parseFloat(this.value);
-		setValue(this.parentElement!, "limitSize", getByteSize(limit, unit));
+		setValue(this, "limitSize", getByteSize(limit, unit));
 	});
 
 	eSave.addEventListener("click", async () => {

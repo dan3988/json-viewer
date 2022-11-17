@@ -32,15 +32,15 @@ body {
 	min-width: 0;
 }
 
-.group.dirty > .cr-control {
+.group.dirty > * {
 	background-color: var(--col-dirty) !important;
 }
 
-.group.dirty > .cr-control:hover {
+.group.dirty > *:hover {
 	background-color: var(--col-dirty-hv) !important;
 }
 
-.group.dirty > .cr-control:focus
-.group.dirty > .cr-control:focus:hover {
+.group.dirty > *:focus
+.group.dirty > *:focus:hover {
 	background-color: var(--col-dirty-hv) !important;
 }
