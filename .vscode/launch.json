@@ -6,6 +6,7 @@
 			"type": "chrome",
 			"userDataDir": "${workspaceFolder}\\.chrome",
 			"request": "launch",
+			"runtimeArgs": ["--load-extension=${workspaceFolder}"]
 			//"url": "chrome://extensions/"
 		}
 	]
