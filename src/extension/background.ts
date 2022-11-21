@@ -14,24 +14,25 @@ settings.addListener(det => {
 		(bag as any)[key] = change.newValue;
 });
 
-async function showSizeLimitOverride(tabId: number): Promise<void> {
+async function showSizeLimitOverride(tabId: number, frameIds: undefined | number[]): Promise<void> {
+	const target = { tabId, frameIds }
 	await chrome.scripting.insertCSS({
-		target: { tabId },
+		target,
 		files: [
 			"res/size-limit.css"
 		]
 	});
 
 	await chrome.scripting.executeScript({
-		target: { tabId },
+		target,
 		files: [
 			"lib/size-limit.js"
 		]
 	});
 }
 
-async function inject(tabId: number, frameId: number, lenientParse: boolean) {
-	const target = { tabId, frameId }
+async function inject(tabId: number, frameIds: undefined | number[], lenientParse: boolean) {
+	const target = { tabId, frameIds }
 	const files = [ "lib/content.js" ];
 
 	if (lenientParse)
@@ -93,12 +94,12 @@ function onHeadersRecieved({ url, responseHeaders, tabId, frameId }: chrome.webR
 		const len = parseInt(contentLength);
 		if (len > bag.limitSize) {
 			console.info("JSON is over size limit.", url);
-			showSizeLimitOverride(tabId);
+			showSizeLimitOverride(tabId, [frameId]);
 			return;
 		}
 	}
 
-	inject(tabId, frameId, !isJson);
+	inject(tabId, [frameId], !isJson);
 }
 
 chrome.webRequest.onHeadersReceived.addListener(onHeadersRecieved, filter, [ "responseHeaders" ]);
@@ -107,7 +108,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, respond) => {
 		return;
 
 	if (message === "limit-override") {
-		await inject(sender.tab.id!, sender.frameId!, true);
+		await inject(sender.tab.id!, sender.frameId == null ? undefined : [sender.frameId], true);
 		respond();
 	}
 });
