@@ -68,7 +68,7 @@ function onHeadersRecieved({ url, responseHeaders, tabId, frameId }: chrome.webR
 			return;
 
 		name = name.toLowerCase();
-		switch (name = name.toLowerCase()) {
+		switch (name) {
 			case "content-type":
 				contentType = value;
 				break;
