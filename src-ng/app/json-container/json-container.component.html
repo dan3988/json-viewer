@@ -1,0 +1,7 @@
+<div *ngIf="container != null">
+	<div [ngClass]="'json-container json-' + container.subtype">
+		<div *ngFor="let prop of container.properties()">
+			<app-json-property [prop]="prop"></app-json-property>
+		</div>
+	</div>
+</div>

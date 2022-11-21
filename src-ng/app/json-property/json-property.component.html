@@ -1,0 +1,11 @@
+<div *ngIf="prop != null" [ngClass]="'json-prop for-' + prop.value.type + '-' + prop.value.subtype">
+	<span class="json-key">{{ prop.key }}</span>
+	<div [ngSwitch]="prop.value.type">
+		<div *ngIf="prop.value.is('container')">
+			<app-json-container [container]="$any(prop.value)"></app-json-container>
+		</div>
+		<div *ngIf="prop.value.is('value')">
+			<app-json-value [token]="$any(prop.value)"></app-json-value>
+		</div>
+	</div>
+</div>

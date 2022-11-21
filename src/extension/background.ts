@@ -42,15 +42,20 @@ async function inject(tabId: number, frameIds: undefined | number[], lenientPars
 		target,
 		origin: "AUTHOR",
 		files: [
-			"res/core.css",
-			"res/json.css"
+			"lib/ng/styles.css"
 		]
 	});
 
 	await chrome.scripting.executeScript({
 		target,
-		files,
 		world: "ISOLATED",
+		files: [
+			"lib/content.js",
+			"lib/ng/runtime.js",
+			"lib/ng/polyfills.js",
+			"lib/ng/vendor.js",
+			"lib/ng/main.js",
+		]
 	});
 }
 
