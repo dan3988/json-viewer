@@ -38,19 +38,19 @@ async function inject(tabId: number, frameIds: undefined | number[], lenientPars
 	if (lenientParse)
 		files.unshift("lib/jsonic.js");
 
-	await chrome.scripting.insertCSS({
-		target,
-		origin: "AUTHOR",
-		files: [
-			"res/core.css",
-			"res/json.css"
-		]
-	});
+	// await chrome.scripting.insertCSS({
+	// 	target,
+	// 	origin: "AUTHOR",
+	// 	files: [
+	// 		"res/core.css",
+	// 		"res/json.css"
+	// 	]
+	// });
 
 	await chrome.scripting.executeScript({
 		target,
-		files,
 		world: "ISOLATED",
+		files: [ "lib/ui/main.js" ]
 	});
 }
 

@@ -4,7 +4,9 @@ import glob from "glob";
 import fs from "fs";
 import path from "path";
 import * as util from "util";
+import * as rl from "rollup";
 
+process.env.ROLLUP_WATCH = true;
 process
 	.on("uncaughtException", console.error)
 	.on("unhandledRejection", console.error);
@@ -183,6 +185,23 @@ try {
 				}
 			}
 		}
+	} else {
+	}
+
+	const config = (await import("./rollup.config.js")).default;
+
+	if (watch) {
+		//const watcher = rl.watch(config);
+		//debugger;
+		
+	} else {
+		const bundle = await rl.rollup(config);
+		const { output } = await bundle.generate({ amd: true });
+		fs.mkdirSync("lib/ui", recur);
+		for (let v of output)
+			if (v.type === "chunk")
+				await fs.promises.writeFile("lib/ui/" + v.fileName, v.code);
+
 	}
 
 	if (watch) {
