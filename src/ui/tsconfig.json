@@ -1,4 +1,7 @@
 {
 	"extends": "@tsconfig/svelte/tsconfig.json",
-	"include": ["*"]
+	"include": [
+		"../*.d.ts",
+		"*"
+	]
 }
