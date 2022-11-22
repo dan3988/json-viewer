@@ -189,26 +189,27 @@ try {
 	}
 
 	const config = (await import("./rollup.config.js")).default;
+	/** @type {rl.RollupWatcher} */
+	let watcher = undefined;
 
 	if (watch) {
-		//const watcher = rl.watch(config);
-		//debugger;
-		
+		watcher = rl.watch(config);
+		watcher.on("event", (evt) => {
+			if (evt.code === "BUNDLE_END")
+				evt.result.write({ amd: true, dir: "lib/ui" });
+		})
 	} else {
 		const bundle = await rl.rollup(config);
-		const { output } = await bundle.generate({ amd: true });
-		fs.mkdirSync("lib/ui", recur);
-		for (let v of output)
-			if (v.type === "chunk")
-				await fs.promises.writeFile("lib/ui/" + v.fileName, v.code);
-
+		await bundle.write({ amd: true, dir: "lib/ui" });
 	}
 
 	if (watch) {
 		function stop() {
+			watcher?.close();
 			amd.stop();
 			esm.stop();
 			console.error("watch stopped");
+			process.exit(1);
 		}
 
 		process.addListener("SIGINT", stop);
