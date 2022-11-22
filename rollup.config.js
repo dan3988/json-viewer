@@ -12,8 +12,8 @@ const production = !process.env.ROLLUP_WATCH;
 export default {
 	input: 'src/ui/main.ts',
 	output: {
-		sourcemap: true,
-		format: 'iife',
+		sourcemap: !production,
+		format: 'cjs',
 		name: 'app',
 		file: 'lib/svcontent.js'
 	},
@@ -37,8 +37,7 @@ export default {
 		typescript({
 			tsconfig: 'src/ui/tsconfig.json',
 			sourceMap: !production,
-			inlineSources: !production,
-			rootDir: 'src-web'
+			inlineSources: !production
 		}),
 		production && terser()
 	],
