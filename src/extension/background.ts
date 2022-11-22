@@ -33,7 +33,7 @@ async function showSizeLimitOverride(tabId: number, frameIds: undefined | number
 
 async function inject(tabId: number, frameIds: undefined | number[], lenientParse: boolean) {
 	const target = { tabId, frameIds }
-	const files = [ "lib/content.js" ];
+	const files = [ "lib/ui/ui.es.js" ];
 
 	if (lenientParse)
 		files.unshift("lib/jsonic.js");
@@ -42,8 +42,7 @@ async function inject(tabId: number, frameIds: undefined | number[], lenientPars
 		target,
 		origin: "AUTHOR",
 		files: [
-			"res/core.css",
-			"res/json.css"
+			"lib/ui/style.css"
 		]
 	});
 

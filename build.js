@@ -4,6 +4,7 @@ import glob from "glob";
 import fs from "fs";
 import path from "path";
 import * as util from "util";
+import * as vite from "vite";
 
 process
 	.on("uncaughtException", console.error)
@@ -162,6 +163,11 @@ try {
 	let esm = amd && await tryBuild("Background", "src/extension");
 	if (!esm)
 		process.exit(-1);
+
+	//TODO get watch working with vite
+	vite.build({
+		mode: dist ? "production" : "development"
+	});
 
 	if (dist) {
 		ensureDir(distDir, true);
