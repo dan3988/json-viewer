@@ -1,5 +1,11 @@
+import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
+import svelte from 'rollup-plugin-svelte';
+import sveltePreprocess from 'svelte-preprocess';
+import { terser } from 'rollup-plugin-terser';
+import css from 'rollup-plugin-css-only';
 import chalk from "chalk";
-import * as esbuild from "esbuild";
 import glob from "glob";
 import fs from "fs";
 import path from "path";
@@ -26,6 +32,7 @@ function logMessage(msg, color, type) {
 }
 
 /**
+ * @param {string} prefix
  * @param {string} text
  * @param {string} file
  * @param {number} column
@@ -35,111 +42,16 @@ function logMessage(msg, color, type) {
  * @param {"red" | "yellow"} color
  * @param {any} type
  */
-function log(text, file, column, line, frame, color, type) {
+function log(prefix, text, file, column, line, frame, color, type) {
 	const loc = path.resolve(file);
 
-	console.log(`${chalk.blueBright(loc)}:${chalk.yellow(line)}:${chalk.yellow(column)}: ${chalk[color](type)}: ${text}`);
+	console.log(`${prefix}${chalk.blueBright(loc)}:${chalk.yellow(line)}:${chalk.yellow(column)}: ${chalk[color](type)}: ${text}`);
 	console.log();
 	console.log(frame);
 	console.log();
 }
 
-/**
- * 
- * @param {string} name 
- * @param {boolean} clear 
- * @param {esbuild.Message[]} errors 
- * @param {esbuild.Message[]} warnings 
- */
-function showResult(name, clear, errors, warnings) {
-	if (clear)
-		console.clear();
-
-	let msg;
-	let fail = errors.length > 0;
-	if (fail) {
-		for (var error of errors)
-			logMessage(error, "red", "ERROR");
-
-		msg = chalk.redBright(`${name}: Build Failed. (${error.length} error${error.length})`);
-	} else {
-		msg = chalk.greenBright(name + ": Build Successful");
-	}
-
-	for (var warning of warnings)
-		logMessage(warning, "yellow", "WARN");
-
-	console.log(msg);
-	console.log();
-}
-
-function getFiles(dir) {
-	return fs.promises.readdir(dir).then(files => {
-		for (let i = 0; i < files.length; ) {
-			const file = files[i];
-			if (file.endsWith(".ts")) {
-				files[i++] = path.join(dir, file);
-			} else {
-				files.splice(i, 1);
-			}
-		}
-
-		return files;
-	});
-}
-
 const globAsync = util.promisify(glob);
-
-/**
- * @type {{
- * 	(name: string, dir: string, entry: string, bundle: boolean) => Promise<esbuild.BuildResult>
- * 	(name: string, dir: string) => Promise<esbuild.BuildResult>
- * }}
- */
-const build = async function(name, dir, arg0, arg1) {
-	let entryPoints, bundle;
-	if (typeof arg0 === "string") {
-		entryPoints = [path.join(dir, arg0)];
-		bundle = arg1;
-	} else {
-		entryPoints = await getFiles(dir);
-		bundle = false;
-	}
-
-	return await esbuild.build({
-		entryPoints,
-		bundle,
-		outdir,
-		watch: watch && {
-			onRebuild(error, result) {
-				let { errors, warnings } = error ?? result;
-				showResult(name, true, errors, warnings);
-			}
-		},
-		minify: dist,
-		sourcemap: !dist,
-		tsconfig: path.join(dir, "tsconfig.json"),
-		platform: "browser",
-		logLevel: "silent",
-		target: "ESNext"
-	});
-}
-
-/** @type {typeof build}  */
-const tryBuild = async function(name) {
-	try {
-		const result = await build(...arguments);
-		showResult(name, false, result.errors, result.warnings);
-		return result;
-	} catch (e) {
-		if (!("errors" in e))
-			throw e;
-
-		showResult(name, false, e.errors, e.warnings);
-		return null;
-	}
-}
-
 const recur = { recursive: true };
 
 /**
@@ -155,6 +67,52 @@ const recur = { recursive: true };
 	}
 }
 
+/**
+ * 
+ * @param {string} name
+ * @param {rl.RollupOptions} config 
+ */
+async function executeRollup(name, config) {
+	if (watch) {
+		const prefix = `[${name}] `;
+		const watcher = rl.watch(config);
+		watcher.on("event", async (evt) => {
+			switch (evt.code) {
+				case "BUNDLE_END":
+					console.log(prefix + chalk.green("Build Successful"));
+					//evt.result.write({ amd: true, dir: "lib/ui" });
+					break;
+				case "ERROR": {
+					const e = evt.error;
+					if (e.code === "PLUGIN_ERROR") {
+						switch (e.plugin) {
+							case "commonjs":
+								log(prefix, e.message, e.filename, e.start.column, e.start.line, e.frame, "red", "ERROR");
+								break;
+							default:
+								console.error(prefix + chalk.red("Unhandled Error: ") + e);
+						}
+					} else {
+						console.error(prefix + chalk.red("Fatal Error: ") + e);
+						watcher.removeAwaited().close().then(v => {
+							process.exit(1);
+						});
+					}
+				}
+			}
+		})
+
+		onExit.push(() => watcher.close());
+	} else {
+		const bundle = await rl.rollup(config);
+		const res = await bundle.write(config.output);
+		debugger;
+//		await bundle.write({ amd: true, dir: "lib/ui" });
+	}
+}
+
+/** @type {(() => void | Promise<void>)[]} */
+const onExit = [];
 const outdir = "lib";
 const distDir = "dist";
 const args = util.parseArgs({
@@ -166,17 +124,76 @@ const args = util.parseArgs({
 	}
 })
 
-let { watch = false, dist = false } = args.values;
+const { watch = false, dist = false } = args.values;
+
+/** @type {rl.RollupOptions} */
+const rollupBg = {
+	input: "src/extension/background.ts",
+	output: {
+		sourcemap: !dist,
+		format: 'cjs',
+		file: 'lib/bg.js'
+	},
+	plugins: [
+		typescript({
+			tsconfig: 'src/extension/tsconfig.json',
+			sourceMap: !dist,
+			inlineSources: !dist
+		}),
+		dist && terser()
+	],
+	watch: {
+		clearScreen: false
+	}
+};
+
+/** @type {rl.RollupOptions} */
+const rollupUi = {
+	input: 'src/ui/viewer.ts',
+	output: {
+		sourcemap: !dist,
+		format: 'cjs',
+		name: 'app',
+		dir: 'lib'
+	},
+	plugins: [
+		svelte({
+			preprocess: [
+				sveltePreprocess({ sourceMap: !dist })
+			],
+			compilerOptions: {
+				// enable run-time checks when not in production
+				dev: !dist,
+				format: "cjs"
+			}
+		}),
+		css({ output: 'viewer.css' }),
+		resolve({
+			browser: true,
+			dedupe: ['svelte']
+		}),
+		commonjs(),
+		typescript({
+			tsconfig: 'src/ui/tsconfig.json',
+			sourceMap: !dist,
+			inlineSources: !dist
+		}),
+		typescript({
+			tsconfig: 'src/extension/tsconfig.json',
+			sourceMap: !dist,
+			inlineSources: !dist
+		}),
+		dist && terser()
+	],
+	watch: {
+		clearScreen: false
+	}
+};
 
 try {
 	ensureDir(outdir, true);
 
 	await fs.promises.cp(`./node_modules/jsonic/${dist ? "jsonic-min.js" : "jsonic.js"}`, path.join(outdir, "jsonic.js"));
-
-	let amd = await tryBuild("Content", "src/content", "content.ts", true)
-	let esm = amd && await tryBuild("Background", "src/extension");
-	if (!esm)
-		process.exit(-1);
 
 	if (dist) {
 		ensureDir(distDir, true);
@@ -198,39 +215,20 @@ try {
 				}
 			}
 		}
-	} else {
 	}
 
-	const config = (await import("./rollup.config.js")).default;
-	/** @type {rl.RollupWatcher} */
-	let watcher = undefined;
+	await executeRollup("BG", rollupBg);
+	await executeRollup("UI", rollupUi);
 
 	if (watch) {
-		watcher = rl.watch(config);
-		watcher.on("event", (evt) => {
-			switch (evt.code) {
-				case "BUNDLE_END":
-					console.log(chalk.green("UI: Build Successful"));
-					//evt.result.write({ amd: true, dir: "lib/ui" });
-					break;
-				case "ERROR": {
-					const e = evt.error;
-					log(e.message, e.filename, e.start.column, e.start.line, e.frame, "red", "ERROR");
-				}
+		async function stop() {
+			if (onExit.length) {
+				console.log("stopping...");
+				for (let fn of onExit)
+					await fn();
+				console.log("stopped.");
 			}
-		})
-	} else {
-		const bundle = await rl.rollup(config);
-		await bundle.write(config.output);
-//		await bundle.write({ amd: true, dir: "lib/ui" });
-	}
 
-	if (watch) {
-		function stop() {
-			watcher?.close();
-			amd.stop();
-			esm.stop();
-			console.error("watch stopped");
 			process.exit(1);
 		}
 

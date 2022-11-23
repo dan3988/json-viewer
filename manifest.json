@@ -5,7 +5,7 @@
 	"name": "JSON Viewer",
 	"version": "1.0.0",
 	"background": {
-		"service_worker": "lib/background.js",
+		"service_worker": "lib/bg.js",
 		"type": "module"
 	},
 	"action": {

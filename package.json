@@ -15,7 +15,6 @@
     "@types/cookies": "^0.7.7",
     "@types/esprima": "^4.0.3",
     "chalk": "^5.1.2",
-    "esbuild": "^0.15.13",
     "glob": "^8.0.3",
     "node-sass": "^8.0.0",
     "patch-package": "^6.5.0",

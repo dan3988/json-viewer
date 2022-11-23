@@ -42,14 +42,14 @@ async function inject(tabId: number, frameIds: undefined | number[], lenientPars
 		target,
 		origin: "AUTHOR",
 		files: [
-			"lib/ui/viewer.css",
+			"lib/viewer.css",
 		]
 	});
 
 	await chrome.scripting.executeScript({
 		target,
 		world: "ISOLATED",
-		files: [ "lib/ui/viewer.js" ]
+		files: [ "lib/viewer.js" ]
 	});
 }
 

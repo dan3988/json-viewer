@@ -14,7 +14,7 @@ export default {
 		sourcemap: !production,
 		format: 'cjs',
 		name: 'app',
-		file: 'lib/ui/viewer.js'
+		file: 'lib/ui.js'
 	},
 	plugins: [
 		svelte({
@@ -35,6 +35,11 @@ export default {
 		commonjs(),
 		typescript({
 			tsconfig: 'src/ui/tsconfig.json',
+			sourceMap: !production,
+			inlineSources: !production
+		}),
+		typescript({
+			tsconfig: 'src/extension/tsconfig.json',
 			sourceMap: !production,
 			inlineSources: !production
 		}),
