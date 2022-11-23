@@ -27,10 +27,6 @@
 		border: 1px transparent solid;
 		border-radius: 5px;
 
-		&.for-value > .expander {
-			display: none;
-		}
-
 		&.for-container {
 			&:before {
 				padding: 0 5px;
@@ -42,8 +38,14 @@
 				grid-area: 1 / 5 / span 1 / span 1;
 			}
 
-			&.expanded::after {
-				grid-area: 3 / 1 / span 1 / span 1;
+			&.expanded {
+				>.prop-count {
+					display: none;
+				}
+
+				&:after {
+					grid-area: 3 / 1 / span 1 / span 1;
+				}
 			}
 		}
 
@@ -77,9 +79,17 @@
 			}
 		}
 
+		>.prop-count, >.empty-container {
+			grid-area: 1 / 4 / span 1 / span 1;
+		}
+
 		>.prop-count {
 			color: var(--col-json-num-fg);
-			grid-area: 1 / 4 / span 1 / span 1;
+		}
+
+		>.empty-container {
+			font-style: italic;
+			color: var(--col-shadow);
 		}
 
 		> :global(.json-value) {
@@ -105,12 +115,16 @@
 {#if value}
 <div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}">
 	{#if key}
-	<span class="expander" on:click={() => expanded = !expanded}></span>
 	<span class="json-key">{key}</span>
 	{/if}
 	{#if value.is("container")}
-	<span class="prop-count">{value.count}</span>
-	<JsonContainer token={value}/>
+		{#if value.count === 0}
+			<span class="empty-container">empty</span>
+		{:else}
+			<span class="expander" on:click={() => expanded = !expanded}></span>
+			<span class="prop-count">{value.count}</span>
+			<JsonContainer token={value}/>
+		{/if}
 	{:else if value.is("value")}
 	<JsonValue token={value}/>
 	{/if}
