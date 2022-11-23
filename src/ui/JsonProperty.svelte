@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { JsonProperty } from "./json";
-	import JsonContainer from "./JsonContainer.svelte";
-	import JsonValue from "./JsonValue.svelte";
+    import JsonRenderer from "./JsonRenderer.svelte";
 
 	export let property: JsonProperty;
 
@@ -9,12 +8,8 @@
 	$: val = property?.value;
 </script>
 {#if property}
-<div class="json-container json-{val.type}">
+<div class="json-prop for-{val.subtype}">
 	<span class="json-key">{key}</span>
-	{#if val.is("container")}
-		<JsonContainer token={val}/>
-	{:else if val.is("value")}
-		<JsonValue token={val}/>
-	{/if}
+	<JsonRenderer token={val}/>
 </div>
 {/if}
