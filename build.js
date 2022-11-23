@@ -84,20 +84,7 @@ async function executeRollup(name, config) {
 					break;
 				case "ERROR": {
 					const e = evt.error;
-					if (e.code === "PLUGIN_ERROR") {
-						switch (e.plugin) {
-							case "commonjs":
-								log(prefix, e.message, e.filename, e.start.column, e.start.line, e.frame, "red", "ERROR");
-								break;
-							default:
-								console.error(prefix + chalk.red("Unhandled Error: ") + e);
-						}
-					} else {
-						console.error(prefix + chalk.red("Fatal Error: ") + e);
-						watcher.removeAwaited().close().then(v => {
-							process.exit(1);
-						});
-					}
+					console.error(prefix + chalk.red("Unhandled Error: ") + e);
 				}
 			}
 		})
