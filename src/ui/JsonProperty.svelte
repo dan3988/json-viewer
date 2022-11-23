@@ -1,10 +1,38 @@
 <script lang="ts">
+    import type { PropertyChangeEvent } from "./prop";
 	import type { JsonToken } from "./json";
-    import JsonContainer from "./JsonContainer.svelte";
-    import JsonValue from "./JsonValue.svelte";
+	import type { ViewerModel } from "./viewer-model";
+	import JsonContainer from "./JsonContainer.svelte";
+	import JsonValue from "./JsonValue.svelte";
 
+	let selected = false;
+	let currentModel: undefined | ViewerModel;
+
+	function onModelPropertyChange(evt: PropertyChangeEvent) {
+		if (evt.property === "selected") {
+			if (evt.oldValue === value) {
+				selected = false;
+			} else if (evt.newValue === value) {
+				selected = true;
+			}
+		}
+	}
+
+	export let model: ViewerModel;
 	export let key: undefined | string | number;
 	export let value: JsonToken;
+
+	$: {
+		console.debug("update");
+		selected = model.selected === value;
+		
+		if (currentModel !== model) {
+			currentModel?.removeListener(onModelPropertyChange);
+			currentModel = model;
+			currentModel?.addListener(onModelPropertyChange);
+		}
+	}
+
 	export let expanded = false;
 </script>
 <style lang="scss">
@@ -27,6 +55,11 @@
 		grid-template-rows: auto auto auto;
 		border: 1px transparent solid;
 		border-radius: 5px;
+
+		&.selected {
+			border-color: var(--col-border);
+			background-color: var(--col-bg-dk);
+		}
 
 		&.for-container {
 			&:before {
@@ -140,9 +173,9 @@
 	}
 </style>
 {#if value}
-<div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}">
+<div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}{selected ? " selected" : ""}">
 	{#if key != null}
-	<span class="json-key">{key}</span>
+	<span class="json-key" on:click={() => model.selected = value}>{key}</span>
 	{/if}
 	{#if value.is("container")}
 		{#if value.count === 0}
@@ -150,7 +183,7 @@
 		{:else}
 			<span class="expander" on:click={() => expanded = !expanded}></span>
 			<span class="prop-count">{value.count}</span>
-			<JsonContainer token={value}/>
+			<JsonContainer model={model} token={value}/>
 		{/if}
 	{:else if value.is("value")}
 	<JsonValue token={value}/>
