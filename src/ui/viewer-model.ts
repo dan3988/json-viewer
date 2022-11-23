@@ -36,20 +36,20 @@ export class ViewerModel {
 	#fireChange(prop: string, oldValue: any, newValue: any) {
 		const ls = this.#listeners;
 		if (ls.length) {
-			const evt = new PropertyChangeEvent(this, prop, oldValue, newValue);
+			const evt = new PropertyChangeEvent(this, "change", prop, oldValue, newValue);
 			for (let handler of ls)
 				handler.call(this, evt);
 		}
 	}
 
-	removeListener(handler: PropertyChangeHandler<any, this>) {
+	removeListener(handler: PropertyChangeHandler<any, any, this>) {
 		const ls = this.#listeners;
 		const i = ls.indexOf(handler);
 		if (i >= 0)
 			ls.splice(i, 1);
 	}
 
-	addListener(handler: PropertyChangeHandler<any, this>) {
+	addListener(handler: PropertyChangeHandler<any, any, this>) {
 		this.#listeners.push(handler);
 	}
 }
