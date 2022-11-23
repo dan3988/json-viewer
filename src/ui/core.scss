@@ -24,6 +24,11 @@ $border-w: 1px;
 	--col-bg-err-hv: #F88;
 	--col-bg-err-focus: #F77;
 	--col-shadow: #999;
+	
+	color: var(--col-fg);
+	background-color: var(--col-body);
+	font-family: Calibri;
+	font-size: medium;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -76,11 +81,3 @@ $border-w: 1px;
 		transition-timing-function: ease-in-out;
 	}
 }
-
-body, button, input, select {
-	color: var(--col-fg);
-	background-color: var(--col-body);
-	font-family: Calibri;
-	font-size: medium;
-}
-
