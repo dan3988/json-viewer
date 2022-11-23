@@ -1,39 +1,40 @@
 <script lang="ts">
-    import type { PropertyChangeEvent } from "./prop";
+    import { PropertyBag, type PropertyChangeEvent } from "./prop";
 	import type { JsonToken } from "./json";
 	import type { ViewerModel } from "./viewer-model";
 	import JsonContainer from "./JsonContainer.svelte";
 	import JsonValue from "./JsonValue.svelte";
 
-	let selected = false;
-	let currentModel: undefined | ViewerModel;
+	const props = new PropertyBag({
+		selected: false,
+		model: undefined as ViewerModel
+	});
+
+	props.addListener((evt) => {
+		switch (evt.property) {
+			case "model":
+				evt.oldValue?.addListener(onModelPropertyChange);
+				evt.newValue?.addListener(onModelPropertyChange);
+				break;
+			case "selected":
+				selected = evt.newValue;
+				break;
+		}
+	})
 
 	function onModelPropertyChange(evt: PropertyChangeEvent) {
-		if (evt.property === "selected") {
-			if (evt.oldValue === value) {
-				selected = false;
-			} else if (evt.newValue === value) {
-				selected = true;
-			}
-		}
+		if (evt.property === "selected")
+			props.set("selected", evt.newValue === value);
 	}
 
 	export let model: ViewerModel;
 	export let key: undefined | string | number;
 	export let value: JsonToken;
-
-	$: {
-		console.debug("update");
-		selected = model.selected === value;
-		
-		if (currentModel !== model) {
-			currentModel?.removeListener(onModelPropertyChange);
-			currentModel = model;
-			currentModel?.addListener(onModelPropertyChange);
-		}
-	}
-
 	export let expanded = false;
+
+	model?.addListener(onModelPropertyChange);
+
+	$: selected = props.get("selected");
 </script>
 <style lang="scss">
 	@import "./core.scss";

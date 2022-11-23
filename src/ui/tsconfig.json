@@ -1,6 +1,8 @@
 {
 	"extends": "@tsconfig/svelte/tsconfig.json",
 	"compilerOptions": {
+		"strictBindCallApply": true,
+		"noErrorTruncation": true,
 		"lib": [
 			"ESNext",
 			"DOM"
