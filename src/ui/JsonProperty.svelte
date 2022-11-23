@@ -6,7 +6,7 @@
 	import JsonValue from "./JsonValue.svelte";
 
 	const props = new PropertyBag({
-		selected: false,
+		isSelected: false,
 		model: undefined as ViewerModel
 	});
 
@@ -16,7 +16,7 @@
 				evt.oldValue?.addListener(onModelPropertyChange);
 				evt.newValue?.addListener(onModelPropertyChange);
 				break;
-			case "selected":
+			case "isSelected":
 				selected = evt.newValue;
 				break;
 		}
@@ -24,7 +24,7 @@
 
 	function onModelPropertyChange(evt: PropertyChangeEvent) {
 		if (evt.property === "selected")
-			props.set("selected", evt.newValue === value);
+			props.bag.isSelected = evt.newValue === value;
 	}
 
 	export let model: ViewerModel;
@@ -34,7 +34,10 @@
 
 	model?.addListener(onModelPropertyChange);
 
-	$: selected = props.get("selected");
+	$: selected = props.bag.isSelected;
+	$: {
+		props.bag.model = model;
+	}
 </script>
 <style lang="scss">
 	@import "./core.scss";
