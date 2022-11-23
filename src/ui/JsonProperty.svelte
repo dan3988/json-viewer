@@ -14,6 +14,7 @@
 		color: var(--col-json-key-fg);
 		grid-area: 1 / 2 / span 1 / span 1;
 		cursor: pointer;
+		padding-right: 5px;
 
 		&:after {
 			content: ":";
@@ -29,12 +30,10 @@
 
 		&.for-container {
 			&:before {
-				padding: 0 5px;
 				grid-area: 1 / 3 / span 1 / span 1;
 			}
 
 			&:after {
-				padding: 0 5px;
 				grid-area: 1 / 5 / span 1 / span 1;
 			}
 
@@ -80,6 +79,7 @@
 		}
 
 		>.prop-count, >.empty-container {
+			padding: 0 5px;
 			grid-area: 1 / 4 / span 1 / span 1;
 		}
 
@@ -94,7 +94,6 @@
 
 		> :global(.json-value) {
 			grid-area: 1 / 3 / span 1 / span 1;
-			margin: 0 5px;
 		}
 
 		> :global(.json-container) {
