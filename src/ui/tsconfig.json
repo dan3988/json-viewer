@@ -1,5 +1,11 @@
 {
 	"extends": "@tsconfig/svelte/tsconfig.json",
+	"compilerOptions": {
+		"lib": [
+			"ESNext",
+			"DOM"
+		]
+	},
 	"include": [
 		"../*.d.ts",
 		"*"
