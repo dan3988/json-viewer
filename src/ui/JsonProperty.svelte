@@ -1,13 +1,11 @@
 <script lang="ts">
-	import type { JsonProperty } from "./json";
-    import JsonRenderer from "./JsonRenderer.svelte";
+	import type { JsonToken } from "./json";
+    import JsonContainer from "./JsonContainer.svelte";
+    import JsonValue from "./JsonValue.svelte";
 
-	export let property: JsonProperty;
-
-	let expanded = false;
-
-	$: key = property?.key;
-	$: val = property?.value;
+	export let key: undefined | string;
+	export let value: JsonToken;
+	export let expanded = false;
 </script>
 <style lang="scss">
 	@import "./core.scss";
@@ -63,10 +61,16 @@
 		}
 	}
 </style>
-{#if property}
-<div class="json-prop for-{val.type} for-{val.subtype} {expanded ? 'expanded' : 'collapsed'}">
+{#if value}
+<div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}">
+	{#if key}
 	<span class="expander" on:click={() => expanded = !expanded}></span>
 	<span class="json-key">{key}</span>
-	<JsonRenderer token={val}/>
+	{/if}
+	{#if value.is("container")}
+	<JsonContainer token={value}/>
+	{:else if value.is("value")}
+	<JsonValue token={value}/>
+	{/if}
 </div>
 {/if}

@@ -8,13 +8,14 @@
 	.json-container {
 		list-style: none;
 		padding: 0;
+		margin: 0;
 	}
 </style>
 {#if token}
 <ul class="json-container json-{token.subtype}">
-	{#each [...token.properties()] as p}
+	{#each [...token.properties()] as { key, value }}
 	<li>
-		<JsonProperty property={p}/>
+		<JsonProperty key={String(key)} value={value}/>
 	</li>
 	{/each}
 </ul>
