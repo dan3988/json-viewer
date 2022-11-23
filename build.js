@@ -17,17 +17,30 @@ process
  * @param {any} type
  */
 function logMessage(msg, color, type) {
-	/** @type {esbuild.Location} */
 	const { file, column, line, lineText, length } = msg.location;
-	const loc = path.resolve(file);
 	const start = lineText.substring(0, column);
 	const mid = lineText.substring(column, column + length);
 	const end = lineText.substring(start.length + mid.length);
 	const midf = chalk.underline(chalk[color](mid));
+	log(msg.text, file, column, line, `${chalk.bgWhite(line)} ${start}${midf}${end}`, color, type);
+}
 
-	console.log(`${chalk.blueBright(loc)}:${chalk.yellow(line)}:${chalk.yellow(column)}: ${chalk[color](type)}: ${msg.text}`);
+/**
+ * @param {string} text
+ * @param {string} file
+ * @param {number} column
+ * @param {number} line
+ * @param {string} lineText
+ * @param {number} length 
+ * @param {"red" | "yellow"} color
+ * @param {any} type
+ */
+function log(text, file, column, line, frame, color, type) {
+	const loc = path.resolve(file);
+
+	console.log(`${chalk.blueBright(loc)}:${chalk.yellow(line)}:${chalk.yellow(column)}: ${chalk[color](type)}: ${text}`);
 	console.log();
-	console.log(`${chalk.bgWhite(line)} ${start}${midf}${end}`);
+	console.log(frame);
 	console.log();
 }
 
@@ -195,8 +208,16 @@ try {
 	if (watch) {
 		watcher = rl.watch(config);
 		watcher.on("event", (evt) => {
-			if (evt.code === "BUNDLE_END")
-				evt.result.write({ amd: true, dir: "lib/ui" });
+			switch (evt.code) {
+				case "BUNDLE_END":
+					console.log(chalk.green("UI: Build Successful"));
+					evt.result.write({ amd: true, dir: "lib/ui" });
+					break;
+				case "ERROR": {
+					const e = evt.error;
+					log(e.message, e.filename, e.start.column, e.start.line, e.frame, "red", "ERROR");
+				}
+			}
 		})
 	} else {
 		const bundle = await rl.rollup(config);
