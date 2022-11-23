@@ -14,7 +14,7 @@ const identifier = "_$_";
  */
  export class Script {
 	/**
-	 * Replaces all '@' identifiers, since they will result in an illegal syntax error, then searches all literal expressions and replaces the identifier with '@'
+	 * Replaces all '@' identifiers, since they will result in an illegal syntax error, then searches all literal expressions and replaces the replacement identifier with '@' to match the original script
 	 */
 	static readonly JPath = class JPathExpression extends Script {
 		static #fixJPath(list: InstructionList, args: [usesPath: boolean]) {
