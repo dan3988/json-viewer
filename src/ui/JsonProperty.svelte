@@ -113,7 +113,7 @@
 </style>
 {#if value}
 <div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}">
-	{#if key}
+	{#if key != null}
 	<span class="json-key">{key}</span>
 	{/if}
 	{#if value.is("container")}
