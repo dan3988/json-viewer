@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "patch-package",
-    "build": "node build.js -d",
+    "build": "node build.js",
+    "dist": "node build.js -d",
     "watch": "node build.js -w"
   },
   "devDependencies": {
@@ -16,10 +17,12 @@
     "chalk": "^5.1.2",
     "esbuild": "^0.15.13",
     "glob": "^8.0.3",
+    "node-sass": "^8.0.0",
     "patch-package": "^6.5.0",
     "rollup": "^2.79.1",
     "rollup-plugin-css-only": "^4.3.0",
     "rollup-plugin-livereload": "^2.0.5",
+    "rollup-plugin-scss": "^4.0.0",
     "rollup-plugin-svelte": "^7.1.0",
     "rollup-plugin-terser": "^7.0.2",
     "svelte": "^3.53.1",
