@@ -3,7 +3,7 @@
     import JsonContainer from "./JsonContainer.svelte";
     import JsonValue from "./JsonValue.svelte";
 
-	export let key: undefined | string;
+	export let key: undefined | string | number;
 	export let value: JsonToken;
 	export let expanded = false;
 </script>

@@ -15,7 +15,7 @@
 <ul class="json-container json-{token.subtype}">
 	{#each [...token.properties()] as { key, value }}
 	<li>
-		<JsonProperty key={String(key)} value={value}/>
+		<JsonProperty key={key} value={value}/>
 	</li>
 	{/each}
 </ul>
