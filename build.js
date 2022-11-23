@@ -211,7 +211,7 @@ try {
 			switch (evt.code) {
 				case "BUNDLE_END":
 					console.log(chalk.green("UI: Build Successful"));
-					evt.result.write({ amd: true, dir: "lib/ui" });
+					//evt.result.write({ amd: true, dir: "lib/ui" });
 					break;
 				case "ERROR": {
 					const e = evt.error;
@@ -221,7 +221,8 @@ try {
 		})
 	} else {
 		const bundle = await rl.rollup(config);
-		await bundle.write({ amd: true, dir: "lib/ui" });
+		await bundle.write(config.output);
+//		await bundle.write({ amd: true, dir: "lib/ui" });
 	}
 
 	if (watch) {

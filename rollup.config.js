@@ -15,7 +15,7 @@ export default {
 		sourcemap: !production,
 		format: 'cjs',
 		name: 'app',
-		file: 'lib/svcontent.js'
+		file: 'lib/ui/viewer.js'
 	},
 	plugins: [
 		svelte({
@@ -28,7 +28,7 @@ export default {
 				format: "cjs"
 			}
 		}),
-		css({ output: 'bundle.css' }),
+		css({ output: 'viewer.css' }),
 		resolve({
 			browser: true,
 			dedupe: ['svelte']
