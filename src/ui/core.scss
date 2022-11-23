@@ -1,4 +1,6 @@
 $border-w: 1px;
+$anim-short: 100ms;
+$anim-med: 200ms;
 
 :root {
 	--col-json-key-fg: #18F;
@@ -59,7 +61,6 @@ $border-w: 1px;
 	}
 }
 
-
 .img-btn {
 	cursor: pointer;
 	position: relative;
@@ -76,8 +77,39 @@ $border-w: 1px;
 		mask-repeat: no-repeat;
 		mask-size: contain;
 		mask-position: center;
-		transition-property: background-color;
-		transition-duration: 200ms;
-		transition-timing-function: ease-in-out;
+	}
+}
+
+.hv {
+	transition-property: background-color;
+	transition-duration: $anim-short;
+	transition-timing-function: ease-in-out;
+
+	&:hover {
+		background-color: var(--col-bg-lt-hv);
+	}
+
+	&:focus,
+	&:focus:hover {
+		background-color: var(--col-bg-lt-focus);
+	}
+}
+
+.hv-b4 {
+	&::before {
+		@extend .hv;
+	}
+}
+
+.hvb {
+	transition-property: background-color;
+
+	&:hover {
+		border-color: var(--col-border-hv);
+	}
+
+	&:focus,
+	&:focus:hover {
+		border-color: var(--col-border-focus);
 	}
 }

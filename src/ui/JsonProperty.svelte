@@ -43,7 +43,7 @@
 				}
 
 				&:after {
-					grid-area: 3 / 1 / span 1 / span 1;
+					grid-area: 3 / 2 / span 1 / span 1;
 				}
 			}
 		}
@@ -68,9 +68,33 @@
 			}
 		}
 
+		&.expanded {
+			> .expander {
+				position: relative;
+
+				&:before {
+					content: "";
+					position: absolute;
+					inset: 0.5em 50%;
+					transform: translateX(-50%);
+					width: 2px;
+					border-radius: 1px;
+				}
+			}
+		}
+
 		&.collapsed {
+			> .expander {
+				@extend .img-btn;
+
+				&:before {
+					inset: 20%;
+				}
+			}
+
 			> .expander::before {
 				rotate: -90deg;
+				--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/arrow.svg");
 			}
 
 			> :global(.json-container) {
@@ -92,6 +116,10 @@
 			color: var(--col-shadow);
 		}
 
+		>.expander {
+			grid-area: 1 / 1 / -1 / span 1;
+		}
+
 		> :global(.json-value) {
 			grid-area: 1 / 3 / span 1 / span 1;
 		}
@@ -102,12 +130,12 @@
 	}
 
 	.expander {
-		@extend .img-btn;
-		--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/arrow.svg");
+		@extend .hv-b4;
+		cursor: pointer;
+		position: relative;
 
 		&:before {
-			inset: 20%;
-			background-color: #999;
+			background-color: var(--col-shadow);
 		}
 	}
 </style>
