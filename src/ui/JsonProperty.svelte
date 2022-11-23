@@ -31,6 +31,42 @@
 			display: none;
 		}
 
+		&.for-container {
+			&:before {
+				padding: 0 5px;
+				grid-area: 1 / 3 / span 1 / span 1;
+			}
+
+			&:after {
+				padding: 0 5px;
+				grid-area: 1 / 5 / span 1 / span 1;
+			}
+
+			&.expanded::after {
+				grid-area: 3 / 1 / span 1 / span 1;
+			}
+		}
+
+		&.for-object {
+			&:before {
+				content: "{";
+			}
+
+			&:after {
+				content: "}"
+			}
+		}
+
+		&.for-array {
+			&:before {
+				content: "[";
+			}
+
+			&:after {
+				content: "]"
+			}
+		}
+
 		&.collapsed {
 			> .expander::before {
 				rotate: -90deg;
@@ -39,6 +75,11 @@
 			> :global(.json-container) {
 				display: none;
 			}
+		}
+
+		>.prop-count {
+			color: var(--col-json-num-fg);
+			grid-area: 1 / 4 / span 1 / span 1;
 		}
 
 		> :global(.json-value) {
@@ -68,6 +109,7 @@
 	<span class="json-key">{key}</span>
 	{/if}
 	{#if value.is("container")}
+	<span class="prop-count">{value.count}</span>
 	<JsonContainer token={value}/>
 	{:else if value.is("value")}
 	<JsonValue token={value}/>
