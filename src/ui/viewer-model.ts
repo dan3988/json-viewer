@@ -1,5 +1,7 @@
-import type { JsonToken } from "./json";
+import { JsonContainer, type JsonToken } from "./json";
 import { PropertyChangeEvent, type PropertyChangeHandler } from "./prop";
+
+
 
 export class ViewerModel {
 	readonly #root: JsonToken;
@@ -27,10 +29,35 @@ export class ViewerModel {
 		this.#listeners = [];
 	}
 
-	select(path: string[]) {
-		const v = this.#root.resolve(path);
-		if (v != null)
-			this.selected = v;
+	select(path: (number | string)[]) {
+		let i = 0;
+		let base: JsonToken;
+		if (path[0] !== "$") {
+			base = this.#selected;
+		} else {
+			i++;
+			base = this.#root;
+		}
+
+		if (!(base instanceof JsonContainer))
+			return false;
+
+		while (true) {
+			const key = path[i];
+			const child = base.get(key);
+			if (child == null)
+				return false;
+
+			if (++i === path.length) {
+				this.selected = child;
+				return true;
+			}
+
+			if (!(child instanceof JsonContainer))
+				return false;
+			
+			base = child;
+		}
 	}
 
 	#fireChange(prop: string, oldValue: any, newValue: any) {

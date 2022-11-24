@@ -230,7 +230,7 @@ export abstract class JsonToken<T = any> extends JsonBase {
 
 	abstract toJSON(): T;
 
-	abstract resolve(path: string[]): null | JsonToken;
+	abstract resolve(path: (number | string)[]): null | JsonToken;
 
 	abstract properties(): Iterable<JsonProperty>;
 	abstract get(key: number | string): undefined | JsonToken;
@@ -258,7 +258,7 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 		this.#proxy = new Proxy(this, handler);
 	}
 
-	resolve(path: string[]) {
+	resolve(path: (number | string)[]) {
 		let container: JsonContainer = this;
 		let i = 0;
 		while (true) {
