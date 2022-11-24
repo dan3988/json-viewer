@@ -32,12 +32,8 @@
 	export let value: JsonToken;
 	export let expanded = false;
 
-	model?.addListener(onModelPropertyChange);
-
 	$: selected = props.bag.isSelected;
-	$: {
-		props.bag.model = model;
-	}
+	$: props.bag.model = model;
 </script>
 <style lang="scss">
 	@import "./core.scss";

@@ -1,12 +1,30 @@
 <script lang="ts">
-    import type { JsonToken } from "./json";
+    import { PropertyBag, PropertyChangeEvent } from "./prop";
 	import type { ViewerModel } from "./viewer-model";
 
 	export let model: ViewerModel;
 
-	let path: (number | string)[];
-	let editing = false;
+	const props = new PropertyBag({
+		model: undefined as ViewerModel
+	});
+
 	let pathText = "";
+	let path: (number | string)[];
+	let isEditing = false;
+
+	props.addListener(evt => {
+		if (evt.property === "model") {
+			evt.oldValue?.removeListener(onModelPropertyChange);
+			evt.newValue?.addListener(onModelPropertyChange);
+		}
+	})
+
+	function onModelPropertyChange(evt: PropertyChangeEvent) {
+		if (evt.property === "selected") {
+			path = evt.newValue?.path;
+			pathText = path ? path.join("/") : "";
+		}
+	}
 
 	function onClick(index: number) {
 		if (index === 0) {
@@ -19,12 +37,12 @@
 
 	function focusIn(this: HTMLInputElement) {
 		this.setSelectionRange(0, this.value.length);
-		editing = true;
+		isEditing = true;
 	}
 
 	function focusOut(this: HTMLInputElement) {
 		this.value = pathText;
-		editing = false;
+		isEditing = false;
 	}
 
 	function onKeyDown(this: HTMLInputElement, e: KeyboardEvent) {
@@ -40,15 +58,7 @@
 		}
 	}
 
-	$: {
-		model.addListener(e => {
-			if (e.property === "selected") {
-				path = e.newValue?.path;
-				pathText = path ? path.join("/") : "";
-				//pathText = path?.join("/");
-			}
-		})
-	}
+	$: props.bag.model = model;
 </script>
 <style lang="scss">
 	.root {
@@ -105,7 +115,7 @@
 	}
 </style>
 {#if model}
-<div class="root{editing ? " editing" : ""}">
+<div class="root{isEditing ? " editing" : ""}">
 	<ul class="list">
 		{#if path}
 			{#each path as part, index}
