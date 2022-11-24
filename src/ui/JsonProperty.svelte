@@ -13,7 +13,7 @@
 	props.addListener((evt) => {
 		switch (evt.property) {
 			case "model":
-				evt.oldValue?.addListener(onModelPropertyChange);
+				evt.oldValue?.removeListener(onModelPropertyChange);
 				evt.newValue?.addListener(onModelPropertyChange);
 				break;
 			case "isSelected":
