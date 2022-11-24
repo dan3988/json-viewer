@@ -6,13 +6,6 @@
 	export let model: ViewerModel;
 	export let token: JsonContainer;
 </script>
-<style lang="scss">
-	.json-container {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-</style>
 {#if token}
 <ul class="json-container json-{token.subtype}">
 	{#each [...token.properties()] as { key, value }}

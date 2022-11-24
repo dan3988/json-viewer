@@ -80,6 +80,12 @@ $anim-med: 200ms;
 	}
 }
 
+:global(ul) {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
 .hv {
 	transition-property: background-color;
 	transition-duration: $anim-short;
