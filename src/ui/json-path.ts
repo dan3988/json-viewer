@@ -1,5 +1,5 @@
 import * as jp from "jsonpath-plus";
-import Script, { JPathExpression } from "./vm.js";
+import Script, { type JPathExpression } from "./vm.js";
 
 export var { JSONPath } = jp;
 export default JSONPath;
