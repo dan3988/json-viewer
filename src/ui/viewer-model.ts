@@ -1,5 +1,6 @@
+import { EventHandlers } from "./evt";
 import { JsonContainer, type JsonToken } from "./json";
-import { PropertyChangeEvent, type PropertyChangeHandler, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
+import { PropertyChangeEvent, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
 
 interface ChangeProps {
 	selected: null | JsonToken
@@ -7,7 +8,7 @@ interface ChangeProps {
 
 export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	readonly #root: JsonToken;
-	readonly #listeners: PropertyChangeHandler[];
+	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<ViewerModel, ChangeProps>>;
 	#selected: JsonToken;
 	
 	get root() {
@@ -26,9 +27,13 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		}
 	}
 
+	get propertyChange() {
+		return this.#propertyChange.event;
+	}
+
 	constructor(root: JsonToken) {
 		this.#root = root;
-		this.#listeners = [];
+		this.#propertyChange = new EventHandlers();
 		this.#selected = null;
 	}
 
@@ -63,23 +68,11 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		}
 	}
 
-	#fireChange(prop: string, oldValue: any, newValue: any) {
-		const ls = this.#listeners;
+	#fireChange(prop: keyof ChangeProps, oldValue: any, newValue: any) {
+		const ls = this.#propertyChange;
 		if (ls.length) {
 			const evt = new PropertyChangeEvent(this, "change", prop, oldValue, newValue);
-			for (let handler of ls)
-				handler.call(this, evt);
+			ls.fire(this, [evt]);
 		}
-	}
-
-	removeListener(handler: PropertyChangeHandlerTypes<this, ChangeProps>): void {
-		const ls = this.#listeners;
-		const i = ls.indexOf(handler);
-		if (i >= 0)
-			ls.splice(i, 1);
-	}
-
-	addListener(handler: PropertyChangeHandlerTypes<this, ChangeProps>): void {
-		this.#listeners.push(handler);
 	}
 }

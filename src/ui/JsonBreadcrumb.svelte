@@ -12,10 +12,10 @@
 	let path: readonly (number | string)[];
 	let isEditing = false;
 
-	props.addListener(evt => {
+	props.propertyChange.addListener(evt => {
 		if (evt.property === "model") {
-			evt.oldValue?.removeListener(onModelPropertyChange);
-			evt.newValue?.addListener(onModelPropertyChange);
+			evt.oldValue?.propertyChange.removeListener(onModelPropertyChange);
+			evt.newValue?.propertyChange.addListener(onModelPropertyChange);
 		}
 	})
 

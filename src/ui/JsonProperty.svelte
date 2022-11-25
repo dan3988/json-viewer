@@ -7,14 +7,15 @@
 
 	const props = new PropertyBag({
 		isSelected: false,
-		model: undefined as ViewerModel
+		model: undefined as ViewerModel,
+		value: undefined as JsonToken
 	});
 
-	props.addListener((evt) => {
+	props.propertyChange.addListener((evt) => {
 		switch (evt.property) {
 			case "model":
-				evt.oldValue?.removeListener(onModelPropertyChange);
-				evt.newValue?.addListener(onModelPropertyChange);
+				evt.oldValue?.propertyChange.removeListener(onModelPropertyChange);
+				evt.newValue?.propertyChange.addListener(onModelPropertyChange);
 				break;
 			case "isSelected":
 				selected = evt.newValue;
@@ -34,6 +35,7 @@
 
 	$: selected = props.bag.isSelected;
 	$: props.bag.model = model;
+	$: props.bag.value = value;
 </script>
 <style lang="scss">
 	@import "./core.scss";
