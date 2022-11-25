@@ -6,9 +6,21 @@ interface ChangeProps {
 	selected: null | JsonToken
 }
 
+export interface ViewerCommands {
+	expandAll: [expand: boolean];
+}
+
+export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
+
+export interface ViewerCommandEvent<K extends keyof ViewerCommands = keyof ViewerCommands> {
+	command: K;
+	args: ViewerCommands[K];
+}
+
 export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	readonly #root: JsonToken;
 	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<ViewerModel, ChangeProps>>;
+	readonly #command: EventHandlers<ViewerCommandHandler<this>>;
 	#selected: JsonToken;
 	
 	get root() {
@@ -31,10 +43,21 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		return this.#propertyChange.event;
 	}
 
+	get command() {
+		return this.#command.event;
+	}
+
 	constructor(root: JsonToken) {
 		this.#root = root;
 		this.#propertyChange = new EventHandlers();
+		this.#command = new EventHandlers();
 		this.#selected = null;
+	}
+
+	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {
+		const handlers = this.#command;
+		if (handlers.length)
+			handlers.fire(this, { command, args });
 	}
 
 	select(path: (number | string)[]) {
@@ -72,7 +95,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		const ls = this.#propertyChange;
 		if (ls.length) {
 			const evt = new PropertyChangeEvent(this, "change", prop, oldValue, newValue);
-			ls.fire(this, [evt]);
+			ls.fire(this, evt);
 		}
 	}
 }

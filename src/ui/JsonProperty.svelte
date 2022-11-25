@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { PropertyBag, type PropertyChangeEvent } from "./prop";
+    import { PropertyBag, type PropertyChangeEventType } from "./prop";
 	import type { JsonToken } from "./json";
-	import type { ViewerModel } from "./viewer-model";
+	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
 	import JsonContainer from "./JsonContainer.svelte";
 	import JsonValue from "./JsonValue.svelte";
 
@@ -14,8 +14,16 @@
 	props.propertyChange.addListener((evt) => {
 		switch (evt.property) {
 			case "model":
-				evt.oldValue?.propertyChange.removeListener(onModelPropertyChange);
-				evt.newValue?.propertyChange.addListener(onModelPropertyChange);
+				if (evt.oldValue) {
+					evt.oldValue.propertyChange.removeListener(onModelPropertyChange);
+					evt.oldValue.command.removeListener(onModelCommand);
+				}
+
+				if (evt.newValue) {
+					evt.newValue.propertyChange.addListener(onModelPropertyChange);
+					evt.newValue.command.addListener(onModelCommand);
+				}
+
 				break;
 			case "isSelected":
 				selected = evt.newValue;
@@ -23,7 +31,12 @@
 		}
 	})
 
-	function onModelPropertyChange(evt: PropertyChangeEvent) {
+	function onModelCommand(evt: ViewerCommandEvent) {
+		if (evt.command === "expandAll")
+			expanded = evt.args[0];
+	}
+
+	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
 		if (evt.property === "selected")
 			props.bag.isSelected = evt.newValue === value;
 	}

@@ -125,7 +125,7 @@ export class PropertyBag<TRecord = any, TKey extends keyof TRecord = keyof TReco
 		const pc = this.#pc;
 		if (pc.length) {
 			const evt = new PropertyChangeEvent(this, type, prop, oldValue, newValue);
-			pc.fire(this, [evt]);
+			pc.fire(this, evt);
 		}
 	}
 }

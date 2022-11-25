@@ -39,7 +39,7 @@ export class EventHandlers<THandler extends Fn> {
 		this.#event = new EventHandlers.#Event(this);
 	}
 
-	fire(thisArg: ThisParameterType<THandler>, args: Parameters<THandler>) {
+	fire(thisArg: ThisParameterType<THandler>, ...args: Parameters<THandler>) {
 		for (let handler of this.#handlers)
 			handler.apply(thisArg, args);
 	}
