@@ -46,6 +46,7 @@
 			jpathResults.forEach((v, i, a) => a[i] = "$" + v);
 		} catch (e) {
 			jpathResults = [];
+			console.error(e);
 			alert(e);
 		}
 	}

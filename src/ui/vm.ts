@@ -87,6 +87,108 @@ const identifier = "_$_";
 
 export default Script;
 
+class FunctionDefinition {
+	readonly args: FunctionParameter[];
+	readonly body: InstructionList;
+
+	constructor(args: FunctionParameter[], body: InstructionList) {
+		this.args = args;
+		this.body = body;
+	}
+
+	debugInfo
+
+	build(baseScope: any) {
+		const { args, body } = this;
+		return function() {
+			const context = Object.create(null);
+			context.arguments = arguments;
+			for (let i = 0; i < args.length; i++)
+				args[i].getValues(context, arguments, i);
+
+			Object.setPrototypeOf(context, baseScope);
+			const stack = new EvaluatorStack(context);
+			return body.execute(stack)
+		}
+	}
+}
+
+interface ParameterPatternMap {
+	Identifier: estree.Identifier;
+	ObjectPattern: estree.ObjectPattern;
+	ArrayPattern: estree.ArrayPattern;
+	AssignmentPattern: estree.AssignmentPattern;
+	RestElement: estree.RestElement;
+	MemberExpression: estree.MemberExpression;
+}
+
+type ParameterLookup = Record<keyof ParameterPatternMap, (token: estree.Pattern) => FunctionParameter>;
+type ParameterObj = { [P in keyof ParameterPatternMap]: (token: ParameterPatternMap[P]) => FunctionParameter };
+
+//type FunctionParameterResolvers = { [P in estree.Pattern["type"] }
+
+abstract class FunctionParameter {
+	static readonly #Identifier = class IdentifierParameter extends FunctionParameter {
+		constructor(readonly name: string) {
+			super();
+		}
+
+		debugInfo() {
+			return {
+				type: "Identifier",
+				name: this.name
+			}
+		}
+
+		getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number) {
+			scope[this.name] = args[index];
+		}
+	}
+
+	static readonly #Rest = class RestParameter extends FunctionParameter {
+		constructor(readonly argument: FunctionParameter) {
+			super();
+		}
+
+		debugInfo() {
+			return {
+				type: "Identifier",
+				argument: this.argument.debugInfo()
+			};
+		}
+
+		getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number) {
+			const remaining = Math.max(0, args.length - index);
+			const value = Array(remaining);
+			for (var i = 0; i < value.length; i++)
+				value[i] = args[i + index];
+
+			this.argument.getValues(scope, [value], 0);
+		}
+	}
+
+	static readonly #lookup: ParameterLookup = {
+		Identifier(token) {
+			return new FunctionParameter.#Identifier(token.name);
+		},
+		RestElement(token) {
+			const argument = FunctionParameter.create(token.argument);
+			return new FunctionParameter.#Rest(argument);
+		},
+	} satisfies ParameterObj;
+
+	static create(token: estree.Pattern) {
+		const fn = FunctionParameter.#lookup[token.type];
+		if (fn === undefined)
+			throw new TypeError("Unsupported parameter pattern: " + token.type);
+		
+		return fn(token);
+	}
+
+	abstract getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number);
+	abstract debugInfo(): { type: string };
+}
+
 class InstructionList {
 	readonly #values: any[];
 	#count: number;
@@ -138,7 +240,16 @@ class InstructionList {
 		const values: any[] = [];
 
 		for (let i = 0; i < v.length;) {
-			const [code, arg]: Instruction = [v[i++], v[i++]]
+			let [code, arg]: Instruction = [v[i++], v[i++]];
+			if (arg instanceof InstructionList)
+				arg = arg.debugInfo();
+			else if (arg instanceof FunctionDefinition) {
+				arg = {
+					args: arg.args,
+					body: arg.body.debugInfo()
+				}
+			}
+
 			values.push({ arg, code: InstructionCode[code] });
 		}
 
@@ -166,7 +277,8 @@ enum InstructionCode {
 	LogicalAnd,
 	LogicalOr,
 	LogicalCoalesce,
-	Conditional
+	Conditional,
+	Function
 }
 
 interface InstructionArg {
@@ -187,6 +299,7 @@ interface InstructionArg {
 	[InstructionCode.LogicalOr]: InstructionList;
 	[InstructionCode.LogicalCoalesce]: InstructionList;
 	[InstructionCode.Conditional]: [x: InstructionList, y: InstructionList]
+	[InstructionCode.Function]: FunctionDefinition
 }
 
 type ArglessInstruction = keyof { [K in keyof InstructionArg as undefined extends InstructionArg[K] ? K : never]: any };
@@ -344,6 +457,11 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		const condition = stack.pop();
 		const result = (condition ? x : y).execute(stack.context);
 		stack.push(result);
+	},
+	// InstructionCode.Function
+	(stack, def) => {
+		const fn = def.build(stack.context);
+		stack.push(fn);
 	}
 ] satisfies InstructionHandlers;
 
@@ -543,6 +661,16 @@ const handlers: HandlerLookup = {
 		build(y, token.alternate);
 		build(b, token.test);
 		b.push(InstructionCode.Conditional, [x, y]);
+	},
+	ArrowFunctionExpression(b, { expression, async, generator, params, body }) {
+		if (!expression || async || generator)
+			throw new TypeError("Cannot use complex arrow functions.");
+
+		const instructions = new InstructionList();
+		const args = Array.from(params, FunctionParameter.create);
+
+		build(instructions, body);
+		b.push(InstructionCode.Function, new FunctionDefinition(args, instructions))
 	}
 }
 
