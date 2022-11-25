@@ -44,7 +44,7 @@ const identifier = "_$_";
 				}
 			}
 		}
-		
+
 		readonly expression: string;
 		readonly usesPath: boolean;
 
@@ -95,8 +95,6 @@ class FunctionDefinition {
 		this.args = args;
 		this.body = body;
 	}
-
-	debugInfo
 
 	build(baseScope: any) {
 		const { args, body } = this;
@@ -152,7 +150,7 @@ abstract class FunctionParameter {
 
 		debugInfo() {
 			return {
-				type: "Identifier",
+				type: "Rest",
 				argument: this.argument.debugInfo()
 			};
 		}
@@ -167,6 +165,69 @@ abstract class FunctionParameter {
 		}
 	}
 
+	static readonly #Array = class ArrayParameter extends FunctionParameter {
+		constructor(readonly elements: FunctionParameter[]) {
+			super();
+		}
+
+		debugInfo() {
+			return {
+				type: "Array",
+				elements: Array.from(this.elements, v => v.debugInfo())
+			};
+		}
+
+		getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number) {
+			const array = args[index];
+			const fn = array[Symbol.iterator];
+			if (typeof fn !== "function")
+				throw new TypeError(typeof array + " is not iterable.");
+
+			const { elements } = this;
+			const iter: Iterator<any> = fn.call(array);
+			const values = Array(elements.length);
+			for (let i = 0; i < values.length; i++) {
+				const { value, done } = iter.next();
+				if (done)
+					break;
+				
+				values[i] = value;
+			}
+
+			for (let i = 0; i < elements.length; i++)
+				elements[i].getValues(scope, values, i);
+		}
+	}
+
+	static readonly #Object = class ObjectParameter extends FunctionParameter {
+		constructor(readonly properties: [key: string | InstructionList, value: FunctionParameter][]) {
+			super();
+		}
+
+		debugInfo() {
+			return {
+				type: "Object",
+				properties: this.properties.map(([k, v]) => ({ key: typeof k === "string" ? k : k.debugInfo(), value: v.debugInfo() }))
+			};
+		}
+
+		getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number) {
+			const obj = args[index];
+			for (const [key, value] of this.properties) {
+				let resolvedKey: PropertyKey;
+				if (typeof key === "string") {
+					resolvedKey = key;
+				} else {
+					const stack = new EvaluatorStack(scope);
+					resolvedKey = key.execute(stack);
+				}
+
+				const v = obj[resolvedKey];
+				value.getValues(scope, [v], index);
+			}
+		}
+	}
+
 	static readonly #lookup: ParameterLookup = {
 		Identifier(token) {
 			return new FunctionParameter.#Identifier(token.name);
@@ -175,6 +236,31 @@ abstract class FunctionParameter {
 			const argument = FunctionParameter.create(token.argument);
 			return new FunctionParameter.#Rest(argument);
 		},
+		ArrayPattern(token) {
+			const elements = token.elements.map(FunctionParameter.create);
+			return new FunctionParameter.#Array(elements);
+		},
+		ObjectPattern(token) {
+			const props: [key: string | InstructionList, value: FunctionParameter][] = [];
+			for (const prop of token.properties) {
+				if (prop.type !== "Property")
+					throw new TypeError("Unsupported object pattern property type: " + prop.type);
+
+				let key: string | InstructionList;
+
+				if (prop.computed) {
+					key = new InstructionList();
+					build(key, prop.key);
+				} else {
+					key = (prop.key as estree.Identifier).name;
+				}
+
+				let value = FunctionParameter.create(prop.value);
+				props.push([key, value]);
+			}
+
+			return new FunctionParameter.#Object(props)
+		}
 	} satisfies ParameterObj;
 
 	static create(token: estree.Pattern) {
@@ -245,7 +331,7 @@ class InstructionList {
 				arg = arg.debugInfo();
 			else if (arg instanceof FunctionDefinition) {
 				arg = {
-					args: arg.args,
+					args: arg.args.map(v => v.debugInfo()),
 					body: arg.body.debugInfo()
 				}
 			}
@@ -679,3 +765,7 @@ for (let i = 0; i < instructionHandlers.length; i++) {
 	if (handler != null)
 		Object.defineProperty(handler, "name", { configurable: true, value: InstructionCode[i] });
 }
+
+// const fn = test("({ length, [length - 1]: a }) => console.log(length, a)");
+// fn("azb");
+// fn(5, "ddd", "eee", "fff", "ggg");
