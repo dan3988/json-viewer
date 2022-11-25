@@ -33,7 +33,7 @@ async function showSizeLimitOverride(tabId: number, frameIds: undefined | number
 
 async function inject(tabId: number, frameIds: undefined | number[], lenientParse: boolean) {
 	const target = { tabId, frameIds }
-	const files = [ "lib/content.js" ];
+	const files = [ "lib/viewer.js" ];
 
 	if (lenientParse)
 		files.unshift("lib/jsonic.js");
@@ -48,8 +48,8 @@ async function inject(tabId: number, frameIds: undefined | number[], lenientPars
 
 	await chrome.scripting.executeScript({
 		target,
-		world: "ISOLATED",
-		files: [ "lib/viewer.js" ]
+		files,
+		world: "ISOLATED"
 	});
 }
 
