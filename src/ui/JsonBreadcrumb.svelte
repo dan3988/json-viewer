@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { PropertyBag, PropertyChangeEvent } from "./prop";
+    import { PropertyBag, type PropertyChangeEventType } from "./prop";
 	import type { ViewerModel } from "./viewer-model";
 
 	export let model: ViewerModel;
@@ -9,7 +9,7 @@
 	});
 
 	let pathText = "";
-	let path: (number | string)[];
+	let path: readonly (number | string)[];
 	let isEditing = false;
 
 	props.addListener(evt => {
@@ -19,7 +19,7 @@
 		}
 	})
 
-	function onModelPropertyChange(evt: PropertyChangeEvent) {
+	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
 		if (evt.property === "selected") {
 			path = evt.newValue?.path;
 			pathText = path ? path.join("/") : "";

@@ -1,9 +1,11 @@
 import { JsonContainer, type JsonToken } from "./json";
-import { PropertyChangeEvent, type PropertyChangeHandler } from "./prop";
+import { PropertyChangeEvent, type PropertyChangeHandler, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
 
+interface ChangeProps {
+	selected: null | JsonToken
+}
 
-
-export class ViewerModel {
+export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	readonly #root: JsonToken;
 	readonly #listeners: PropertyChangeHandler[];
 	#selected: JsonToken;
@@ -27,6 +29,7 @@ export class ViewerModel {
 	constructor(root: JsonToken) {
 		this.#root = root;
 		this.#listeners = [];
+		this.#selected = null;
 	}
 
 	select(path: (number | string)[]) {
@@ -69,14 +72,14 @@ export class ViewerModel {
 		}
 	}
 
-	removeListener(handler: PropertyChangeHandler<any, any, this>) {
+	removeListener(handler: PropertyChangeHandlerTypes<this, ChangeProps>): void {
 		const ls = this.#listeners;
 		const i = ls.indexOf(handler);
 		if (i >= 0)
 			ls.splice(i, 1);
 	}
 
-	addListener(handler: PropertyChangeHandler<any, any, this>) {
+	addListener(handler: PropertyChangeHandlerTypes<this, ChangeProps>): void {
 		this.#listeners.push(handler);
 	}
 }

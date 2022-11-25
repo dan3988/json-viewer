@@ -1,7 +1,7 @@
 export type PropertyChangeHandler<T = any, TKey extends PropertyKey = any, TSource = unknown> = (this: TSource, evt: PropertyChangeEvent<T, TKey, TSource>) => void;
 export type PropertyChangeType = "create" | "change" | "delete";
 
-export class PropertyChangeEvent<T = any, TKey extends PropertyKey = any, TSource = unknown> {
+export class PropertyChangeEvent<T = any, TKey extends PropertyKey = PropertyKey, TSource = unknown> {
 	constructor(
 		readonly source: TSource,
 		readonly type: PropertyChangeType,
@@ -10,15 +10,16 @@ export class PropertyChangeEvent<T = any, TKey extends PropertyKey = any, TSourc
 		readonly newValue: T) { }
 }
 
-export interface PropertyChangeNotifier {
-	addListener(handler: PropertyChangeHandler<any, any, this>): void;
-	removeListener(handler: PropertyChangeHandler<any, any, this>): void;
+export interface PropertyChangeNotifier<TRecord extends Record<string, any> = Record<string, any>, TKey extends keyof TRecord = keyof TRecord> {
+	addListener(handler: PropertyChangeHandlerTypes<this, TRecord, TKey>): void;
+	removeListener(handler: PropertyChangeHandlerTypes<this, TRecord, TKey>): void;
 }
 
-type EventTypes<TRecord, TKey extends string & keyof TRecord, TSource> = { [P in TKey]: PropertyChangeEvent<TRecord[P], P, TSource> }[TKey];
-type HandlerTypes<TRecord, TKey extends string & keyof TRecord, TSource> = Fn<[evt: EventTypes<TRecord, TKey, TSource>], any, TSource>
+export type PropertyChangeEventType<TSource> = TSource extends PropertyChangeNotifier<infer TRecord, infer TKey> ? PropertyChangeEventTypes<TSource, TRecord, TKey> : never;
+export type PropertyChangeEventTypes<TSource, TRecord, TKey extends keyof TRecord = keyof TRecord> = { [P in TKey]: PropertyChangeEvent<TRecord[P], P, TSource> }[TKey];
+export type PropertyChangeHandlerTypes<TSource, TRecord, TKey extends keyof TRecord = keyof TRecord> = Fn<[evt: PropertyChangeEventTypes<TSource, TRecord, TKey>], any, TSource>
 
-export class PropertyBag<TRecord = any, TKey extends string & keyof TRecord = string & keyof TRecord> implements PropertyChangeNotifier {
+export class PropertyBag<TRecord = any, TKey extends string & keyof TRecord = string & keyof TRecord> implements PropertyChangeNotifier<TRecord, TKey> {
 	static readonly #handler: ProxyHandler<PropertyBag<any>> = {
 		get(t, p) {
 			return Reflect.get(t.#props, p);
@@ -113,11 +114,11 @@ export class PropertyBag<TRecord = any, TKey extends string & keyof TRecord = st
 		}
 	}
 
-	addListener(handler: HandlerTypes<TRecord, TKey, any>): void {
+	addListener(handler: PropertyChangeHandlerTypes<this, TRecord, TKey>): void {
 		this.#listeners.push(handler);
 	}
 
-	removeListener(handler: HandlerTypes<TRecord, TKey, any>): void {
+	removeListener(handler: PropertyChangeHandlerTypes<this, TRecord, TKey>): void {
 		const ls = this.#listeners;
 		const i = ls.indexOf(handler);
 		if (i >= 0)
