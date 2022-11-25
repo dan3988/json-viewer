@@ -123,7 +123,7 @@ export class PropertyBag<TRecord = any, TKey extends keyof TRecord = keyof TReco
 
 	#fireChange(prop: TKey, type: PropertyChangeType, oldValue: any, newValue: any) {
 		const pc = this.#pc;
-		if (pc.length) {
+		if (pc.hasListeners) {
 			const evt = new PropertyChangeEvent(this, type, prop, oldValue, newValue);
 			pc.fire(this, evt);
 		}

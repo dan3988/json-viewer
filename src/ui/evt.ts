@@ -26,8 +26,8 @@ export class EventHandlers<THandler extends Fn> {
 	readonly #handlers: THandler[];
 	readonly #event: IEvent<THandler>;
 
-	get length() {
-		return this.#handlers.length;
+	get hasListeners() {
+		return this.#handlers.length > 0;
 	}
 
 	get event() {

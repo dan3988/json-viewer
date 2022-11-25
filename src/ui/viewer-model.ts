@@ -56,7 +56,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 
 	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {
 		const handlers = this.#command;
-		if (handlers.length)
+		if (handlers.hasListeners)
 			handlers.fire(this, { command, args });
 	}
 
@@ -93,7 +93,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 
 	#fireChange(prop: keyof ChangeProps, oldValue: any, newValue: any) {
 		const ls = this.#propertyChange;
-		if (ls.length) {
+		if (ls.hasListeners) {
 			const evt = new PropertyChangeEvent(this, "change", prop, oldValue, newValue);
 			ls.fire(this, evt);
 		}
