@@ -28,11 +28,10 @@
 
 	function onClick(index: number) {
 		if (index === 0) {
-			model.selected = model.root;
+			model.select(["$"], true);
 		} else {
 			const slice = path.slice(0, index + 1);
-			model.select(slice, { block: "start" });
-			//model.execute("scrollTo", model.selected, { block: "start" });
+			model.select(slice, true);
 		}
 	}
 

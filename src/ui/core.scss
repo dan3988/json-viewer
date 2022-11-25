@@ -1,4 +1,9 @@
 $border-w: 1px;
+$border-rad: 5px;
+
+$pad-small: 2px;
+$pad-med: 5px;
+
 $anim-short: 100ms;
 $anim-med: 200ms;
 
@@ -86,36 +91,44 @@ $anim-med: 200ms;
 	margin: 0;
 }
 
+.border {
+	border: solid $border-w var(--col-border);
+}
+
+.border-rnd {
+	@extend .border;
+	border-radius: $border-rad;
+}
+
 .hv {
 	transition-property: background-color;
 	transition-duration: $anim-short;
 	transition-timing-function: ease-in-out;
 
+	&.border {
+		transition-property: background-color border-color;
+	}
+
 	&:hover {
 		background-color: var(--col-bg-lt-hv);
+
+		&.border {
+			border-color: var(--col-border-hv);
+		}
 	}
 
 	&:focus,
 	&:focus:hover {
 		background-color: var(--col-bg-lt-focus);
+
+		&.border {
+			border-color: var(--col-border-focus);
+		}
 	}
 }
 
 .hv-b4 {
 	&::before {
 		@extend .hv;
-	}
-}
-
-.hvb {
-	transition-property: background-color;
-
-	&:hover {
-		border-color: var(--col-border-hv);
-	}
-
-	&:focus,
-	&:focus:hover {
-		border-color: var(--col-border-focus);
 	}
 }

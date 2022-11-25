@@ -4,6 +4,7 @@
 	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
 	import JsonContainer from "./JsonContainer.svelte";
 	import JsonValue from "./JsonValue.svelte";
+    import { tick } from "svelte";
 
 	const props = new PropertyBag({
 		isSelected: false,
@@ -33,12 +34,19 @@
 
 	function onModelCommand(evt: ViewerCommandEvent) {
 		switch (evt.command) {
+			case "expand":
+				if (evt.args[0].has(value))
+					expanded = true;
+
+				break;
 			case "expandAll":
 				expanded = evt.args[0];
 				break;
 			case "scrollTo":
 				if (evt.args[0] === value)
-					keyElement.scrollIntoView({ block: "center" });
+					tick().then(() => keyElement.scrollIntoView({ behavior: "auto", block: "center" }));
+
+				break;
 		}
 	}
 

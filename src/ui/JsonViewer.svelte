@@ -14,6 +14,10 @@
         grid-template-columns: 1fr 20rem;
         grid-template-rows: 1fr auto;
         overflow: hidden;
+
+        > div {
+            position: relative;
+        }
     }
 
     .w-prop {

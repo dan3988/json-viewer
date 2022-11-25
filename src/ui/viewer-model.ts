@@ -1,5 +1,5 @@
 import { EventHandlers } from "./evt";
-import { JsonContainer, type JsonToken } from "./json";
+import { JsonContainer, JsonToken } from "./json";
 import { PropertyChangeEvent, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
 
 interface ChangeProps {
@@ -8,7 +8,8 @@ interface ChangeProps {
 
 export interface ViewerCommands {
 	expandAll: [expand: boolean];
-	scrollTo: [token: JsonToken, args?: boolean | ScrollIntoViewOptions];
+	expand: [tokens: ReadonlySet<JsonToken>];
+	scrollTo: [token: JsonToken];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
@@ -58,11 +59,22 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 			handlers.fire(this, <any>{ command, args });
 	}
 
-	select(path: (number | string)[], scroll?: boolean | ScrollIntoViewOptions) {
+	select(path: string | (number | string)[], scroll?: boolean) {
+		if (typeof path === "string")
+			path = path.split("/");
+
 		let i = 0;
 		let base: JsonToken;
 		if (path[0] !== "$") {
 			base = this.#selected;
+		} else if (path.length === 1) {
+			const root = this.#root;
+			this.selected = root;
+
+			if (scroll)
+				this.execute("scrollTo", root);
+
+			return true;
 		} else {
 			i++;
 			base = this.#root;
@@ -79,8 +91,15 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 
 			if (++i === path.length) {
 				this.selected = child;
-				if (scroll != null)
-					this.execute("scrollTo", child, scroll);
+
+				if (scroll) {
+					const tree = new Set<JsonToken>();
+					for (let t = child; t != null; t = t.parent)
+						tree.add(t);
+
+					this.execute("expand", tree);
+					this.execute("scrollTo", child);
+				}
 
 				return true;
 			}
