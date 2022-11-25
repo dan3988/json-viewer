@@ -8,14 +8,12 @@ interface ChangeProps {
 
 export interface ViewerCommands {
 	expandAll: [expand: boolean];
+	scrollTo: [token: JsonToken, args?: boolean | ScrollIntoViewOptions];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
 
-export interface ViewerCommandEvent<K extends keyof ViewerCommands = keyof ViewerCommands> {
-	command: K;
-	args: ViewerCommands[K];
-}
+export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
 
 export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	readonly #root: JsonToken;
@@ -57,10 +55,10 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {
 		const handlers = this.#command;
 		if (handlers.hasListeners)
-			handlers.fire(this, { command, args });
+			handlers.fire(this, <any>{ command, args });
 	}
 
-	select(path: (number | string)[]) {
+	select(path: (number | string)[], scroll?: boolean | ScrollIntoViewOptions) {
 		let i = 0;
 		let base: JsonToken;
 		if (path[0] !== "$") {
@@ -81,6 +79,9 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 
 			if (++i === path.length) {
 				this.selected = child;
+				if (scroll != null)
+					this.execute("scrollTo", child, scroll);
+
 				return true;
 			}
 

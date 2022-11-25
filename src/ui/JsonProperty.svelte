@@ -32,8 +32,14 @@
 	})
 
 	function onModelCommand(evt: ViewerCommandEvent) {
-		if (evt.command === "expandAll")
-			expanded = evt.args[0];
+		switch (evt.command) {
+			case "expandAll":
+				expanded = evt.args[0];
+				break;
+			case "scrollTo":
+				if (evt.args[0] === value)
+					keyElement.scrollIntoView({ block: "center" });
+		}
 	}
 
 	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
@@ -45,6 +51,8 @@
 	export let key: undefined | string | number;
 	export let value: JsonToken;
 	export let expanded = false;
+
+	let keyElement: HTMLElement;
 
 	$: selected = props.bag.isSelected;
 	$: props.bag.model = model;
@@ -190,7 +198,7 @@
 {#if value}
 <div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}{selected ? " selected" : ""}">
 	{#if key != null}
-	<span class="json-key" on:click={() => model.selected = value}>{key}</span>
+	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = value}>{key}</span>
 	{/if}
 	{#if value.is("container")}
 		{#if value.count === 0}

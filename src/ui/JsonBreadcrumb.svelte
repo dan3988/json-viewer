@@ -31,7 +31,8 @@
 			model.selected = model.root;
 		} else {
 			const slice = path.slice(0, index + 1);
-			model.select(slice);
+			model.select(slice, { block: "start" });
+			//model.execute("scrollTo", model.selected, { block: "start" });
 		}
 	}
 
