@@ -56,6 +56,18 @@
 <style lang="scss">
 	@import "./core.scss";
 
+	.btn-clr {
+		@extend .img-btn, .hv-b4;
+
+		&:before {
+			background-color: var(--col-border);
+			--col-bg-lt: var(--col-border);
+			--col-bg-lt-hv: var(--col-border-hv);
+			--col-bg-lt-focus: var(--col-border-focus);
+			--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/clear.svg");
+		}
+	}
+
 	.root {
 		position: absolute;
 		inset: 0;
@@ -95,12 +107,14 @@
 {#if model}
 <div class="root">
 	<div class="group">
-		<button type="button" on:click={expandAll}>Expand All</button>
-		<button type="button" on:click={collapseAll}>Collapse All</button>
+		<button type="button" class="btn" on:click={expandAll}>Expand All</button>
+		<button type="button" class="btn" on:click={collapseAll}>Collapse All</button>
 	</div>
 	<div class="group">
-		<input class="jpath-input" type="text" bind:value={jpath} on:keypress={onKeyPress}/>
-		<button type="button" on:click={evaluateJpath}>Evaluate</button>
+		<span class="lbl">Path</span>
+		<input class="jpath-input control" type="text" bind:value={jpath} on:keypress={onKeyPress}/>
+		<button type="button" class="btn btn-clr" on:click={() => jpath = ""}></button>
+		<button type="button" class="btn" on:click={evaluateJpath}>Evaluate</button>
 	</div>
 	<ul class="jpath-results">
 		{#each jpathResults as path}

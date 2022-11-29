@@ -3,6 +3,7 @@ $border-rad: 5px;
 
 $pad-small: 2px;
 $pad-med: 5px;
+$pad-l: 15px;
 
 $anim-short: 100ms;
 $anim-med: 200ms;
@@ -34,8 +35,6 @@ $anim-med: 200ms;
 	
 	color: var(--col-fg);
 	background-color: var(--col-body);
-	font-family: Calibri;
-	font-size: medium;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -66,6 +65,11 @@ $anim-med: 200ms;
 	}
 }
 
+:global(*) {
+	font-family: Calibri;
+	font-size: medium;
+}
+
 .img-btn {
 	cursor: pointer;
 	position: relative;
@@ -91,6 +95,65 @@ $anim-med: 200ms;
 	margin: 0;
 }
 
+:global(.control) {
+	@extend .border-rnd, .hv;
+
+	--col-bg-lt: var(--col-bg-lt);
+	--col-bg-lt-hv: var(--col-bg-dk-hv);
+	--col-bg-lt-focus: var(--col-bg-dk-focus);
+	outline: none;
+	padding: $pad-med;
+}
+
+:global(.lbl),
+:global(.btn) {
+	@extend .border-rnd;
+
+	background-color: var(--col-bg-lt);
+	padding: $pad-med $pad-l;
+}
+
+:global(.btn) {
+	@extend .hv;
+	cursor: pointer;
+}
+
+:global(.group) {
+	display: flex;
+	flex-direction: row;
+
+	&:has(.control) {
+		> * {
+			min-width: 0;
+			flex: 0 0 content;
+		}
+
+		> .control {
+			flex: 1 1 0;
+		}
+	}
+
+	> * {
+		min-width: 0;
+		flex: 1 1 0;
+		border-radius: 0;
+
+		&:not(:first-child) {
+			margin-left: -$border-w;
+		}
+
+		&:first-child {
+			border-top-left-radius: $border-rad;
+			border-bottom-left-radius: $border-rad;
+		}
+
+		&:last-child {
+			border-top-right-radius: $border-rad;
+			border-bottom-right-radius: $border-rad;
+		}
+	}
+}
+
 .border {
 	border: solid $border-w var(--col-border);
 }
@@ -110,6 +173,7 @@ $anim-med: 200ms;
 	}
 
 	&:hover {
+		z-index: 1;
 		background-color: var(--col-bg-lt-hv);
 
 		&.border {
