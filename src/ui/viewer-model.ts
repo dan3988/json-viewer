@@ -1,15 +1,15 @@
 import { EventHandlers } from "./evt";
-import { JsonContainer, JsonToken } from "./json";
+import { JsonContainer, JsonProperty, JsonToken } from "./json";
 import { PropertyChangeEvent, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
 
 interface ChangeProps {
-	selected: null | JsonToken
+	selected: null | JsonProperty
 }
 
 export interface ViewerCommands {
 	expandAll: [expand: boolean];
-	expand: [tokens: ReadonlySet<JsonToken>];
-	scrollTo: [token: JsonToken];
+	expand: [tokens: ReadonlySet<JsonProperty>];
+	scrollTo: [token: JsonProperty];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
@@ -17,10 +17,10 @@ export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent]
 export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
 
 export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
-	readonly #root: JsonToken;
+	readonly #root: JsonProperty;
 	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<ViewerModel, ChangeProps>>;
 	readonly #command: EventHandlers<ViewerCommandHandler<this>>;
-	#selected: null | JsonToken;
+	#selected: null | JsonProperty;
 	
 	get root() {
 		return this.#root;
@@ -46,7 +46,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		return this.#command.event;
 	}
 
-	constructor(root: JsonToken) {
+	constructor(root: JsonProperty) {
 		this.#root = root;
 		this.#propertyChange = new EventHandlers();
 		this.#command = new EventHandlers();
@@ -64,9 +64,12 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 			path = path.split("/");
 
 		let i = 0;
-		let base: JsonToken;
+		let baseProp: JsonProperty;
 		if (path[0] !== "$") {
-			base = this.#selected;
+			if (this.#selected == null)
+				return false;
+
+			baseProp = this.#selected;
 		} else if (path.length === 1) {
 			const root = this.#root;
 			this.selected = root;
@@ -77,9 +80,11 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 			return true;
 		} else {
 			i++;
-			base = this.#root;
+			baseProp = this.#root;
 		}
 
+
+		let base = baseProp.value;
 		if (!(base instanceof JsonContainer))
 			return false;
 
@@ -93,7 +98,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 				this.selected = child;
 
 				if (scroll) {
-					const tree = new Set<JsonToken>();
+					const tree = new Set<JsonProperty>();
 					for (let t = child; t != null; t = t.parent)
 						tree.add(t);
 

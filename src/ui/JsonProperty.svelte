@@ -1,34 +1,34 @@
 <script lang="ts">
     import { PropertyBag, type PropertyChangeEventType } from "./prop";
-	import type { JsonToken } from "./json";
+	import type { JsonProperty } from "./json";
 	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
 	import JsonValue from "./JsonValue.svelte";
     import { tick } from "svelte";
 
+	export let model: ViewerModel;
+	export let prop: JsonProperty;
+	export let expanded = false;
+	export let indent = -1;
+
 	const maxIndentClass = 8;
+	const props = new PropertyBag({ model, prop, isSelected: false });
 
-	const props = new PropertyBag({
-		isSelected: false,
-		model: undefined as ViewerModel,
-		value: undefined as JsonToken
-	});
-
-	props.propertyChange.addListener((evt) => {
-		switch (evt.property) {
+	props.propertyChange.addListener(({ property, newValue, oldValue }) => {
+		switch (property) {
 			case "model":
-				if (evt.oldValue) {
-					evt.oldValue.propertyChange.removeListener(onModelPropertyChange);
-					evt.oldValue.command.removeListener(onModelCommand);
+				if (oldValue) {
+					oldValue.propertyChange.removeListener(onModelPropertyChange);
+					oldValue.command.removeListener(onModelCommand);
 				}
 
-				if (evt.newValue) {
-					evt.newValue.propertyChange.addListener(onModelPropertyChange);
-					evt.newValue.command.addListener(onModelCommand);
+				if (newValue) {
+					newValue.propertyChange.addListener(onModelPropertyChange);
+					newValue.command.addListener(onModelCommand);
 				}
 
 				break;
 			case "isSelected":
-				selected = evt.newValue;
+				selected = newValue;
 				break;
 		}
 	})
@@ -36,7 +36,7 @@
 	function onModelCommand(evt: ViewerCommandEvent) {
 		switch (evt.command) {
 			case "expand":
-				if (evt.args[0].has(value))
+				if (evt.args[0].has(prop))
 					expanded = true;
 
 				break;
@@ -44,7 +44,7 @@
 				expanded = evt.args[0];
 				break;
 			case "scrollTo":
-				if (evt.args[0] === value)
+				if (evt.args[0] === prop)
 					tick().then(() => keyElement.scrollIntoView({ behavior: "auto", block: "center" }));
 
 				break;
@@ -53,20 +53,12 @@
 
 	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
 		if (evt.property === "selected")
-			props.bag.isSelected = evt.newValue === value;
+			props.bag.isSelected = evt.newValue === prop;
 	}
-
-	export let model: ViewerModel;
-	export let key: undefined | string | number;
-	export let value: JsonToken;
-	export let expanded = false;
-	export let indent = -1;
 
 	let keyElement: HTMLElement;
 
 	$: selected = props.bag.isSelected;
-	$: props.bag.model = model;
-	$: props.bag.value = value;
 </script>
 <style lang="scss">
 	@import "./core.scss";
@@ -244,27 +236,25 @@
 		}
 	}
 </style>
-{#if value}
-<div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}{selected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
-	{#if key != null}
-	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = value}>{key}</span>
-	{/if}
-	{#if value.is("container")}
-		{#if value.count === 0}
+{#if prop}
+<div class="json-prop for-{prop.value.type} for-{prop.value.subtype} {expanded ? 'expanded' : 'collapsed'}{selected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
+	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop}>{prop.key}</span>
+	{#if prop.value.is("container")}
+		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
 			<span class="expander" on:click={() => expanded = !expanded}></span>
-			<span class="prop-count">{value.count}</span>
-			<ul class="json-container json-{value.subtype}">
-				{#each [...value.properties()] as prop}
+			<span class="prop-count">{prop.value.count}</span>
+			<ul class="json-container json-{prop.value.subtype}">
+				{#each [...prop.value.properties()] as p}
 				<li>
-					<svelte:self model={model} key={prop.key} value={prop.value} indent={indent + 1} />
+					<svelte:self model={model} prop={p} indent={indent + 1} />
 				</li>
 				{/each}
 			</ul>
 		{/if}
-	{:else if value.is("value")}
-	<JsonValue token={value}/>
+	{:else if prop.value.is("value")}
+	<JsonValue token={prop.value}/>
 	{/if}
 </div>
 {/if}

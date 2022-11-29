@@ -95,8 +95,8 @@ class JsonIterator<TKey extends string | number, TResult> implements Iterable<TR
 	}
 }
 
-function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [prop: null | JsonProperty, value: T]>
-function resolveConstructor(value: any): Constructor<JsonToken, [prop: null | JsonProperty, value: any]> {
+function resolveConstructor<T>(value: T): Constructor<JsonToken<T>, [prop: JsonProperty, value: T]>
+function resolveConstructor(value: any): Constructor<JsonToken, [prop: JsonProperty, value: any]> {
 	if (value == null)
 		return JsonValue;
 
@@ -126,11 +126,16 @@ abstract class JsonBase {
 export type ToToken<T> = T extends readonly any[] ? JsonArray<T> : (T extends object ? JsonObject<T> : (T extends JsonValueType ? JsonValue<T> : JsonToken))
 
 export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
-	readonly #parent: JsonContainer<TKey, any>;
+	static create<T>(value: T): JsonProperty<"$", T> {
+		return new JsonProperty(null, null, "$", value);
+	}
+
+	readonly #parent: null | JsonContainer<TKey, any>;
 	#prev: null | JsonProperty<TKey>;
 	#next: null | JsonProperty<TKey>;
 	readonly #key: TKey;
 	readonly #value: JsonToken<TValue>;
+	readonly #path: (string | number)[];
 
 	get type() {
 		return "property" as const;
@@ -148,6 +153,10 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.#next;
 	}
 
+	get path(): readonly (string | number)[] {
+		return this.#path;
+	}
+
 	get key() {
 		return this.#key;
 	}
@@ -156,13 +165,15 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.#value as any;
 	}
 
-	constructor(parent: JsonContainer<TKey, any>, prev: null | JsonProperty<TKey>, key: TKey, value: TValue, filterableKey?: boolean) {
+	constructor(parent: null | JsonContainer<TKey, any>, prev: null | JsonProperty<TKey>, key: TKey, value: TValue) {
 		super();
 		const ctor = resolveConstructor(value);
 		this.#parent = parent;
 		this.#prev = prev;
 		this.#next = null;
 		this.#key = key;
+		this.#path = parent == null ? [] : Array.from(parent.parentProperty.path)
+		this.#path.push(key);
 		this.#value = new ctor(this, value);
 
 		if (prev != null)
@@ -176,15 +187,8 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 }
 
 export abstract class JsonToken<T = any> extends JsonBase {
-	static create<T>(value: T): ToToken<T>
-	static create(value: any): JsonToken {
-		const ctor = resolveConstructor(value);
-		return new ctor(null, value);
-	}
-
-	readonly #root: null | JsonContainer;
-	readonly #prop: null | JsonProperty;
-	readonly #path: (string | number)[];
+	readonly #root: JsonProperty;
+	readonly #prop: JsonProperty;
 
 	get root() {
 		return this.#root;
@@ -198,25 +202,13 @@ export abstract class JsonToken<T = any> extends JsonBase {
 		return this.#prop;
 	}
 
-	get path(): readonly (string | number)[] {
-		return this.#path;
-	}
-
 	abstract get proxy(): T;
 	abstract get subtype(): keyof JsonTokenSubTypeMap;
 
-	protected constructor(prop: null | JsonProperty) {
+	protected constructor(prop: JsonProperty) {
 		super();
-		if (prop == null) {
-			this.#root = this instanceof JsonContainer ? this : null;
-			this.#prop = null;
-			this.#path = ["$"];
-		} else {
-			this.#root = prop.parent.root;
-			this.#prop = prop;
-			this.#path = Array.from(prop.parent.#path);
-			this.#path.push(prop.key);
-		}
+		this.#root = prop.parent?.root ?? prop;
+		this.#prop = prop;
 	}
 	
 	is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
@@ -250,7 +242,7 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 		return this.#proxy;
 	}
 
-	protected constructor(prop: null | JsonProperty, handler: ProxyHandler<JsonContainer<TKey, T>>) {
+	protected constructor(prop: JsonProperty, handler: ProxyHandler<JsonContainer<TKey, T>>) {
 		super(prop);
 		this.#proxy = new Proxy(this, handler);
 	}
@@ -286,8 +278,7 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 		return JsonIterator.values(this);
 	}
 
-	abstract override get(key: TKey): undefined | JsonToken;
-	abstract override getProperty(key: TKey): undefined | JsonProperty<TKey>;
+	abstract override getProperty(key: string | number): undefined | JsonProperty<TKey>;
 }
 
 export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonContainer<number & keyof T, T> {
@@ -346,15 +337,15 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 		return this.#items.length;
 	}
 
-	constructor(prop: null | JsonProperty, value: T[]) {
+	constructor(prop: JsonProperty, value: T[]) {
 		super(prop, JsonArray.#proxyHandler as any);
 		if (value && value.length) {
-			let prop = new JsonProperty(this, null, 0, value[0], false);
+			let prop = new JsonProperty<number>(this, null, 0, value[0]);
 			this.#items = Array(value.length);
 			this.#items[0] = prop;
 			this.#first = prop;
 			for (let i = 1; i < value.length; i++)
-				this.#items[i] = prop = new JsonProperty(this, prop, i, value[i], false);
+				this.#items[i] = prop = new JsonProperty<number>(this, prop, i, value[i]);
 
 			this.#last = prop;
 		} else {
@@ -364,16 +355,12 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 		}
 	}
 
-	getProperty<K extends number & keyof T>(key: K): JsonProperty<K, JsonToken<T[K]>>;
-	getProperty(key: number): undefined | JsonProperty<number & keyof T>;
-	getProperty(key: number): undefined | JsonProperty<number & keyof T> {
-		return this.#items.at(key);
+	getProperty(key: string | number): undefined | JsonProperty<number & keyof T> {
+		return typeof key !== "number" ? undefined : this.#items.at(key);
 	}
 
-	get<K extends number & keyof T>(key: K): ToToken<T[K]>;
-	get(key: number): undefined | JsonToken;
-	get(key: number): undefined | JsonToken {
-		return this.#items.at(key)?.value;
+	get(key: string | number): undefined | JsonToken {
+		return this.getProperty(key)?.value;
 	}
 
 	toJSON(): T {
@@ -449,7 +436,7 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 		return "object" as const;
 	}
 
-	constructor(prop: null | JsonProperty, value: T) {
+	constructor(prop: JsonProperty, value: T) {
 		super(prop, JsonObject.#proxyHandler as any);
 		this.#props = new Map();
 		if (value) {
@@ -459,14 +446,14 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 			if (keys.length) {
 				let key = keys[0];
 				let item = (value as any)[key];
-				let prop = new JsonProperty<Key>(this, null, key, item, true);
+				let prop = new JsonProperty<Key>(this, null, key, item);
 
 				this.#props.set(key, prop);
 				this.#first = prop;
 				for (let i = 1; i < keys.length; i++) {
 					key = keys[i];
 					item = (value as any)[key];
-					prop = new JsonProperty<Key>(this, prop, key, item, true);
+					prop = new JsonProperty<Key>(this, prop, key, item);
 					this.#props.set(key, prop);
 				}
 
@@ -479,16 +466,12 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 		this.#last = null;
 	}
 
-	getProperty<K extends string & keyof T>(key: K): JsonProperty<K, JsonToken<T[K]>>;
-	getProperty(key: string): undefined | JsonProperty<string & keyof T>;
-	getProperty(key: string): undefined | JsonProperty<string & keyof T> {
-		return this.#props.get(key);
+	getProperty(key: string | number): undefined | JsonProperty<string & keyof T> {
+		return typeof key !== "string" ? undefined : this.#props.get(key);
 	}
 
-	get<K extends string & keyof T>(key: K): ToToken<T[K]>;
-	get(key: string): undefined | JsonToken;
-	get(key: string): undefined | JsonToken {
-		return this.#props.get(key)?.value;
+	get(key: string | number): undefined | JsonToken {
+		return this.getProperty(key)?.value;
 	}
 
 	toJSON(): T {
@@ -522,7 +505,7 @@ export class JsonValue<T extends JsonValueType = JsonValueType> extends JsonToke
 		return this.#type;
 	}
 
-	constructor(prop: null | JsonProperty, value: T) {
+	constructor(prop: JsonProperty, value: T) {
 		super(prop);
 		this.#value = value;
 		this.#type = value === null ? "null" : <any>typeof value;
