@@ -2,7 +2,6 @@
     import { PropertyBag, type PropertyChangeEventType } from "./prop";
 	import type { JsonToken } from "./json";
 	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
-	import JsonContainer from "./JsonContainer.svelte";
 	import JsonValue from "./JsonValue.svelte";
     import { tick } from "svelte";
 
@@ -214,7 +213,13 @@
 		{:else}
 			<span class="expander" on:click={() => expanded = !expanded}></span>
 			<span class="prop-count">{value.count}</span>
-			<JsonContainer model={model} token={value}/>
+			<ul class="json-container json-{value.subtype}">
+				{#each [...value.properties()] as prop}
+				<li>
+					<svelte:self model={model} key={prop.key} value={prop.value}/>
+				</li>
+				{/each}
+			</ul>
 		{/if}
 	{:else if value.is("value")}
 	<JsonValue token={value}/>
