@@ -7,7 +7,8 @@
 		"lib": [
 			"ESNext",
 			"DOM"
-		]
+		],
+		"target": "ESNext"
 	},
 	"include": [
 		"../*.d.ts",
