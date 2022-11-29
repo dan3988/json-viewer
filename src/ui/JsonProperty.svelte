@@ -5,6 +5,8 @@
 	import JsonValue from "./JsonValue.svelte";
     import { tick } from "svelte";
 
+	const maxIndentClass = 8;
+
 	const props = new PropertyBag({
 		isSelected: false,
 		model: undefined as ViewerModel,
@@ -58,6 +60,7 @@
 	export let key: undefined | string | number;
 	export let value: JsonToken;
 	export let expanded = false;
+	export let indent = -1;
 
 	let keyElement: HTMLElement;
 
@@ -85,6 +88,8 @@
 		grid-template-rows: auto auto auto;
 		border: 1px transparent solid;
 		border-radius: 5px;
+
+		--col-indent: var(--col-shadow);
 
 		&.selected {
 			border-color: var(--col-border);
@@ -144,6 +149,38 @@
 					border-radius: 1px;
 				}
 			}
+
+			&.indent-0 {
+				--col-indent: var(--col-indent-1);
+			}
+
+			&.indent-1 {
+				--col-indent: var(--col-indent-2);
+			}
+
+			&.indent-2 {
+				--col-indent: var(--col-indent-3);
+			}
+
+			&.indent-3 {
+				--col-indent: var(--col-indent-4);
+			}
+
+			&.indent-4 {
+				--col-indent: var(--col-indent-5);
+			}
+
+			&.indent-5 {
+				--col-indent: var(--col-indent-6);
+			}
+
+			&.indent-6 {
+				--col-indent: var(--col-indent-7);
+			}
+
+			&.indent-7 {
+				--col-indent: var(--col-indent-8);
+			}
 		}
 
 		&.collapsed {
@@ -182,7 +219,7 @@
 		>.expander {
 			grid-area: 1 / 1 / -1 / span 1;
 		}
-
+		
 		> :global(.json-value) {
 			grid-area: 1 / 3 / span 1 / span 1;
 		}
@@ -198,12 +235,12 @@
 		position: relative;
 
 		&:before {
-			background-color: var(--col-shadow);
+			background-color: var(--col-indent);
 		}
 	}
 </style>
 {#if value}
-<div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}{selected ? " selected" : ""}">
+<div class="json-prop for-{value.type} for-{value.subtype} {expanded ? 'expanded' : 'collapsed'}{selected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
 	{#if key != null}
 	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = value}>{key}</span>
 	{/if}
@@ -216,7 +253,7 @@
 			<ul class="json-container json-{value.subtype}">
 				{#each [...value.properties()] as prop}
 				<li>
-					<svelte:self model={model} key={prop.key} value={prop.value}/>
+					<svelte:self model={model} key={prop.key} value={prop.value} indent={indent + 1} />
 				</li>
 				{/each}
 			</ul>

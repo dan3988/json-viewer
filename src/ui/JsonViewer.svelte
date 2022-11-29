@@ -55,7 +55,7 @@
 
 <div class="root">
     <div class="w-prop">
-        <JsonProperty model={model} key="$root" value={model.root} expanded={true}/>
+        <JsonProperty model={model} key="$root" value={model.root} expanded={true} indent={0}/>
     </div>
     <div class="w-path">
         <JsonBreadcrumb model={model}/>
