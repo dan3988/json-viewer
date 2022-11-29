@@ -3,37 +3,37 @@
 
 	export let token: JsonValue;
 
-	function render(target: HTMLElement, value: any): SvelteActionReturnType {
-		let e: Text | HTMLAnchorElement;
-		if (value === null) {
-			e = document.createTextNode("null");
+	function getNode(value: any) {
+		if (value === null || typeof value !== "string") {
+			const text = String(value);
+			return document.createTextNode(text);
 		} else {
-			switch (typeof value) {
-				case "number":
-				case "boolean":
-					e = document.createTextNode(String(value));
-					break;
-				case "string": {
-					const text = JSON.stringify(value);
-					if (value.startsWith("http://") || value.startsWith("https://")) {
-						e = document.createElement("a");
-						e.href = value;
-						e.textContent = text;
-					} else {
-						e = document.createTextNode(text);
-					}
-					break;
-				}
+			const text = JSON.stringify(value);
+			if (value.startsWith("http://") || value.startsWith("https://")) {
+				const a = document.createElement("a");
+				a.href = value;
+				a.textContent = text;
+				return a;
+			} else {
+				return document.createTextNode(text);
 			}
 		}
+	}
 
+	function render(target: HTMLElement, value: any): SvelteActionReturnType {
+		let e = getNode(value);
 		target.appendChild(e);
 		return {
 			destroy() {
 				e.remove();
 			},
-			update(...args) {
-				debugger;
+			update(newValue) {
+				if (value !== newValue) {
+					value = newValue;
+					const next = getNode(value);
+					e.replaceWith(next);
+					e = next;
+				}
 			}
 		}
 	}

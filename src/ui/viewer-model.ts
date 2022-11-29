@@ -20,7 +20,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	readonly #root: JsonToken;
 	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<ViewerModel, ChangeProps>>;
 	readonly #command: EventHandlers<ViewerCommandHandler<this>>;
-	#selected: JsonToken;
+	#selected: null | JsonToken;
 	
 	get root() {
 		return this.#root;

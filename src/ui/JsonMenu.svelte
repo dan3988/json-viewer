@@ -8,19 +8,18 @@
 	let jpath: string;
 	let jpathResults: string[] = [];
 
-	const props = new PropertyBag({
-		model: undefined as ViewerModel
-	});
+	const props = new PropertyBag({ model });
 
-	props.propertyChange.addListener(evt => {
-		if (evt.property === "model") {
-			evt.oldValue?.propertyChange.removeListener(onModelPropertyChange);
-			evt.newValue?.propertyChange.addListener(onModelPropertyChange);
-		}
-	})
+	// props.bag.model.propertyChange.addListener(onModelPropertyChange);
+	// props.propertyChange.addListener(evt => {
+	// 	if (evt.property === "model") {
+	// 		evt.oldValue.propertyChange.removeListener(onModelPropertyChange);
+	// 		evt.newValue.propertyChange.addListener(onModelPropertyChange);
+	// 	}
+	// })
 
-	function onModelPropertyChange(evt: PropertyChangeEvent) {
-	}
+	// function onModelPropertyChange(evt: PropertyChangeEvent) {
+	// }
 
 	function expandAll() {
 		model.execute("expandAll", true);

@@ -4,14 +4,13 @@
 
 	export let model: ViewerModel;
 
-	const props = new PropertyBag({
-		model: undefined as ViewerModel
-	});
+	const props = new PropertyBag({ model });
 
 	let pathText = "";
-	let path: readonly (number | string)[];
+	let path: readonly (number | string)[] = [];
 	let isEditing = false;
 
+	props.bag.model.propertyChange.addListener(onModelPropertyChange);
 	props.propertyChange.addListener(evt => {
 		if (evt.property === "model") {
 			evt.oldValue?.propertyChange.removeListener(onModelPropertyChange);
@@ -21,8 +20,8 @@
 
 	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
 		if (evt.property === "selected") {
-			path = evt.newValue?.path;
-			pathText = path ? path.join("/") : "";
+			path = evt.newValue?.path ?? [];
+			pathText = path.join("/");
 		}
 	}
 

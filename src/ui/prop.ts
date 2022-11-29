@@ -22,7 +22,7 @@ export type PropertyChangeEventTypes<TSource, TRecord, TKey extends keyof TRecor
 export type PropertyChangeHandlerType<TSource> = TSource extends PropertyChangeNotifier<infer TRecord, infer TKey> ? PropertyChangeHandlerTypes<TSource, TRecord, TKey> : never;
 export type PropertyChangeHandlerTypes<TSource, TRecord, TKey extends keyof TRecord = keyof TRecord> = Fn<[evt: PropertyChangeEventTypes<TSource, TRecord, TKey>], any, TSource>;
 
-export class PropertyBag<TRecord = any, TKey extends keyof TRecord = keyof TRecord> implements PropertyChangeNotifier<TRecord, TKey> {
+export class PropertyBag<TRecord extends Record<string, any> = Record<string, any>, TKey extends keyof TRecord = keyof TRecord> implements PropertyChangeNotifier<TRecord, TKey> {
 	static readonly #handler: ProxyHandler<PropertyBag<any>> = {
 		get(t, p) {
 			return Reflect.get(t.#props, p);
@@ -35,7 +35,7 @@ export class PropertyBag<TRecord = any, TKey extends keyof TRecord = keyof TReco
 			const desc = Reflect.getOwnPropertyDescriptor(props, p);
 			if (desc === undefined) {
 				t.#props[p] = value;
-				t.#fireChange(p, "create", undefined, desc.value);
+				t.#fireChange(p, "create", undefined, value);
 			} else if (desc.writable) {
 				const old = desc.value;
 				desc.value = value;

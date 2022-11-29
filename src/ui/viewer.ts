@@ -4,7 +4,7 @@ import { ViewerModel } from "./viewer-model";
 
 // @ts-ignore
 const parse = typeof jsonic === "function" ? jsonic : JSON.parse;
-const pre = document.querySelector("pre");
+const pre = document.querySelector("pre")!;
 const json = parse(pre.innerText);
 pre.remove();
 const root = JsonToken.create(json);
