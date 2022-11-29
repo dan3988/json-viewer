@@ -9,6 +9,9 @@ $anim-short: 100ms;
 $anim-med: 200ms;
 
 :root {
+	--flt-bright-hv: brightness(0.95);
+	--flt-bright-focus: brightness(0.85);
+
 	--col-json-key-fg: #18F;
 	--col-json-str-fg: #854;
 	--col-json-num-fg: #992;
@@ -29,17 +32,9 @@ $anim-med: 200ms;
 	--col-fg: #000;
 	--col-body: #FFF;
 	--col-border: #999;
-	--col-border-hv: #669;
-	--col-border-focus: #888;
 	--col-bg-dk: #FFF;
-	--col-bg-dk-hv: #EEF;
-	--col-bg-dk-focus: #EEF;
 	--col-bg-lt: #CCC;
-	--col-bg-lt-hv: #9DF;
-	--col-bg-lt-focus: #777;
 	--col-bg-err: #F99;
-	--col-bg-err-hv: #F88;
-	--col-bg-err-focus: #F77;
 	--col-shadow: #999;
 	
 	color: var(--col-fg);
@@ -48,6 +43,9 @@ $anim-med: 200ms;
 
 @media (prefers-color-scheme: dark) {
 	:root {
+		--flt-bright-hv: brightness(1.2);
+		--flt-bright-focus: brightness(1.4);
+
 		--col-json-key-fg: #8CF;
 		--col-json-str-fg: #C75;
 		--col-json-num-fg: #FF8;
@@ -68,17 +66,9 @@ $anim-med: 200ms;
 		--col-fg: #FFF;
 		--col-body: #111;
 		--col-border: #444;
-		--col-border-hv: #555;
-		--col-border-focus: #666;
 		--col-bg-dk: #333;
-		--col-bg-dk-hv: #444;
-		--col-bg-dk-focus: #555;
 		--col-bg-lt: #555;
-		--col-bg-lt-hv: #666;
-		--col-bg-lt-focus: #777;
 		--col-bg-err: #933;
-		--col-bg-err-hv: #944;
-		--col-bg-err-focus: #A55;
 		--col-shadow: #999;
 	}
 }
@@ -116,9 +106,7 @@ $anim-med: 200ms;
 :global(.control) {
 	@extend .border-rnd, .hv;
 
-	--col-bg-lt: var(--col-bg-lt);
-	--col-bg-lt-hv: var(--col-bg-dk-hv);
-	--col-bg-lt-focus: var(--col-bg-dk-focus);
+	background-color: var(--col-bg-dk);
 	outline: none;
 	padding: $pad-med;
 }
@@ -182,30 +170,19 @@ $anim-med: 200ms;
 }
 
 .hv {
-	transition-property: background-color;
+	transition-property: filter;
 	transition-duration: $anim-short;
 	transition-timing-function: ease-in-out;
 
-	&.border {
-		transition-property: background-color border-color;
-	}
-
 	&:hover {
 		z-index: 1;
-		background-color: var(--col-bg-lt-hv);
-
-		&.border {
-			border-color: var(--col-border-hv);
-		}
+		filter: var(--flt-bright-hv);
 	}
 
 	&:focus,
 	&:focus:hover {
-		background-color: var(--col-bg-lt-focus);
-
-		&.border {
-			border-color: var(--col-border-focus);
-		}
+		z-index: 2;
+		filter: var(--flt-bright-focus);
 	}
 }
 

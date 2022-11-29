@@ -61,9 +61,6 @@
 
 		&:before {
 			background-color: var(--col-border);
-			--col-bg-lt: var(--col-border);
-			--col-bg-lt-hv: var(--col-border-hv);
-			--col-bg-lt-focus: var(--col-border-focus);
 			--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/clear.svg");
 		}
 	}
