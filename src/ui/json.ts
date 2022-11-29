@@ -217,9 +217,6 @@ export abstract class JsonToken<T = any> extends JsonBase {
 			this.#path = Array.from(prop.parent.#path);
 			this.#path.push(prop.key);
 		}
-		let root = prop?.parent?.root;
-		this.#prop = prop;
-		this.#root = root != null ? root : (this instanceof JsonContainer ? this : null);
 	}
 	
 	is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
