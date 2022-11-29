@@ -140,6 +140,11 @@
 			> .expander {
 				position: relative;
 
+				&:hover::before {
+					width: 4px;
+					border-radius: 2px;
+				}
+
 				&:before {
 					content: "";
 					position: absolute;
