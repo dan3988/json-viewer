@@ -23,7 +23,7 @@ jp.JSONPath.prototype._eval = function (code: string, value: any, valueName: str
 	sandbox["@"] = value;
 
 	if (script.usesPath)
-		sandbox["@path"] = JSONPath.toPathString(path.concat([valueName]));
+		sandbox["@path"] = JSONPath.toPathString([...path, valueName]);
 
 	const proto = Object.getPrototypeOf(sandbox)
 	try {
