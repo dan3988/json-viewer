@@ -3,6 +3,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import svelte from 'rollup-plugin-svelte';
 import sveltePreprocess from 'svelte-preprocess';
+import { sass } from 'svelte-preprocess-sass';
 import { terser } from 'rollup-plugin-terser';
 import css from 'rollup-plugin-css-only';
 import chalk from "chalk";
@@ -84,7 +85,21 @@ async function executeRollup(name, config) {
 					break;
 				case "ERROR": {
 					const e = evt.error;
+					if (e.code === "PLUGIN_ERROR") {
+						let msg;
+						switch (e.plugin) {
+							case "svelte":
+								msg = chalk.yellow(e.id) + " " + chalk.blue(e.line) + ":" + chalk.blue(e.column) + "\n" + e.formatted;
+								break;
+						}
+
+						if (msg) {
+							console.error(prefix + msg);
+							break;
+						}
+					}
 					console.error(prefix + chalk.red("Unhandled Error: ") + e);
+					break;
 				}
 			}
 		})
@@ -146,7 +161,8 @@ const rollupUi = {
 	plugins: [
 		svelte({
 			preprocess: [
-				sveltePreprocess({ sourceMap: !dist })
+				sveltePreprocess({ sourceMap: !dist }),
+				sass()
 			],
 			compilerOptions: {
 				// enable run-time checks when not in production

@@ -68,7 +68,7 @@
 	let keyElement: HTMLElement;
 </script>
 <style lang="scss">
-	@import "./core.scss";
+	@use "./core.scss" as *;
 
 	.json-key {
 		color: var(--col-json-key-fg);
@@ -193,7 +193,7 @@
 
 		&.collapsed {
 			> .expander {
-				@extend .img-btn;
+				@include img-btn;
 
 				&:before {
 					inset: 20%;
@@ -238,7 +238,7 @@
 	}
 
 	.expander {
-		@extend .hv-b4;
+		@include hv-b4;
 		cursor: pointer;
 		position: relative;
 

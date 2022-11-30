@@ -89,7 +89,8 @@
 	onMount(() => prop.focus());
 </script>
 <style lang="scss">
-	@import "./core.scss";
+	@use "./core.scss" as *;
+	@import "./globals.scss";
 
 	.root {
 		position: absolute;

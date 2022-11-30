@@ -8,144 +8,22 @@ $pad-l: 15px;
 $anim-short: 100ms;
 $anim-med: 200ms;
 
-:root {
-	--flt-bright-hv: brightness(0.95);
-	--flt-bright-focus: brightness(0.85);
-
-	--col-json-key-fg: #18F;
-	--col-json-str-fg: #854;
-	--col-json-num-fg: #992;
-	--col-json-bln-fg: #14A;
-	--col-json-null-fg: #95F;
-	--col-match-fg: #000;
-	--col-match-bg: #CC3;
-
-	--col-indent-1: #F44;
-	--col-indent-2: #F84;
-	--col-indent-3: #FF8;
-	--col-indent-4: #8F8;
-	--col-indent-5: #4FF;
-	--col-indent-6: #48F;
-	--col-indent-7: #F8F;
-	--col-indent-8: #F4F;
-
-	--col-fg: #000;
-	--col-body: #FFF;
-	--col-border: #999;
-	--col-bg-dk: #FFF;
-	--col-bg-lt: #CCC;
-	--col-bg-err: #F99;
-	--col-shadow: #999;
-	
-	color: var(--col-fg);
-	background-color: var(--col-body);
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--flt-bright-hv: brightness(1.2);
-		--flt-bright-focus: brightness(1.4);
-
-		--col-json-key-fg: #8CF;
-		--col-json-str-fg: #C75;
-		--col-json-num-fg: #FF8;
-		--col-json-bln-fg: #38F;
-		--col-json-null-fg: #95F;
-		--col-match-fg: #000;
-		--col-match-bg: #FF0;
-
-		--col-indent-1: #B44;
-		--col-indent-2: #B84;
-		--col-indent-3: #BB8;
-		--col-indent-4: #8B8;
-		--col-indent-5: #4BB;
-		--col-indent-6: #48B;
-		--col-indent-7: #B8B;
-		--col-indent-8: #B4B;
-
-		--col-fg: #FFF;
-		--col-body: #111;
-		--col-border: #444;
-		--col-bg-dk: #333;
-		--col-bg-lt: #555;
-		--col-bg-err: #933;
-		--col-shadow: #999;
-	}
-}
-
-:global(*) {
-	font-family: Calibri;
-	font-size: medium;
-}
-
-.img-btn {
-	cursor: pointer;
-	position: relative;
-	
-	&:before {
-		content: "";
-		position: absolute;
-		inset: 1px;
-		-webkit-mask-image: var(--mask-image);
-		-webkit-mask-repeat: no-repeat;
-		-webkit-mask-size: contain;
-		-webkit-mask-position: center;
-		mask-image: var(--mask-image);
-		mask-repeat: no-repeat;
-		mask-size: contain;
-		mask-position: center;
-	}
-}
-
-:global(ul) {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-}
-
-:global(input:not([type="checkbox"]).control),
-:global(textarea.control) {
-	background-color: var(--col-bg-dk);
-}
-
-:global(.control) {
-	@extend .border-rnd, .hv;
-
-	background-color: var(--col-bg-lt);
-	outline: none;
-	padding: $pad-med;
-}
-
-:global(.lbl),
-:global(.btn) {
-	@extend .border-rnd;
-
-	text-align: center;
-	background-color: var(--col-bg-lt);
-	padding: $pad-med $pad-l;
-}
-
-:global(.btn) {
-	@extend .hv;
-	cursor: pointer;
-}
-
-:global(.group) {
+@mixin group {
 	display: flex;
 	flex-direction: row;
 
 	&:has(.control) {
-		> * {
+		> :global(*) {
 			min-width: 0;
 			flex: 0 0 content;
 		}
 
-		> .control {
+		> :global(.control) {
 			flex: 1 1 0;
 		}
 	}
 
-	> * {
+	> :global(*) {
 		min-width: 0;
 		flex: 1 1 0;
 		border-radius: 0;
@@ -166,16 +44,35 @@ $anim-med: 200ms;
 	}
 }
 
-.border {
+@mixin img-btn {
+	cursor: pointer;
+	position: relative;
+	
+	&:before {
+		content: "";
+		position: absolute;
+		inset: 1px;
+		-webkit-mask-image: var(--mask-image);
+		-webkit-mask-repeat: no-repeat;
+		-webkit-mask-size: contain;
+		-webkit-mask-position: center;
+		mask-image: var(--mask-image);
+		mask-repeat: no-repeat;
+		mask-size: contain;
+		mask-position: center;
+	}
+}
+
+@mixin border {
 	border: solid $border-w var(--col-border);
 }
 
-.border-rnd {
-	@extend .border;
+@mixin border-rnd {
+	@include border;
 	border-radius: $border-rad;
 }
 
-.hv {
+@mixin hv {
 	transition-property: filter;
 	transition-duration: $anim-short;
 	transition-timing-function: ease-in-out;
@@ -192,8 +89,8 @@ $anim-med: 200ms;
 	}
 }
 
-.hv-b4 {
+@mixin hv-b4 {
 	&::before {
-		@extend .hv;
+		@include hv;
 	}
 }

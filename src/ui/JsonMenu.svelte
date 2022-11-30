@@ -70,10 +70,11 @@
 	$: props.bag.model = model;
 </script>
 <style lang="scss">
-	@import "./core.scss";
+	@use "./core.scss" as *;
 
 	.btn-clr {
-		@extend .img-btn, .hv-b4;
+		@include img-btn;
+		@include hv-b4;
 
 		&:before {
 			background-color: var(--col-border);
@@ -105,12 +106,13 @@
 	}
 
 	.jpath-results {
-		@extend .border-rnd;
+		@include border-rnd;
 		overflow-y: scroll;
 		padding: $pad-med;
 
 		> li {
-			@extend .border-rnd, .hv;
+			@include border-rnd;
+			@include hv;
 			cursor: pointer;
 			padding: $pad-small;
 			overflow: hidden;
