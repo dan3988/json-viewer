@@ -85,16 +85,22 @@
 		position: absolute;
 		inset: 0;
 		padding: $pad-med;
-		display: flex;
+		display: grid;
+		grid-template-rows: auto auto auto 1fr;
+		grid-template-columns: 6rem auto 2rem 6rem;
+		grid-row-gap: $pad-med;
 		flex-direction: column;
-		gap: $pad-med;
-
+		
 		> * {
-			flex: 0px 1 1;
+			grid-column: 1 / -1;
 		}
 
-		> .group {
-			flex: auto 0 0;
+		> .group.field {
+			display: contents;
+
+			> :last-child {
+				grid-column-end: -1;
+			}
 		}
 	}
 
@@ -123,21 +129,21 @@
 		<button type="button" class="btn" on:click={() => setExpanded(true)}>Expand All</button>
 		<button type="button" class="btn" on:click={() => setExpanded(false)}>Collapse All</button>
 	</div>
-	<div class="group">
+	<div class="group field">
 		<span class="lbl">Filter</span>
 		<input class="filter-input control" type="text" bind:value={filter}/>
 		<button type="button" class="btn btn-clr" on:click={() => filter = ""}></button>
-		<select class="control" bind:value={filterMode}>
+		<select class="filter-type control" bind:value={filterMode}>
 			<option value={JsonTokenFilterFlags.Both}>All</option>
 			<option value={JsonTokenFilterFlags.Keys}>Keys</option>
 			<option value={JsonTokenFilterFlags.Values}>Values</option>
 		</select>
 	</div>
-	<div class="group">
+	<div class="group field">
 		<span class="lbl">Path</span>
 		<input class="jpath-input control" type="text" bind:value={jpath} on:keypress={onKeyPress}/>
 		<button type="button" class="btn btn-clr" on:click={() => jpath = ""}></button>
-		<button type="button" class="btn" on:click={evaluateJpath}>Evaluate</button>
+		<button type="button" class="btn btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
 	<ul class="jpath-results">
 		{#each jpathResults as path}
