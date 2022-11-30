@@ -1,3 +1,8 @@
+import { EventHandlers } from "./evt";
+import { PropertyChangeEvent, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
+
+const emptyArray: readonly never[] = Object.freeze([]);
+
 export interface JsonTokenTypeMap {
 	"container": JsonContainer;
 	"property": JsonProperty;
@@ -125,7 +130,13 @@ abstract class JsonBase {
 
 export type ToToken<T> = T extends readonly any[] ? JsonArray<T> : (T extends object ? JsonObject<T> : (T extends JsonValueType ? JsonValue<T> : JsonToken))
 
-export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
+interface ChangeProps {
+	hidden: boolean;
+	expanded: boolean;
+	selected: boolean;
+}
+
+export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase implements PropertyChangeNotifier<ChangeProps> {
 	static create<T>(value: T): JsonProperty<"$", T> {
 		return new JsonProperty(null, null, "$", value);
 	}
@@ -133,9 +144,14 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	readonly #parent: null | JsonContainer<TKey, any>;
 	#prev: null | JsonProperty<TKey>;
 	#next: null | JsonProperty<TKey>;
+	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<JsonProperty, ChangeProps>>;
 	readonly #key: TKey;
 	readonly #value: JsonToken<TValue>;
 	readonly #path: (string | number)[];
+
+	#selected: boolean;
+	#expanded: boolean;
+	#hidden: boolean;
 
 	get type() {
 		return "property" as const;
@@ -165,6 +181,36 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.#value as any;
 	}
 
+	get propertyChange() {
+		return this.#propertyChange.event;
+	}
+
+	get selected() {
+		return this.#selected;
+	}
+
+	set selected(value) {
+		if (this.#selected != value) {
+			this.#selected = value;
+			this.#fireChange("selected", !value, value);
+		}
+	}
+
+	get expanded() {
+		return this.#expanded;
+	}
+
+	set expanded(value) {
+		if (this.#expanded != value) {
+			this.#expanded = value;
+			this.#fireChange("expanded", !value, value);
+		}
+	}
+
+	get hidden() {
+		return this.#hidden;
+	}
+
 	constructor(parent: null | JsonContainer<TKey, any>, prev: null | JsonProperty<TKey>, key: TKey, value: TValue) {
 		super();
 		const ctor = resolveConstructor(value);
@@ -175,14 +221,44 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		this.#path = parent == null ? [] : Array.from(parent.parentProperty.path)
 		this.#path.push(key);
 		this.#value = new ctor(this, value);
+		this.#propertyChange = new EventHandlers();
+		this.#expanded = false;
+		this.#hidden = false;
 
 		if (prev != null)
 			prev.#next = this;
+	}
+
+	#fireChange(name: keyof ChangeProps, oldValue: any, newValue: any): void {
+		const handlers = this.#propertyChange;
+		if (handlers.hasListeners)
+			handlers.fire(this, new PropertyChangeEvent(this, "change", name, oldValue, newValue));
+	}
+
+	toggleExpanded() {
+		const v = !this.#expanded;
+		this.#expanded = v;
+		this.#fireChange("expanded", !v, v);
 	}
 	
 	is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
 	is(type: string) {
 		return type === "property";
+	}
+
+	filter(filter: string, filterMode: JsonTokenFilterFlags, isAppend: boolean) {
+		if (isAppend && this.#hidden)
+			return false;
+
+		const showKey = Boolean(filterMode & JsonTokenFilterFlags.Keys) && String.prototype.toLowerCase.call(this.#key).includes(filter);
+		const showValue = this.#value.__shown(filter, filterMode, isAppend);
+		const show = showKey || showValue;
+		if (this.#hidden === show) {
+			this.#hidden = !show;
+			this.#fireChange("hidden", show, !show);
+		}
+
+		return show;
 	}
 }
 
@@ -217,14 +293,17 @@ export abstract class JsonToken<T = any> extends JsonBase {
 		return type === this.type || type == this.subtype;
 	}
 
+	/** @internal */
+	abstract __shown(filter: string, filterMode: JsonTokenFilterFlags, isAppend: boolean): boolean;
+
 	abstract toJSON(): T;
 
 	abstract resolve(path: (number | string)[]): null | JsonToken;
 
-	abstract properties(): Iterable<JsonProperty>;
+	abstract properties(): IterableIterator<JsonProperty>;
 	abstract get(key: number | string): undefined | JsonToken;
 	abstract getProperty(key: number | string): undefined | JsonProperty;
-	abstract keys(): Iterable<number | string>;
+	abstract keys(): IterableIterator<number | string>;
 }
 
 export abstract class JsonContainer<TKey extends string | number = string | number, T = any> extends JsonToken<T> {
@@ -245,6 +324,17 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 	protected constructor(prop: JsonProperty, handler: ProxyHandler<JsonContainer<TKey, T>>) {
 		super(prop);
 		this.#proxy = new Proxy(this, handler);
+	}
+
+	/** @internal */
+	__shown(filter: string, filterMode: JsonTokenFilterFlags, isAppend: boolean): boolean {
+		let show = false;
+
+		for (const prop of this.properties())
+			if (prop.filter(filter, filterMode, isAppend))
+				show = true;
+
+		return show;
 	}
 
 	resolve(path: (number | string)[]) {
@@ -511,6 +601,11 @@ export class JsonValue<T extends JsonValueType = JsonValueType> extends JsonToke
 		this.#type = value === null ? "null" : <any>typeof value;
 	}
 
+	/** @internal */
+	__shown(filter: string, filterMode: JsonTokenFilterFlags): boolean {
+		return Boolean(filterMode & JsonTokenFilterFlags.Values) && String.prototype.toLowerCase.call(this.#value).includes(filter);
+	}
+
 	resolve(): JsonToken<any> | null {
 		return null;
 	}
@@ -519,15 +614,15 @@ export class JsonValue<T extends JsonValueType = JsonValueType> extends JsonToke
 		return this.#value;
 	}
 
-	keys(): Iterable<never> {
-		return Array.prototype as any;
+	keys(): IterableIterator<never> {
+		return emptyArray[Symbol.iterator]()
 	}
 
-	properties(): Iterable<never> {
-		return Array.prototype as any;
+	properties(): IterableIterator<never> {
+		return emptyArray[Symbol.iterator]();
 	}
 
-	get(): undefined {
+	get(): undefined | JsonToken {
 		return undefined;
 	}
 

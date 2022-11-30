@@ -9,6 +9,7 @@ const json = parse(pre.innerText);
 pre.remove();
 const root = JsonProperty.create(json);
 const model = new ViewerModel(root);
+root.expanded = true;
 
 new JsonViewer({
 	target: document.body,

@@ -7,14 +7,26 @@
 
 	export let model: ViewerModel;
 	export let prop: JsonProperty;
-	export let expanded = false;
 	export let indent = -1;
 
 	const maxIndentClass = 8;
-	const props = new PropertyBag({ model, prop, isSelected: false });
+	const props = new PropertyBag({
+		isHidden: prop.hidden,
+		isExpanded: prop.expanded,
+		isSelected: prop.selected,
+		model,
+		prop
+	});
 
-	props.propertyChange.addListener(({ property, newValue, oldValue }) => {
+	props.bag.prop.propertyChange.addListener(onValuePropertyChange);
+	props.bag.model.propertyChange.addListener(onModelPropertyChange);
+	props.bag.model.command.addListener(onModelCommand);
+	props.propertyChange.addListener(({ property, oldValue, newValue }) => {
 		switch (property) {
+			case "prop":
+				oldValue.propertyChange.removeListener(onValuePropertyChange);
+				newValue.propertyChange.addListener(onValuePropertyChange);
+				break;
 			case "model":
 				if (oldValue) {
 					oldValue.propertyChange.removeListener(onModelPropertyChange);
@@ -27,38 +39,33 @@
 				}
 
 				break;
-			case "isSelected":
-				selected = newValue;
-				break;
 		}
 	})
 
-	function onModelCommand(evt: ViewerCommandEvent) {
-		switch (evt.command) {
-			case "expand":
-				if (evt.args[0].has(prop))
-					expanded = true;
+	function onValuePropertyChange({ property, newValue }: PropertyChangeEventType<JsonProperty>) {
+		switch (property) {
+			case "hidden":
+				props.bag.isHidden = newValue;
+				break;
+			case "expanded":
+				props.bag.isExpanded = newValue;
+				break;
+			case "selected":
+				props.bag.isSelected = newValue;
+				break;
+		}
+	}
 
-				break;
-			case "expandAll":
-				expanded = evt.args[0];
-				break;
-			case "scrollTo":
-				if (evt.args[0] === prop)
-					tick().then(() => keyElement.scrollIntoView({ behavior: "auto", block: "center" }));
-
-				break;
+	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
+		if (command === "scrollTo" && arg0 === prop) {
+			tick().then(() => keyElement.scrollIntoView({ block: "center" }));
 		}
 	}
 
 	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
-		if (evt.property === "selected")
-			props.bag.isSelected = evt.newValue === prop;
 	}
 
 	let keyElement: HTMLElement;
-
-	$: selected = props.bag.isSelected;
 </script>
 <style lang="scss">
 	@import "./core.scss";
@@ -82,6 +89,10 @@
 		border-radius: 5px;
 
 		--col-indent: var(--col-shadow);
+
+		&[hidden] {
+			display: none !important;
+		}
 
 		&.selected {
 			border-color: var(--col-border);
@@ -237,13 +248,13 @@
 	}
 </style>
 {#if prop}
-<div class="json-prop for-{prop.value.type} for-{prop.value.subtype} {expanded ? 'expanded' : 'collapsed'}{selected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
+<div hidden={props.bag.isHidden} class="json-prop for-{prop.value.type} for-{prop.value.subtype} {props.bag.isExpanded ? 'expanded' : 'collapsed'}{props.bag.isSelected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
 	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop}>{prop.key}</span>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
-			<span class="expander" on:click={() => expanded = !expanded}></span>
+			<span class="expander" on:click={() => prop.toggleExpanded()}></span>
 			<span class="prop-count">{prop.value.count}</span>
 			<ul class="json-container json-{prop.value.subtype}">
 				{#each [...prop.value.properties()] as p}

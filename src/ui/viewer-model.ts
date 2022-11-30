@@ -1,5 +1,5 @@
 import { EventHandlers } from "./evt";
-import { JsonContainer, JsonProperty, JsonToken } from "./json";
+import { JsonArray, JsonContainer, JsonObject, JsonProperty, JsonToken, JsonTokenFilterFlags, JsonValue } from "./json";
 import { PropertyChangeEvent, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
 
 interface ChangeProps {
@@ -7,8 +7,6 @@ interface ChangeProps {
 }
 
 export interface ViewerCommands {
-	expandAll: [expand: boolean];
-	expand: [tokens: ReadonlySet<JsonProperty>];
 	scrollTo: [token: JsonProperty];
 }
 
@@ -21,7 +19,9 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<ViewerModel, ChangeProps>>;
 	readonly #command: EventHandlers<ViewerCommandHandler<this>>;
 	#selected: null | JsonProperty;
-	
+	#filter: string;
+	#filterFlags: JsonTokenFilterFlags;
+
 	get root() {
 		return this.#root;
 	}
@@ -31,11 +31,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	}
 
 	set selected(value) {
-		const old = this.#selected;
-		if (old !== value) {
-			this.#selected = value;
-			this.#fireChange('selected', old, value);
-		}
+		this.setSelected(value, false, false);
 	}
 
 	get propertyChange() {
@@ -51,6 +47,8 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		this.#propertyChange = new EventHandlers();
 		this.#command = new EventHandlers();
 		this.#selected = null;
+		this.#filter = "";
+		this.#filterFlags = JsonTokenFilterFlags.Both;
 	}
 
 	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {
@@ -59,7 +57,28 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 			handlers.fire(this, <any>{ command, args });
 	}
 
-	select(path: string | (number | string)[], scroll?: boolean) {
+	filter(text: string, flags?: JsonTokenFilterFlags) {
+		text = text.toLowerCase();
+		const oldText = this.#filter;
+		const oldFlags = this.#filterFlags;
+		const flagsChanged = flags != null && flags !== oldFlags;
+		flags ??= oldFlags;
+
+		let append = text.includes(oldText);
+		if (append && oldText.length === text.length && !flagsChanged)
+			return;
+
+		if (append && flagsChanged)
+			append = (oldFlags & flags) === flags;
+
+		this.#filter = text;
+		this.#filterFlags = flags;
+		this.#root.filter(text, flags, append);
+	}
+
+	select(path: string | (number | string)[], scrollTo?: boolean) {
+		scrollTo ??= false;
+
 		if (typeof path === "string")
 			path = path.split("/");
 
@@ -72,11 +91,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 			baseProp = this.#selected;
 		} else if (path.length === 1) {
 			const root = this.#root;
-			this.selected = root;
-
-			if (scroll)
-				this.execute("scrollTo", root);
-
+			this.setSelected(root, scrollTo, scrollTo);
 			return true;
 		} else {
 			i++;
@@ -84,35 +99,52 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		}
 
 
-		let base = baseProp.value;
+		let base: JsonToken = baseProp.value;
 		if (!(base instanceof JsonContainer))
 			return false;
 
 		while (true) {
 			const key = path[i];
-			const child = base.get(key);
+			const child = base.getProperty(key);
 			if (child == null)
 				return false;
 
 			if (++i === path.length) {
-				this.selected = child;
-
-				if (scroll) {
-					const tree = new Set<JsonProperty>();
-					for (let t = child; t != null; t = t.parent)
-						tree.add(t);
-
-					this.execute("expand", tree);
-					this.execute("scrollTo", child);
-				}
-
+				this.setSelected(child, scrollTo, scrollTo);
 				return true;
 			}
 
-			if (!(child instanceof JsonContainer))
+			if (!(child.value instanceof JsonContainer))
 				return false;
 			
-			base = child;
+			base = child.value;
+		}
+	}
+
+	#onSelected(selected: JsonProperty, expand: boolean, scrollTo: boolean) {
+		if (expand)
+			for (let p: null | JsonToken = selected.value; p != null; p = p.parent)
+				p.parentProperty.expanded = true;
+
+		if (scrollTo)
+			this.execute("scrollTo", selected);
+	}
+	
+	setSelected(selected: null | JsonProperty, expand: boolean, scrollTo: boolean) {
+		const old = this.#selected;
+		if (old !== selected) {
+			if (old)
+				old.selected = false;
+
+			if (selected) {
+				selected.selected = true;
+				this.#onSelected(selected, expand, scrollTo);
+			}
+
+			this.#selected = selected;
+			this.#fireChange('selected', old, selected);
+		} else if (old) {
+			this.#onSelected(old, expand, scrollTo);
 		}
 	}
 

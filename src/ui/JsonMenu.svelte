@@ -1,9 +1,15 @@
 <script lang="ts">
+    import { JsonTokenFilterFlags, JsonProperty } from "./json";
     import JSONPath from "./json-path";
-    import { PropertyBag, PropertyChangeEvent } from "./prop";
+    import { PropertyBag } from "./prop";
 	import type { ViewerModel } from "./viewer-model";
 
 	export let model: ViewerModel;
+
+	let filter = "";
+	let filterMode = JsonTokenFilterFlags.Both;
+
+	$: model.filter(filter, filterMode);
 
 	let jpath: string;
 	let jpathResults: string[] = [];
@@ -21,12 +27,23 @@
 	// function onModelPropertyChange(evt: PropertyChangeEvent) {
 	// }
 
-	function expandAll() {
-		model.execute("expandAll", true);
-	}
+	function setExpanded(expanded: boolean) {
+		const stack: Iterator<JsonProperty>[] = [];
+		let cur: Iterator<JsonProperty> = model.root.value.properties()
+		while (true) {
+			let r = cur.next();
+			if (r.done) {
+				let last = stack.pop();
+				if (last == null)
+					return;
 
-	function collapseAll() {
-		model.execute("expandAll", false);
+				cur = last;
+			} else {
+				r.value.expanded = expanded;
+				const it = r.value.value.properties();
+				stack.push(it);
+			}
+		}
 	}
 
 	function onKeyPress(evt: KeyboardEvent) {
@@ -41,7 +58,7 @@
 		}
 
 		try {
-			jpathResults = JSONPath({ json: model.root.proxy, path: jpath, resultType: "pointer" });
+			jpathResults = JSONPath({ json: model.root.value.proxy, path: jpath, resultType: "pointer" });
 			jpathResults.forEach((v, i, a) => a[i] = "$" + v);
 		} catch (e) {
 			jpathResults = [];
@@ -103,8 +120,18 @@
 {#if model}
 <div class="root">
 	<div class="group">
-		<button type="button" class="btn" on:click={expandAll}>Expand All</button>
-		<button type="button" class="btn" on:click={collapseAll}>Collapse All</button>
+		<button type="button" class="btn" on:click={() => setExpanded(true)}>Expand All</button>
+		<button type="button" class="btn" on:click={() => setExpanded(false)}>Collapse All</button>
+	</div>
+	<div class="group">
+		<span class="lbl">Filter</span>
+		<input class="filter-input control" type="text" bind:value={filter}/>
+		<button type="button" class="btn btn-clr" on:click={() => filter = ""}></button>
+		<select class="control" bind:value={filterMode}>
+			<option value={JsonTokenFilterFlags.Both}>All</option>
+			<option value={JsonTokenFilterFlags.Keys}>Keys</option>
+			<option value={JsonTokenFilterFlags.Values}>Values</option>
+		</select>
 	</div>
 	<div class="group">
 		<span class="lbl">Path</span>
