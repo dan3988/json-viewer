@@ -40,6 +40,10 @@
 </script>
 <style lang="scss">
 	@import "./core.scss";
+
+	.json-value {
+		white-space: nowrap;
+	}
 	
 	.json-string {
 		color: var(--col-json-str-fg);

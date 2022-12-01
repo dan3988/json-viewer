@@ -85,7 +85,6 @@
 	.root {
 		position: absolute;
 		inset: 0;
-		padding: $pad-med;
 		display: grid;
 		grid-template-rows: auto auto auto 1fr;
 		grid-template-columns: 6rem auto 2rem 6rem;

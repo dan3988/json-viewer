@@ -65,7 +65,7 @@
 					const selected = model.selected;
 					if (selected && selected.value.is("container") && selected.value.first != null) {
 						selected.expanded = true;
-						model.setSelected(selected.value.first, true, true);
+						model.setSelected(selected.value.first, false, true);
 						e.preventDefault();
 					}
 				}
@@ -85,8 +85,30 @@
 	}
 
 	let prop: HTMLElement;
+	let menu: HTMLElement;
 
 	onMount(() => prop.focus());
+
+	let dragStart: undefined | { x: number, w: number };
+
+	function onMouseDown(evt: MouseEvent) {
+		dragStart = { x: evt.x, w: menu.clientWidth };
+		document.addEventListener("mousemove", onMouseMove);
+		document.addEventListener("mouseup", onMouseUp);
+	}
+
+	function onMouseMove(evt: MouseEvent) {
+		if (dragStart) {
+			const pos = Math.max(0, dragStart.w + dragStart.x - evt.x);
+			menu.style.width = pos + "px";
+		}
+	}
+
+	function onMouseUp() {
+		dragStart = undefined;
+		document.removeEventListener("mousemove", onMouseMove);
+		document.removeEventListener("mouseup", onMouseUp);
+	}
 </script>
 <style lang="scss">
 	@use "./core.scss" as *;
@@ -96,13 +118,19 @@
 		position: absolute;
 		inset: 0;
 		display: grid;
-		grid-template-columns: 1fr 30rem;
+		grid-template-columns: 1fr 5px auto;
 		grid-template-rows: 1fr auto;
 		overflow: hidden;
 
 		> div {
 			position: relative;
 		}
+	}
+
+	.gripper {
+		grid-area: 1 / 2 / -1 / 3;
+		user-select: none;
+		cursor: ew-resize;
 	}
 
 	.w-prop {
@@ -122,6 +150,10 @@
 
 	.w-menu {
 		grid-area: 1 / -2 / -1 / -1;
+		min-width: 30rem;
+		max-width: 80vw;
+		margin: $pad-med;
+		margin-left: 0;
 	}
 
 	@media only screen and (max-width: 900px) {
@@ -132,10 +164,15 @@
 
 		.w-menu {
 			grid-area: 1 / 1 / span 1 / -1;
+			width: unset !important;
+			max-width: unset;
+			margin: $pad-med;
 		}
 
 		.w-prop {
+			@include border-rnd;
 			grid-area: 2 / 1 / span 1 / -1;
+			margin: 0 $pad-med;
 		}
 
 		.w-path {
@@ -148,10 +185,11 @@
 	<div class="w-prop" tabindex="1" bind:this={prop} on:keydown={onKeyDown}>
 		<JsonProperty model={model} prop={model.root} indent={0}/>
 	</div>
+	<div class="gripper" draggable="true" on:mousedown={onMouseDown}/>
 	<div class="w-path">
 		<JsonBreadcrumb model={model}/>
 	</div>
-	<div class="w-menu">
+	<div class="w-menu" bind:this={menu}>
 		<JsonMenu model={model}/>
 	</div>
 </div>
