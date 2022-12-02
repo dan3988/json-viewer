@@ -1,4 +1,7 @@
 {
 	"task.allowAutomaticTasks": "on",
-	"typescript.tsdk": "node_modules\\typescript\\lib"
+	"typescript.tsdk": "node_modules\\typescript\\lib",
+	"svelte.plugin.svelte.compilerWarnings": {
+		"a11y-no-noninteractive-tabindex": "ignore"
+	}
 }
