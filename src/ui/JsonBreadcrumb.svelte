@@ -83,11 +83,17 @@
 	}
 
 	.list {
+		@include font-elem;
+
 		display: flex;
 		flex-direction: row;
 		user-select: none;
 
 		> li {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+
 			&:not(:last-child)::after {
 				content: "/";
 			}
@@ -108,6 +114,7 @@
 
 	.editor {
 		@include control;
+
 		flex: 0px 1 1;
 		margin: 0;
 		outline: none;

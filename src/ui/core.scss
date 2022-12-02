@@ -44,8 +44,14 @@ $anim-med: 200ms;
 	}
 }
 
+@mixin font-elem {
+	font-family: var(--font-family);
+	font-size: medium;
+}
+
 @mixin control {
 	@include border-rnd;
+	@include font-elem;
 	@include hv;
 
 	outline: none;

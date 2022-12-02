@@ -28,6 +28,7 @@
 	--col-bg-lt: #CCC;
 	--col-bg-err: #F99;
 	--col-shadow: #999;
+	--font-family: Calibri;
 	
 	color: var(--col-fg);
 	background-color: var(--col-body);
@@ -65,11 +66,6 @@
 	}
 }
 
-:global(*) {
-	font-family: Calibri;
-	font-size: medium;
-}
-
 :global(input:not([type="checkbox"]).control),
 :global(textarea.control) {
 	@include core.control;
@@ -84,6 +80,7 @@
 :global(.lbl),
 :global(.btn) {
 	@include core.border-rnd;
+	@include core.font-elem;
 
 	text-align: center;
 	background-color: var(--col-bg-lt);
