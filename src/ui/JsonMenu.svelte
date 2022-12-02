@@ -77,6 +77,13 @@
 		(this.previousElementSibling as HTMLElement).focus();
 	}
 
+	function jpathItemEvent(path: string, evt: MouseEvent | KeyboardEvent) {
+		if (evt.type === "click" || (evt.type === "keypress" && (evt as KeyboardEvent).code === "Space")) {
+			evt.preventDefault();
+			model.select(path, true);
+		}
+	}
+
 	$: props.bag.model = model;
 </script>
 <style lang="scss">
@@ -116,17 +123,25 @@
 
 	.jpath-results {
 		@include border-rnd;
+		@include font-elem;
+
+		--font-family: monospace;
 		overflow-y: scroll;
 		padding: $pad-med;
 
 		> li {
 			@include border-rnd;
 			@include hv;
+
 			cursor: pointer;
 			padding: $pad-small;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
+
+			&:hover {
+				background-color: var(--col-bg-lt);
+			}
 
 			&:not(:hover) {
 				border-color: transparent;
@@ -158,8 +173,8 @@
 	</div>
 	<ul class="jpath-results">
 		{#each jpathResults as path}
-			<li on:click={() => model.select(path, true)}>{path}</li>
+			<li tabindex="0" on:keypress={e => jpathItemEvent(path, e)} on:click={e => jpathItemEvent(path, e)}>{path}</li>
 		{/each}
-	</ul>
+	</ul>	
 </div>
 {/if}

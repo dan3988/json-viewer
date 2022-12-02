@@ -248,7 +248,10 @@
 	}
 </style>
 {#if prop}
-<div hidden={props.bag.isHidden} class="json-prop for-{prop.value.type} for-{prop.value.subtype} {props.bag.isExpanded ? 'expanded' : 'collapsed'}{props.bag.isSelected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
+<div
+	hidden={props.bag.isHidden}
+	tabindex="0"
+	class="json-prop for-{prop.value.type} for-{prop.value.subtype} {props.bag.isExpanded ? 'expanded' : 'collapsed'}{props.bag.isSelected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
 	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop}>{prop.key}</span>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
