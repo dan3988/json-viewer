@@ -67,6 +67,16 @@
 		}
 	}
 
+	function clearFilter(this: HTMLElement) {
+		filter = "";
+		(this.previousElementSibling as HTMLElement).focus();
+	}
+
+	function clearJpath(this: HTMLElement) {
+		jpath = "";
+		(this.previousElementSibling as HTMLElement).focus();
+	}
+
 	$: props.bag.model = model;
 </script>
 <style lang="scss">
@@ -133,7 +143,7 @@
 	<div class="group field">
 		<span class="lbl">Filter</span>
 		<input class="filter-input control" type="text" bind:value={filter}/>
-		<button type="button" class="btn btn-clr" on:click={() => filter = ""}></button>
+		<button type="button" class="btn btn-clr" on:click={clearFilter}></button>
 		<select class="filter-type control" bind:value={filterMode}>
 			<option value={JsonTokenFilterFlags.Both}>All</option>
 			<option value={JsonTokenFilterFlags.Keys}>Keys</option>
@@ -143,7 +153,7 @@
 	<div class="group field">
 		<span class="lbl">Path</span>
 		<input class="jpath-input control" type="text" bind:value={jpath} on:keypress={onKeyPress}/>
-		<button type="button" class="btn btn-clr" on:click={() => jpath = ""}></button>
+		<button type="button" class="btn btn-clr" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
 	<ul class="jpath-results">
