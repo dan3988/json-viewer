@@ -26,22 +26,30 @@ $anim-med: 200ms;
 	> :global(*) {
 		min-width: 0;
 		flex: 1 1 0;
-		border-radius: 0;
+		border-radius: 0 !important;
 
 		&:not(:first-child) {
 			margin-left: -$border-w;
 		}
 
 		&:first-child {
-			border-top-left-radius: $border-rad;
-			border-bottom-left-radius: $border-rad;
+			border-top-left-radius: $border-rad !important;
+			border-bottom-left-radius: $border-rad !important;
 		}
 
 		&:last-child {
-			border-top-right-radius: $border-rad;
-			border-bottom-right-radius: $border-rad;
+			border-top-right-radius: $border-rad !important;
+			border-bottom-right-radius: $border-rad !important;
 		}
 	}
+}
+
+@mixin control {
+	@include border-rnd;
+	@include hv;
+
+	outline: none;
+	padding: $pad-med;
 }
 
 @mixin img-btn {

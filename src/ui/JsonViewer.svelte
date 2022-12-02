@@ -145,15 +145,15 @@
 	}
 
 	.w-path {
-		grid-area: -2 / 1 / -1 / span 1;
+		grid-area: -2 / 1 / -1 / -1;
+		padding: $pad-med;
 	}
 
 	.w-menu {
-		grid-area: 1 / -2 / -1 / -1;
+		grid-area: 1 / -2 / -2 / -1;
 		min-width: 30rem;
 		max-width: 80vw;
-		margin: $pad-med;
-		margin-left: 0;
+		margin: $pad-med $pad-med 0 0;
 	}
 
 	@media only screen and (max-width: 900px) {

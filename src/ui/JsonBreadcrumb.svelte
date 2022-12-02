@@ -60,6 +60,8 @@
 	$: props.bag.model = model;
 </script>
 <style lang="scss">
+	@use "./core.scss" as *;
+
 	.root {
 		display: flex;
 		gap: 0;
@@ -87,7 +89,7 @@
 
 		> li {
 			&:not(:last-child)::after {
-				content: ">";
+				content: "/";
 			}
 		}
 	}
@@ -105,8 +107,8 @@
 	}
 
 	.editor {
+		@include control;
 		flex: 0px 1 1;
-		padding: 10px 5px;
 		margin: 0;
 		outline: none;
 		border: none;

@@ -72,16 +72,13 @@
 
 :global(input:not([type="checkbox"]).control),
 :global(textarea.control) {
+	@include core.control;
 	background-color: var(--col-bg-dk);
 }
 
 :global(.control) {
-	@include core.border-rnd;
-	@include core.hv;
-
+	@include core.control;
 	background-color: var(--col-bg-lt);
-	outline: none;
-	padding: core.$pad-med;
 }
 
 :global(.lbl),
