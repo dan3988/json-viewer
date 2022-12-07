@@ -4,7 +4,8 @@
     "postinstall": "patch-package",
     "build": "node build.js",
     "dist": "node build.js -d",
-    "watch": "node build.js -w"
+    "watch": "node build.js -w",
+    "file-server": "npx http-server"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^23.0.2",
@@ -16,6 +17,7 @@
     "@types/esprima": "^4.0.3",
     "chalk": "^5.1.2",
     "glob": "^8.0.3",
+    "http-server": "^14.1.1",
     "patch-package": "^6.5.0",
     "rollup": "^2.79.1",
     "rollup-plugin-css-only": "^4.3.0",

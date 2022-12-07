@@ -1,0 +1,39 @@
+{
+	"object": {
+		"identifier": "value",
+		"under_score": "value",
+		"non-identifier": "value",
+		"special@chars": "value",
+		"0atstart": "value",
+		"endswith0": "value"
+	},
+	"array": [
+		1,
+		2,
+		3,
+		4,
+		5
+	],
+	"number": 0,
+	"true": true,
+	"false": false,
+	"null": null,
+	"string": "this is a string",
+	"special chars": "this is\r\na string\r\n\t\"with special chars\"",
+	"nested_array": [
+		[
+			1,
+			2,
+			3,
+			4,
+			5
+		],
+		[
+			"One",
+			"Two",
+			"Three",
+			"Four",
+			"Five"
+		]
+	]
+}
