@@ -13,6 +13,7 @@
 				const a = document.createElement("a");
 				a.href = value;
 				a.textContent = text;
+				a.target = "_blank";
 				return a;
 			} else {
 				return document.createTextNode(text);
