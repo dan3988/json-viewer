@@ -1,29 +1,21 @@
 <script lang="ts">
-    import { PropertyBag, type PropertyChangeEventType } from "./prop";
+	import { onDestroy } from "svelte";
 	import type { ViewerModel } from "./viewer-model";
 
 	export let model: ViewerModel;
-
-	const props = new PropertyBag({ model });
 
 	let pathText = "";
 	let path: readonly (number | string)[] = [];
 	let isEditing = false;
 
-	props.bag.model.propertyChange.addListener(onModelPropertyChange);
-	props.propertyChange.addListener(evt => {
-		if (evt.property === "model") {
-			evt.oldValue.propertyChange.removeListener(onModelPropertyChange);
-			evt.newValue.propertyChange.addListener(onModelPropertyChange);
-		}
+
+	const selected = model.bag.readables.selected;
+	const unsub = selected.subscribe(v => {
+		path = v?.path ?? [];
+		pathText = path.join("/");
 	})
 
-	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
-		if (evt.property === "selected") {
-			path = evt.newValue?.path ?? [];
-			pathText = path.join("/");
-		}
-	}
+	onDestroy(unsub);
 
 	function onClick(index: number) {
 		if (index === 0) {
@@ -56,8 +48,6 @@
 			}
 		}
 	}
-
-	$: props.bag.model = model;
 </script>
 <style lang="scss">
 	@use "./core.scss" as *;

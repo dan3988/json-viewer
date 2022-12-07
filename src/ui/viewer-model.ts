@@ -1,9 +1,11 @@
 import { EventHandlers } from "./evt";
-import { JsonArray, JsonContainer, JsonObject, JsonProperty, JsonToken, JsonTokenFilterFlags, JsonValue } from "./json";
-import { PropertyChangeEvent, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
+import { JsonContainer, JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json";
+import { PropertyBag } from "./prop";
 
 interface ChangeProps {
-	selected: null | JsonProperty
+	selected: null | JsonProperty;
+	filterText: string;
+	filterFlags: JsonTokenFilterFlags;
 }
 
 export interface ViewerCommands {
@@ -14,41 +16,43 @@ export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent]
 
 export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
 
-export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
+export class ViewerModel {
 	readonly #root: JsonProperty;
-	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<ViewerModel, ChangeProps>>;
+	readonly #bag: PropertyBag<ChangeProps>;
 	readonly #command: EventHandlers<ViewerCommandHandler<this>>;
-	#selected: null | JsonProperty;
-	#filter: string;
-	#filterFlags: JsonTokenFilterFlags;
 
 	get root() {
 		return this.#root;
 	}
 
 	get selected() {
-		return this.#selected;
+		return this.#bag.getValue("selected");
 	}
 
 	set selected(value) {
 		this.setSelected(value, false, false);
 	}
 
-	get propertyChange() {
-		return this.#propertyChange.event;
+	get bag() {
+		return this.#bag.readOnly;
 	}
 
 	get command() {
 		return this.#command.event;
 	}
 
+	get filterText() {
+		return this.#bag.getValue("filterText");
+	}
+
+	get filterFlags() {
+		return this.#bag.getValue("filterFlags");
+	}
+
 	constructor(root: JsonProperty) {
 		this.#root = root;
-		this.#propertyChange = new EventHandlers();
+		this.#bag = new PropertyBag({ selected: null, filterFlags: JsonTokenFilterFlags.Both, filterText: "" });
 		this.#command = new EventHandlers();
-		this.#selected = null;
-		this.#filter = "";
-		this.#filterFlags = JsonTokenFilterFlags.Both;
 	}
 
 	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {
@@ -59,20 +63,21 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 
 	filter(text: string, flags?: JsonTokenFilterFlags) {
 		text = text.toLowerCase();
-		const oldText = this.#filter;
-		const oldFlags = this.#filterFlags;
+		const oldText = this.#bag.getValue("filterText");
+		const oldFlags = this.#bag.getValue("filterFlags");
 		const flagsChanged = flags != null && flags !== oldFlags;
 		flags ??= oldFlags;
 
 		let append = text.includes(oldText);
-		if (append && oldText.length === text.length && !flagsChanged)
+		let textChanged = !append || oldText.length !== text.length;
+		if (!textChanged && !flagsChanged)
 			return;
 
 		if (append && flagsChanged)
 			append = (oldFlags & flags) === flags;
 
-		this.#filter = text;
-		this.#filterFlags = flags;
+		this.#bag.setValue("filterText", text);
+		this.#bag.setValue("filterFlags", flags);
 		this.#root.filter(text, flags, append);
 	}
 
@@ -85,10 +90,11 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 		let i = 0;
 		let baseProp: JsonProperty;
 		if (path[0] !== "$") {
-			if (this.#selected == null)
+			const selected = this.#bag.getValue("selected");
+			if (selected == null)
 				return false;
 
-			baseProp = this.#selected;
+			baseProp = selected;
 		} else if (path.length === 1) {
 			const root = this.#root;
 			this.setSelected(root, scrollTo, scrollTo);
@@ -131,7 +137,7 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 	}
 	
 	setSelected(selected: null | JsonProperty, expand: boolean, scrollTo: boolean) {
-		const old = this.#selected;
+		const old = this.#bag.getValue("selected");
 		if (old !== selected) {
 			if (old)
 				old.selected = false;
@@ -141,18 +147,9 @@ export class ViewerModel implements PropertyChangeNotifier<ChangeProps> {
 				this.#onSelected(selected, expand, scrollTo);
 			}
 
-			this.#selected = selected;
-			this.#fireChange('selected', old, selected);
+			this.#bag.setValue("selected", selected);
 		} else if (old) {
 			this.#onSelected(old, expand, scrollTo);
-		}
-	}
-
-	#fireChange(prop: keyof ChangeProps, oldValue: any, newValue: any) {
-		const ls = this.#propertyChange;
-		if (ls.hasListeners) {
-			const evt = new PropertyChangeEvent(this, "change", prop, oldValue, newValue);
-			ls.fire(this, evt);
 		}
 	}
 }

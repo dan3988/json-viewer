@@ -1,5 +1,4 @@
-import { EventHandlers } from "./evt";
-import { PropertyChangeEvent, type PropertyChangeHandlerTypes, type PropertyChangeNotifier } from "./prop";
+import { PropertyBag } from "./prop";
 
 const emptyArray: readonly never[] = Object.freeze([]);
 
@@ -136,7 +135,7 @@ interface ChangeProps {
 	selected: boolean;
 }
 
-export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase implements PropertyChangeNotifier<ChangeProps> {
+export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
 	static create<T>(value: T): JsonProperty<"$", T> {
 		return new JsonProperty(null, null, "$", value);
 	}
@@ -144,14 +143,10 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	readonly #parent: null | JsonContainer<TKey, any>;
 	#prev: null | JsonProperty<TKey>;
 	#next: null | JsonProperty<TKey>;
-	readonly #propertyChange: EventHandlers<PropertyChangeHandlerTypes<JsonProperty, ChangeProps>>;
 	readonly #key: TKey;
 	readonly #value: JsonToken<TValue>;
 	readonly #path: (string | number)[];
-
-	#selected: boolean;
-	#expanded: boolean;
-	#hidden: boolean;
+	readonly #bag: PropertyBag<ChangeProps>;
 
 	get type() {
 		return "property" as const;
@@ -181,34 +176,28 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.#value as any;
 	}
 
-	get propertyChange() {
-		return this.#propertyChange.event;
-	}
-
-	get selected() {
-		return this.#selected;
-	}
-
-	set selected(value) {
-		if (this.#selected != value) {
-			this.#selected = value;
-			this.#fireChange("selected", !value, value);
-		}
-	}
-
-	get expanded() {
-		return this.#expanded;
-	}
-
-	set expanded(value) {
-		if (this.#expanded != value) {
-			this.#expanded = value;
-			this.#fireChange("expanded", !value, value);
-		}
+	get bag() {
+		return this.#bag.readOnly;
 	}
 
 	get hidden() {
-		return this.#hidden;
+		return this.#bag.getValue("selected");
+	}
+
+	get selected() {
+		return this.#bag.getValue("selected");
+	}
+
+	set selected(value) {
+		this.#bag.setValue("selected", value);
+	}
+
+	get expanded() {
+		return this.#bag.getValue("expanded");
+	}
+
+	set expanded(value) {
+		this.#bag.setValue("expanded", value);
 	}
 
 	constructor(parent: null | JsonContainer<TKey, any>, prev: null | JsonProperty<TKey>, key: TKey, value: TValue) {
@@ -221,24 +210,15 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		this.#path = parent == null ? [] : Array.from(parent.parentProperty.path)
 		this.#path.push(key);
 		this.#value = new ctor(this, value);
-		this.#propertyChange = new EventHandlers();
-		this.#expanded = false;
-		this.#hidden = false;
+		this.#bag = new PropertyBag({ expanded: false, hidden: false, selected: false });
 
 		if (prev != null)
 			prev.#next = this;
 	}
 
-	#fireChange(name: keyof ChangeProps, oldValue: any, newValue: any): void {
-		const handlers = this.#propertyChange;
-		if (handlers.hasListeners)
-			handlers.fire(this, new PropertyChangeEvent(this, "change", name, oldValue, newValue));
-	}
-
 	toggleExpanded() {
-		const v = !this.#expanded;
-		this.#expanded = v;
-		this.#fireChange("expanded", !v, v);
+		const v = !this.#bag.getValue("expanded");
+		this.#bag.setValue("expanded", v);
 	}
 	
 	is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
@@ -247,17 +227,13 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	}
 
 	filter(filter: string, filterMode: JsonTokenFilterFlags, isAppend: boolean) {
-		if (isAppend && this.#hidden)
+		if (isAppend && this.hidden)
 			return false;
 
 		const showKey = Boolean(filterMode & JsonTokenFilterFlags.Keys) && String.prototype.toLowerCase.call(this.#key).includes(filter);
 		const showValue = this.#value.__shown(filter, filterMode, isAppend);
 		const show = showKey || showValue;
-		if (this.#hidden === show) {
-			this.#hidden = !show;
-			this.#fireChange("hidden", show, !show);
-		}
-
+		this.#bag.setValue("hidden", !show);
 		return show;
 	}
 }

@@ -1,68 +1,24 @@
 <script lang="ts">
-    import { PropertyBag, type PropertyChangeEventType } from "./prop";
 	import type { JsonProperty } from "./json";
 	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
 	import JsonValue from "./JsonValue.svelte";
-    import { tick } from "svelte";
+    import { onDestroy, tick } from "svelte";
 
 	export let model: ViewerModel;
 	export let prop: JsonProperty;
 	export let indent = -1;
 
 	const maxIndentClass = 8;
-	const props = new PropertyBag({
-		isHidden: prop.hidden,
-		isExpanded: prop.expanded,
-		isSelected: prop.selected,
-		model,
-		prop
-	});
+	const { expanded, hidden, selected } = prop.bag.readables;
 
-	props.bag.prop.propertyChange.addListener(onValuePropertyChange);
-	props.bag.model.propertyChange.addListener(onModelPropertyChange);
-	props.bag.model.command.addListener(onModelCommand);
-	props.propertyChange.addListener(({ property, oldValue, newValue }) => {
-		switch (property) {
-			case "prop":
-				oldValue.propertyChange.removeListener(onValuePropertyChange);
-				newValue.propertyChange.addListener(onValuePropertyChange);
-				break;
-			case "model":
-				if (oldValue) {
-					oldValue.propertyChange.removeListener(onModelPropertyChange);
-					oldValue.command.removeListener(onModelCommand);
-				}
+	model.command.addListener(onModelCommand);
 
-				if (newValue) {
-					newValue.propertyChange.addListener(onModelPropertyChange);
-					newValue.command.addListener(onModelCommand);
-				}
-
-				break;
-		}
-	})
-
-	function onValuePropertyChange({ property, newValue }: PropertyChangeEventType<JsonProperty>) {
-		switch (property) {
-			case "hidden":
-				props.bag.isHidden = newValue;
-				break;
-			case "expanded":
-				props.bag.isExpanded = newValue;
-				break;
-			case "selected":
-				props.bag.isSelected = newValue;
-				break;
-		}
-	}
+	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
 		if (command === "scrollTo" && arg0 === prop) {
 			tick().then(() => keyElement.scrollIntoView({ block: "center" }));
 		}
-	}
-
-	function onModelPropertyChange(evt: PropertyChangeEventType<ViewerModel>) {
 	}
 
 	let keyElement: HTMLElement;
@@ -249,9 +205,9 @@
 </style>
 {#if prop}
 <div
-	hidden={props.bag.isHidden}
+	hidden={$hidden}
 	tabindex="0"
-	class="json-prop for-{prop.value.type} for-{prop.value.subtype} {props.bag.isExpanded ? 'expanded' : 'collapsed'}{props.bag.isSelected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
+	class="json-prop for-{prop.value.type} for-{prop.value.subtype} {$expanded ? 'expanded' : 'collapsed'}{$selected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
 	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop}>{prop.key}</span>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}

@@ -1,131 +1,111 @@
-import { type IEvent, EventHandlers } from "./evt";
+import type { Readable, Subscriber, Unsubscriber } from "svelte/store";
 
-export type PropertyChangeHandler<T = any, TKey extends PropertyKey = any, TSource = unknown> = (this: TSource, evt: PropertyChangeEvent<T, TKey, TSource>) => void;
-export type PropertyChangeType = "create" | "change" | "delete";
+type Invalidator<T> = (value?: T) => void;
 
-export class PropertyChangeEvent<T = any, TKey extends PropertyKey = PropertyKey, TSource = unknown> {
-	constructor(
-		readonly source: TSource,
-		readonly type: PropertyChangeType,
-		readonly property: TKey,
-		readonly oldValue: T,
-		readonly newValue: T) { }
+interface IReadable<T = undefined> extends Readable<T> {
+	readonly value: T;
 }
 
-export interface PropertyChangeNotifier<TRecord extends Record<string, any> = Record<string, any>, TKey extends keyof TRecord = keyof TRecord> {
-	propertyChange: IEvent<PropertyChangeHandlerTypes<this, TRecord, TKey>>;
+interface IReadableImpl<T = undefined> extends IReadable<T> {
+	setValue(value: T): void;
 }
 
-export type PropertyChangeEventType<TSource> = TSource extends PropertyChangeNotifier<infer TRecord, infer TKey> ? PropertyChangeEventTypes<TSource, TRecord, TKey> : never;
-export type PropertyChangeEventTypes<TSource, TRecord, TKey extends keyof TRecord = keyof TRecord> = { [P in TKey]: PropertyChangeEvent<TRecord[P], P, TSource> }[TKey];
+type Readables<T> = { readonly [P in keyof T]: IReadable<T[P]> };
+type ReadableImpls<T> = { readonly [P in keyof T]: IReadableImpl<T[P]> };
 
-export type PropertyChangeHandlerType<TSource> = TSource extends PropertyChangeNotifier<infer TRecord, infer TKey> ? PropertyChangeHandlerTypes<TSource, TRecord, TKey> : never;
-export type PropertyChangeHandlerTypes<TSource, TRecord, TKey extends keyof TRecord = keyof TRecord> = Fn<[evt: PropertyChangeEventTypes<TSource, TRecord, TKey>], any, TSource>;
+export interface ReadOnlyPropertyBag<TRecord extends Record<string, any> = Record<string, any>> {
+	readonly readables: Readables<TRecord>;
 
-export class PropertyBag<TRecord extends Record<string, any> = Record<string, any>, TKey extends keyof TRecord = keyof TRecord> implements PropertyChangeNotifier<TRecord, TKey> {
-	static readonly #handler: ProxyHandler<PropertyBag<any>> = {
-		get(t, p) {
-			return Reflect.get(t.#props, p);
-		},
-		getOwnPropertyDescriptor(t, p) {
-			return Reflect.getOwnPropertyDescriptor(t.#props, p);
-		},
-		set(t, p, value) {
-			const props = t.#props;
-			const desc = Reflect.getOwnPropertyDescriptor(props, p);
-			if (desc === undefined) {
-				t.#props[p] = value;
-				t.#fireChange(p, "create", undefined, value);
-			} else if (desc.writable) {
-				const old = desc.value;
-				desc.value = value;
-				Reflect.defineProperty(props, p, desc);
-				if (old !== value)
-					t.#fireChange(p, "change", old, value);
-			} else {
-				return false;
-			}
+	getValue<K extends keyof TRecord>(key: K): TRecord[K];
+}
 
-			return true;
-		},
-		defineProperty(t, p, desc) {
-			if (desc.get || desc.set)
-				throw new TypeError("Cannot define accessor properies on PropertyBag.bag");
+type IReadOnlyPropertyBag<T extends Record<string, any>> = ReadOnlyPropertyBag<T>;
 
-			const props = t.#props;
-			const oldDesc = Reflect.getOwnPropertyDescriptor(props, p);
-			if (oldDesc === undefined) {
-				Reflect.defineProperty(props, p, desc);
-				t.#fireChange(p, "create", undefined, desc.value);
-			} else {
-				Reflect.defineProperty(props, p, desc);
-				if (oldDesc.value !== desc.value)
-					t.#fireChange(p, "change", oldDesc.value, desc.value);
-			}
+export class PropertyBag<TRecord extends Record<string, any> = Record<string, any>> implements ReadOnlyPropertyBag<TRecord> {
+	static readonly #ReadOnly = class ReadOnlyPropertyBag<TRecord extends Record<string, any>> implements IReadOnlyPropertyBag<TRecord> {
+		readonly #owner: PropertyBag<TRecord>;
 
-			return true;
-		},
-		deleteProperty(t, p) {
-			const props = t.#props;
-			const desc = Reflect.getOwnPropertyDescriptor(t.#props, p);
-			if (desc === undefined)
-				return false;
+		get readables() {
+			return this.#owner.#readables;
+		}
 
-			Reflect.deleteProperty(props, p);
-			t.#fireChange(p, "delete", desc.value, undefined);
-			return true;
-		},
-		ownKeys(t) {
-			return Reflect.ownKeys(t.#props);
-		},
-		getPrototypeOf() {
-			return null;
-		},
-		setPrototypeOf() {
-			return false;
-		},
-		has(t, p) {
-			return p in t.#props;
+		constructor(owner: PropertyBag<TRecord>) {
+			this.#owner = owner;
+		}
+
+		getValue<K extends keyof TRecord>(key: K): TRecord[K] {
+			return this.#owner.getValue(key);
 		}
 	}
 
-	readonly #props: any;
-	readonly #bag: any;
-	readonly #pc: EventHandlers<PropertyChangeHandlerTypes<this, TRecord, TKey>>;
+	static readonly #Readable = class ReadableImpl<TRecord extends Record<string | symbol, any>, TKey extends keyof TRecord> implements IReadableImpl<TRecord[TKey]> {
+		readonly #owner: PropertyBag<TRecord>;
+		readonly #key: TKey;
+		#value: TRecord[TKey];
+		readonly #subs: Map<number, Invalidator<TRecord[TKey]>>;
+		#subNo: number;
 
-	get bag(): TRecord {
-		return this.#bag;
-	}
+		get value() {
+			return this.#value;
+		}
 
-	get size() {
-		return this.#props.size;
-	}
+		constructor(owner: PropertyBag<TRecord>, key: TKey, value: TRecord[TKey]) {
+			this.#owner = owner;
+			this.#key = key;
+			this.#value = value;
+			this.#subs = new Map();
+			this.#subNo = 0;
+			//this.subscribe = this.subscribe.bind(this);
+		}
 
-	get propertyChange() {
-		return this.#pc.event;
-	}
-
-	constructor(values?: TRecord) {
-		this.#props = {};
-		this.#bag = new Proxy(this, PropertyBag.#handler);
-		this.#pc = new EventHandlers();
-		if (values) {
-			const p = this.#props;
-			for (const [key, value] of Object.entries(values)) {
-				Reflect.defineProperty(p, key, {
-					enumerable: true,
-					writable: true,
-					value
-				});
+		setValue(v: TRecord[TKey]) {
+			if (this.#value !== v) {
+				this.#value = v;
+				this.#subs.forEach(fn => fn(v));
 			}
 		}
+
+		#unsubscribe(subNo: number): void {
+			this.#subs.delete(subNo);
+		}
+
+		subscribe(run: Subscriber<TRecord[TKey]>, invalidate?: Invalidator<TRecord[TKey]>): Unsubscriber {
+			const value = this.#value;
+			run(value);
+			const subNo = this.#subNo++;
+			this.#subs.set(subNo, invalidate ?? run);
+			return this.#unsubscribe.bind(this, subNo);
+		}
 	}
 
-	#fireChange(prop: TKey, type: PropertyChangeType, oldValue: any, newValue: any) {
-		const pc = this.#pc;
-		if (pc.hasListeners) {
-			const evt = new PropertyChangeEvent(this, type, prop, oldValue, newValue);
-			pc.fire(this, evt);
+	readonly #readables: ReadableImpls<TRecord>;
+	readonly #readOnly: ReadOnlyPropertyBag<TRecord>;
+
+	get readables(): Readables<TRecord> {
+		return this.#readables as any;
+	}
+
+	get readOnly() {
+		return this.#readOnly;
+	}
+
+	constructor(values: TRecord) {
+		const readables: any = {};
+
+		for (const key in values) {
+			const v = values[key];
+			readables[key] = new PropertyBag.#Readable(this, key, v);
 		}
+
+		this.#readables = readables;
+		this.#readOnly = new PropertyBag.#ReadOnly(this);
+	}
+
+	getValue<K extends keyof TRecord>(key: K): TRecord[K] {
+		return this.#readables[key].value;
+	}
+
+	setValue<K extends keyof TRecord>(key: K, value: TRecord[K]) {
+		this.#readables[key].setValue(value);
 	}
 }

@@ -14,19 +14,6 @@
 	let jpath: string;
 	let jpathResults: string[] = [];
 
-	const props = new PropertyBag({ model });
-
-	// props.bag.model.propertyChange.addListener(onModelPropertyChange);
-	// props.propertyChange.addListener(evt => {
-	// 	if (evt.property === "model") {
-	// 		evt.oldValue.propertyChange.removeListener(onModelPropertyChange);
-	// 		evt.newValue.propertyChange.addListener(onModelPropertyChange);
-	// 	}
-	// })
-
-	// function onModelPropertyChange(evt: PropertyChangeEvent) {
-	// }
-
 	function setExpanded(expanded: boolean) {
 		const stack: Iterator<JsonProperty>[] = [];
 		let cur: Iterator<JsonProperty> = model.root.value.properties()
@@ -83,8 +70,6 @@
 			model.select(path, true);
 		}
 	}
-
-	$: props.bag.model = model;
 </script>
 <style lang="scss">
 	@use "./core.scss" as *;
