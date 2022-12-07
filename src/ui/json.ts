@@ -579,7 +579,11 @@ export class JsonValue<T extends JsonValueType = JsonValueType> extends JsonToke
 
 	/** @internal */
 	__shown(filter: string, filterMode: JsonTokenFilterFlags): boolean {
-		return Boolean(filterMode & JsonTokenFilterFlags.Values) && String.prototype.toLowerCase.call(this.#value).includes(filter);
+		if ((filterMode & JsonTokenFilterFlags.Values) === 0) 
+			return false;
+
+		const str = this.#value === null ? "null" :  String.prototype.toLowerCase.call(this.#value);
+		return str.includes(filter);
 	}
 
 	resolve(): JsonToken<any> | null {
