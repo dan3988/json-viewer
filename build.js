@@ -167,7 +167,7 @@ const rollupUi = {
 			compilerOptions: {
 				// enable run-time checks when not in production
 				dev: !dist,
-				format: "cjs"
+				format: "esm"
 			}
 		}),
 		css({ output: 'viewer.css' }),
@@ -178,11 +178,6 @@ const rollupUi = {
 		commonjs(),
 		typescript({
 			tsconfig: 'src/ui/tsconfig.json',
-			sourceMap: !dist,
-			inlineSources: !dist
-		}),
-		typescript({
-			tsconfig: 'src/extension/tsconfig.json',
 			sourceMap: !dist,
 			inlineSources: !dist
 		}),
