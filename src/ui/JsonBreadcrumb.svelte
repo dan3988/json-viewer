@@ -41,7 +41,7 @@
 			let path = this.value.split("/").filter(v => v.length);
 			if (path.length === 0) {
 				model.selected = null;
-			} else if (model.select(path)) {
+			} else if (model.select(path, true)) {
 				//unfocus the input
 				this.disabled = true;
 				this.disabled = false;
@@ -53,8 +53,8 @@
 	@use "./core.scss" as *;
 
 	.root {
-		display: flex;
-		gap: 0;
+		display: grid;
+		grid-template-areas: 1fr;
 		align-items: center;
 
 		> .editor {
@@ -75,6 +75,7 @@
 	.list {
 		@include font-elem;
 
+		grid-area: 1 / 1 / span 1 / span 1;
 		display: flex;
 		flex-direction: row;
 		user-select: none;
@@ -91,10 +92,15 @@
 	}
 
 	.path-part {
+		z-index: 1;
 		cursor: pointer;
 		padding: 2px;
 		margin: 0 5px;
 		border-radius: 5px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 50rem;
 
 		&:hover {
 			color: var(--col-match-fg);
@@ -105,6 +111,7 @@
 	.editor {
 		@include control;
 
+		grid-area: 1 / 1 / span 1 / span 1;
 		flex: 0px 1 1;
 		margin: 0;
 		outline: none;
@@ -114,15 +121,15 @@
 </style>
 {#if model}
 <div class="root{isEditing ? " editing" : ""}">
+	<input class="editor" on:focusin={focusIn} on:focusout={focusOut} on:keydown={onKeyDown} value={pathText}/>
 	<ul class="list">
 		{#if path}
 			{#each path as part, index}
 				<li>
-					<span class="path-part" on:click={() => onClick(index)}>{part}</span>
+					<span class="path-part" title={String(part)} on:click={() => onClick(index)}>{part}</span>
 				</li>
 			{/each}
 		{/if}
 	</ul>
-	<input class="editor" on:focusin={focusIn} on:focusout={focusOut} on:keydown={onKeyDown} value={pathText}/>
 </div>
 {/if}
