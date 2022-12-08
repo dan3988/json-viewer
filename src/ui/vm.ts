@@ -229,32 +229,32 @@ abstract class FunctionParameter {
 	}
 
 	static readonly #Assignment = class AssignmentParameter extends FunctionParameter {
-		constructor(readonly left: FunctionParameter, readonly right: LiteralValue | InstructionList) {
+		constructor(readonly left: FunctionParameter, readonly def: LiteralValue | InstructionList) {
 			super();
 		}
 
-		#resolveRight(scope: any) {
-			let { right } = this;
-			if (right instanceof InstructionList) {
+		#resolveDefault(scope: any): any {
+			let { def } = this;
+			if (def instanceof InstructionList) {
 				const stack = new EvaluatorStack(scope);
-				right = right.execute(stack);
+				def = def.execute(stack);
 			}
 
-			return right;
+			return def;
 		}
 
 		debugInfo() {
 			return {
 				type: "Assignment",
 				left: this.left.debugInfo(),
-				right: this.right instanceof InstructionList ? this.right.debugInfo() : this.right
+				def: this.def instanceof InstructionList ? this.def.debugInfo() : this.def
 			}
 		}
 
 		getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number) {
 			let arg = args[index];
 			if (arg === undefined)
-				arg = this.#resolveRight(scope);
+				arg = this.#resolveDefault(scope);
 
 			this.left.getValues(scope, [arg], 0);
 		}
@@ -295,7 +295,7 @@ abstract class FunctionParameter {
 		},
 		AssignmentPattern({ left, right }) {
 			let param = FunctionParameter.create(left);
-			let value: estree.Literal["value"] | InstructionList;
+			let value: LiteralValue | InstructionList;
 
 			if (right.type === "Literal") {
 				value = right.value;
