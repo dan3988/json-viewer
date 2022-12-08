@@ -33,6 +33,11 @@ abstract class AbstractRenderer<T> implements Renderer<T> {
 
 const jsIdentifier = /^[$A-Z_][0-9A-Z_$]*$/igm;
 
+function isIdentifier(text: string) {
+	jsIdentifier.lastIndex = 0;
+	return jsIdentifier.test(text);
+}
+
 class JsonValueRenderer extends AbstractRenderer<any> {
 	protected onUpdate(target: HTMLElement, value: any): void {
 		if (value === null || typeof value !== "string") {
@@ -45,8 +50,6 @@ class JsonValueRenderer extends AbstractRenderer<any> {
 				a.textContent = text;
 				a.target = "_blank";
 				target.append(a);
-			} else if (jsIdentifier.test(value)) {
-				target.innerText = JSON.stringify(value);
 			} else {
 				renderEscapedText(target, value);
 			}
@@ -99,7 +102,7 @@ function renderEscapedText(target: HTMLElement, value: string) {
 
 class JsonKeyRenderer extends AbstractRenderer<string | number> {
 	protected onUpdate(target: HTMLElement, value: string | number): void {
-		if (typeof value !== "string" || jsIdentifier.test(value)) {
+		if (typeof value !== "string" || isIdentifier(value)) {
 			target.innerText = value.toString();
 		} else {
 			renderEscapedText(target, value);
