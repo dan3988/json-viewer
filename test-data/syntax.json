@@ -5,7 +5,10 @@
 		"non-identifier": "value",
 		"special@chars": "value",
 		"0atstart": "value",
-		"endswith0": "value"
+		"endswith0": "value",
+		"very\r\n\"special\"\r\n\tchars": "value",
+		"very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long name": "value",
+		"unicode \u0000 test": "value"
 	},
 	"array": [
 		1,

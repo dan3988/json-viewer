@@ -3,6 +3,7 @@
 	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
 	import JsonValue from "./JsonValue.svelte";
     import { onDestroy, tick } from "svelte";
+    import { renderKey } from "./util";
 
 	export let model: ViewerModel;
 	export let prop: JsonProperty;
@@ -30,10 +31,15 @@
 		color: var(--col-json-key-fg);
 		grid-area: 1 / 2 / span 1 / span 1;
 		cursor: pointer;
+		white-space: nowrap;
 		padding-right: 5px;
 
 		&:after {
 			content: ":";
+		}
+
+		> :global(.esc) {
+			color: var(--col-json-num-fg);
 		}
 	}
 
@@ -208,7 +214,7 @@
 	hidden={$hidden}
 	tabindex="0"
 	class="json-prop for-{prop.value.type} for-{prop.value.subtype} {$expanded ? 'expanded' : 'collapsed'}{$selected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
-	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop}>{prop.key}</span>
+	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop} use:renderKey={prop.key}/>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
