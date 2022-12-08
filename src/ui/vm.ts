@@ -117,11 +117,11 @@ interface ParameterPatternMap {
 	ArrayPattern: estree.ArrayPattern;
 	AssignmentPattern: estree.AssignmentPattern;
 	RestElement: estree.RestElement;
-	MemberExpression: estree.MemberExpression;
 }
 
 type ParameterLookup = Record<keyof ParameterPatternMap, (token: estree.Pattern) => FunctionParameter>;
 type ParameterObj = { [P in keyof ParameterPatternMap]: (token: ParameterPatternMap[P]) => FunctionParameter };
+type LiteralValue = estree.Literal["value"];
 
 //type FunctionParameterResolvers = { [P in estree.Pattern["type"] }
 
@@ -228,6 +228,38 @@ abstract class FunctionParameter {
 		}
 	}
 
+	static readonly #Assignment = class AssignmentParameter extends FunctionParameter {
+		constructor(readonly left: FunctionParameter, readonly right: LiteralValue | InstructionList) {
+			super();
+		}
+
+		#resolveRight(scope: any) {
+			let { right } = this;
+			if (right instanceof InstructionList) {
+				const stack = new EvaluatorStack(scope);
+				right = right.execute(stack);
+			}
+
+			return right;
+		}
+
+		debugInfo() {
+			return {
+				type: "Assignment",
+				left: this.left.debugInfo(),
+				right: this.right instanceof InstructionList ? this.right.debugInfo() : this.right
+			}
+		}
+
+		getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number) {
+			let arg = args[index];
+			if (arg === undefined)
+				arg = this.#resolveRight(scope);
+
+			this.left.getValues(scope, [arg], 0);
+		}
+	}
+
 	static readonly #lookup: ParameterLookup = {
 		Identifier(token) {
 			return new FunctionParameter.#Identifier(token.name);
@@ -260,6 +292,19 @@ abstract class FunctionParameter {
 			}
 
 			return new FunctionParameter.#Object(props)
+		},
+		AssignmentPattern({ left, right }) {
+			let param = FunctionParameter.create(left);
+			let value: estree.Literal["value"] | InstructionList;
+
+			if (right.type === "Literal") {
+				value = right.value;
+			} else {
+				value = new InstructionList();
+				build(value, right);
+			}
+
+			return new FunctionParameter.#Assignment(param, value);
 		}
 	} satisfies ParameterObj;
 
@@ -766,6 +811,6 @@ for (let i = 0; i < instructionHandlers.length; i++) {
 		Object.defineProperty(handler, "name", { configurable: true, value: InstructionCode[i] });
 }
 
-// const fn = test("({ length, [length - 1]: a }) => console.log(length, a)");
+// const fn = test("(a = 5) => console.log(a)");
 // fn("azb");
-// fn(5, "ddd", "eee", "fff", "ggg");
+// fn();
