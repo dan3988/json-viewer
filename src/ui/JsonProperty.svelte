@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { JsonProperty } from "./json";
 	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
-	import JsonValue from "./JsonValue.svelte";
     import { onDestroy, tick } from "svelte";
-    import { renderKey } from "./util";
+    import { renderKey, renderValue } from "./util";
 
 	export let model: ViewerModel;
 	export let prop: JsonProperty;
@@ -37,10 +36,10 @@
 		&:after {
 			content: ":";
 		}
+	}
 
-		> :global(.esc) {
-			color: var(--col-json-num-fg);
-		}
+	:global(.esc) {
+		color: var(--col-json-num-fg);
 	}
 
 	.json-prop {
@@ -208,6 +207,27 @@
 			background-color: var(--col-indent);
 		}
 	}
+
+	.json-value {
+		white-space: nowrap;
+
+		&.json-string {
+			color: var(--col-json-str-fg);
+		}
+
+		&.json-number {
+			color: var(--col-json-num-fg);
+		}
+
+		&.json-boolean {
+			color: var(--col-json-bln-fg);
+		}
+
+		&.json-null {
+			color: var(--col-json-null-fg);
+		}
+	}
+
 </style>
 {#if prop}
 <div
@@ -230,7 +250,7 @@
 			</ul>
 		{/if}
 	{:else if prop.value.is("value")}
-	<JsonValue token={prop.value}/>
+	<span class="json-value json-{prop.value.subtype}" use:renderValue={prop.value.value}/>
 	{/if}
 </div>
 {/if}

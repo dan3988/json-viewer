@@ -38,15 +38,17 @@ class JsonValueRenderer extends AbstractRenderer<any> {
 		if (value === null || typeof value !== "string") {
 			target.innerText = String(value);
 		} else {
-			const text = JSON.stringify(value);
 			if (value.startsWith("http://") || value.startsWith("https://")) {
 				const a = document.createElement("a");
+				const text = JSON.stringify(value);
 				a.href = value;
 				a.textContent = text;
 				a.target = "_blank";
 				target.append(a);
+			} else if (jsIdentifier.test(value)) {
+				target.innerText = JSON.stringify(value);
 			} else {
-				target.innerText = text;
+				renderEscapedText(target, value);
 			}
 		}
 	}
@@ -64,39 +66,43 @@ function appendSpan(parent: HTMLElement, className: string, text: string, start?
 	return span;
 }
 
+function renderEscapedText(target: HTMLElement, value: string) {
+	const json = JSON.stringify(value);
+
+	let last = 1;
+	let i = 1;
+
+	appendSpan(target, "quot", "\"");
+
+	while (true) {
+		let next = json.indexOf("\\", i);
+		if (next < 0) {
+			appendSpan(target, "", json, last, json.length - 1);
+			appendSpan(target, "quot", "\"");
+			break;
+		} else {
+			if (last < next)
+				appendSpan(target, "", json, last, last = next);
+
+			let char = json.charAt(++last);
+			if (char !== "u") {
+				appendSpan(target, "esc", "\\" + char);
+				last++;
+			} else {
+				appendSpan(target, "esc", json, next, last += 5);
+			}
+
+			i = last;
+		}
+	}
+}
+
 class JsonKeyRenderer extends AbstractRenderer<string | number> {
 	protected onUpdate(target: HTMLElement, value: string | number): void {
 		if (typeof value !== "string" || jsIdentifier.test(value)) {
 			target.innerText = value.toString();
 		} else {
-			const json = JSON.stringify(value);
-
-			let last = 1;
-			let i = 1;
-
-			appendSpan(target, "quot", "\"");
-
-			while (true) {
-				let next = json.indexOf("\\", i);
-				if (next < 0) {
-					appendSpan(target, "", json, last, json.length - 1);
-					appendSpan(target, "quot", "\"");
-					break;
-				} else {
-					if (last < next)
-						appendSpan(target, "", json, last, last = next);
-
-					let char = json.charAt(++last);
-					if (char !== "u") {
-						appendSpan(target, "esc", "\\" + char);
-						last++;
-					} else {
-						appendSpan(target, "esc", json, next, last += 5);
-					}
-
-					i = last;
-				}
-			}
+			renderEscapedText(target, value);
 		}
 	}
 }
