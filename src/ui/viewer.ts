@@ -13,7 +13,6 @@ root.expanded = true;
 
 model.bag.readables.selected.subscribe(v => {
 	if (v != null && !popping) {
-		console.debug("pushstate", v.path);
 		history.pushState(v.path, "", "#" + encodePath(v.path));
 	}
 });
@@ -61,7 +60,6 @@ if (location.hash)
 	});
 
 window.addEventListener("popstate", function(ev) {
-	console.debug("popstate", ev.state);
 	suppressPush(() => {
 		if (ev.state == null) {
 			model.selected = null;
