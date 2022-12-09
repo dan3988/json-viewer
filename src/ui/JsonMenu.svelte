@@ -11,7 +11,7 @@
 
 	$: model.filter(filter, filterMode);
 
-	let jpath: string;
+	let jpath: HTMLInputElement;
 	let jpathResults: string[] = [];
 
 	function setExpanded(expanded: boolean) {
@@ -33,24 +33,31 @@
 		}
 	}
 
-	function onKeyPress(evt: KeyboardEvent) {
+	function onJpathKeyPress(evt: KeyboardEvent) {
 		if (evt.key === "Enter")
 			evaluateJpath();
 	}
 
+	function clearValidation(this: HTMLInputElement) {
+		this.setCustomValidity("");
+	}
+
 	function evaluateJpath() {
-		if (!jpath) {
+		const path = jpath.value;
+		if (!path) {
 			jpathResults = [];
 			return;
 		}
 
 		try {
-			jpathResults = JSONPath({ json: model.root.value.proxy, path: jpath, resultType: "pointer" });
+			jpathResults = JSONPath({ json: model.root.value.proxy, path, resultType: "pointer" });
 			jpathResults.forEach((v, i, a) => a[i] = "$" + v);
 		} catch (e) {
+			jpath.setCustomValidity(e.message);
+			jpath.reportValidity();
+			jpath.addEventListener("input", clearValidation, { once: true });
 			jpathResults = [];
 			console.error(e);
-			alert(e);
 		}
 	}
 
@@ -60,8 +67,8 @@
 	}
 
 	function clearJpath(this: HTMLElement) {
-		jpath = "";
-		(this.previousElementSibling as HTMLElement).focus();
+		jpath.value = "";
+		jpath.focus();
 	}
 
 	function jpathItemEvent(path: string, evt: MouseEvent | KeyboardEvent) {
@@ -152,7 +159,7 @@
 	</div>
 	<div class="group field">
 		<span class="lbl">Path</span>
-		<input class="jpath-input control" type="text" bind:value={jpath} on:keypress={onKeyPress}/>
+		<input class="jpath-input control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
 		<button type="button" class="btn btn-clr" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>

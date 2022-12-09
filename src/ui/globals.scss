@@ -70,6 +70,10 @@
 :global(textarea.control) {
 	@include core.control;
 	background-color: var(--col-bg-dk);
+
+	&:invalid {
+		background-color: var(--col-bg-err);
+	}
 }
 
 :global(.control) {
