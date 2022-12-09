@@ -1,8 +1,8 @@
 @use "./core.scss" as core;
 
 :root {
-	--flt-bright-hv: brightness(0.95);
-	--flt-bright-focus: brightness(0.85);
+	--flt-bright-hv: brightness(0.97);
+	--flt-bright-focus: brightness(0.9);
 
 	--col-json-key-fg: #18F;
 	--col-json-str-fg: #854;
@@ -12,14 +12,14 @@
 	--col-match-fg: #000;
 	--col-match-bg: #CC3;
 
-	--col-indent-1: #F44;
-	--col-indent-2: #F84;
-	--col-indent-3: #FF8;
-	--col-indent-4: #8F8;
-	--col-indent-5: #4FF;
-	--col-indent-6: #48F;
-	--col-indent-7: #F8F;
-	--col-indent-8: #F4F;
+	--col-indent-1: #C44;
+	--col-indent-2: #C84;
+	--col-indent-3: #CC8;
+	--col-indent-4: #8C8;
+	--col-indent-5: #4CC;
+	--col-indent-6: #48C;
+	--col-indent-7: #C8C;
+	--col-indent-8: #C4C;
 
 	--col-fg: #000;
 	--col-body: #FFF;
