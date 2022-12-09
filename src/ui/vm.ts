@@ -12,7 +12,7 @@ const identifier = "_$_";
 /**
  * Override for the default jsonpath-plus script class, which uses eval(), as it is forbidden in extensions using manifest V3.
  */
- export class Script {
+export class Script {
 	/**
 	 * Replaces all '@' identifiers, since they will result in an illegal syntax error, then searches all literal expressions and replaces the replacement identifier with '@' to match the original script
 	 */
@@ -21,14 +21,15 @@ const identifier = "_$_";
 			for (let i = 0; i < list.count; i++) {
 				let [code, arg] = list.get(i)!;
 				switch (code) {
-					case InstructionCode.Literal: {
+					case InstructionCode.Literal:
 						if (typeof arg === "string") {
 							if (arg.includes(identifier)) {
 								arg = arg.replace(identifier, "@");
 								list.setArg(i, arg);
 							}
 						}
-					}
+
+						break;
 					case InstructionCode.Identifier:
 						if (typeof arg === "string" && arg.includes(identifier)) {
 							arg = arg.replace(identifier, "@");
