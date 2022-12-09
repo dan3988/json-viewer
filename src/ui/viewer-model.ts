@@ -129,13 +129,13 @@ export class ViewerModel {
 
 	#onSelected(selected: JsonProperty, expand: boolean, scrollTo: boolean) {
 		if (expand)
-			for (let p: null | JsonToken = selected.value; p != null; p = p.parent)
+			for (let p: null | JsonToken = selected.parent; p != null; p = p.parent)
 				p.parentProperty.expanded = true;
 
 		if (scrollTo)
 			this.execute("scrollTo", selected);
 	}
-	
+
 	setSelected(selected: null | JsonProperty, expand: boolean, scrollTo: boolean) {
 		const old = this.#bag.getValue("selected");
 		if (old !== selected) {

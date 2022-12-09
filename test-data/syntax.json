@@ -7,6 +7,9 @@
 		"0atstart": "value",
 		"endswith0": "value",
 		"very\r\n\"special\"\r\n\tchars": "value",
+		"back\\slashes": "value",
+		"forward/slashes": "value",
+		"tilde~aaaa": "value",
 		"very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long name": "value",
 		"unicode \u0000 test": "value"
 	},
