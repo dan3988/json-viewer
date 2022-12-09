@@ -422,7 +422,7 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 	}
 
 	getProperty(key: string | number): undefined | JsonProperty<number & keyof T> {
-		return typeof key !== "number" ? undefined : this.#items.at(key);
+		return this.#items.at(Number(key));
 	}
 
 	get(key: string | number): undefined | JsonToken {
@@ -533,7 +533,7 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 	}
 
 	getProperty(key: string | number): undefined | JsonProperty<string & keyof T> {
-		return typeof key !== "string" ? undefined : this.#props.get(key);
+		return this.#props.get(String(key));
 	}
 
 	get(key: string | number): undefined | JsonToken {
