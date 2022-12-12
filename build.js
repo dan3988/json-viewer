@@ -151,7 +151,7 @@ const rollupBg = {
 
 /** @type {rl.RollupOptions} */
 const rollupUi = {
-	input: 'src/ui/viewer.ts',
+	input: 'src/viewer/viewer.ts',
 	output: {
 		sourcemap: !dist,
 		format: 'cjs',
@@ -177,7 +177,7 @@ const rollupUi = {
 		}),
 		commonjs(),
 		typescript({
-			tsconfig: 'src/ui/tsconfig.json',
+			tsconfig: 'src/viewer/tsconfig.json',
 			sourceMap: !dist,
 			inlineSources: !dist
 		}),
