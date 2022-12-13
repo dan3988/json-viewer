@@ -59,7 +59,7 @@ const recur = { recursive: true };
  * @param {string} dir
  * @param {boolean} [clean]
  */
- function ensureDir(dir, clean) {
+function ensureDir(dir, clean) {
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, recur);
 	} else if (clean) {
@@ -87,7 +87,12 @@ function svelteConfig(baseDir, entry, output) {
 		plugins: [
 			svelte({
 				preprocess: [
-					sveltePreprocess({ sourceMap: !dist }),
+					sveltePreprocess({
+						sourceMap: !dist,
+						typescript: {
+							tsconfigFile: "./src/tsconfig.svelte.json"
+						}
+					}),
 					sass()
 				],
 				compilerOptions: {
@@ -136,7 +141,7 @@ async function executeRollup(name, config) {
 						let msg;
 						switch (e.plugin) {
 							case "svelte":
-								msg = chalk.yellow(e.id) + " " + chalk.blue(e.line) + ":" + chalk.blue(e.column) + "\n" + e.formatted;
+								msg = chalk.yellow(e.id) + " " + chalk.blue(e.start.line) + ":" + chalk.blue(e.start.column) + ": " + chalk.red(e.message) + "\n" + (e.formatted ?? e.frame);
 								break;
 						}
 
@@ -156,7 +161,7 @@ async function executeRollup(name, config) {
 		const bundle = await rl.rollup(config);
 		const res = await bundle.write(config.output);
 		debugger;
-//		await bundle.write({ amd: true, dir: "lib/ui" });
+		//		await bundle.write({ amd: true, dir: "lib/ui" });
 	}
 }
 

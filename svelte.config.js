@@ -3,7 +3,11 @@ import { sass } from "svelte-preprocess-sass";
 
 export default {
 	preprocess: [
-		sveltePreprocess(),
+		sveltePreprocess({
+			typescript: {
+				tsconfigFileL: "./src/tsconfig.svelte.json"
+			}
+		}),
 		sass()
 	]
 }

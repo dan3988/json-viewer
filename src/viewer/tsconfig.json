@@ -1,15 +1,5 @@
 {
-	"extends": "@tsconfig/svelte/tsconfig.json",
-	"compilerOptions": {
-		"strictNullChecks": true,
-		"strictBindCallApply": true,
-		"noErrorTruncation": true,
-		"lib": [
-			"ESNext",
-			"DOM"
-		],
-		"target": "ESNext"
-	},
+	"extends": "../tsconfig.svelte.json",
 	"include": [
 		"../*.d.ts",
 		"*"
