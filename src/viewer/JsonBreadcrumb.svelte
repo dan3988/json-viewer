@@ -50,7 +50,7 @@
 	}
 </script>
 <style lang="scss">
-	@use "./core.scss" as *;
+	@use "../core.scss" as *;
 
 	.root {
 		display: grid;

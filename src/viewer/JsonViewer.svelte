@@ -111,8 +111,8 @@
 	}
 </script>
 <style lang="scss">
-	@use "./core.scss" as *;
-	@import "./globals.scss";
+	@use "../core.scss" as *;
+	@import "../globals.scss";
 
 	.root {
 		position: absolute;

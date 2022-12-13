@@ -24,7 +24,7 @@
 	let keyElement: HTMLElement;
 </script>
 <style lang="scss">
-	@use "./core.scss" as *;
+	@use "../core.scss" as *;
 
 	.json-key {
 		color: var(--col-json-key-fg);

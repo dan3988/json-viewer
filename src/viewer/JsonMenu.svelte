@@ -79,7 +79,7 @@
 	}
 </script>
 <style lang="scss">
-	@use "./core.scss" as *;
+	@use "../core.scss" as *;
 
 	.btn-clr {
 		@include img-btn;
