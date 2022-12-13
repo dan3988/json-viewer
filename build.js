@@ -70,6 +70,53 @@ const recur = { recursive: true };
 
 /**
  * 
+ * @param {string} baseDir
+ * @param {string} entry
+ * @param {string} output
+ * @returns {rl.RollupOptions}
+ */
+function svelteConfig(baseDir, entry, output) {
+	return {
+		input: path.join(baseDir, entry),
+		output: {
+			sourcemap: !dist,
+			format: 'cjs',
+			name: 'app',
+			dir: 'lib'
+		},
+		plugins: [
+			svelte({
+				preprocess: [
+					sveltePreprocess({ sourceMap: !dist }),
+					sass()
+				],
+				compilerOptions: {
+					// enable run-time checks when not in production
+					dev: !dist,
+					format: "esm"
+				}
+			}),
+			css({ output: output + ".css" }),
+			resolve({
+				browser: true,
+				dedupe: ['svelte']
+			}),
+			commonjs(),
+			typescript({
+				tsconfig: path.join(baseDir, "tsconfig.json"),
+				sourceMap: !dist,
+				inlineSources: !dist
+			}),
+			dist && terser()
+		],
+		watch: {
+			clearScreen: false
+		}
+	};
+}
+
+/**
+ * 
  * @param {string} name
  * @param {rl.RollupOptions} config 
  */
@@ -149,8 +196,11 @@ const rollupBg = {
 	}
 };
 
+const rollupUi = svelteConfig("src/viewer", "viewer.ts", "viewer");
+const rollupOpts = svelteConfig("src/options", "options.ts", "options");
+
 /** @type {rl.RollupOptions} */
-const rollupUi = {
+const rollupUi2 = {
 	input: 'src/viewer/viewer.ts',
 	output: {
 		sourcemap: !dist,
@@ -217,6 +267,7 @@ try {
 
 	await executeRollup("BG", rollupBg);
 	await executeRollup("UI", rollupUi);
+	await executeRollup("OP", rollupOpts);
 
 	if (watch) {
 		async function stop() {
