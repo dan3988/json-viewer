@@ -81,6 +81,10 @@
 	background-color: var(--col-bg-lt);
 }
 
+:global(.check) {
+	@include core.check;
+}
+
 :global(.lbl),
 :global(.btn) {
 	@include core.border-rnd;

@@ -49,6 +49,17 @@ $anim-med: 200ms;
 	font-size: medium;
 }
 
+@mixin check {
+	@include border-rnd;
+	@include font-elem;
+	@include hv;
+
+	cursor: pointer;
+	background-color: var(--col-bg-lt);
+	color: var(--col-fg);
+	padding: $pad-med;
+}
+
 @mixin control {
 	@include border-rnd;
 	@include font-elem;

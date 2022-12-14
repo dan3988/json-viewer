@@ -83,50 +83,70 @@
 	const def = convertFrom(settings.getDefault());
 	const editor = new EditorModel(def);
 	const { enabled, limitEnabled, limitUnit, limitValue, indentChar, indentCount } = editor.values;
-
-	load();
+	const loading = load();
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
 	@import "../globals.scss";
 
 	.base {
-		display: flex;
-		gap: 5px;
-		flex-direction: column;
-		width: 100%;
+		display: grid;
+		grid-template-columns: 7rem 1fr 7rem;
+		grid-row-gap: 5px;
+		width: 500px;
+		margin: auto;
+
+		> .group {
+			display: contents;
+		}
+
+		> .grp-enabled > *,
+		> .grp-limit-enabled > *,
+		> .btn {
+			grid-column: 1 / -1;
+		}
+	}
+
+	@media only screen and (max-width: 500px) {
+		.base {
+			width: 100%;
+		}
 	}
 </style>
-<div class="base cr">
-	<div class="group">
-		<label class="check border control">
-			<input class="control border check" type="checkbox" bind:checked={$enabled}/>
-			Enabled
-		</label>
+{#await loading}
+	<p>Loading...</p>
+{:then}
+	<div class="base cr">
+		<div class="group grp-enabled">
+			<label class="check">
+				<input class="control border" type="checkbox" bind:checked={$enabled}/>
+				Enabled
+			</label>
+		</div>
+		<div class="group grp-limit-enabled">
+			<label class="check">
+				<input class="control border" type="checkbox" bind:checked={$limitEnabled}/>
+				JSON Size Limit
+			</label>
+		</div>
+		<div class="group grp-limit-value">
+			<span class="lbl border">Size limit</span>
+			<input class="control" type="number" step="any" inputmode="numeric" bind:value={$limitValue}/>
+			<select class="control" bind:value={$limitUnit}>
+				{#each units as unit}
+					<option value={unit}>{LimitUnit[unit]}</option>
+				{/each}
+			</select>
+		</div>
+		<div class="group grp-indent">
+			<span class="lbl">Indent</span>
+			<input class="control" type="number" inputmode="numeric" bind:value={$indentCount}/>
+			<select class="control" bind:value={$indentChar}>
+				{#each indents as [key, value]}
+					<option value={value}>{key}</option>
+				{/each}
+			</select>
+		</div>
+		<button class="btn border control lt" on:click={save}>Save</button>
 	</div>
-	<div class="group">
-		<label class="check border control">
-			<input class="control border check" type="checkbox" bind:checked={$limitEnabled}/>
-			JSON Size Limit
-		</label>
-	</div>
-	<div class="group">
-		<span class="lbl border">Size limit</span>
-		<input class="control" type="number" step="any" inputmode="numeric" bind:value={$limitValue}/>
-		<select class="control" bind:value={$limitUnit}>
-			{#each units as unit}
-				<option value={unit}>{LimitUnit[unit]}</option>
-			{/each}
-		</select>
-	</div>
-	<div class="group">
-		<span class="lbl">Indent</span>
-		<input class="control" type="number" inputmode="numeric" bind:value={$indentCount}/>
-		<select class="control" bind:value={$indentChar}>
-			{#each indents as [key, value]}
-				<option value={value}>{key}</option>
-			{/each}
-		</select>
-	</div>
-	<button class="btn border control lt" on:click={save}>Save</button>
-</div>
+{/await}
