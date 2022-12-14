@@ -136,21 +136,35 @@ async function executeRollup(name, config) {
 					//evt.result.write({ amd: true, dir: "lib/ui" });
 					break;
 				case "ERROR": {
-					const e = evt.error;
+					let msg;
+					let e = evt.error;
 					if (e.code === "PLUGIN_ERROR") {
-						let msg;
 						switch (e.plugin) {
 							case "svelte":
-								msg = chalk.yellow(e.id) + " " + chalk.blue(e.start.line) + ":" + chalk.blue(e.start.column) + ": " + chalk.red(e.message) + "\n" + (e.formatted ?? e.frame);
+								msg = chalk.yellow(e.id);
+								if (e.start)
+									msg += " " + chalk.blue(e.start.line) + ":" + chalk.blue(e.start.column);
+
+								msg += ": " + chalk.red(e.message);
+								let code = e.frame;
+								if (code)
+									msg += "\n" + code;
+
 								break;
 						}
 
-						if (msg) {
-							console.error(prefix + msg);
-							break;
-						}
+					} else if (e.code === "PARSE_ERROR") {
+						msg = chalk.yellow(e.id);
+						if (e.loc)
+							msg += " " + chalk.blue(e.loc.line) + ":" + chalk.blue(e.loc.column);
+
+						msg += ": " + chalk.red(e.message);
+						let code = e.frame;
+						if (code)
+							msg += "\n" + code;
 					}
-					console.error(prefix + chalk.red("Unhandled Error: ") + e);
+					
+					console.error(prefix + (msg ?? (chalk.red("Unhandled Error: ") + e)));
 					break;
 				}
 			}

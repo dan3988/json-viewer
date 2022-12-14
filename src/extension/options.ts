@@ -1,4 +1,4 @@
-import settings from "./settings.js";
+import settings from "../settings.js";
 
 const ePluginEnabled = document.getElementById("plugin-enabled") as HTMLInputElement;
 const eLimitEnabled = document.getElementById("limit-enabled") as HTMLInputElement;

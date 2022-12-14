@@ -1,5 +1,5 @@
 <script lang="ts">
-	import settings from "../extension/settings";
+	import settings from "../settings";
 	import EditorModel from "./editor";
 
 	enum LimitUnit {
