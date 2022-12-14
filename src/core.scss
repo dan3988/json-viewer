@@ -54,6 +54,7 @@ $anim-med: 200ms;
 	@include font-elem;
 	@include hv;
 
+	color: var(--col-fg);
 	outline: none;
 	padding: $pad-med;
 }
