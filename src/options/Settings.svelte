@@ -1,7 +1,7 @@
 <script lang="ts">
 	import settings from "../extension/settings";
-    import EditorModel from "./e./editor
-	
+	import EditorModel from "./editor";
+
 	enum LimitUnit {
 		B,
 		KB,
