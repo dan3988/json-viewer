@@ -1,6 +1,6 @@
 <script lang="ts">
 	import settings from "../settings";
-	import EditorModel, { type EntryValue } from "./editor";
+	import EditorModel, { type EntryRef } from "./editor";
 
 	enum LimitUnit {
 		B,
@@ -54,23 +54,20 @@
 		return { enabled, limitEnabled, limitUnit, limitValue, indentCount, indentChar };
 	}
 
-	async function load() {
+	async function load(): Promise<SettingValues> {
 		const v = await settings.get();
-		const settingValues = convertFrom(v);
-		editor.update(settingValues);
+		return convertFrom(v);
 	}
 
-	function addDirty<K extends keyof (SettingValues | settings.Settings)>(bag: settings.SaveType, entry: EntryValue<K, SettingValues[K]>) {
-		if (entry.isDirty)
-			bag[entry.key] = entry.value;
-	}
+	// function isDirty(prop: keyof SettingValues) {
+	// 	return original[prop] !== editing[prop];
+	// }
 
 	async function save() {
 		const bag: settings.SaveType = {};
-		if (limitValue.isDirty || limitUnit.isDirty) {
-			const limitSize = getByteSize(limitValue.value, limitUnit.value);
-			bag.limitSize = limitSize;
-		}
+
+		if (limitUnit.changed || limitValue.changed)
+			bag.limitSize = getByteSize(limitValue.value, limitUnit.value);
 
 		addDirty(bag, limitEnabled);
 		addDirty(bag, enabled);
@@ -78,16 +75,30 @@
 		addDirty(bag, indentCount);
 
 		await settings.setValues(bag);
+
+		model.commit();
 	}
 
-	const def = convertFrom(settings.getDefault());
-	const editor = new EditorModel(def);
-	const { enabled, limitEnabled, limitUnit, limitValue, indentChar, indentCount } = editor.values;
-	const loading = load();
+	function addDirty<K extends (keyof SettingValues) & (keyof settings.Settings)>(bag: settings.SaveType, prop: EntryRef<K, SettingValues[K]>) {
+		if (prop.changed)
+			bag[prop.key] = prop.value;
+	}
+
+	const loading = load().then(v => {
+		model = new EditorModel(v);
+		({ enabled, limitEnabled, limitUnit, limitValue, indentChar, indentCount } = model.props);
+	});
+
+	let { enabled, limitEnabled, limitUnit, limitValue, indentChar, indentCount } = Object.prototype as typeof model["props"];
+	let model: EditorModel<SettingValues>;
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
 	@import "../globals.scss";
+
+	.dirty {
+		background-color: #553;
+	}
 
 	.base {
 		display: grid;
@@ -98,6 +109,10 @@
 
 		> .group {
 			display: contents;
+
+			&.dirty > * {
+				@extend .dirty;
+			}
 		}
 
 		> .grp-enabled > *,
@@ -117,22 +132,22 @@
 	<p>Loading...</p>
 {:then}
 	<div class="base cr">
-		<div class="group grp-enabled">
+		<div class="group grp-enabled" class:dirty={$enabled.changed}>
 			<label class="check">
-				<input class="control border" type="checkbox" bind:checked={$enabled}/>
+				<input class="control border" type="checkbox" bind:checked={$enabled.value}/>
 				Enabled
 			</label>
 		</div>
-		<div class="group grp-limit-enabled">
+		<div class="group grp-limit-enabled" class:dirty={$limitEnabled.changed}>
 			<label class="check">
-				<input class="control border" type="checkbox" bind:checked={$limitEnabled}/>
+				<input class="control border" type="checkbox" bind:checked={$limitEnabled.value}/>
 				JSON Size Limit
 			</label>
 		</div>
 		<div class="group grp-limit-value">
 			<span class="lbl border">Size limit</span>
-			<input class="control" type="number" step="any" inputmode="numeric" bind:value={$limitValue}/>
-			<select class="control" bind:value={$limitUnit}>
+			<input class="control" class:dirty={$limitValue.changed} type="number" step="any" inputmode="numeric" bind:value={$limitValue.value}/>
+			<select class="control" class:dirty={$limitUnit.changed}  bind:value={$limitUnit.value}>
 				{#each units as unit}
 					<option value={unit}>{LimitUnit[unit]}</option>
 				{/each}
@@ -140,8 +155,8 @@
 		</div>
 		<div class="group grp-indent">
 			<span class="lbl">Indent</span>
-			<input class="control" type="number" inputmode="numeric" bind:value={$indentCount}/>
-			<select class="control" bind:value={$indentChar}>
+			<input class="control" class:dirty={$indentCount.changed} type="number" inputmode="numeric" bind:value={$indentCount.value}/>
+			<select class="control" class:dirty={$indentChar.changed} bind:value={$indentChar.value}>
 				{#each indents as [key, value]}
 					<option value={value}>{key}</option>
 				{/each}

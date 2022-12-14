@@ -1,94 +1,113 @@
-import type { Subscriber, Unsubscriber, Updater, Writable } from "svelte/store";
+import type { Writable, Readable, Subscriber, Unsubscriber, Updater } from "svelte/store";
 
-class EditorSlot<K extends string, V> implements Writable<V>, EntryValue<K, V> {
-	readonly #listeners: Subscriber<V>[];
+type Dict<V = any> = Record<string, V>;
+type DirtyType<V> = { [K in keyof V]: boolean };
+type Invalidator<T> = (value?: T) => void;
+
+export interface Entry<V> {
+	value: V;
+	changed: boolean;
+}
+
+export type PropsType<T extends Dict> = { [P in string & keyof T]: EntryRef<P, T[P]> };
+
+export interface EntryRef<K extends string, V> extends Writable<Entry<V>>, Entry<V> {
+	readonly key: K;
+	readonly entry: Entry<V>;
+}
+
+type PropsTypeInternal<T extends Dict> = { [P in string & keyof T]: EntryImpl<P, T[P]> };
+
+class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 	readonly #key: K;
-	#value: V;
-	#dirty: boolean;
-
+	readonly #listeners: Subscriber<Entry<V>>[];
+	#original: V;
+	#current: V;
+	#changed: boolean;
+	
 	get key() {
 		return this.#key;
 	}
 
+	get changed() {
+		return this.#changed;
+	}
+
 	get value() {
-		return this.#value;
+		return this.#current;
 	}
 
-	get isDirty() {
-		return this.#dirty;
+	get entry(): Entry<V> {
+		const value = this.#current;
+		const changed = this.#changed;
+		return { value, changed };
 	}
-
 
 	constructor(key: K, value: V) {
-		this.#listeners = [];
 		this.#key = key;
-		this.#value = value;
-		this.#dirty = false;
+		this.#original = value;
+		this.#current = value;
+		this.#changed = false;
+		this.#listeners = [];
 	}
 
-	set(value: V): void {
-		if (this.#value !== value) {
-			console.log("change", this.key, this.value, value);
-			this.#value = value;
-			this.#dirty = true;
-			this.#listeners.forEach(v => v(value));
+	__setOriginal() {
+		this.#original = this.#current;
+		this.#changed = false;
+		this.#listeners.forEach(fn => fn(this.entry));
+	}
+
+	set(entry: Entry<V>): void {
+		const value = entry.value;
+		const changed = value !== this.#original;
+		if (changed !== this.#changed || value !== this.#current) {
+			this.#changed = changed;
+			this.#current = value;
+			this.#listeners.forEach(fn => fn({ value, changed }));
 		}
 	}
-	
-	update(updater: Updater<V>): void {
-		const v = updater(this.#value);
+
+	update(updater: Updater<Entry<V>>): void {
+		const v = updater(this.entry);
 		this.set(v);
 	}
 
-	#unsubscribe(fn: Subscriber<V>) {
+	#unsubscribe(fn: Subscriber<Entry<V>>) {
 		const i = this.#listeners.indexOf(fn);
 		if (i >= 0)
 			this.#listeners.splice(i, 1);
 	}
 
-	subscribe(run: Subscriber<V>, invalidate?: ((value?: V | undefined) => void) | undefined): Unsubscriber {
-		run(this.#value);
+	subscribe(run: Subscriber<Entry<V>>, invalidate?: Invalidator<Entry<V>>): Unsubscriber {
+		run(this.entry);
 		const fn = invalidate ?? run;
 		this.#listeners.push(fn);
 		return this.#unsubscribe.bind(this, fn);
 	}
 }
 
-export type EditorValues<T extends object> = { [P in keyof T]: EntryValue<P, T[P]> };
-export interface EntryValue<K, V> extends Writable<V> {
-	readonly key: K;
-	readonly value: V;
-	readonly isDirty: boolean;
-}
+export class EditorModel<T extends Dict = Dict> {
+	readonly #props: PropsTypeInternal<T>;
 
-export class EditorModel<T extends Record<string, any> = Record<string, any>> implements Iterable<EntryValue<keyof T, T[string]>> {
-	readonly #slots: EditorValues<T>;
-
-	get values() {
-		return this.#slots;
+	get props(): PropsType<T> {
+		return this.#props;
 	}
 
-	constructor(value: T) {
-		const slots: any = {};
-		for (const [key, v] of Object.entries(value))
-			slots[key] = new EditorSlot(key, v);
+	constructor(values: T) {
+		const props: any = {};
 
-		this.#slots = slots;
-	}
-
-	update(values: T) {
 		for (const key in values) {
-			const v = values[key];
-			this.#slots[key].set(v);
+			const value = values[key];
+			props[key] = new EntryImpl(key, value);
 		}
+
+		this.#props = props;
 	}
 
-	entries(): EntryValue<keyof T, T[string]>[] {
-		return Object.values(this.#slots);
-	}
-
-	[Symbol.iterator]() {
-		return this.entries()[Symbol.iterator]();
+	commit() {
+		const props = this.#props;
+		for (const key in props)
+			props[key].__setOriginal();
 	}
 }
 
