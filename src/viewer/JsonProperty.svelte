@@ -152,7 +152,7 @@
 			}
 		}
 
-		&.collapsed {
+		&:not(.expanded) {
 			> .expander {
 				@include img-btn;
 
@@ -232,8 +232,9 @@
 {#if prop}
 <div
 	hidden={$hidden}
-	tabindex="0"
-	class="json-prop for-{prop.value.type} for-{prop.value.subtype} {$expanded ? 'expanded' : 'collapsed'}{$selected ? " selected" : ""}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}">
+	class="json-prop for-{prop.value.type} for-{prop.value.subtype}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}"
+	class:expanded={$expanded}
+	class:selected={$selected}>
 	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop} use:renderKey={prop.key}/>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
