@@ -1,6 +1,6 @@
 <script lang="ts">
 	import settings from "../settings";
-	import EditorModel from "./editor";
+	import EditorModel, { type EntryValue } from "./editor";
 
 	enum LimitUnit {
 		B,
@@ -47,12 +47,35 @@
 		return { enabled, limitEnabled, limitUnit, limitValue };
 	}
 
-	function save() {
+	async function load() {
+		const v = await settings.get();
+		const settingValues = convertFrom(v);
+		editor.update(settingValues);
+	}
+
+	function addDirty<K extends keyof (SettingValues | settings.Settings)>(bag: settings.SaveType, entry: EntryValue<K, SettingValues[K]>) {
+		if (entry.isDirty)
+			bag[entry.key] = entry.value;
+	}
+
+	async function save() {
+		const bag: settings.SaveType = {};
+		if (limitValue.isDirty || limitUnit.isDirty) {
+			const limitSize = getByteSize(limitValue.value, limitUnit.value);
+			bag.limitSize = limitSize;
+		}
+
+		addDirty(bag, limitEnabled);
+		addDirty(bag, enabled);
+
+		await settings.setValues(bag);
 	}
 
 	const def = convertFrom(settings.getDefault());
 	const editor = new EditorModel(def);
 	const { enabled, limitEnabled, limitUnit, limitValue } = editor.values;
+
+	load();
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
@@ -80,12 +103,11 @@
 	</div>
 	<div id="grp-limit-value" class="group">
 		<span class="lbl border">Size limit</span>
-		<input class="control border hv" type="number" inputmode="numeric" bind:value={$limitValue}/>
+		<input class="control border hv" type="number" step="any" inputmode="numeric" bind:value={$limitValue}/>
 		<select class="control border hv" bind:value={$limitUnit}>
-			<option value="0">B</option>
-			<option value="1">KB</option>
-			<option value="2">MB</option>
-			<option value="3">GB</option>
+			{#each units as unit}
+				<option value={unit}>{LimitUnit[unit]}</option>
+			{/each}
 		</select>
 	</div>
 	<button class="btn border control lt" on:click={save}>Save</button>

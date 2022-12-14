@@ -54,8 +54,8 @@ class EditorSlot<K extends string, V> implements Writable<V>, EntryValue<K, V> {
 	}
 }
 
-export type EditorValues<T extends object> = { [P in keyof T]: Writable<T[P]> };
-export interface EntryValue<K, V> {
+export type EditorValues<T extends object> = { [P in keyof T]: EntryValue<P, T[P]> };
+export interface EntryValue<K, V> extends Writable<V> {
 	readonly key: K;
 	readonly value: V;
 	readonly isDirty: boolean;
