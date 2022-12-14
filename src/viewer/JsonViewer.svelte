@@ -4,8 +4,48 @@
 	import JsonProperty from "./JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
     import { onMount } from "svelte";
+	import settings from "../settings";
+    import type { JsonToken } from "./json";
 
 	export let model: ViewerModel;
+
+	const getter = settings.get().then((v) => {
+		indentChar = v.indentChar;
+		indentCount = v.indentCount;
+		indent = indentChar.repeat(indentCount);
+	});
+
+	settings.addListener(({ changes }) => {
+		let change = false;
+		if (changes.indentChar) {
+			change = true;
+			indentChar = changes.indentChar.newValue;
+		}
+
+		if (changes.indentCount) {
+			change = true;
+			indentCount = changes.indentCount.newValue;
+		}
+
+		if (change)
+			indent = indentChar.repeat(indentCount);
+	})
+
+	let indentChar = "\t";
+	let indentCount = 1;
+	let indent = indentChar;
+
+	async function copy(token: JsonToken) {
+		let text: string;
+		if (token.is("value")) {
+			text = String(token.value);
+		} else {
+			await getter;
+			text = JSON.stringify(token, undefined, indent);
+		}
+		
+		await navigator.clipboard.writeText(text);
+	}
 
 	function onKeyDown(e: KeyboardEvent) {
 		switch (e.key) {
@@ -27,8 +67,7 @@
 					const value = model.selected?.value;
 					if (value != null) {
 						e.preventDefault();
-						const text = value.is("value") ? String(value.value) : JSON.stringify(value, undefined, "\t");
-						navigator.clipboard.writeText(text);
+						copy(value);
 					}
 				}
 				break;

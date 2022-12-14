@@ -16,6 +16,11 @@
 		LimitUnit.GB
 	]
 
+	const indents = [
+		["Tab", "\t"],
+		["Space", " "]
+	]
+
 	function getByteSize(limit: number, unit: LimitUnit): number {
 		return limit * (1 << (10 * unit));
 	}
@@ -39,12 +44,14 @@
 		limitValue: number;
 		limitUnit: LimitUnit;
 		limitEnabled: boolean;
+		indentCount: number;
+		indentChar: string;
 	}
 
 	function convertFrom(settings: settings.Settings): SettingValues {
 		const [limitValue, limitUnit] = getLimitUnit(settings.limitSize);
-		const { enabled, limitEnabled } = settings;
-		return { enabled, limitEnabled, limitUnit, limitValue };
+		const { enabled, limitEnabled, indentCount, indentChar } = settings;
+		return { enabled, limitEnabled, limitUnit, limitValue, indentCount, indentChar };
 	}
 
 	async function load() {
@@ -67,13 +74,15 @@
 
 		addDirty(bag, limitEnabled);
 		addDirty(bag, enabled);
+		addDirty(bag, indentChar);
+		addDirty(bag, indentCount);
 
 		await settings.setValues(bag);
 	}
 
 	const def = convertFrom(settings.getDefault());
 	const editor = new EditorModel(def);
-	const { enabled, limitEnabled, limitUnit, limitValue } = editor.values;
+	const { enabled, limitEnabled, limitUnit, limitValue, indentChar, indentCount } = editor.values;
 
 	load();
 </script>
@@ -95,18 +104,27 @@
 			Enabled
 		</label>
 	</div>
-	<div id="grp-limit-enabled" class="group">
+	<div class="group">
 		<label class="check border control">
 			<input class="control border check" type="checkbox" bind:checked={$limitEnabled}/>
 			JSON Size Limit
 		</label>
 	</div>
-	<div id="grp-limit-value" class="group">
+	<div class="group">
 		<span class="lbl border">Size limit</span>
-		<input class="control border hv" type="number" step="any" inputmode="numeric" bind:value={$limitValue}/>
-		<select class="control border hv" bind:value={$limitUnit}>
+		<input class="control" type="number" step="any" inputmode="numeric" bind:value={$limitValue}/>
+		<select class="control" bind:value={$limitUnit}>
 			{#each units as unit}
 				<option value={unit}>{LimitUnit[unit]}</option>
+			{/each}
+		</select>
+	</div>
+	<div class="group">
+		<span class="lbl">Indent</span>
+		<input class="control" type="number" inputmode="numeric" bind:value={$indentCount}/>
+		<select class="control" bind:value={$indentChar}>
+			{#each indents as [key, value]}
+				<option value={value}>{key}</option>
 			{/each}
 		</select>
 	</div>

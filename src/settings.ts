@@ -43,8 +43,8 @@ export namespace settings {
 		makeSetting("enabled", Boolean, true),
 		makeSetting("limitEnabled", Boolean, true),
 		makeSetting("limitSize", Number, 1 << 20),
-		makeSetting("indentType", Number, 1),
-		makeSetting("indentTabs", Boolean, true)
+		makeSetting("indentCount", Number, 1),
+		makeSetting("indentChar", String, "\t")
 	]
 
 	const map = list.reduce((map, v) => map.set(v.key, v), new Map<string, settings.Setting>());
@@ -65,8 +65,8 @@ export namespace settings {
 		enabled: boolean;
 		limitEnabled: boolean;
 		limitSize: number;
-		indentType: number;
-		indentTabs: boolean;
+		indentCount: number;
+		indentChar: string;
 	}
 
 	export function getDefault(): SettingsBag {
