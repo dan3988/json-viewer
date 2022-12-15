@@ -39,18 +39,21 @@ export namespace settings {
 		return { key, type, synced, defaultValue } as any;
 	}
 
+	function Integer(v: any) {
+		return typeof v === "number" ? Math.trunc(v) : parseInt(v);
+	}
+
 	const list = [
 		makeSetting("enabled", Boolean, true),
 		makeSetting("limitEnabled", Boolean, true),
-		makeSetting("limitSize", Number, 1 << 20),
-		makeSetting("indentCount", Number, 1),
+		makeSetting("limitSize", Integer, 1 << 20),
+		makeSetting("indentCount", Integer, 1),
 		makeSetting("indentChar", String, "\t")
 	]
 
 	const map = list.reduce((map, v) => map.set(v.key, v), new Map<string, settings.Setting>());
 
 	export interface SettingType<T = unknown> {
-		readonly name: string;
 		(value: any): T;
 	}
 	
