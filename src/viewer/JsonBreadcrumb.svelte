@@ -6,7 +6,7 @@
 
 	let pathText = "";
 	let path: readonly (number | string)[] = [];
-	let isEditing = false;
+	let editing = false;
 
 
 	const selected = model.bag.readables.selected;
@@ -28,12 +28,12 @@
 
 	function focusIn(this: HTMLInputElement) {
 		this.setSelectionRange(0, this.value.length);
-		isEditing = true;
+		editing = true;
 	}
 
 	function focusOut(this: HTMLInputElement) {
 		this.value = pathText;
-		isEditing = false;
+		editing = false;
 	}
 
 	function onKeyDown(this: HTMLInputElement, e: KeyboardEvent) {
@@ -120,7 +120,7 @@
 	}
 </style>
 {#if model}
-<div class="root{isEditing ? " editing" : ""}">
+<div class="root" class:editing>
 	<input class="editor" on:focusin={focusIn} on:focusout={focusOut} on:keydown={onKeyDown} value={pathText}/>
 	<ul class="list">
 		{#if path}
