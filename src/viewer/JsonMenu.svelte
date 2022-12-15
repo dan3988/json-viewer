@@ -82,12 +82,11 @@
 	@use "../core.scss" as *;
 
 	.btn-clr {
-		@include img-btn;
+		@include img-btn-url("clear.svg");
 		@include hv-b4;
 
 		&:before {
 			background-color: var(--col-border);
-			--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/clear.svg");
 		}
 	}
 

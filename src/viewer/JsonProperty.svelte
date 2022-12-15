@@ -154,7 +154,7 @@
 
 		&:not(.expanded) {
 			> .expander {
-				@include img-btn;
+				@include img-btn-url("arrow.svg");
 
 				&:before {
 					inset: 20%;
@@ -163,7 +163,6 @@
 
 			> .expander::before {
 				rotate: -90deg;
-				--mask-image: url("chrome-extension://__MSG_@@extension_id__/res/arrow.svg");
 			}
 
 			> :global(.json-container) {
