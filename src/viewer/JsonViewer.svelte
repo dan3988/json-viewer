@@ -226,7 +226,7 @@
 	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
 		<JsonProperty model={model} prop={model.root} indent={0}/>
 	</div>
-	<div class="gripper" draggable="true" on:mousedown={onMouseDown}/>
+	<div class="gripper" on:mousedown={onMouseDown}/>
 	<div class="w-path">
 		<JsonBreadcrumb model={model}/>
 	</div>
