@@ -96,7 +96,7 @@
 	@use "../core.scss" as *;
 	@import "../globals.scss";
 
-	.dirty {
+	.dirty:not(:invalid) {
 		background-color: #553;
 	}
 
