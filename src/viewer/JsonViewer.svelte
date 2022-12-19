@@ -223,7 +223,7 @@
 </style>
 
 <div class="root">
-	<div class="w-prop" tabindex="1" bind:this={prop} on:keydown={onKeyDown}>
+	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
 		<JsonProperty model={model} prop={model.root} indent={0}/>
 	</div>
 	<div class="gripper" draggable="true" on:mousedown={onMouseDown}/>
