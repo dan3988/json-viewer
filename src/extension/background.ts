@@ -2,17 +2,44 @@ import settings from "../settings.js";
 
 console.log('launch');
 
+const mf = chrome.runtime.getManifest();
 const bag = settings.getDefault();
 const filter: chrome.webRequest.RequestFilter = {
 	urls: [ "<all_urls>" ],
 	types: [ "main_frame", "sub_frame" ]
+};
+
+const gsIcons: Record<number, string> = { ...mf.action.default_icon };
+for (const key in gsIcons)
+	gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
+
+async function onEnabledChanged(enabled: boolean) {
+	if (enabled) {
+		await chrome.action.setIcon({ path: mf.action.default_icon });
+		await chrome.action.setTitle({ title: mf.action.default_title });
+	} else {
+		await chrome.action.setIcon({ path: gsIcons });
+		await chrome.action.setTitle({ title: mf.action.default_title + " (Disabled)" });
+	}
 }
 
-settings.get().then(v => Object.assign(bag, v));
-settings.addListener(det => {
-	for (let [key, change] of Object.entries(det.changes))
-		(bag as any)[key] = change.newValue;
-});
+async function loadSettings() {
+	const v = await settings.get();
+	Object.assign(bag, v);
+	if (!v.enabled)
+		await onEnabledChanged(false);
+
+	settings.addListener(async det => {
+		for (let [key, change] of Object.entries(det.changes))
+			(bag as any)[key] = change.newValue;
+
+		const enabled = det.changes.enabled;
+		if (enabled !== undefined)
+			await onEnabledChanged(enabled.newValue);
+	});
+}
+
+loadSettings();
 
 async function showSizeLimitOverride(tabId: number, frameIds: undefined | number[]): Promise<void> {
 	const target = { tabId, frameIds }
