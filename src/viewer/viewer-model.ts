@@ -81,9 +81,7 @@ export class ViewerModel {
 		this.#root.filter(text, flags, append);
 	}
 
-	select(path: string | (number | string)[], scrollTo?: boolean) {
-		scrollTo ??= false;
-
+	resolve(path: string | (number | string)[]): JsonProperty | undefined {
 		if (typeof path === "string")
 			path = path.split("/");
 
@@ -92,39 +90,37 @@ export class ViewerModel {
 		if (path[0] !== "$") {
 			const selected = this.#bag.getValue("selected");
 			if (selected == null)
-				return false;
+				return;
 
 			baseProp = selected;
 		} else if (path.length === 1) {
-			const root = this.#root;
-			this.setSelected(root, scrollTo, scrollTo);
-			return true;
+			return this.#root;
 		} else {
 			i++;
 			baseProp = this.#root;
 		}
+	
+		for (let curr = baseProp; curr.value instanceof JsonContainer; ) {
+			const key = path[i];
+			const child = curr.value.getProperty(key);
+			if (child == null)
+				break;
 
+			if (++i === path.length)
+				return child;
 
-		let base: JsonToken = baseProp.value;
-		if (!(base instanceof JsonContainer))
+			curr = child;
+		}
+	}
+
+	select(path: string | (number | string)[], scrollTo?: boolean) {
+		const prop = this.resolve(path);
+		if (prop == null)
 			return false;
 
-		while (true) {
-			const key = path[i];
-			const child = base.getProperty(key);
-			if (child == null)
-				return false;
-
-			if (++i === path.length) {
-				this.setSelected(child, scrollTo, scrollTo);
-				return true;
-			}
-
-			if (!(child.value instanceof JsonContainer))
-				return false;
-			
-			base = child.value;
-		}
+		scrollTo ??= false;
+		this.setSelected(prop, scrollTo, scrollTo);
+		return true;
 	}
 
 	#onSelected(selected: JsonProperty, expand: boolean, scrollTo: boolean) {
