@@ -1,11 +1,13 @@
 <script lang="ts">
-	export let path: undefined | readonly (number | string)[] = undefined;
+	type PartType = undefined | readonly (number | string)[];
 
-	function updatePath(value: undefined | readonly (number | string)[]) {
+	export let path: PartType = undefined;
+
+	function updatePath(value: PartType) {
 		path = value;
 	}
 
-	function render(target: HTMLElement, path: undefined | readonly (number | string)[]) {
+	function render(target: HTMLElement, path: PartType) {
 		function validateSelection(s: null | Selection, element: HTMLElement): s is Selection {
 			const selection = window.getSelection();
 			if (selection != null)
@@ -81,7 +83,7 @@
 
 		function onInput(this: HTMLElement) {}
 
-		function update(path: undefined | readonly (number | string)[]) {
+		function update(path: PartType) {
 			target.innerHTML = "";
 
 			path?.forEach(v => {
@@ -89,6 +91,8 @@
 				target.appendChild(e);
 			});
 		}
+
+		update(path);
 
 		target.addEventListener("keydown", onKeyDown);
 		target.addEventListener("input", onInput);
@@ -101,9 +105,6 @@
 		};
 	}
 </script>
-
-<ul class="list" contenteditable="true" use:render={path} />
-
 <style lang="scss">
 	@use "../core.scss" as *;
 
@@ -134,3 +135,5 @@
 		}
 	}
 </style>
+
+<ul class="list" contenteditable="true" use:render={path} />
