@@ -127,21 +127,9 @@
 	let prop: HTMLElement;
 	let menu: HTMLElement;
 
-	function safeSubscribe<T>(v: Readable<T>, s: Subscriber<T>) {
-		onDestroy(v.subscribe(s));
-	}
-
-	const selected  = model.bag.readables.selected;
-	const path = writable<undefined | readonly (string | number)[]>(selected.value?.path);
-
-	safeSubscribe(selected, v => $path = v?.path);
-	safeSubscribe(path, v => {
-		if (v == null) {
-			model.setSelected(null);
-		} else if (selected.value?.path !== v && !model.select(v)) {
-			$path = selected.value?.path;
-		}
-	});
+	// function safeSubscribe<T>(v: Readable<T>, s: Subscriber<T>) {
+	// 	onDestroy(v.subscribe(s));
+	// }
 
 	onMount(() => prop.focus());
 
@@ -245,7 +233,7 @@
 	</div>
 	<div class="gripper" on:mousedown={onMouseDown}/>
 	<div class="w-path">
-		<JsonPathEditor bind:path={$path}/>
+		<JsonPathEditor model={model}/>
 	</div>
 	<div class="w-menu" bind:this={menu}>
 		<JsonMenu model={model}/>

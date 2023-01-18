@@ -1,34 +1,33 @@
 <script lang="ts">
-	type PartType = undefined | readonly (number | string)[];
+    import type { JsonProperty } from "./json";
+    import type { ViewerModel } from "./viewer-model";
 
-	export let path: PartType = undefined;
+	export let model: ViewerModel;
 
-	function updatePath(value: PartType) {
-		path = value;
+	$: selected = model.bag.readables.selected;
+
+	function validateSelection(s: null | Selection, element: HTMLElement): s is Selection {
+		const selection = window.getSelection();
+		if (selection != null)
+			for (let node = selection.focusNode; node != null; node = node.parentNode)
+				if (node == element)
+					return true;
+
+		return false;
 	}
 
-	function render(target: HTMLElement, path: PartType) {
-		function validateSelection(s: null | Selection, element: HTMLElement): s is Selection {
-			const selection = window.getSelection();
-			if (selection != null)
-				for (let node = selection.focusNode; node != null; node = node.parentNode)
-					if (node == element)
-						return true;
+	function createPartNode(part: string | number) {
+		const e = document.createElement("span");
+		e.innerText = String(part);
+		e.contentEditable = "true";
+		const li = document.createElement("li");
 
-			return false;
-		}
+		li.contentEditable = "false";
+		li.appendChild(e);
+		return li;
+	}
 
-		function createPartNode(part: string | number) {
-			const e = document.createElement("span");
-			e.innerText = String(part);
-			e.contentEditable = "true";
-			const li = document.createElement("li");
-
-			li.contentEditable = "false";
-			li.appendChild(e);
-			return li;
-		}
-
+	function render(target: HTMLElement, selected: null | JsonProperty) {
 		function onKeyDown(this: HTMLElement, evt: KeyboardEvent) {
 			switch (evt.code) {
 				default:
@@ -38,7 +37,8 @@
 					for (let child of this.childNodes)
 						parts.push(child.textContent!);
 						
-					updatePath(parts);
+					
+					model.select(parts);
 					break;
 				}
 				case "Slash": {
@@ -83,16 +83,16 @@
 
 		function onInput(this: HTMLElement) {}
 
-		function update(path: PartType) {
+		function update(selected: null | JsonProperty) {
 			target.innerHTML = "";
 
-			path?.forEach(v => {
+			selected?.path.forEach(v => {
 				const e = createPartNode(v);
 				target.appendChild(e);
 			});
 		}
 
-		update(path);
+		update(selected);
 
 		target.addEventListener("keydown", onKeyDown);
 		target.addEventListener("input", onInput);
@@ -136,4 +136,4 @@
 	}
 </style>
 
-<ul class="list" contenteditable="true" use:render={path} />
+<ul class="list" contenteditable="true" use:render={$selected} />
