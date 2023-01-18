@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { ViewerModel } from "./viewer-model";
-	import JsonBreadcrumb from "./JsonBreadcrumb.svelte";
 	import JsonProperty from "./JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
 	import settings from "../settings";
     import type { JsonToken } from "./json";
+    import JsonPathEditor from "./JsonPathEditor.svelte";
+    import { writable, type Readable, type Subscriber } from "svelte/store";
 
 	export let model: ViewerModel;
 
@@ -126,6 +127,22 @@
 	let prop: HTMLElement;
 	let menu: HTMLElement;
 
+	function safeSubscribe<T>(v: Readable<T>, s: Subscriber<T>) {
+		onDestroy(v.subscribe(s));
+	}
+
+	const selected  = model.bag.readables.selected;
+	const path = writable<undefined | readonly (string | number)[]>(selected.value?.path);
+
+	safeSubscribe(selected, v => $path = v?.path);
+	safeSubscribe(path, v => {
+		if (v == null) {
+			model.setSelected(null);
+		} else if (selected.value?.path !== v && !model.select(v)) {
+			$path = selected.value?.path;
+		}
+	});
+
 	onMount(() => prop.focus());
 
 	let dragStart: undefined | { x: number, w: number };
@@ -228,7 +245,7 @@
 	</div>
 	<div class="gripper" on:mousedown={onMouseDown}/>
 	<div class="w-path">
-		<JsonBreadcrumb model={model}/>
+		<JsonPathEditor bind:path={$path}/>
 	</div>
 	<div class="w-menu" bind:this={menu}>
 		<JsonMenu model={model}/>

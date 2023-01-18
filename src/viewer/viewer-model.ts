@@ -81,7 +81,7 @@ export class ViewerModel {
 		this.#root.filter(text, flags, append);
 	}
 
-	resolve(path: string | (number | string)[]): JsonProperty | undefined {
+	resolve(path: string | readonly (number | string)[]): JsonProperty | undefined {
 		if (typeof path === "string")
 			path = path.split("/");
 
@@ -113,7 +113,7 @@ export class ViewerModel {
 		}
 	}
 
-	select(path: string | (number | string)[], scrollTo?: boolean) {
+	select(path: string | readonly (number | string)[], scrollTo?: boolean) {
 		const prop = this.resolve(path);
 		if (prop == null)
 			return false;
@@ -132,7 +132,9 @@ export class ViewerModel {
 			this.execute("scrollTo", selected);
 	}
 
-	setSelected(selected: null | JsonProperty, expand: boolean, scrollTo: boolean) {
+	setSelected(selected: null): void;
+	setSelected(selected: null | JsonProperty, expand: boolean, scrollTo: boolean): void
+	setSelected(selected: null | JsonProperty, expand?: boolean, scrollTo?: boolean) {
 		const old = this.#bag.getValue("selected");
 		if (old !== selected) {
 			if (old)
@@ -140,12 +142,12 @@ export class ViewerModel {
 
 			if (selected) {
 				selected.selected = true;
-				this.#onSelected(selected, expand, scrollTo);
+				this.#onSelected(selected, expand ?? false, scrollTo ?? false);
 			}
 
 			this.#bag.setValue("selected", selected);
 		} else if (old) {
-			this.#onSelected(old, expand, scrollTo);
+			this.#onSelected(old, expand ?? false, scrollTo ?? false);
 		}
 	}
 }
