@@ -5,7 +5,7 @@ export default {
 	preprocess: [
 		sveltePreprocess({
 			typescript: {
-				tsconfigFileL: "./src/tsconfig.svelte.json"
+				tsconfigFile: "./src/tsconfig.svelte.json"
 			}
 		}),
 		sass()
