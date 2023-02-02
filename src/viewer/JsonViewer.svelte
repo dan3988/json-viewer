@@ -6,7 +6,6 @@
 	import settings from "../settings";
     import type { JsonToken } from "./json";
     import JsonPathEditor from "./JsonPathEditor.svelte";
-    import { writable, type Readable, type Subscriber } from "svelte/store";
 
 	export let model: ViewerModel;
 
