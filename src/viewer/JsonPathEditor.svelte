@@ -30,12 +30,13 @@
 		const e = document.createElement("span");
 		e.innerText = str;
 		e.classList.add(dollar.className, "content");
-		e.contentEditable = "true";
 
-		const slash = document.createTextNode("/");
+		const slash = document.createElement("span");
+		slash.innerText = "/";
+		slash.className = dollar.className;
+
 		const li = document.createElement("li");
 
-		li.contentEditable = "false";
 		li.className = dollar.className;
 		li.appendChild(slash);
 		li.appendChild(e);
@@ -46,7 +47,7 @@
 		const list: string[] = [];
 		let parent = e.parentElement;
 		while ((parent = parent?.previousElementSibling as any) != null) {
-			const span = parent.querySelector("span")!;
+			const span = parent.querySelector("span.content") as HTMLSpanElement;
 			list.unshift(span.innerText);
 		}
 
@@ -92,7 +93,7 @@
 			return false;
 		} else {
 			const el = this._target;
-			const span = el.querySelector("span")!;
+			const span = el.querySelector("span.content") as HTMLSpanElement;
 			span.innerText = selected;
 			const range = document.createRange();
 			range.selectNode(span);
@@ -145,7 +146,7 @@
 		type KeyLookup = { [P in KeyCode]?: KeyHandler };
 
 		const ctrlHandlers: Record<string, KeyHandler> = {
-			KeyA(selection, range, li, span) {
+			KeyA(selection, range) {
 				range = document.createRange();
 				range.selectNode(this);
 				selection.removeAllRanges();
@@ -189,7 +190,7 @@
 				if (start && end || li.nextSibling == null) {
 					span.innerText = start;
 					const sibling = createPartNode(end);
-					const content = sibling.firstElementChild as HTMLSpanElement;
+					const content = sibling.lastElementChild as HTMLSpanElement;
 					target.insertBefore(sibling, li.nextSibling);
 					//setTimeout(() => range.setStart(sibling.firstChild!, 0), 10);
 					
@@ -213,10 +214,6 @@
 		} satisfies KeyLookup;
 
 		function onKeyDown(this: HTMLElement, evt: KeyboardEvent) {
-			const handler = (evt.ctrlKey ? ctrlHandlers : handlers)[evt.code];
-			if (handler == null)
-				return;
-
 			const selection = getSelectionFor(this);
 			if (selection == null)
 				return evt.preventDefault();
@@ -227,7 +224,7 @@
 
 			let span: HTMLSpanElement;
 			for (let e: Node = range.commonAncestorContainer; ;) {
-				if (e instanceof HTMLSpanElement && e.classList.contains(dollar.className) && e.classList.contains("content")) {
+				if (e instanceof HTMLSpanElement && e.classList.contains(dollar.className)) {
 					span = e;
 					break;
 				}
@@ -236,18 +233,34 @@
 					return evt.preventDefault();
 			}
 
-			const result = handler.call(this, selection, range, span.parentElement as HTMLLIElement, span);
-			if (!result)
+			if (span.classList.contains("content")) {
+				const handler = (evt.ctrlKey ? ctrlHandlers : handlers)[evt.code];
+				const cancel = handler && !handler.call(this, selection, range, span.parentElement as HTMLLIElement, span);
+				if (cancel)
+					evt.preventDefault();
+			} else if (evt.key.length === 1 || evt.key === "Delete" || evt.key === "Backspace") {
 				evt.preventDefault();
+			}
+
 		}
 
 		function onInput(this: HTMLElement, evt: InputEventHelper) {
 			console.debug(evt.inputType);
 
-			const { target, inputType } = evt;
+			const selection = getSelectionFor(this);
+			if (selection == null)
+				return;
+
+			let range = selection.getRangeAt(0);
+			let e: null | Node = range.commonAncestorContainer;
+			while (!(e instanceof HTMLElement))
+				if ((e = e.parentElement) == null)
+					return;
+
+			const { inputType } = evt;
 			switch (inputType) {
 				case "insertText": 
-					showAutocomplete(target);
+					showAutocomplete(e);
 					break;
 			}
 		}
@@ -275,6 +288,9 @@
 			update,
 			destroy() {
 				target.innerHTML = "";
+				target.appendChild(dollar);
+				target.removeEventListener("keydown", onKeyDown);
+				target.removeEventListener("input", onInput);
 			},
 		};
 	}
