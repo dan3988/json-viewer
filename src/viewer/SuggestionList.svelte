@@ -54,7 +54,7 @@
 	}
 </style>
 <template>
-	<ul class="list" bind:this={list}>
+	<ul class="list" bind:this={list} contenteditable="false">
 		{#each suggestions as text, i}
 			<li class:selected={i == index}>{text}</li>
 		{/each}

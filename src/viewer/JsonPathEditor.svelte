@@ -8,7 +8,7 @@
 
 	interface InputEventHelper extends InputEvent {
 		target: HTMLElement;
-		inputType: "insertText";
+		inputType: "insertText" | "deleteContentBackward" | "deleteContentForward" | "deleteWordBackward" | "deleteWordForward" | "historyUndo" | "historyRedo";
 	}
 
 	let dollar: HTMLLIElement;
@@ -41,17 +41,6 @@
 		li.appendChild(slash);
 		li.appendChild(e);
 		return li;
-	}
-
-	function getPath(e: HTMLSpanElement) {
-		const list: string[] = [];
-		let parent = e.parentElement;
-		while ((parent = parent?.previousElementSibling as any) != null) {
-			const span = parent.querySelector("span.content") as HTMLSpanElement;
-			list.unshift(span.innerText);
-		}
-
-		return list;
 	}
 
 	interface AutocompleteHelper {
@@ -96,7 +85,7 @@
 			const span = el.querySelector("span.content") as HTMLSpanElement;
 			span.innerText = selected;
 			const range = document.createRange();
-			range.selectNode(span);
+			range.selectNodeContents(span);
 			range.collapse(false);
 			const selection = getSelection()!;
 			selection.removeAllRanges();
@@ -108,6 +97,31 @@
 	function render(target: HTMLElement, selected: null | JsonProperty) {
 		let autocomplete: undefined | AutocompleteHelper = undefined;
 
+		function* getParts(end?: HTMLLIElement) {
+			const first = target.firstElementChild;	
+			if (first == null)
+				return;
+
+			for (let e = first.nextElementSibling; e != null && e != end; e = e.nextElementSibling) {
+				const span = e.querySelector("span.content");
+				if (span != null)
+					yield span.textContent!;
+			}
+		}
+
+		function tryResolve(end?: HTMLLIElement): null | JsonProperty {
+			let e = model.root;
+			for (let part of getParts(end)) {
+				const prop = e.value.getProperty(part);
+				if (prop == null)
+					return null;
+
+				e = prop;
+			}
+
+			return e;
+		}
+
 		function destroyAutocomplete() {
 			if (autocomplete) {
 				autocomplete.destroy();
@@ -115,10 +129,9 @@
 			}
 		}
 
-		function showAutocomplete(target: HTMLElement) {
+		function showAutocomplete(target: HTMLElement, end?: HTMLLIElement) {
 			const suggestions: string[] = [];
-			const path = getPath(target);
-			const prop = model.resolve(path);
+			const prop = tryResolve(end);
 			if (prop == null || !prop.value.is("container")) {
 				autocomplete?.destroy();
 				autocomplete = undefined;
@@ -136,7 +149,7 @@
 				for (const key of prop.value.keys())
 					suggestions.push(String(key));
 			}
-			
+
 			autocomplete?.destroy();
 			autocomplete = new AutocompleteHelper(target.parentElement!, suggestions);
 			return true;
@@ -155,17 +168,20 @@
 		} satisfies KeyLookup;
 
 		const handlers: Record<string, KeyHandler> = {
+			Backspace(selection, range, li, span) {
+				if (span.innerText !== "" && span.innerText !== "\n")
+					return false;
+
+				li.remove();
+			},
 			Enter() {
 				if (autocomplete != null) {
 					autocomplete.complete();
 					autocomplete = undefined;
 				} else {
-					let parts: string[] = [];
-					for (let child of this.childNodes)
-						parts.push(child.textContent!);
-
-					if (!model.select(parts, true))
-						update(selected)
+					const prop = tryResolve();
+					if (prop)
+						model.setSelected(prop, true, true);
 				}
 			},
 			ArrowUp() {
@@ -187,11 +203,12 @@
 
 				destroyAutocomplete();
 
-				if (start && end || li.nextSibling == null) {
+				const next = li.nextSibling;
+				if (start && end || next == null) {
 					span.innerText = start;
 					const sibling = createPartNode(end);
 					const content = sibling.lastElementChild as HTMLSpanElement;
-					target.insertBefore(sibling, li.nextSibling);
+					target.insertBefore(sibling, next);
 					//setTimeout(() => range.setStart(sibling.firstChild!, 0), 10);
 					
 					const newRange = document.createRange();
@@ -201,7 +218,7 @@
 					selection.addRange(newRange);
 
 					if (newRange.startOffset == 0)
-						showAutocomplete(content);
+						showAutocomplete(content, sibling);
 
 				} else if (start) {
 					if (span.innerText !== start)
