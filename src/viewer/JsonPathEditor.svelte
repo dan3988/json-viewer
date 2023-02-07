@@ -11,6 +11,9 @@
 		inputType: "insertText" | "deleteContentBackward" | "deleteContentForward" | "deleteWordBackward" | "deleteWordForward" | "historyUndo" | "historyRedo";
 	}
 
+	/** zero-width space */
+	const zws = "\u200B";
+
 	let dollar: HTMLLIElement;
 
 	const selected = model.bag.readables.selected;
@@ -25,11 +28,27 @@
 		return null;
 	}
 
-	function createPartNode(part: string | number) {
-		const str = String(part);
-		const e = document.createElement("span");
-		e.innerText = str;
-		e.classList.add(dollar.className, "content");
+	function getContent(content: Element) {
+		let text = content.textContent;
+		if (!text || text === "\n")
+			return "";
+
+		while (text.startsWith(zws))
+			text = text.substring(1);
+
+		while (text.endsWith(zws))
+			text = text.substring(0, text.length - 1);
+
+		return text;
+	}
+
+	function createPartNode(part: string | number, array?: false): HTMLLIElement
+	function createPartNode(part: string | number, array: true): [HTMLLIElement, HTMLSpanElement, Text];
+	function createPartNode(part: string | number, array?: boolean): any {
+		const node = document.createTextNode(String(part) || zws);
+		const span = document.createElement("span");
+		span.classList.add(dollar.className, "content");
+		span.appendChild(node);
 
 		const slash = document.createElement("span");
 		slash.innerText = "/";
@@ -39,8 +58,8 @@
 
 		li.className = dollar.className;
 		li.appendChild(slash);
-		li.appendChild(e);
-		return li;
+		li.appendChild(span);
+		return array ? [li, span, node] : li;
 	}
 
 	interface AutocompleteHelper {
@@ -105,7 +124,7 @@
 			for (let e = first.nextElementSibling; e != null && e != end; e = e.nextElementSibling) {
 				const span = e.querySelector("span.content");
 				if (span != null)
-					yield span.textContent!;
+					yield getContent(span);
 			}
 		}
 
@@ -138,7 +157,7 @@
 				return false;
 			}
 
-			const search = target.innerText.toLowerCase();
+			const search = getContent(target).toLowerCase();
 			if (search) {
 				for (const key of prop.value.keys()) {
 					const str = String(key);
@@ -169,8 +188,9 @@
 
 		const handlers: Record<string, KeyHandler> = {
 			Backspace(selection, range, li, span) {
-				if (span.innerText !== "" && span.innerText !== "\n")
-					return false;
+				const txt = getContent(span);
+				if (txt)
+					return true;
 
 				li.remove();
 			},
@@ -206,15 +226,14 @@
 				const next = li.nextSibling;
 				if (start && end || next == null) {
 					span.innerText = start;
-					const sibling = createPartNode(end);
-					const content = sibling.lastElementChild as HTMLSpanElement;
+					const [sibling, content] = createPartNode(end, true);
 					target.insertBefore(sibling, next);
 					//setTimeout(() => range.setStart(sibling.firstChild!, 0), 10);
 					
 					const newRange = document.createRange();
 					newRange.selectNodeContents(content);
 					newRange.collapse(true);
-					selection.removeRange(range);
+					selection.removeAllRanges();
 					selection.addRange(newRange);
 
 					if (newRange.startOffset == 0)
