@@ -28,27 +28,38 @@
 		return null;
 	}
 
+	function trimZws(node: Text) {
+		let data = node.data;
+		if (data.startsWith(zws)) {
+			node.data = data.substring(1);
+		} else if (data.endsWith(zws)) {
+			node.data = data.substring(0, data.length - 1);
+		}
+	}
+
 	function getContent(content: Element) {
 		let text = content.textContent;
-		if (!text || text === "\n")
-			return "";
+		return (!text || text === "\n" || text === zws) ? "" : text;
+	}
 
-		while (text.startsWith(zws))
-			text = text.substring(1);
-
-		while (text.endsWith(zws))
-			text = text.substring(0, text.length - 1);
-
-		return text;
+	function appendPartNode(parent: Node, part: string | number) {
+		const node = createPartNode(part);
+		parent.appendChild(node);
+		return node;
 	}
 
 	function createPartNode(part: string | number, array?: false): HTMLLIElement
 	function createPartNode(part: string | number, array: true): [HTMLLIElement, HTMLSpanElement, Text];
 	function createPartNode(part: string | number, array?: boolean): any {
-		const node = document.createTextNode(String(part) || zws);
+		const node = document.createTextNode(String(part));
 		const span = document.createElement("span");
 		span.classList.add(dollar.className, "content");
 		span.appendChild(node);
+
+		if (node.data === "") {
+			node.data = zws;
+			span.setAttribute("placeholder", "");
+		}
 
 		const slash = document.createElement("span");
 		slash.innerText = "/";
@@ -59,6 +70,7 @@
 		li.className = dollar.className;
 		li.appendChild(slash);
 		li.appendChild(span);
+
 		return array ? [li, span, node] : li;
 	}
 
@@ -82,6 +94,22 @@
 		});
 	}
 
+	function setCaret(node: Node, index: number, fromEnd?: boolean): Range
+	function setCaret(selection: Selection, node: Node, index: number, fromEnd?: boolean): Range
+	function setCaret(...args: any[]) {
+		let selection: Selection = args[0] instanceof Selection ? args.shift() : window.getSelection();
+		let [node, index, fromEnd]: [Node, number, boolean?] = args as any;
+		if (fromEnd)
+			index = node.textContent!.length - index;
+
+		const range = document.createRange();
+		range.setStart(node, index);
+		range.setEnd(node, index);
+		selection.removeAllRanges();
+		selection.addRange(range);
+		return range;
+	}
+
 	AutocompleteHelper.prototype.next = function next(this: AutocompleteHelperClass) {
 		this._list.next();
 	}
@@ -102,13 +130,11 @@
 		} else {
 			const el = this._target;
 			const span = el.querySelector("span.content") as HTMLSpanElement;
-			span.innerText = selected;
-			const range = document.createRange();
-			range.selectNodeContents(span);
-			range.collapse(false);
-			const selection = getSelection()!;
-			selection.removeAllRanges();
-			selection.addRange(range);
+			const text = document.createTextNode(selected);
+			span.removeAttribute("placeholder");
+			span.innerHTML = "";
+			span.appendChild(text);
+			setCaret(text, 0, true);
 			return true;
 		}
 	}
@@ -226,17 +252,12 @@
 				const next = li.nextSibling;
 				if (start && end || next == null) {
 					span.innerText = start;
-					const [sibling, content] = createPartNode(end, true);
+					const [sibling, content, text] = createPartNode(end, true);
 					target.insertBefore(sibling, next);
 					//setTimeout(() => range.setStart(sibling.firstChild!, 0), 10);
 					
-					const newRange = document.createRange();
-					newRange.selectNodeContents(content);
-					newRange.collapse(true);
-					selection.removeAllRanges();
-					selection.addRange(newRange);
-
-					if (newRange.startOffset == 0)
+					setCaret(selection, text, 0, true);
+					if (!end)
 						showAutocomplete(content, sibling);
 
 				} else if (start) {
@@ -293,10 +314,18 @@
 				if ((e = e.parentElement) == null)
 					return;
 
+			if (e.hasAttribute("placeholder")) {
+				const node = e.firstChild;
+				if (node instanceof Text) {
+					e.removeAttribute("placeholder");
+					trimZws(node);
+				}
+			}
+
 			const { inputType } = evt;
 			switch (inputType) {
 				case "insertText": 
-					showAutocomplete(e);
+					showAutocomplete(e, e.parentElement as any);
 					break;
 			}
 		}
@@ -308,10 +337,10 @@
 
 			if (selected) {
 				const { path } = selected;
-				for (var i = 1; i < path.length; i++) {
-					const e = createPartNode(path[i]);
-					target.appendChild(e);
-				}
+				for (var i = 1; i < path.length; i++)
+					appendPartNode(target, path[i]);
+			} else {
+				appendPartNode(target, "");
 			}
 		}
 
