@@ -94,22 +94,6 @@
 		});
 	}
 
-	function setCaret(node: Node, index: number, fromEnd?: boolean): Range
-	function setCaret(selection: Selection, node: Node, index: number, fromEnd?: boolean): Range
-	function setCaret(...args: any[]) {
-		let selection: Selection = args[0] instanceof Selection ? args.shift() : window.getSelection();
-		let [node, index, fromEnd]: [Node, number, boolean?] = args as any;
-		if (fromEnd)
-			index = node.textContent!.length - index;
-
-		const range = document.createRange();
-		range.setStart(node, index);
-		range.setEnd(node, index);
-		selection.removeAllRanges();
-		selection.addRange(range);
-		return range;
-	}
-
 	AutocompleteHelper.prototype.next = function next(this: AutocompleteHelperClass) {
 		this._list.next();
 	}
@@ -137,6 +121,48 @@
 			setCaret(text, 0, true);
 			return true;
 		}
+	}
+
+	const nodeIterateUp = ['firstChild', 'nextSibling'] as const;
+	const nodeIterateDown = ['lastChild', 'previousSibling'] as const;
+
+	function caretFromEnd(range: Range, node: Node, index: number, keys: typeof nodeIterateUp | typeof nodeIterateDown): boolean {
+		const [kStart, kMove] = keys;
+		for (let n = node[kStart]; n != null; n = n[kMove]) {
+			if (n instanceof Text) {
+				const data = n.data;
+				if ((index -= data.length) <= 0) {
+					index = -index;
+					range.setStart(n, index);
+					range.setEnd(n, index);
+					return true;
+				}
+			} else if (caretFromEnd(range, n, index, keys)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function setCaret(node: Node, index: number, fromEnd?: boolean): Range
+	function setCaret(selection: Selection, node: Node, index: number, fromEnd?: boolean): Range
+	function setCaret(...args: any[]) {
+		let selection: Selection = args[0] instanceof Selection ? args.shift() : window.getSelection();
+		let [node, index, fromEnd]: [Node, number, boolean?] = args as any;
+		if (fromEnd) {
+			let n = node.lastChild;
+			while (n != null) {
+				n = n.previousSibling;
+			}
+		}
+
+		const range = document.createRange();
+		const keys = fromEnd ? nodeIterateDown : nodeIterateUp;
+		caretFromEnd(range, node, index, keys);
+		selection.removeAllRanges();
+		selection.addRange(range);
+		return range;
 	}
 
 	function render(target: HTMLElement, selected: null | JsonProperty) {
@@ -218,7 +244,10 @@
 				if (txt)
 					return true;
 
+				const prev = li.previousElementSibling;
 				li.remove();
+				if (prev)
+					setCaret(prev, 0, true);
 			},
 			Enter() {
 				if (autocomplete != null) {
