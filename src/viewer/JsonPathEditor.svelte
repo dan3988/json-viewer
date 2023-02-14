@@ -69,13 +69,14 @@
 		next(): void;
 		prev(): void;
 
+		update(target: HTMLElement, suggestions: string[]): void;
 		complete(): boolean;
 		destroy(): void;
 	}
 
 	interface AutocompleteHelperClass extends AutocompleteHelper {
-		readonly _list: SuggestionList;
-		readonly _target: HTMLElement;
+		_list: SuggestionList;
+		_target: HTMLElement;
 	}
 
 	function AutocompleteHelper(target: HTMLElement, suggestions: readonly string[]) {
@@ -95,6 +96,17 @@
 
 	AutocompleteHelper.prototype.destroy = function destroy(this: AutocompleteHelperClass) {
 		this._list.$destroy();
+	}
+
+	AutocompleteHelper.prototype.update = function update(this: AutocompleteHelperClass, target: HTMLElement, suggestions: string[]) {
+		const props = { suggestions };
+		if (this._target == target) {
+			this._list.$set(props);
+		} else {
+			this._list.$destroy();
+			this._list = new SuggestionList({ target, props });
+			this._target = target;
+		}
 	}
 
 	AutocompleteHelper.prototype.complete = function complete(this: AutocompleteHelperClass) {
@@ -170,8 +182,12 @@
 					suggestions.push(String(key));
 			}
 
-			autocomplete?.destroy();
-			autocomplete = new AutocompleteHelper(target.parentElement!, suggestions);
+			if (autocomplete) {
+				autocomplete.update(target, suggestions)
+			} else {
+				autocomplete = new AutocompleteHelper(target, suggestions);
+			}
+			
 			return true;
 		}
 
