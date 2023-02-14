@@ -1,9 +1,9 @@
 <script lang="ts">
-	import SuggestionList from "./SuggestionList.svelte";
 	import type { JsonProperty } from "./json";
 	import type { ViewerModel } from "./viewer-model";
     import type { KeyCode } from "../keyboard";
 	import * as sh from "./selection-helper";
+    import AutocompleteHelper from "./autocomplete-helper";
 
 	export let model: ViewerModel;
 
@@ -63,67 +63,6 @@
 		li.appendChild(span);
 
 		return array ? [li, span, node] : li;
-	}
-
-	interface AutocompleteHelper {
-		next(): void;
-		prev(): void;
-
-		update(target: HTMLElement, suggestions: string[]): void;
-		complete(): boolean;
-		destroy(): void;
-	}
-
-	interface AutocompleteHelperClass extends AutocompleteHelper {
-		_list: SuggestionList;
-		_target: HTMLElement;
-	}
-
-	function AutocompleteHelper(target: HTMLElement, suggestions: readonly string[]) {
-		this._target = target;
-		this._list = new SuggestionList({
-			target, props: { suggestions }
-		});
-	}
-
-	AutocompleteHelper.prototype.next = function next(this: AutocompleteHelperClass) {
-		this._list.next();
-	}
-
-	AutocompleteHelper.prototype.prev = function prev(this: AutocompleteHelperClass) {
-		this._list.prev();
-	}
-
-	AutocompleteHelper.prototype.destroy = function destroy(this: AutocompleteHelperClass) {
-		this._list.$destroy();
-	}
-
-	AutocompleteHelper.prototype.update = function update(this: AutocompleteHelperClass, target: HTMLElement, suggestions: string[]) {
-		const props = { suggestions };
-		if (this._target == target) {
-			this._list.$set(props);
-		} else {
-			this._list.$destroy();
-			this._list = new SuggestionList({ target, props });
-			this._target = target;
-		}
-	}
-
-	AutocompleteHelper.prototype.complete = function complete(this: AutocompleteHelperClass) {
-		const selected = this._list.getSelected();
-		this.destroy();
-		if (selected == null) {
-			return false;
-		} else {
-			const el = this._target;
-			const span = el.querySelector("span.content") as HTMLSpanElement;
-			const text = document.createTextNode(selected);
-			span.removeAttribute("placeholder");
-			span.innerHTML = "";
-			span.appendChild(text);
-			sh.setCaret(text, 0, true);
-			return true;
-		}
 	}
 
 	function render(target: HTMLElement, selected: null | JsonProperty) {
