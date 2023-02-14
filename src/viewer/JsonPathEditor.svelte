@@ -126,7 +126,7 @@
 	const nodeIterateUp = ['firstChild', 'nextSibling'] as const;
 	const nodeIterateDown = ['lastChild', 'previousSibling'] as const;
 
-	function caretFromEnd(range: Range, node: Node, index: number, keys: typeof nodeIterateUp | typeof nodeIterateDown): boolean {
+	function findCaretPos(range: Range, node: Node, index: number, keys: typeof nodeIterateUp | typeof nodeIterateDown): boolean {
 		const [kStart, kMove] = keys;
 		for (let n = node[kStart]; n != null; n = n[kMove]) {
 			if (n instanceof Text) {
@@ -137,7 +137,7 @@
 					range.setEnd(n, index);
 					return true;
 				}
-			} else if (caretFromEnd(range, n, index, keys)) {
+			} else if (findCaretPos(range, n, index, keys)) {
 				return true;
 			}
 		}
@@ -159,7 +159,7 @@
 
 		const range = document.createRange();
 		const keys = fromEnd ? nodeIterateDown : nodeIterateUp;
-		caretFromEnd(range, node, index, keys);
+		findCaretPos(range, node, index, keys);
 		selection.removeAllRanges();
 		selection.addRange(range);
 		return range;
