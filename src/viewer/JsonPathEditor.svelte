@@ -40,7 +40,7 @@
 	}
 
 	function createPartNode(part: string | number, array?: false): HTMLLIElement
-	function createPartNode(part: string | number, array: true): [HTMLLIElement, HTMLSpanElement, Text];
+	function createPartNode(part: string | number, array: true): [HTMLLIElement, HTMLDivElement, HTMLSpanElement, Text];
 	function createPartNode(part: string | number, array?: boolean): any {
 		const node = document.createTextNode(String(part));
 		const span = document.createElement("span");
@@ -52,6 +52,10 @@
 			span.setAttribute("placeholder", "");
 		}
 
+		const wrapper = document.createElement("div");
+		wrapper.classList.add(dollar.className, "wrapper");
+		wrapper.appendChild(span)
+
 		const slash = document.createElement("span");
 		slash.innerText = "/";
 		slash.className = dollar.className;
@@ -60,9 +64,9 @@
 
 		li.className = dollar.className;
 		li.appendChild(slash);
-		li.appendChild(span);
+		li.appendChild(wrapper);
 
-		return array ? [li, span, node] : li;
+		return array ? [li, wrapper, span, node] : li;
 	}
 
 	function render(target: HTMLElement, selected: null | JsonProperty) {
@@ -100,7 +104,7 @@
 			}
 		}
 
-		function showAutocomplete(target: HTMLElement, end?: HTMLLIElement) {
+		function showAutocomplete(target: HTMLElement, content: Element, end?: HTMLLIElement) {
 			const suggestions: string[] = [];
 			const prop = tryResolve(end);
 			if (prop == null || !prop.value.is("container")) {
@@ -109,7 +113,7 @@
 				return false;
 			}
 
-			const search = getContent(target).toLowerCase();
+			const search = getContent(content).toLowerCase();
 			if (search) {
 				for (const key of prop.value.keys()) {
 					const str = String(key);
@@ -185,13 +189,13 @@
 				const next = li.nextSibling;
 				if (start && end || next == null) {
 					span.innerText = start;
-					const [sibling, content, text] = createPartNode(end, true);
+					const [sibling, wrapper, content, text] = createPartNode(end, true);
 					target.insertBefore(sibling, next);
 					//setTimeout(() => range.setStart(sibling.firstChild!, 0), 10);
 					
 					sh.setCaret(selection, text, 0, true);
 					if (!end)
-						showAutocomplete(content, sibling);
+						showAutocomplete(wrapper, content, sibling);
 
 				} else if (start) {
 					if (span.innerText !== start)
@@ -255,10 +259,11 @@
 				}
 			}
 
+			const wrapper = e.parentElement as HTMLDivElement;
 			const { inputType } = evt;
 			switch (inputType) {
 				case "insertText": 
-					showAutocomplete(e, e.parentElement as any);
+					showAutocomplete(wrapper, e, wrapper.parentElement as any);
 					break;
 			}
 		}
@@ -306,22 +311,27 @@
 		user-select: none;
 
 		> li {
-			position: relative;
 			display: flex;
 			flex-direction: row;
 			align-items: center;
 
-			> span.content {
-				margin: 0 $pad-med;
-				display: block;
-				outline: none;
-				min-width: 1em;
+			> .wrapper {
+				position: relative;
+				
+				> span.content {
+					margin: 0 $pad-med;
+					display: block;
+					outline: none;
+					min-width: 1em;
+				}
 			}
 		}
 	}
 </style>
 <ul class="list" contenteditable="true" use:render={$selected}>
 	<li contenteditable="false">
-		<span class="content">$</span>
+		<div class="wrapper">
+			<span class="content">$</span>
+		</div>
 	</li>
 </ul>
