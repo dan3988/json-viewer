@@ -143,10 +143,7 @@
 				range.selectNode(this);
 				selection.removeAllRanges();
 				selection.addRange(range);
-			}
-		} satisfies KeyLookup;
-
-		const handlers: Record<string, KeyHandler> = {
+			},
 			Backspace(selection, range, li, span) {
 				const txt = getContent(span);
 				if (txt)
@@ -156,7 +153,11 @@
 				li.remove();
 				if (prev)
 					sh.setCaret(prev, 0, true);
-			},
+			}
+		} satisfies KeyLookup;
+
+		const handlers: Record<string, KeyHandler> = {
+			Backspace: ctrlHandlers.Backspace,
 			Enter() {
 				if (autocomplete != null) {
 					autocomplete.complete();
@@ -229,7 +230,7 @@
 
 			if (span.classList.contains("content")) {
 				const handler = (evt.ctrlKey ? ctrlHandlers : handlers)[evt.code];
-				const cancel = handler && !handler.call(this, selection, range, span.parentElement as HTMLLIElement, span);
+				const cancel = handler && !handler.call(this, selection, range, span.closest("li"), span);
 				if (cancel)
 					evt.preventDefault();
 			} else if (evt.key.length === 1 || evt.key === "Delete" || evt.key === "Backspace") {
