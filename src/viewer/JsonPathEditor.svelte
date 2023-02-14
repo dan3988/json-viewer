@@ -3,6 +3,7 @@
 	import type { JsonProperty } from "./json";
 	import type { ViewerModel } from "./viewer-model";
     import type { KeyCode } from "../keyboard";
+	import * as sh from "./selection-helper";
 
 	export let model: ViewerModel;
 
@@ -17,16 +18,6 @@
 	let dollar: HTMLLIElement;
 
 	const selected = model.bag.readables.selected;
-
-	function getSelectionFor(element: HTMLElement): null | Selection {
-		const selection = window.getSelection();
-		if (selection != null)
-			for (let node = selection.focusNode; node != null; node = node.parentNode)
-				if (node == element)
-					return selection;
-
-		return null;
-	}
 
 	function trimZws(node: Text) {
 		let data = node.data;
@@ -118,51 +109,9 @@
 			span.removeAttribute("placeholder");
 			span.innerHTML = "";
 			span.appendChild(text);
-			setCaret(text, 0, true);
+			sh.setCaret(text, 0, true);
 			return true;
 		}
-	}
-
-	const nodeIterateUp = ['firstChild', 'nextSibling'] as const;
-	const nodeIterateDown = ['lastChild', 'previousSibling'] as const;
-
-	function findCaretPos(range: Range, node: Node, index: number, keys: typeof nodeIterateUp | typeof nodeIterateDown): boolean {
-		const [kStart, kMove] = keys;
-		for (let n = node[kStart]; n != null; n = n[kMove]) {
-			if (n instanceof Text) {
-				const data = n.data;
-				if ((index -= data.length) <= 0) {
-					index = -index;
-					range.setStart(n, index);
-					range.setEnd(n, index);
-					return true;
-				}
-			} else if (findCaretPos(range, n, index, keys)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function setCaret(node: Node, index: number, fromEnd?: boolean): Range
-	function setCaret(selection: Selection, node: Node, index: number, fromEnd?: boolean): Range
-	function setCaret(...args: any[]) {
-		let selection: Selection = args[0] instanceof Selection ? args.shift() : window.getSelection();
-		let [node, index, fromEnd]: [Node, number, boolean?] = args as any;
-		if (fromEnd) {
-			let n = node.lastChild;
-			while (n != null) {
-				n = n.previousSibling;
-			}
-		}
-
-		const range = document.createRange();
-		const keys = fromEnd ? nodeIterateDown : nodeIterateUp;
-		findCaretPos(range, node, index, keys);
-		selection.removeAllRanges();
-		selection.addRange(range);
-		return range;
 	}
 
 	function render(target: HTMLElement, selected: null | JsonProperty) {
@@ -247,7 +196,7 @@
 				const prev = li.previousElementSibling;
 				li.remove();
 				if (prev)
-					setCaret(prev, 0, true);
+					sh.setCaret(prev, 0, true);
 			},
 			Enter() {
 				if (autocomplete != null) {
@@ -285,7 +234,7 @@
 					target.insertBefore(sibling, next);
 					//setTimeout(() => range.setStart(sibling.firstChild!, 0), 10);
 					
-					setCaret(selection, text, 0, true);
+					sh.setCaret(selection, text, 0, true);
 					if (!end)
 						showAutocomplete(content, sibling);
 
@@ -300,7 +249,7 @@
 		} satisfies KeyLookup;
 
 		function onKeyDown(this: HTMLElement, evt: KeyboardEvent) {
-			const selection = getSelectionFor(this);
+			const selection = sh.getSelectionFor(this);
 			if (selection == null)
 				return evt.preventDefault();
 
@@ -333,7 +282,7 @@
 		function onInput(this: HTMLElement, evt: InputEventHelper) {
 			console.debug(evt.inputType);
 
-			const selection = getSelectionFor(this);
+			const selection = sh.getSelectionFor(this);
 			if (selection == null)
 				return;
 
