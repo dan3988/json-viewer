@@ -22,9 +22,9 @@
 	function trimZws(node: Text) {
 		let data = node.data;
 		if (data.startsWith(zws)) {
-			node.data = data.substring(1);
+			node.deleteData(0, 1);
 		} else if (data.endsWith(zws)) {
-			node.data = data.substring(0, data.length - 1);
+			node.deleteData(data.length - 1, 1);
 		}
 	}
 
