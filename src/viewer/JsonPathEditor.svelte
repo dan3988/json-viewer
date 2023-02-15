@@ -137,27 +137,57 @@
 		type KeyHandler = Fn<[selction: Selection, range: Range, parent: HTMLLIElement, target: HTMLSpanElement], void | boolean, HTMLElement>;
 		type KeyLookup = { [P in KeyCode]?: KeyHandler };
 
+		const common: KeyLookup = {
+			Backspace(selection, range, li, span) {
+				if (range.startOffset > 0) 
+					return true;
+
+				const prev = li.previousElementSibling;
+				if (!prev || prev == dollar)
+					return true;
+
+				const txt = getContent(span).substring(range.endOffset);
+				li.remove();
+				if (txt) {
+					const span = prev.querySelector("span.content") as HTMLSpanElement;
+					const content = span.firstChild as Text;
+					content.appendData(txt);
+				}
+				sh.setCaret(selection, prev, txt.length, true);
+			},
+			Delete(selection, range, li, span) {
+				if (range.endOffset < span.innerText.length) 
+					return true;
+
+				const next = li.nextElementSibling;
+				if (!next)
+					return true;
+
+				let end = 0;
+				const txt = getContent(span).substring(0, range.startOffset);
+				li.remove();
+				if (txt) {
+					const span = next.querySelector("span.content") as HTMLSpanElement;
+					const content = span.firstChild as Text;
+					end = content.data.length;
+					content.insertData(0, txt);
+				}
+				sh.setCaret(selection, next, end, true);
+			}
+		}
+
 		const ctrlHandlers: Record<string, KeyHandler> = {
+			...common,
 			KeyA(selection, range) {
 				range = document.createRange();
 				range.selectNode(this);
 				selection.removeAllRanges();
 				selection.addRange(range);
 			},
-			Backspace(selection, range, li, span) {
-				const txt = getContent(span);
-				if (txt)
-					return true;
-
-				const prev = li.previousElementSibling;
-				li.remove();
-				if (prev)
-					sh.setCaret(prev, 0, true);
-			}
 		} satisfies KeyLookup;
 
 		const handlers: Record<string, KeyHandler> = {
-			Backspace: ctrlHandlers.Backspace,
+			...common,
 			Enter() {
 				if (autocomplete != null) {
 					autocomplete.complete();
