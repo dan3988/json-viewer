@@ -72,7 +72,7 @@
 	function render(target: HTMLElement, selected: null | JsonProperty) {
 		let autocomplete: undefined | AutocompleteHelper = undefined;
 
-		function* getParts(end?: HTMLLIElement) {
+		function* getParts(end?: null | HTMLElement) {
 			const first = target.firstElementChild;	
 			if (first == null)
 				return;
@@ -84,7 +84,7 @@
 			}
 		}
 
-		function tryResolve(end?: HTMLLIElement): null | JsonProperty {
+		function tryResolve(end?: null | HTMLElement): null | JsonProperty {
 			let e = model.root;
 			for (let part of getParts(end)) {
 				const prop = e.value.getProperty(part);
@@ -137,6 +137,13 @@
 		type KeyHandler = Fn<[selction: Selection, range: Range, parent: HTMLLIElement, target: HTMLSpanElement], void | boolean, HTMLElement>;
 		type KeyLookup = { [P in KeyCode]?: KeyHandler };
 
+		function insertSectionAfter(selection: Selection, value: string, li: HTMLLIElement, span: HTMLSpanElement) {
+			const [sibling, wrapper, content] = createPartNode(value, true);
+			li.insertAdjacentElement("afterend", sibling)
+			showAutocomplete(wrapper, content, sibling);	
+			sh.setCaret(selection, content, 0, false);
+		}
+
 		const common: KeyLookup = {
 			Backspace(selection, range, li, span) {
 				if (range.endOffset > 0) 
@@ -188,10 +195,15 @@
 
 		const handlers: Record<string, KeyHandler> = {
 			...common,
-			Enter() {
+			Enter(selection, range, li, span) {
 				if (autocomplete != null) {
+					const target = autocomplete.target;
 					autocomplete.complete();
 					autocomplete = undefined;
+
+					const prop = tryResolve(target.parentElement);
+					if (prop && prop.value.is("container"))
+						insertSectionAfter(selection, "", li, span);
 				} else {
 					const prop = tryResolve();
 					if (prop)
@@ -210,24 +222,26 @@
 
 				autocomplete.next();
 			},
+			Tab(selection, range, li, span) {
+				if (autocomplete != null) {
+					autocomplete.complete();
+					autocomplete = undefined;
+				}
+			},
 			Slash(selection, range, li, span) {
-				const text = span.innerText;
+				const text = getContent(span);
 				const start = text.substring(0, range.startOffset);
 				const end = text.substring(range.endOffset);
 
 				destroyAutocomplete();
 
+				if (!(start || end))
+					return;
+
 				const next = li.nextSibling;
 				if (start && end || next == null) {
 					span.innerText = start;
-					const [sibling, wrapper, content, text] = createPartNode(end, true);
-					target.insertBefore(sibling, next);
-					//setTimeout(() => range.setStart(sibling.firstChild!, 0), 10);
-					
-					sh.setCaret(selection, text, 0, true);
-					if (!end)
-						showAutocomplete(wrapper, content, sibling);
-
+					insertSectionAfter(selection, end, li, span);
 				} else if (start) {
 					if (span.innerText !== start)
 						span.innerText = start;

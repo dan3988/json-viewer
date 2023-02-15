@@ -5,6 +5,10 @@ export default class AutocompleteHelper {
     #target: HTMLElement;
     #list: SuggestionList;
 
+    get target() {
+        return this.#target;
+    }
+
     constructor(target: HTMLElement, suggestions: readonly string[]) {
         this.#target = target;
         this.#list = new SuggestionList({  
@@ -36,7 +40,7 @@ export default class AutocompleteHelper {
         }
     }
 
-    complete() {
+    complete(): boolean {
         const selected = this.#list.getSelected();
         this.destroy();
         if (selected == null) {
@@ -48,6 +52,7 @@ export default class AutocompleteHelper {
             span.removeAttribute("placeholder");
             span.innerHTML = "";
             span.appendChild(text);
+
             sh.setCaret(text, 0, true);
             return true;
         }
