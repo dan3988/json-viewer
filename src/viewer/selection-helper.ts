@@ -1,23 +1,66 @@
 const nodeIterateUp = ['firstChild', 'nextSibling'] as const;
 const nodeIterateDown = ['lastChild', 'previousSibling'] as const;
 
-function findCaretPos(range: Range, node: Node, index: number, keys: typeof nodeIterateUp | typeof nodeIterateDown): boolean {
-	const [kStart, kMove] = keys;
-	for (let n = node[kStart]; n != null; n = n[kMove]) {
-		if (n instanceof Text) {
-			const data = n.data;
-			if ((index -= data.length) <= 0) {
-				index = -index;
-				range.setStart(n, index);
-				range.setEnd(n, index);
-				return true;
-			}
-		} else if (findCaretPos(range, n, index, keys)) {
-			return true;
+abstract class CaretFinder {
+	resolve(range: Range, node: Node, index: number, target: number): boolean {
+		if (node instanceof Text) {
+			return this.__match(node, range, index, target) < 0
+		} else {
+			for (let n = this.__start(node); n != null; n = this.__next(n))
+				if (this.resolve(range, n, index, target))
+					return true;
+		
+			return false;
 		}
 	}
 
-	return false;
+	protected abstract __start(node: Node): Node | null;
+	protected abstract __next(node: Node): Node | null;
+	protected abstract __match(text: Text, range: Range, current: number, target: number): number;
+}
+
+class CaretFinderForward extends CaretFinder {
+	protected __start(node: Node): Node | null {
+		return node.firstChild;
+	}
+
+	protected __next(node: Node): Node | null {
+		return node.nextSibling;
+	}
+
+	protected __match(text: Text, range: Range, current: number, target: number): number {
+		const data = text.data;
+		const next = current + data.length
+		if (next < target)
+			return next;
+
+		const pos = current - target;
+		range.setStart(text, pos);
+		range.setEnd(text, pos);
+		return -1;
+	}
+}
+
+class CaretFinderBackward extends CaretFinder {
+	protected __start(node: Node): Node | null {
+		return node.lastChild;
+	}
+
+	protected __next(node: Node): Node | null {
+		return node.previousSibling;
+	}
+
+	protected __match(text: Text, range: Range, current: number, target: number): number {
+		const data = text.data;
+		if ((current -= data.length) <= 0) {
+			current = -current;
+			range.setStart(text, current);
+			range.setEnd(text, current);
+			return -1;
+		}
+
+		return current;
+	}
 }
 
 export function getSelectionFor(element: HTMLElement): null | Selection {
@@ -30,21 +73,16 @@ export function getSelectionFor(element: HTMLElement): null | Selection {
 	return null;
 }
 
-export function setCaret(node: Node, index: number, fromEnd?: boolean): Range
-export function setCaret(selection: Selection, node: Node, index: number, fromEnd?: boolean): Range
+export function setCaret(node: Node, index: number, fromEnd?: boolean): Range | undefined
+export function setCaret(selection: Selection, node: Node, index: number, fromEnd?: boolean): Range | undefined
 export function setCaret(...args: any[]) {
-	let selection: Selection = args[0] instanceof Selection ? args.shift() : window.getSelection();
-	let [node, index, fromEnd]: [Node, number, boolean?] = args as any;
-	if (fromEnd) {
-		let n = node.lastChild;
-		while (n != null) {
-			n = n.previousSibling;
-		}
-	}
-
+	const selection: Selection = args[0] instanceof Selection ? args.shift() : window.getSelection();
+	const [node, index, fromEnd]: [Node, number, boolean?] = args as any;
 	const range = document.createRange();
-	const keys = fromEnd ? nodeIterateDown : nodeIterateUp;
-	findCaretPos(range, node, index, keys);
+	const finder = (fromEnd ? CaretFinderBackward : CaretFinderForward).prototype;
+	if (!finder.resolve(range, node, index, index))
+		return undefined;
+
 	selection.removeAllRanges();
 	selection.addRange(range);
 	return range;
