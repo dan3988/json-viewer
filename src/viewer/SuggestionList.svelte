@@ -1,16 +1,26 @@
 <script lang="ts">
-	export let suggestions: readonly string[];
-	export let index = -1;
+	export let source: Iterable<number | string>;
+	export let filter: string;
+	export let index = 0;
 
+
+	let filterLw: string;
+	let results: string[];
+
+	$: {
+		filterLw = filter?.toLowerCase();
+		results = source ? [...source].filter((v) => String(v).toLowerCase().includes(filterLw)) : Array.prototype;
+	}
+	
 	let list: HTMLUListElement;
 
 	export function getSelected() {
-		return suggestions[index];
+		return results[index];
 	}
 
 	export function next() {
 		var next = index + 1;
-		if (next >= suggestions.length)
+		if (next >= results.length)
 			next = 0;
 
 		index = next;
@@ -20,10 +30,56 @@
 	export function prev() {
 		var prev = index - 1;
 		if (prev < 0)
-			prev = suggestions.length - 1;
+			prev = results.length - 1;
 
 		index = prev;
 		list.children[prev]?.scrollIntoView({ block: 'nearest' });
+	}
+
+	function appendE<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, className: string, content: string): HTMLElementTagNameMap[K] {
+		const e = document.createElement(tag);
+		e.className = className;
+		e.innerText = content;
+		parent.append(e);
+		return e;
+	}
+
+	function renderListItem(target: HTMLElement, arg: { suggestion: string, filter: string }) {
+		function update({ suggestion, filter }: { suggestion: string, filter: string }) {
+			if (!filter) {
+				target.innerText = suggestion;
+				return;
+			}
+
+			target.innerHTML = "";
+			let lw = suggestion.toLowerCase();
+			let ix = lw.indexOf(filter);
+			if (ix < 0)
+				return;
+
+			let last = 0;
+
+			while (true) {
+				if (ix < 0) {
+					appendE(target, "span", "", suggestion.substring(last));
+					break;
+				} else if (ix > last) {
+					appendE(target, "span", "", suggestion.substring(last, ix));
+				}
+
+				appendE(target, "span", "match", suggestion.substring(ix, ix + filter.length));
+				ix = lw.indexOf(filter, last = ix + filter.length);
+			}
+		}
+		
+		update(arg);
+
+		return {
+			update,
+			destroy() {
+				target.innerHTML = "";
+			}
+		}
 	}
 </script>
 <style lang="scss">
@@ -46,6 +102,11 @@
 
 		> li {
 			padding: $pad-small $pad-med;
+
+			> :global(.match) {
+				background-color: var(--col-match-bg);
+				color: var(--col-match-fg);
+			}
 		}
 	}
 
@@ -55,8 +116,8 @@
 </style>
 <template>
 	<ul class="list" bind:this={list} contenteditable="false">
-		{#each suggestions as text, i}
-			<li class:selected={i == index}>{text}</li>
+		{#each results as suggestion, i}
+			<li class:selected={i == index} use:renderListItem={{ suggestion, filter: filterLw }}></li>
 		{/each}
 	</ul>
 </template>

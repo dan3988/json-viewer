@@ -9,11 +9,11 @@ export default class AutocompleteHelper {
         return this.#target;
     }
 
-    constructor(target: HTMLElement, suggestions: readonly string[]) {
+    constructor(target: HTMLElement, source: Iterable<number | string>, filter: string) {
         this.#target = target;
         this.#list = new SuggestionList({  
             target,
-            props: { suggestions }
+            props: { source, filter }
         });
     }
 
@@ -29,8 +29,8 @@ export default class AutocompleteHelper {
         this.#list.$destroy();
     }
 
-    update(target: HTMLElement, suggestions: string[]) {
-        const props = { suggestions };
+    update(target: HTMLElement, source: Iterable<number | string>, filter: string) {
+        const props = { source, filter };
         if (this.#target == target) {
             this.#list.$set(props);
         } else {

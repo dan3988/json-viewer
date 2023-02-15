@@ -105,7 +105,6 @@
 		}
 
 		function showAutocomplete(target: HTMLElement, content: Element, end?: HTMLLIElement) {
-			const suggestions: string[] = [];
 			const prop = tryResolve(end);
 			if (prop == null || !prop.value.is("container")) {
 				autocomplete?.destroy();
@@ -114,21 +113,14 @@
 			}
 
 			const search = getContent(content).toLowerCase();
-			if (search) {
-				for (const key of prop.value.keys()) {
-					const str = String(key);
-					if (str.toLowerCase().includes(search))
-						suggestions.push(str);
-				}
-			} else {
-				for (const key of prop.value.keys())
-					suggestions.push(String(key));
+			const source = {
+				[Symbol.iterator]: () => prop.value.keys()
 			}
 
 			if (autocomplete) {
-				autocomplete.update(target, suggestions)
+				autocomplete.update(target, source, search)
 			} else {
-				autocomplete = new AutocompleteHelper(target, suggestions);
+				autocomplete = new AutocompleteHelper(target, source, search);
 			}
 			
 			return true;
@@ -198,12 +190,12 @@
 			Enter(selection, range, li, span) {
 				if (autocomplete != null) {
 					const target = autocomplete.target;
-					autocomplete.complete();
-					autocomplete = undefined;
-
-					const prop = tryResolve(target.parentElement);
-					if (prop && prop.value.is("container"))
-						insertSectionAfter(selection, "", li, span);
+					if (autocomplete.complete()) {
+						autocomplete = undefined;
+						const prop = tryResolve(target);
+						if (prop && prop.value.is("container"))
+							insertSectionAfter(selection, "", li, span);
+					}
 				} else {
 					const prop = tryResolve();
 					if (prop)
