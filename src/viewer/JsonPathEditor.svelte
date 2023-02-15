@@ -139,14 +139,14 @@
 
 		const common: KeyLookup = {
 			Backspace(selection, range, li, span) {
-				if (range.startOffset > 0) 
+				if (range.endOffset > 0) 
 					return true;
 
 				const prev = li.previousElementSibling;
 				if (!prev || prev == dollar)
 					return true;
 
-				const txt = getContent(span).substring(range.endOffset);
+				const txt = getContent(span);
 				li.remove();
 				if (txt) {
 					const span = prev.querySelector("span.content") as HTMLSpanElement;
@@ -156,7 +156,7 @@
 				sh.setCaret(selection, prev, txt.length, true);
 			},
 			Delete(selection, range, li, span) {
-				if (range.endOffset < span.innerText.length) 
+				if (range.startOffset < span.innerText.length) 
 					return true;
 
 				const next = li.nextElementSibling;
@@ -164,7 +164,7 @@
 					return true;
 
 				let end = 0;
-				const txt = getContent(span).substring(0, range.startOffset);
+				const txt = getContent(span);
 				li.remove();
 				if (txt) {
 					const span = next.querySelector("span.content") as HTMLSpanElement;
