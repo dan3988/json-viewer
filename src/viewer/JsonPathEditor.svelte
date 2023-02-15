@@ -222,7 +222,7 @@
 
 				autocomplete.next();
 			},
-			Tab(selection, range, li, span) {
+			Tab() {
 				if (autocomplete != null) {
 					autocomplete.complete();
 					autocomplete = undefined;
@@ -313,6 +313,10 @@
 			}
 		}
 
+		function onFocusOut() {
+			update(selected);
+		}
+
 		function update(selected: null | JsonProperty) {
 			dollar ??= target.firstElementChild as HTMLLIElement;
 			target.innerHTML = "";
@@ -331,6 +335,7 @@
 
 		target.addEventListener("keydown", onKeyDown);
 		target.addEventListener("input", onInput);
+		target.addEventListener("focusout", onFocusOut);
 
 		return {
 			update,
@@ -339,6 +344,7 @@
 				target.appendChild(dollar);
 				target.removeEventListener("keydown", onKeyDown);
 				target.removeEventListener("input", onInput);
+				target.removeEventListener("focusout", onFocusOut);
 			},
 		};
 	}
