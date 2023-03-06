@@ -123,6 +123,14 @@
 			padding: $pad-small $pad-med;
 			cursor: pointer;
 
+			&.selected {
+				background-color: #44AAFF88;
+
+				&:hover {
+					background-color: #44AAFFCC;
+				}
+			}
+
 			&:hover {
 				background-color: #44AAFF44;
 			}
@@ -131,14 +139,6 @@
 				background-color: var(--col-match-bg);
 				color: var(--col-match-fg);
 			}
-		}
-	}
-
-	.selected {
-		background-color: #44AAFF88;
-
-		&:hover {
-			background-color: #44AAFFCC;
 		}
 	}
 </style>
