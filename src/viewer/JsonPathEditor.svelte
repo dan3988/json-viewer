@@ -309,7 +309,8 @@
 			update(selected);
 		}
 
-		function update(selected: null | JsonProperty) {
+		function update(newValue: null | JsonProperty) {
+			selected = newValue;
 			dollar ??= target.firstElementChild as HTMLLIElement;
 			target.innerHTML = "";
 			target.appendChild(dollar);
