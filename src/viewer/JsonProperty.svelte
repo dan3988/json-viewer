@@ -208,7 +208,7 @@
 	}
 
 	.json-value {
-		white-space: nowrap;
+		white-space: break-spaces;
 
 		&.json-string {
 			color: var(--col-json-str-fg);
