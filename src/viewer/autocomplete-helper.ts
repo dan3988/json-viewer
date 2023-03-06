@@ -15,6 +15,29 @@ export default class AutocompleteHelper {
             target,
             props: { source, filter }
         });
+
+        this.#list.$on("click", this.#onClick.bind(this));
+    }
+
+    #complete(selected: null | string) {
+        this.destroy();
+        if (selected == null) {
+            return false;
+        } else {
+            const el = this.#target;
+            const span = el.querySelector("span.content") as HTMLSpanElement;
+            const text = document.createTextNode(selected);
+            span.removeAttribute("placeholder");
+            span.innerHTML = "";
+            span.appendChild(text);
+
+            sh.setCaret(text, 0, true);
+            return true;
+        }
+    }
+
+    #onClick(arg: CustomEvent) {
+        this.#complete(arg.detail.suggestion);
     }
 
     next() {
@@ -42,19 +65,6 @@ export default class AutocompleteHelper {
 
     complete(): boolean {
         const selected = this.#list.getSelected();
-        this.destroy();
-        if (selected == null) {
-            return false;
-        } else {
-            const el = this.#target;
-            const span = el.querySelector("span.content") as HTMLSpanElement;
-            const text = document.createTextNode(selected);
-            span.removeAttribute("placeholder");
-            span.innerHTML = "";
-            span.appendChild(text);
-
-            sh.setCaret(text, 0, true);
-            return true;
-        }
+        return this.#complete(selected);
     }
 }

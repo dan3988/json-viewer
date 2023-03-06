@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+
 	export let source: Iterable<number | string>;
 	export let filter: string;
 	export let index = 0;
@@ -44,8 +46,17 @@
 		return e;
 	}
 
-	function renderListItem(target: HTMLElement, arg: { suggestion: string, filter: string }) {
-		function update({ suggestion, filter }: { suggestion: string, filter: string }) {
+	const dispatch = createEventDispatcher();
+
+	interface RenderArg {
+		suggestion: string;
+		filter: string;
+		index: number;
+	};
+
+	function renderListItem(target: HTMLElement, arg: RenderArg) {
+		function update(a: RenderArg) {
+			let { suggestion } = arg = a;
 			if (!filter) {
 				target.innerText = suggestion;
 				return;
@@ -74,9 +85,17 @@
 		
 		update(arg);
 
+		function onClick() {
+			const { suggestion, index } = arg;
+			dispatch("click", { suggestion, index });
+		}
+
+		target.addEventListener('click', onClick);
+
 		return {
 			update,
 			destroy() {
+				target.removeEventListener('click', onClick);
 				target.innerHTML = "";
 			}
 		}
@@ -102,6 +121,11 @@
 
 		> li {
 			padding: $pad-small $pad-med;
+			cursor: pointer;
+
+			&:hover {
+				background-color: #44AAFF44;
+			}
 
 			> :global(.match) {
 				background-color: var(--col-match-bg);
@@ -111,13 +135,17 @@
 	}
 
 	.selected {
-		background-color: slateblue;
+		background-color: #44AAFF88;
+
+		&:hover {
+			background-color: #44AAFFCC;
+		}
 	}
 </style>
 <template>
 	<ul class="list" bind:this={list} contenteditable="false">
 		{#each results as suggestion, i}
-			<li class:selected={i == index} use:renderListItem={{ suggestion, filter: filterLw }}></li>
+			<li class:selected={i == index} use:renderListItem={{ suggestion, filter: filterLw, index: i }}></li>
 		{/each}
 	</ul>
 </template>
