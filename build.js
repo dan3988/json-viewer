@@ -69,7 +69,6 @@ function ensureDir(dir, clean) {
 }
 
 /**
- * 
  * @param {string} baseDir
  * @param {string} entry
  * @param {string} output
@@ -82,7 +81,9 @@ function svelteConfig(baseDir, entry, output) {
 			sourcemap: !dist,
 			format: 'cjs',
 			name: 'app',
-			dir: 'lib'
+			dir: 'lib',
+			intro: '{',
+			outro: '}'
 		},
 		plugins: [
 			svelte({
@@ -98,7 +99,7 @@ function svelteConfig(baseDir, entry, output) {
 				compilerOptions: {
 					// enable run-time checks when not in production
 					dev: !dist,
-					format: "esm"
+					format: "cjs"
 				}
 			}),
 			css({ output: output + ".css" }),
@@ -114,6 +115,44 @@ function svelteConfig(baseDir, entry, output) {
 			}),
 			dist && terser()
 		],
+		watch: {
+			clearScreen: false
+		}
+	};
+}
+
+/**
+ * @param {string} baseDir
+ * @param {string} entry
+ * @param {string} output
+ * @returns {rl.RollupOptions}
+ */
+function jsConfig(baseDir, entry, output, addScss) {
+	/** @type {(rl.Plugin | undefined)[]} */
+	const plugins = [
+		typescript({
+			tsconfig: path.join(baseDir, 'tsconfig.json'),
+			sourceMap: !dist,
+			inlineSources: !dist
+		})
+	]
+
+	if (addScss)
+		plugins.push(sass({ 
+			fileName: output + ".css"
+		}));
+
+	if (dist)
+		plugins.push(terser());
+
+	return {
+		input: path.join(baseDir, entry),
+		output: {
+			sourcemap: !dist,
+			format: 'cjs',
+			file: path.join("lib", output + ".js"),
+		},
+		plugins,
 		watch: {
 			clearScreen: false
 		}
@@ -194,29 +233,25 @@ const args = util.parseArgs({
 
 const { watch = false, dist = false } = args.values;
 
-/** @type {rl.RollupOptions} */
-const rollupBg = {
-	input: "src/extension/background.ts",
-	output: {
-		sourcemap: !dist,
-		format: 'cjs',
-		file: 'lib/bg.js'
+/** @type {Record<string, rl.RollupOptions>} */
+const configs = {
+	CTS: 
+	{
+		input: "src/content-script/content.js",
+		output: {
+			sourcemap: !dist,
+			format: 'cjs',
+			file: 'lib/content-script.js'
+		},
+		watch: {
+			clearScreen: false
+		}
 	},
-	plugins: [
-		typescript({
-			tsconfig: 'src/extension/tsconfig.json',
-			sourceMap: !dist,
-			inlineSources: !dist
-		}),
-		dist && terser()
-	],
-	watch: {
-		clearScreen: false
-	}
-};
-
-const rollupUi = svelteConfig("src/viewer", "viewer.ts", "viewer");
-const rollupOpts = svelteConfig("src/options", "options.ts", "options");
+	CT: svelteConfig("src/content", "content.ts", "content"),
+	BG: jsConfig("src/extension", "background.ts", "bg"),
+	UI: svelteConfig("src/viewer", "viewer.ts", "viewer"),
+	OP: svelteConfig("src/options", "options.ts", "options"),
+}
 
 try {
 	ensureDir(outdir, true);
@@ -245,9 +280,8 @@ try {
 		}
 	}
 
-	await executeRollup("BG", rollupBg);
-	await executeRollup("UI", rollupUi);
-	await executeRollup("OP", rollupOpts);
+	for (var [key, cfg] of Object.entries(configs))
+		await executeRollup(key, cfg);
 
 	if (watch) {
 		async function stop() {

@@ -17,6 +17,15 @@
 		},
 		"default_popup": "res/options-popup.html"
 	},
+	"content_scripts": [
+		{
+			"matches": [ "*://*/*" ],
+			"run_at": "document_end",
+			"js": [
+				"lib/content-script.js"
+			]
+		}
+	],
 	"icons": {
 		"16": "res/icon16.png",
 		"48": "res/icon48.png",
@@ -34,10 +43,8 @@
 			]
 		}
 	],
-	"host_permissions": [ "<all_urls>" ],
 	"permissions": [
 		"scripting",
-		"storage",
-		"webRequest"
+		"storage"
 	]
 }

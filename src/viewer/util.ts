@@ -113,3 +113,20 @@ class JsonKeyRenderer extends AbstractRenderer<string | number> {
 export function renderKey(target: HTMLElement, key: string | number): Renderer<string | number> {
 	return new JsonKeyRenderer(target, key);
 }
+
+type ExtractFunctions<TObject extends object> = { [P in keyof TObject as TObject[P] extends Function ? P : never]?: TObject[P] extends (...args: infer A) => infer V ? (this: TObject, ...args: A) => V : never };
+
+export function defValue<T extends object, K extends keyof T>(object: T, p: K, value: T[K], enumerable?: boolean, writable?: boolean, configurable?: boolean): void
+export function defValue(object: object, p: PropertyKey, value: any, enumerable?: boolean, writable?: boolean, configurable?: boolean): void
+export function defValue(object: object, p: PropertyKey, value: any, enumerable?: boolean, writable?: boolean, configurable?: boolean): void {
+	Object.defineProperty(object, p, { value, enumerable, writable, configurable });
+}
+
+export function defFn<T extends object>(clazz: Constructor<T>, functions: ExtractFunctions<T>): void
+export function defFn(clazz: Function, functions: any): void {
+	for (const key in functions) {
+		const fn = functions[key];
+		defValue(fn, "name", key, false, false, true);
+		defValue(clazz.prototype, key, fn, false, true, true);
+	}
+}

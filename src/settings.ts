@@ -44,6 +44,7 @@ export namespace settings {
 	}
 
 	const list = [
+		makeSetting("mimes", Array, ["application/json"]),
 		makeSetting("enabled", Boolean, true),
 		makeSetting("limitEnabled", Boolean, true),
 		makeSetting("limitSize", Integer, 1 << 20),
@@ -65,6 +66,7 @@ export namespace settings {
 	}
 
 	export interface Settings {
+		mimes: string[];
 		enabled: boolean;
 		limitEnabled: boolean;
 		limitSize: number;
