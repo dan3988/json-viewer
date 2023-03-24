@@ -2,7 +2,7 @@
 	import type { JsonProperty } from "./json";
 	import type { ViewerModel } from "./viewer-model";
     import type { KeyCode } from "../keyboard";
-	import * as sh from "./selection-helper";
+	import * as dom from "./dom-helper";
     import AutocompleteHelper from "./autocomplete-helper";
 
 	export let model: ViewerModel;
@@ -133,12 +133,12 @@
 			const [sibling, wrapper, content] = createPartNode(value, true);
 			li.insertAdjacentElement("afterend", sibling)
 			showAutocomplete(wrapper, content, sibling);	
-			sh.setCaret(selection, content, 0, false);
+			dom.setCaret(selection, content, 0, false);
 		}
 
 		const common: KeyLookup = {
 			Backspace(selection, range, li, span) {
-				if (range.endOffset > 0) 
+				if (range.endOffset > 0)
 					return true;
 
 				const prev = li.previousElementSibling;
@@ -152,7 +152,7 @@
 					const content = span.firstChild as Text;
 					content.appendData(txt);
 				}
-				sh.setCaret(selection, prev, txt.length, true);
+				dom.setCaret(selection, prev, txt.length, true);
 			},
 			Delete(selection, range, li, span) {
 				if (range.startOffset < span.innerText.length) 
@@ -171,22 +171,22 @@
 					end = content.data.length;
 					content.insertData(0, txt);
 				}
-				sh.setCaret(selection, next, end, true);
+				dom.setCaret(selection, next, end, true);
 			}
 		}
 
 		const ctrlHandlers: Record<string, KeyHandler> = {
-			...common,
 			KeyA(selection, range) {
 				range = document.createRange();
-				range.selectNode(this);
+				range.setStartAfter(this.firstChild!);
+				range.setEndAfter(this.lastChild!);
+
 				selection.removeAllRanges();
 				selection.addRange(range);
-			},
+			}
 		} satisfies KeyLookup;
 
 		const handlers: Record<string, KeyHandler> = {
-			...common,
 			Enter(selection, range, li, span) {
 				if (autocomplete != null) {
 					const target = autocomplete.target;
@@ -244,70 +244,8 @@
 			}
 		} satisfies KeyLookup;
 
-		function onKeyDown(this: HTMLElement, evt: KeyboardEvent) {
-			const selection = sh.getSelectionFor(this);
-			if (selection == null)
-				return evt.preventDefault();
-
-			const range = selection.getRangeAt(0);
-			if (range.commonAncestorContainer === this)
-				return;
-
-			let span: HTMLSpanElement;
-			for (let e: Node = range.commonAncestorContainer; ;) {
-				if (e instanceof HTMLSpanElement && e.classList.contains(dollar.className)) {
-					span = e;
-					break;
-				}
-
-				if ((e = e.parentNode!) == this)
-					return evt.preventDefault();
-			}
-
-			if (span.classList.contains("content")) {
-				const handler = (evt.ctrlKey ? ctrlHandlers : handlers)[evt.code];
-				const cancel = handler && !handler.call(this, selection, range, span.closest("li"), span);
-				if (cancel)
-					evt.preventDefault();
-			} else if (evt.key.length === 1 || evt.key === "Delete" || evt.key === "Backspace") {
-				evt.preventDefault();
-			}
-
-		}
-
-		function onInput(this: HTMLElement, evt: InputEventHelper) {
-			console.debug(evt.inputType);
-
-			const selection = sh.getSelectionFor(this);
-			if (selection == null)
-				return;
-
-			let range = selection.getRangeAt(0);
-			let e: null | Node = range.commonAncestorContainer;
-			while (!(e instanceof HTMLElement))
-				if ((e = e.parentElement) == null)
-					return;
-
-			if (e.hasAttribute("placeholder")) {
-				const node = e.firstChild;
-				if (node instanceof Text) {
-					e.removeAttribute("placeholder");
-					trimZws(node);
-				}
-			}
-
-			const wrapper = e.parentElement as HTMLDivElement;
-			const { inputType } = evt;
-			switch (inputType) {
-				case "insertText": 
-					showAutocomplete(wrapper, e, wrapper.parentElement as any);
-					break;
-			}
-		}
-
-		function onFocusOut() {
-			update(selected);
-		}
+		Object.setPrototypeOf(ctrlHandlers, common);
+		Object.setPrototypeOf(handlers, common);
 
 		function update(newValue: null | JsonProperty) {
 			selected = newValue;
@@ -326,18 +264,79 @@
 
 		update(selected);
 
-		target.addEventListener("keydown", onKeyDown);
-		target.addEventListener("input", onInput);
-		target.addEventListener("focusout", onFocusOut);
+		const unsub = dom.subscribe(target, {
+			keydown(evt) {
+				if (evt.keyCode === 17 || evt.keyCode === 16)
+					return;
+
+				const selection = dom.getSelectionFor(this);
+				if (selection == null)
+					return evt.ctrlKey ? undefined : evt.preventDefault();
+
+				const range = selection.getRangeAt(0);
+				if (range.commonAncestorContainer === this)
+					return;
+
+				let span: HTMLSpanElement;
+				for (let e: Node = range.commonAncestorContainer; ;) {
+					if (e instanceof HTMLSpanElement && e.classList.contains(dollar.className)) {
+						span = e;
+						break;
+					}
+
+					if ((e = e.parentNode!) == this)
+						return evt.preventDefault();
+				}
+
+				if (span.classList.contains("content")) {
+					const handler = (evt.ctrlKey ? ctrlHandlers : handlers)[evt.code];
+					const cancel = handler && !handler.call(this, selection, range, span.closest("li"), span);
+					if (cancel)
+						evt.preventDefault();
+				} else if (evt.key.length === 1 || evt.key === "Delete" || evt.key === "Backspace") {
+					evt.preventDefault();
+				}
+			},
+			input(evt: InputEventHelper) {
+				console.debug(evt.inputType);
+				const selection = dom.getSelectionFor(this);
+				if (selection == null)
+					return;
+
+				let range = selection.getRangeAt(0);
+				let e: null | Node = range.commonAncestorContainer;
+				while (!(e instanceof HTMLElement))
+					if ((e = e.parentElement) == null)
+						return;
+
+				if (e.hasAttribute("placeholder")) {
+					const node = e.firstChild;
+					if (node instanceof Text) {
+						e.removeAttribute("placeholder");
+						trimZws(node);
+					}
+				}
+
+				const wrapper = e.parentElement as HTMLDivElement;
+				const { inputType } = evt;
+				switch (inputType) {
+					case "insertText": 
+						showAutocomplete(wrapper, e, wrapper.parentElement as any);
+						break;
+				}
+			},
+			focusout() {
+			if (!(window as any).ignorefocus)
+				update(selected);
+			}
+		})
 
 		return {
 			update,
 			destroy() {
 				target.innerHTML = "";
 				target.appendChild(dollar);
-				target.removeEventListener("keydown", onKeyDown);
-				target.removeEventListener("input", onInput);
-				target.removeEventListener("focusout", onFocusOut);
+				unsub();
 			},
 		};
 	}

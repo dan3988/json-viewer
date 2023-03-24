@@ -1,5 +1,5 @@
 import SuggestionList from "./SuggestionList.svelte";
-import * as sh from "./selection-helper";
+import * as dom from "./dom-helper";
 
 export default class AutocompleteHelper {
     #target: HTMLElement;
@@ -31,7 +31,7 @@ export default class AutocompleteHelper {
             span.innerHTML = "";
             span.appendChild(text);
 
-            sh.setCaret(text, 0, true);
+            dom.setCaret(text, 0, true);
             return true;
         }
     }

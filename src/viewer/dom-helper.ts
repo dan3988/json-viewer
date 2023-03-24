@@ -1,6 +1,3 @@
-const nodeIterateUp = ['firstChild', 'nextSibling'] as const;
-const nodeIterateDown = ['lastChild', 'previousSibling'] as const;
-
 abstract class CaretFinder {
 	resolve(range: Range, node: Node, index: number, target: number): boolean {
 		if (node instanceof Text) {
@@ -86,4 +83,20 @@ export function setCaret(...args: any[]) {
 	selection.removeAllRanges();
 	selection.addRange(range);
 	return range;
+}
+
+type HandlersType<T> = { [K in keyof HTMLElementEventMap]?: Fn<[evt: HTMLElementEventMap[K]], void, T> };
+
+function unsubscribe(this: HTMLElement, entries: [key: string, value: Fn][]): void {
+	for (var [key, value] of entries)
+		this.removeEventListener(key, value);
+}
+
+export function subscribe<T extends HTMLElement>(target: T, handlers: HandlersType<T>): () => void {
+	const entries = Object.entries(handlers);
+
+	for (var [key, value] of entries)
+		target.addEventListener(key, value);
+
+	return unsubscribe.bind(target, entries);
 }
