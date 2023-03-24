@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { JsonProperty } from "./json";
 	import type { ViewerModel } from "./viewer-model";
-    import type { KeyCode } from "../keyboard";
+	import type { KeyCode } from "../keyboard";
 	import * as dom from "./dom-helper";
-    import AutocompleteHelper from "./autocomplete-helper";
+	import AutocompleteHelper from "./autocomplete-helper";
+	import Linq from "@daniel.pickett/linq-js";
+	import { def } from "./util";
 
 	export let model: ViewerModel;
 
@@ -68,6 +70,159 @@
 
 		return array ? [li, wrapper, span, node] : li;
 	}
+
+	function getPartRoot(node: Node): null | HTMLLIElement {
+		let e: Element;
+		if (node instanceof Element) {
+			e = node;
+		} else if (node.parentElement == null) {
+			return null;
+		} else {
+			e = node.parentElement;
+		}
+		
+		if (e.tagName === "SPAN" && (e = e.parentElement!) == null)
+			return null;
+		
+		if (e.tagName === "DIV" && (e = e.parentElement!) == null)
+			return null;
+
+		return e.tagName !== "LI" ? null : e as HTMLLIElement;
+	}
+
+	interface SelectionDetailsItem {
+		text: Text;
+		content: HTMLSpanElement;
+		li: HTMLLIElement;
+		start: number;
+		length: number;
+
+		toString(): string;
+	}
+
+	interface SelectionDetailsItemConstructor {
+		readonly prototype: SelectionDetailsItem;
+		new(text: Text, content: HTMLSpanElement, li: HTMLLIElement, start: number, length: number): SelectionDetailsItem;
+	}
+
+	const SelectionDetailsItem: SelectionDetailsItemConstructor = <any>function(text, content, li, start, length) {
+		this.text = text;
+		this.content =  content;
+		this.li = li;
+		this.start = start;
+		this.length = length;
+	}
+
+	SelectionDetailsItem.prototype.toString = function toString(this: SelectionDetailsItem) {
+		const { text, start, length } = this;
+		return text.substringData(start, length);
+	}
+
+	interface SelectionDetails extends Iterable<SelectionDetailsItem> {
+		readonly count: number;
+		at(index: number): undefined | SelectionDetailsItem;
+		toPath(): string[];
+		toString(): string;
+	}
+
+	interface SelectionDetailsConstructor {
+		(selection?: Selection): null | SelectionDetails;
+		readonly prototype: SelectionDetails;
+		new(): never;
+	}
+
+	const SelectionDetails: SelectionDetailsConstructor = <any>function(selection?: null | Selection) {
+		if (selection == null) {
+			selection = window.getSelection();
+
+			if (selection == null)
+				return null;
+		}
+
+		if (selection.rangeCount !== 1)
+			return;
+		
+		const range = selection.getRangeAt(0);
+
+		let start = range.startContainer;
+		let end = range.endContainer;
+		let startI = range.startOffset;
+		let endI: number | undefined = range.endOffset;
+
+		let startReal: null | HTMLLIElement = null;
+		if (start instanceof Element && start.tagName === "UL") {
+			startReal = start.children.item(startI) as HTMLLIElement;
+			startI = 0;
+		} else {
+			startReal = getPartRoot(start);
+		}
+
+		let endReal: null | Element = null;
+		if (end instanceof Element && end.tagName === "UL") {
+			endReal = end.children.item(endI - 1) as HTMLLIElement;
+			endI = undefined;
+		} else {
+			endReal = getPartRoot(end);
+		}
+
+		if (startReal == null || endReal == null)
+			return;
+
+		let details: SelectionDetailsItem[] = [];
+		let current = startReal;
+
+		while (current !== endReal) {
+			const content = current.querySelector("span.content") as HTMLSpanElement;
+			if (content == null)
+				return;
+
+			const text = content.firstChild as Text;
+
+			details.push(new SelectionDetailsItem(text, content, current, startI, text.length - startI));
+
+			if (current.nextElementSibling == null)
+				return;
+			
+			startI = 0;
+			current = current.nextElementSibling as HTMLLIElement;
+		}
+
+		const content = current.querySelector("span.content") as HTMLSpanElement;
+		if (content == null)
+			return;
+
+		const text = content.firstChild as Text;
+
+		details.push(new SelectionDetailsItem(text, content, current, startI, endI == undefined ? text.length : (endI - startI)));
+
+		return Object.create(SelectionDetails.prototype, {
+			_arr: { value: details }
+		});
+	}
+
+	def(SelectionDetails, {
+		accessors: {
+			count: {
+				get() {
+					return (this as any)._arr.length;
+				}
+			}
+		},
+		functions: {
+			at(index) {
+				return (this as any)._arr.at(index);
+			},
+			toPath() {
+				return Linq<SelectionDetailsItem>(this).select(v => v.toString()).toArray();
+			},
+			toString() {
+				return this.toPath().join("/");
+			},
+			[Symbol.iterator]() {
+				return (this as any)._arr[Symbol.iterator]();
+			}
+		}
+	})
 
 	function render(target: HTMLElement, selected: null | JsonProperty) {
 		let autocomplete: undefined | AutocompleteHelper = undefined;
@@ -262,7 +417,23 @@
 			}
 		}
 
-		update(selected);
+		function onCopy(e: HTMLElement, data: DataTransfer, cut: boolean) {
+			const selection = dom.getSelectionFor(e);
+			if (selection == null)
+				return;
+
+			const det = SelectionDetails(selection);
+			if (det == null)
+				return;
+
+			const path = det.toPath();
+
+			data.setData("application/jsonpath", JSON.stringify(path));
+			data.setData("text/plain", path.join("/"))
+
+			if (cut)
+				selection.deleteFromDocument();
+		}
 
 		const unsub = dom.subscribe(target, {
 			keydown(evt) {
@@ -326,10 +497,20 @@
 				}
 			},
 			focusout() {
-			if (!(window as any).ignorefocus)
-				update(selected);
+				if (!(window as any).ignorefocus)
+					update(selected);
+			},
+			copy(evt) {
+				evt.clipboardData && onCopy(this, evt.clipboardData, false);
+				evt.preventDefault();
+			},
+			cut(evt) {
+				evt.clipboardData && onCopy(this, evt.clipboardData, true);
+				evt.preventDefault();
 			}
 		})
+
+		update(selected);
 
 		return {
 			update,
