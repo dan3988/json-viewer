@@ -43,6 +43,7 @@
 			]
 		}
 	],
+	"host_permissions": [ "<all_urls>" ],
 	"permissions": [
 		"scripting",
 		"storage"
