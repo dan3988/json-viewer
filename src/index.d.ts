@@ -7,3 +7,7 @@ declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 declare interface Array<T> {
 	at(index: number): undefined | T
 }
+
+declare module "*.svelte" {
+	export default import("svelte").SvelteComponentTyped;
+}

@@ -2,9 +2,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "patch-package",
-    "build": "node build.js",
-    "dist": "node build.js -d",
-    "watch": "node build.js -w",
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
     "file-server": "npx http-server"
   },
   "devDependencies": {
