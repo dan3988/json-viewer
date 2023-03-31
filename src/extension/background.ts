@@ -42,7 +42,7 @@ async function inject(tabId: number, frameId: number | undefined, script: string
 	const files = [ `lib/${script}.js` ];
 
 	if (addJsonic)
-		files.unshift("lib/jsonic.js");
+		files.unshift("node_modules/jsonic/jsonic-min.js");
 
 	await chrome.scripting.insertCSS({
 		target,
