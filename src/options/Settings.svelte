@@ -1,96 +1,39 @@
 <script lang="ts">
 	import settings from "../settings";
 	import EditorModel, { type EntryRef } from "./editor";
-
-	enum LimitUnit {
-		B,
-		KB,
-		MB,
-		GB
-	}
-
-	const units = [
-		LimitUnit.B,
-		LimitUnit.KB,
-		LimitUnit.MB,
-		LimitUnit.GB
-	]
+    import ListEditor from "./ListEditor.svelte";
 
 	const indents = [
 		["Tab", "\t"],
 		["Space", " "]
 	]
 
-	function getByteSize(limit: number, unit: LimitUnit): number {
-		return limit * (1 << (10 * unit));
-	}
-
-	function getLimitUnit(limit: number): [limit: number, unit: LimitUnit] {
-		let unit = units[0];
-		let i = 0;
-		while (true) {
-			if (limit < 1024 || ++i === units.length)
-				break;
-
-			limit >>= 10;
-			unit = units[i];
-		}
-		
-		return [limit, unit];
-	}
-
-	interface SettingValues {
-		enabled: boolean;
-		limitValue: number;
-		limitUnit: LimitUnit;
-		limitEnabled: boolean;
-		indentCount: number;
-		indentChar: string;
-	}
-
-	function convertFrom(settings: settings.Settings): SettingValues {
-		const [limitValue, limitUnit] = getLimitUnit(settings.limitSize);
-		const { enabled, limitEnabled, indentCount, indentChar } = settings;
-		return { enabled, limitEnabled, limitUnit, limitValue, indentCount, indentChar };
-	}
-
-	async function load(): Promise<SettingValues> {
-		const v = await settings.get();
-		return convertFrom(v);
-	}
-
-	// function isDirty(prop: keyof SettingValues) {
-	// 	return original[prop] !== editing[prop];
-	// }
-
 	async function save() {
 		const bag: settings.SaveType = {};
 
-		if (limitUnit.changed || limitValue.changed)
-			bag.limitSize = getByteSize(limitValue.value, limitUnit.value);
-
-		addDirty(bag, limitEnabled);
-		addDirty(bag, enabled);
-		addDirty(bag, indentChar);
-		addDirty(bag, indentCount);
+		addIfDirty(bag, enabled);
+		addIfDirty(bag, mimes);
+		addIfDirty(bag, whitelist);
+		addIfDirty(bag, indentChar);
+		addIfDirty(bag, indentCount);
 
 		await settings.setValues(bag);
 
 		model.commit();
 	}
 
-	function addDirty<K extends (keyof SettingValues) & (keyof settings.Settings)>(bag: settings.SaveType, prop: EntryRef<K, SettingValues[K]>) {
+	function addIfDirty<K extends keyof settings.Settings>(bag: settings.SaveType, prop: EntryRef<K, settings.Settings[K]>) {
 		if (prop.changed)
 			bag[prop.key] = prop.value;
 	}
 
-	const loading = load().then(v => {
+	const loading = settings.get().then(v => {
 		model = new EditorModel(v);
-		({ enabled, limitEnabled, limitUnit, limitValue, indentChar, indentCount } = model.props);
+		({ enabled, mimes, whitelist, indentChar, indentCount } = model.props);
 	});
 
-	let { enabled, limitEnabled, limitUnit, limitValue, indentChar, indentCount } = Object.prototype as typeof model["props"];
-	let model: EditorModel<SettingValues>;
+	let { enabled, mimes, whitelist, indentChar, indentCount } = Object.prototype as typeof model["props"];
+	let model: EditorModel<settings.SettingsBag>;
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
@@ -108,7 +51,13 @@
 		margin: auto;
 
 		> .group {
-			display: contents;
+			&.list {
+				grid-column: 1 / -1;
+			}
+
+			&:not(.list) {
+				display: contents;
+			}
 
 			&.dirty > * {
 				@extend .dirty;
@@ -138,20 +87,11 @@
 				Enabled
 			</label>
 		</div>
-		<div class="group grp-limit-enabled" class:dirty={$limitEnabled.changed}>
-			<label class="check">
-				<input class="control border" type="checkbox" bind:checked={$limitEnabled.value}/>
-				JSON Size Limit
-			</label>
+		<div class="group grp-mimes list" class:dirty={$mimes.changed}>
+			<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." bind:items={$mimes.value}/>
 		</div>
-		<div class="group grp-limit-value">
-			<span class="lbl border">Size limit</span>
-			<input class="control" class:dirty={$limitValue.changed} type="number" step="any" inputmode="numeric" bind:value={$limitValue.value}/>
-			<select class="control" class:dirty={$limitUnit.changed}  bind:value={$limitUnit.value}>
-				{#each units as unit}
-					<option value={unit}>{LimitUnit[unit]}</option>
-				{/each}
-			</select>
+		<div class="group grp-whitelist list" class:dirty={$whitelist.changed}>
+			<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." bind:items={$whitelist.value}/>
 		</div>
 		<div class="group grp-indent">
 			<span class="lbl">Indent</span>

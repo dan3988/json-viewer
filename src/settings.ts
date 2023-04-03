@@ -43,11 +43,14 @@ export namespace settings {
 		return typeof v === "number" ? Math.trunc(v) : parseInt(v);
 	}
 
+	function ArrayType(v: any) {
+		return Array.isArray(v) ? v : [...v];
+	}
+
 	const list = [
-		makeSetting("mimes", Array, ["application/json"]),
+		makeSetting("mimes", ArrayType, ["application/json"]),
+		makeSetting("whitelist", ArrayType, []),
 		makeSetting("enabled", Boolean, true),
-		makeSetting("limitEnabled", Boolean, true),
-		makeSetting("limitSize", Integer, 1 << 20),
 		makeSetting("indentCount", Integer, 1),
 		makeSetting("indentChar", String, "\t")
 	]
@@ -67,9 +70,8 @@ export namespace settings {
 
 	export interface Settings {
 		mimes: string[];
+		whitelist: string[];
 		enabled: boolean;
-		limitEnabled: boolean;
-		limitSize: number;
 		indentCount: number;
 		indentChar: string;
 	}

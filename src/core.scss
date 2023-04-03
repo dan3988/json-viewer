@@ -70,12 +70,13 @@ $anim-med: 200ms;
 	padding: $pad-med;
 }
 
-@mixin img-btn($img) {
+@mixin img-btn($img, $col: unset) {
 	cursor: pointer;
 	position: relative;
 	
 	&:before {
 		content: "";
+		background-color: $col;
 		position: absolute;
 		inset: 1px;
 		-webkit-mask-image: $img;
@@ -89,8 +90,8 @@ $anim-med: 200ms;
 	}
 }
 
-@mixin img-btn-url($name) {
-	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name))
+@mixin img-btn-url($name, $col: unset) {
+	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $col);
 }
 
 @mixin border {
@@ -100,12 +101,17 @@ $anim-med: 200ms;
 @mixin border-rnd {
 	@include border;
 	border-radius: $border-rad;
+	overflow: hidden;
+}
+
+@mixin anim-short($props) {
+	transition-property: $props;
+	transition-duration: $anim-short;
+	transition-timing-function: ease-in-out;
 }
 
 @mixin hv {
-	transition-property: filter;
-	transition-duration: $anim-short;
-	transition-timing-function: ease-in-out;
+	@include anim-short(filter);
 
 	&:hover {
 		z-index: 1;
@@ -113,7 +119,9 @@ $anim-med: 200ms;
 	}
 
 	&:focus,
-	&:focus:hover {
+	&:focus-within
+	&:focus:hover 
+	&:focus-within:hover {
 		z-index: 2;
 		filter: var(--flt-bright-focus);
 	}
