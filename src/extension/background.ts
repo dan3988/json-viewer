@@ -82,8 +82,11 @@ chrome.runtime.onMessage.addListener(async (message: Message, sender, respond) =
 
 	switch (message.type) {
 		case "checkme":
-			if (bag.mimes.includes(message.contentType))
-				await inject(tabId, sender.frameId, "content", false);
+			if (bag.mimes.includes(message.contentType)) {
+				const url = sender.url && new URL(sender.url);
+				const autoLoad = Boolean(url && bag.whitelist.includes(url.host));
+				await inject(tabId, sender.frameId, autoLoad ? "viewer" : "content", autoLoad);
+			}
 
 			respond();
 			break;
