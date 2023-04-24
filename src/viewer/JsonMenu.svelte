@@ -86,10 +86,6 @@
 		@include hv-b4;
 	}
 
-	.btn-light {
-		--bs-btn-border-color: var(--bs-border-color);
-	}
-
 	.input-group:not(.field) > .btn,
 	.input-group.field > .form-control,
 	.input-group.field > .form-select {
@@ -121,13 +117,13 @@
 {#if model}
 <div class="root">
 	<div class="input-group">
-		<button type="button" class="flex-fill btn btn-light" on:click={() => setExpanded(true)}>Expand All</button>
-		<button type="button" class="flex-fill btn btn-light" on:click={() => setExpanded(false)}>Collapse All</button>
+		<button type="button" class="flex-fill btn btn-cust-light" on:click={() => setExpanded(true)}>Expand All</button>
+		<button type="button" class="flex-fill btn btn-cust-light" on:click={() => setExpanded(false)}>Collapse All</button>
 	</div>
 	<div class="input-group field">
 		<span class="input-group-text">Filter</span>
 		<input class="filter-input form-control" type="text" bind:value={filter}/>
-		<button type="button" class="btn btn-light btn-clr" on:click={clearFilter}></button>
+		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearFilter}></button>
 		<select class="filter-type form-select" bind:value={filterMode}>
 			<option value={JsonTokenFilterFlags.Both}>All</option>
 			<option value={JsonTokenFilterFlags.Keys}>Keys</option>
@@ -137,7 +133,7 @@
 	<div class="input-group field">
 		<span class="input-group-text">Path</span>
 		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
-		<button type="button" class="btn btn-light btn-clr" on:click={clearJpath}></button>
+		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
 	<ul class="jpath-results list-group list-group-flush overflow-y-scroll border rounded">
