@@ -24,6 +24,13 @@
 		items = copy;
 	}
 
+	function onKeyDown(this: HTMLInputElement, e: KeyboardEvent) {
+		if (e.key === "Enter") {
+			const evt = new Event("focusout");
+			this.dispatchEvent(evt);
+		}
+	}
+
 	function onFocusOut(e: HTMLInputElement, index: number) {
 		const newValue = e.value;
 		if (newValue === items[index])
@@ -154,7 +161,7 @@
 		</li>
 		{/each}
 		<li class="placeholder">
-			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)}/>
+			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onKeyDown}/>
 		</li>
 	</ul>
 </div>
