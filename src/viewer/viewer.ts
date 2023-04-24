@@ -22,12 +22,12 @@ try {
 		}
 	});
 
-	function suppressPush(fn: Fn)
-	function suppressPush<T>(fn: Fn<[], void, T>, thisArg: T)
+	function suppressPush(fn: Fn): any
+	function suppressPush<T, R>(fn: Fn<[], void, T>, thisArg: T): R
 	function suppressPush(fn: Function, thisArg?: any) {
 		try {
 			popping = true;
-			fn.call(thisArg);
+			return fn.call(thisArg);
 		} finally {
 			popping = false;
 		}
