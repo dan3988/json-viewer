@@ -9,14 +9,16 @@ const gsIcons: Record<number, string> = { ...mf.action.default_icon };
 for (const key in gsIcons)
 	gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
+function updateIcon(path: Record<string, string>, title: string) {
+	const setIcon = chrome.action.setIcon({ path });
+	const setTitle = chrome.action.setTitle({ title });
+	return Promise.all([setIcon, setTitle]);
+}
+
 async function onEnabledChanged(enabled: boolean) {
-	if (enabled) {
-		await chrome.action.setIcon({ path: mf.action.default_icon });
-		await chrome.action.setTitle({ title: mf.action.default_title });
-	} else {
-		await chrome.action.setIcon({ path: gsIcons });
-		await chrome.action.setTitle({ title: mf.action.default_title + " (Disabled)" });
-	}
+	return enabled
+		? updateIcon(mf.action.default_icon, mf.action.default_title)
+		: updateIcon(gsIcons, mf.action.default_title + " (Disabled)");
 }
 
 async function loadSettings() {
