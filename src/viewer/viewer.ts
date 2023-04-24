@@ -1,5 +1,7 @@
 /// <reference path="../../node_modules/json5/lib/index.d.ts" />
 
+import settings from "../settings";
+import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
 import { JsonProperty } from "./json"
 import { ViewerModel } from "./viewer-model";
@@ -55,6 +57,22 @@ try {
 	
 		return parts;
 	}
+
+	async function loadAsync() {
+		const { darkMode } = await settings.get("darkMode");
+		const tracker = new ThemeTracker(document.documentElement, darkMode);
+	
+		settings.addListener(v => {
+			const { darkMode } = v.changes;
+			if (darkMode !== undefined)
+				tracker.preferDark = darkMode.newValue;
+		}, "local");
+		
+		new JsonViewer({
+			target: document.body,
+			props: { model }
+		})
+	}
 	
 	let popping = false;
 	if (location.hash)
@@ -73,12 +91,8 @@ try {
 			}
 		});
 	})
-	
-	new JsonViewer({
-		target: document.body,
-		props: { model }
-	})
 
+	loadAsync();
 	undefined;
 } catch (e) {
 	e instanceof Error ? `${e.name} ${e.message}` : e;

@@ -47,7 +47,16 @@ export namespace settings {
 		return Array.isArray(v) ? v : [...v];
 	}
 
+	function NullableType<T>(v: SettingType<T>): SettingType<T | null> {
+		return <any>NullableType.value.bind(v);
+	}
+
+	NullableType.value = function<T>(this: SettingType<T>, value: any): T | null {
+		return value == null ? null : this(value);
+	}
+
 	const list = [
+		makeSetting("darkMode", NullableType(Boolean), null),
 		makeSetting("mimes", ArrayType, ["application/json"]),
 		makeSetting("whitelist", ArrayType, []),
 		makeSetting("enabled", Boolean, true),
@@ -69,6 +78,7 @@ export namespace settings {
 	}
 
 	export interface Settings {
+		darkMode: null | boolean;
 		mimes: string[];
 		whitelist: string[];
 		enabled: boolean;
@@ -99,10 +109,10 @@ export namespace settings {
 	export function addListener(handler: ChangeHandler, type?: "both" | "sync" | "local") {
 		let [sync, local] = type == null || type === "both" ? [true, true] : [type === "sync", type === "local"];
 		if (local)
-			chrome.storage.sync.onChanged.addListener((changes) => handler({ changes, synced: false }));
+			chrome.storage.local.onChanged.addListener((changes) => handler({ changes, synced: false }));
 
 		if (sync)
-			chrome.storage.local.onChanged.addListener((changes) => handler({ changes, synced: true }));
+			chrome.storage.sync.onChanged.addListener((changes) => handler({ changes, synced: true }));
 	}
 
 	export function getSetting<K extends keyof Settings>(key: K, required: true): Setting<Settings[K]>

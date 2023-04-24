@@ -2,23 +2,12 @@
 	import type { ViewerModel } from "./viewer-model";
 	import JsonProperty from "./JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
-    import { onDestroy, onMount } from "svelte";
+	import { onMount } from "svelte";
 	import settings from "../settings";
-    import type { JsonToken } from "./json";
-    import JsonPathEditor from "./JsonPathEditor.svelte";
-    import ThemeTracker from "../theme-tracker";
+	import type { JsonToken } from "./json";
+	import JsonPathEditor from "./JsonPathEditor.svelte";
 
 	export let model: ViewerModel;
-
-	function trackTheme(e: HTMLElement) {
-		const tracker = new ThemeTracker(e);
-		return {
-			destroy() {
-				tracker.destroy();
-			}
-		}
-	}
-
 
 	const getter = settings.get().then((v) => {
 		indentChar = v.indentChar;
@@ -239,7 +228,7 @@
 	}
 </style>
 
-<div class="root bg-body text-body" use:trackTheme>
+<div class="root bg-body text-body">
 	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
 		<JsonProperty model={model} prop={model.root} indent={0}/>
 	</div>

@@ -81,7 +81,7 @@
 
 	.btn-help {
 		@include hv-b4;
-		@include img-btn-url("info.svg", 2px, var(--col-blue));
+		@include img-btn-url("info.svg", 2px, var(--bs-blue));
 	}
 
 	.root {

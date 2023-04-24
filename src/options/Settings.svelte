@@ -1,8 +1,10 @@
 <script lang="ts">
 	import settings from "../settings";
+	import ThemeTracker from "../theme-tracker";
 	import EditorModel, { type EntryRef } from "./editor";
-    import ListEditor from "./ListEditor.svelte";
+	import ListEditor from "./ListEditor.svelte";
 
+	const tracker = new ThemeTracker(document.documentElement);
 	const indents = [
 		["Tab", "\t"],
 		["Space", " "]
@@ -11,6 +13,7 @@
 	async function save() {
 		const bag: settings.SaveType = {};
 
+		addIfDirty(bag, darkMode);
 		addIfDirty(bag, enabled);
 		addIfDirty(bag, mimes);
 		addIfDirty(bag, whitelist);
@@ -30,11 +33,12 @@
 	const loading = settings.get().then(v => {
 		model = new EditorModel(v);
 		model.addListener(() => canSave = true);
-		({ enabled, mimes, whitelist, indentChar, indentCount } = model.props);
+		({ darkMode, enabled, mimes, whitelist, indentChar, indentCount } = model.props);
+		darkMode.subscribe(v => tracker.preferDark = v.value);
 	});
 
 	let canSave = false;
-	let { enabled, mimes, whitelist, indentChar, indentCount } = Object.prototype as typeof model["props"];
+	let { darkMode, enabled, mimes, whitelist, indentChar, indentCount } = Object.prototype as typeof model["props"];
 	let model: EditorModel<settings.SettingsBag>;
 </script>
 <style lang="scss">
@@ -42,7 +46,7 @@
 	@import "../globals.scss";
 
 	.dirty:not(:invalid) {
-		background-color: #553;
+		//background-color: #553;
 	}
 
 	.grp-indent > select {
@@ -70,6 +74,12 @@
 				<input class="form-check-input" type="checkbox" bind:checked={$enabled.value}/>
 				Enabled
 			</label>
+		</div>
+		<div class="input-group input-group-eq" class:dirty={$darkMode.changed}>
+			<span class="input-group-text">Theme</span>
+			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value == null} on:click={() => $darkMode.value = null}>Default</span>
+			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value === false} on:click={() => $darkMode.value = false}>Light</span>
+			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value === true} on:click={() => $darkMode.value = true}>Dark</span>
 		</div>
 		<div class="input-group grp-mimes list" class:dirty={$mimes.changed}>
 			<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." bind:items={$mimes.value}/>
