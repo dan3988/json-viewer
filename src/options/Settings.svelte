@@ -65,8 +65,12 @@
 		}
 	}
 
-	.eq > * {
+	.grp-theme > * {
 		flex: 1 1 0px;
+
+		&.active {
+			z-index: 3;
+		}
 	}
 </style>
 {#await loading}
@@ -79,11 +83,11 @@
 				Enabled
 			</label>
 		</div>
-		<div class="input-group eq" class:dirty={$darkMode.changed}>
+		<div class="input-group grp-theme" class:dirty={$darkMode.changed}>
 			<span class="input-group-text">Theme</span>
-			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value == null} on:click={() => $darkMode.value = null}>Default</span>
-			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value === false} on:click={() => $darkMode.value = false}>Light</span>
-			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value === true} on:click={() => $darkMode.value = true}>Dark</span>
+			<span role="button" class="btn btn-cust-light" class:active={$darkMode.value == null} on:click={() => $darkMode.value = null}>Default</span>
+			<span role="button" class="btn btn-cust-light" class:active={$darkMode.value === false} on:click={() => $darkMode.value = false}>Light</span>
+			<span role="button" class="btn btn-cust-light" class:active={$darkMode.value === true} on:click={() => $darkMode.value = true}>Dark</span>
 		</div>
 		<div class="input-group grp-mimes list" class:dirty={$mimes.changed}>
 			<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." bind:items={$mimes.value}/>
