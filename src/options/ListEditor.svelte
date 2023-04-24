@@ -71,23 +71,19 @@
 	}
 
 	.btn-rm {
-		@include img-btn-url("delete.svg");
+		@include img-btn-url("delete.svg", $pad-med);
 
-		&::before {
-			inset: $pad-med;
-			background-color: var(--col-bg-err);
-		}
+		--bs-btn-border-color: #a52834;
+		--bs-btn-hover-border-color: #b02a37;
+		--bs-btn-active-border-color: #dc3545;
+		--bs-btn-disabled-border-color: #dc3545;
 	}
 
 	.btn-help {
-		@include hv-b4;
 		@include img-btn-url("info.svg", 2px, var(--bs-blue));
 	}
 
 	.root {
-		@include border-rnd;
-		@include font-elem;
-
 		display: flex;
 		flex-direction: column;
 
@@ -112,26 +108,16 @@
 			padding: 0;
 			max-height: 15rem;
 			flex: 1 1 auto;
-			overflow-y: scroll;
 
 			> li {
 				display: flex;
-				
-				> .btn-rm {
-					@include anim-short(opacity);
+				padding: 0;
 
+				&:not(:hover) > .btn-rm {
 					opacity: 0;
 				}
 
-				&:hover {
-					> .btn-rm {
-						opacity: 1;
-					}
-				}
-
 				> .button {
-					@include hv;
-
 					flex: 0 0 2rem;
 				}
 
@@ -147,21 +133,21 @@
 		}
 	}
 </style>
-<div class="root flex-fill border rounded">
+<div class="root flex-fill border rounded overflow-hidden">
 	<div class="head nav-header border-bottom bg-body-tertiary">
 		{#if help}
 		<span class="button btn-help" title={help}></span>
 		{/if}
 		<span class="title">{title}</span>
 	</div>
-	<ul class="list">
+	<ul class="list list-group list-group-flush overflow-y-scroll">
 		{#each items as item, i}
-		<li>
+		<li class="list-group-item">
 			<input class="value" type="text" placeholder="Empty" on:focusout={evt => onFocusOut(evt.currentTarget, i)} value={item}/>
-			<span class="button btn-rm" title="Delete" on:click={() => deleteAt(i)}></span>
+			<span class="button btn-rm" role="button" title="Delete" on:click={() => deleteAt(i)}></span>
 		</li>
 		{/each}
-		<li class="pc">
+		<li class="list-group-item pc">
 			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onKeyDown}/>
 		</li>
 	</ul>
