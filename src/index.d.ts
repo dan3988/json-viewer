@@ -4,6 +4,8 @@ declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 	new(...args: TArgs): TValue;
 }
 
+declare var JSON5: typeof import("json5");
+
 declare interface Array<T> {
 	at(index: number): undefined | T
 }

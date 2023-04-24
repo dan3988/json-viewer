@@ -35,14 +35,12 @@ async function loadSettings() {
 	});
 }
 
-loadSettings();
-
 async function inject(tabId: number, frameId: number | undefined, script: string, addJsonic: boolean) {
 	const target = { tabId, frameIds: frameId == undefined ? undefined : [frameId] };
 	const files = [ `lib/${script}.js` ];
 
 	if (addJsonic)
-		files.unshift("node_modules/jsonic/jsonic-min.js");
+		files.unshift("node_modules/json5/dist/index.min.js");
 
 	await chrome.scripting.insertCSS({
 		target,
@@ -76,9 +74,8 @@ interface CheckMessage extends MessageBase {
 
 type Message = LoadMessage | CheckMessage;
 
-const callbacks = new Map<string, Function>();
+loadSettings();
 
-//chrome.webRequest.onHeadersReceived.addListener(onHeadersRecieved, filter, [ "responseHeaders" ]);
 chrome.runtime.onMessage.addListener((message: Message, sender, respond) => {
 	const tabId = sender.tab?.id;
 	if (tabId == null)

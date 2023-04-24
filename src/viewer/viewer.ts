@@ -1,15 +1,16 @@
+/// <reference path="../../node_modules/json5/lib/index.d.ts" />
+
 import JsonViewer from "./JsonViewer.svelte";
 import { JsonProperty } from "./json"
 import { ViewerModel } from "./viewer-model";
 
 try {
-	// @ts-ignore
-	const parse = typeof jsonic === "function" ? jsonic : JSON.parse;
+	const lib = typeof JSON5 === "undefined" ? JSON : JSON5;
 	const pre = document.querySelector("body > pre") as null | HTMLPreElement;
 	if (pre == null)
 		throw "Could not find JSON element.";
 
-	const json = parse(pre.innerText);
+	const json = lib.parse(pre.innerText);
 	pre.remove();
 	const root = JsonProperty.create(json);
 	const model = new ViewerModel(root);
