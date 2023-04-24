@@ -64,6 +64,10 @@
 			width: 100%;
 		}
 	}
+
+	.eq > * {
+		flex: 1 1 0px;
+	}
 </style>
 {#await loading}
 	<p>Loading...</p>
@@ -75,7 +79,7 @@
 				Enabled
 			</label>
 		</div>
-		<div class="input-group input-group-eq" class:dirty={$darkMode.changed}>
+		<div class="input-group eq" class:dirty={$darkMode.changed}>
 			<span class="input-group-text">Theme</span>
 			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value == null} on:click={() => $darkMode.value = null}>Default</span>
 			<span role="button" class="btn btn-outline-secondary" class:active={$darkMode.value === false} on:click={() => $darkMode.value = false}>Light</span>
