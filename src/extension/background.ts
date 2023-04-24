@@ -74,12 +74,7 @@ interface CheckMessage extends MessageBase {
 	contentType: string;
 }
 
-interface ErrorMessage extends MessageBase {
-	type: "error";
-	message: string;
-}
-
-type Message = LoadMessage | CheckMessage | ErrorMessage;
+type Message = LoadMessage | CheckMessage;
 
 const callbacks = new Map<string, Function>();
 
@@ -90,17 +85,8 @@ chrome.runtime.onMessage.addListener((message: Message, sender, respond) => {
 		return;
 
 	switch (message.type) {
-		case "error":
-			if (sender.id) {
-				const cb = callbacks.get(sender.id);
-				if (cb)
-					cb(message);
-			}
-
-			respond();
-			break;
 		case "checkme":
-			if (bag.mimes.includes(message.contentType)) {
+			if (bag.enabled && bag.mimes.includes(message.contentType)) {
 				const url = sender.url && new URL(sender.url);
 				const autoLoad = Boolean(url && bag.whitelist.includes(url.host));
 				inject(tabId, sender.frameId, autoLoad ? "viewer" : "content", autoLoad).then(respond);
