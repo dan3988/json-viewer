@@ -44,7 +44,7 @@ async function inject(tabId: number, frameId: number | undefined, script: string
 
 	if (viewer) {
 		scripts.unshift("node_modules/json5/dist/index.min.js");
-		styles.unshift("https://getbootstrap.com/docs/5.3/dist/css/bootstrap.min.css");
+		styles.unshift("node_modules/bootstrap/dist/css/bootstrap.min.css");
 	}
 
 	await chrome.scripting.insertCSS({

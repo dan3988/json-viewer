@@ -70,15 +70,36 @@ $anim-med: 200ms;
 	padding: $pad-med;
 }
 
-@mixin img-btn($img, $col: unset) {
-	cursor: pointer;
+@mixin img-btn($img, $padding: 0, $color: null) {
 	position: relative;
+
+	@if ($color == null) {
+		&:hover::before {
+			background-color: var(--bs-btn-hover-color);
+		}
+	
+		&:active::before {
+			background-color: var(--bs-btn-active-color);
+		}
+	
+		&:disabled::before {
+			background-color: var(--bs-btn-disabled-color);
+		}
+		
+		&::before {
+			background-color: var(--bs-btn-color);
+		}
+	} @else {
+		&::before {
+			background-color: $color;
+		}
+	}
+
 	
 	&:before {
 		content: "";
-		background-color: $col;
 		position: absolute;
-		inset: 1px;
+		inset: $padding;
 		-webkit-mask-image: $img;
 		-webkit-mask-repeat: no-repeat;
 		-webkit-mask-size: contain;
@@ -90,8 +111,8 @@ $anim-med: 200ms;
 	}
 }
 
-@mixin img-btn-url($name, $col: unset) {
-	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $col);
+@mixin img-btn-url($name, $padding: 0, $color: null) {
+	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $padding, $color);
 }
 
 @mixin border {

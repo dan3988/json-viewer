@@ -1,6 +1,6 @@
 @use "./core.scss" as core;
 
-:root {
+:root, [data-bs-theme=light] {
 	--flt-bright-hv: brightness(0.97);
 	--flt-bright-focus: brightness(0.9);
 
@@ -36,7 +36,7 @@
 	--font-family: Calibri;
 }
 
-@media (prefers-color-scheme: dark) {
+[data-bs-theme=dark] {
 	:root {
 		--flt-bright-hv: brightness(1.2);
 		--flt-bright-focus: brightness(1.4);
@@ -70,44 +70,6 @@
 		--col-red: #F86;
 		--col-grn: #4F8;
 	}
-}
-
-:global(input:not([type="checkbox"]).control),
-:global(textarea.control) {
-	@include core.control;
-	background-color: var(--col-bg-dk);
-
-	&:invalid {
-		background-color: var(--col-bg-err);
-	}
-}
-
-:global(.control) {
-	@include core.control;
-	background-color: var(--col-bg-lt);
-}
-
-:global(.check) {
-	@include core.check;
-}
-
-:global(.lbl),
-:global(.btn) {
-	@include core.border-rnd;
-	@include core.font-elem;
-
-	text-align: center;
-	background-color: var(--col-bg-lt);
-	padding: core.$pad-med core.$pad-l;
-}
-
-:global(.btn) {
-	@include core.hv;
-	cursor: pointer;
-}
-
-:global(.group) {
-	@include core.group;
 }
 
 :global(ul) {
