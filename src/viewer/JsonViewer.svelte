@@ -178,6 +178,8 @@
 
 	.w-prop {
 		font-family: monospace;
+		font-size: 12px;
+
 		padding: $pad-small;
 		grid-area: 1 / 1 / -2 / span 1;
 		overflow: scroll;

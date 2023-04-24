@@ -84,10 +84,16 @@
 	.btn-clr {
 		@include img-btn-url("clear.svg");
 		@include hv-b4;
+	}
 
-		&:before {
-			background-color: var(--col-border);
-		}
+	.btn-light {
+		--bs-btn-border-color: var(--bs-border-color);
+	}
+
+	.input-group:not(.field) > .btn,
+	.input-group.field > .form-control,
+	.input-group.field > .form-select {
+		width: unset;
 	}
 
 	.root {
@@ -95,76 +101,48 @@
 		inset: 0;
 		display: grid;
 		grid-template-rows: auto auto auto 1fr;
-		grid-template-columns: 6rem auto 2rem 6rem;
+		grid-template-columns: 6rem 1fr 2rem 6rem;
 		grid-row-gap: $pad-med;
 		flex-direction: column;
+
+		> .field {
+			display: contents;
+		}
 		
 		> * {
 			grid-column: 1 / -1;
 		}
-
-		> .group.field {
-			display: contents;
-
-			> :last-child {
-				grid-column-end: -1;
-			}
-		}
 	}
 
 	.jpath-results {
-		@include border-rnd;
-		@include font-elem;
-
-		--font-family: monospace;
-		overflow-y: scroll;
-		padding: $pad-med;
-
-		> li {
-			@include border-rnd;
-			@include hv;
-
-			cursor: pointer;
-			padding: $pad-small;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-
-			&:hover {
-				background-color: var(--col-bg-lt);
-			}
-
-			&:not(:hover) {
-				border-color: transparent;
-			}
-		}
+		font-family: monospace;
 	}
 </style>
 {#if model}
 <div class="root">
-	<div class="group">
-		<button type="button" class="btn" on:click={() => setExpanded(true)}>Expand All</button>
-		<button type="button" class="btn" on:click={() => setExpanded(false)}>Collapse All</button>
+	<div class="input-group">
+		<button type="button" class="flex-fill btn btn-light" on:click={() => setExpanded(true)}>Expand All</button>
+		<button type="button" class="flex-fill btn btn-light" on:click={() => setExpanded(false)}>Collapse All</button>
 	</div>
-	<div class="group field">
-		<span class="lbl">Filter</span>
-		<input class="filter-input control" type="text" bind:value={filter}/>
-		<button type="button" class="btn btn-clr" on:click={clearFilter}></button>
-		<select class="filter-type control" bind:value={filterMode}>
+	<div class="input-group field">
+		<span class="input-group-text">Filter</span>
+		<input class="filter-input form-control" type="text" bind:value={filter}/>
+		<button type="button" class="btn btn-light btn-clr" on:click={clearFilter}></button>
+		<select class="filter-type form-select" bind:value={filterMode}>
 			<option value={JsonTokenFilterFlags.Both}>All</option>
 			<option value={JsonTokenFilterFlags.Keys}>Keys</option>
 			<option value={JsonTokenFilterFlags.Values}>Values</option>
 		</select>
 	</div>
-	<div class="group field">
-		<span class="lbl">Path</span>
-		<input class="jpath-input control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
-		<button type="button" class="btn btn-clr" on:click={clearJpath}></button>
-		<button type="button" class="btn btn-eval" on:click={evaluateJpath}>Evaluate</button>
+	<div class="input-group field">
+		<span class="input-group-text">Path</span>
+		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
+		<button type="button" class="btn btn-light btn-clr" on:click={clearJpath}></button>
+		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
-	<ul class="jpath-results">
+	<ul class="jpath-results list-group list-group-flush overflow-y-scroll border rounded">
 		{#each jpathResults as path}
-			<li tabindex="0" on:keypress={e => jpathItemEvent(path, e)} on:click={e => jpathItemEvent(path, e)}>{path}</li>
+			<li tabindex="0" role="button" class="list-group-item list-group-item-action" on:keypress={e => jpathItemEvent(path, e)} on:click={e => jpathItemEvent(path, e)}>{path}</li>
 		{/each}
 	</ul>	
 </div>

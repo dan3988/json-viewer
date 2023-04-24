@@ -75,19 +75,19 @@ $anim-med: 200ms;
 
 	@if ($color == null) {
 		&:hover::before {
-			background-color: var(--bs-btn-hover-color);
+			background-color: var(--bs-btn-hover-border-color);
 		}
 	
 		&:active::before {
-			background-color: var(--bs-btn-active-color);
+			background-color: var(--bs-btn-active-border-color);
 		}
 	
 		&:disabled::before {
-			background-color: var(--bs-btn-disabled-color);
+			background-color: var(--bs-btn-disabled-border-color);
 		}
 		
 		&::before {
-			background-color: var(--bs-btn-color);
+			background-color: var(--bs-btn-border-color);
 		}
 	} @else {
 		&::before {

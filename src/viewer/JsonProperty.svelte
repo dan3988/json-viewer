@@ -154,11 +154,7 @@
 
 		&:not(.expanded) {
 			> .expander {
-				@include img-btn-url("arrow.svg", var(--col-shadow));
-
-				&:before {
-					inset: 20%;
-				}
+				@include img-btn-url("arrow.svg", 20%, var(--col-shadow));
 			}
 
 			> .expander::before {
