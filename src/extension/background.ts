@@ -52,15 +52,17 @@ async function inject(tabId: number, frameId: number | undefined, script: string
 		]
 	});
 	
-	await chrome.scripting.executeScript({
+	const result = await chrome.scripting.executeScript({
 		target,
 		files,
 		world: "ISOLATED"
 	});
+
+	return result[0].result;
 }
 
 interface MessageBase {
-	type: "checkme" | "loadme";
+	type: "checkme" | "loadme" | "error";
 }
 
 interface LoadMessage extends MessageBase {
@@ -72,27 +74,41 @@ interface CheckMessage extends MessageBase {
 	contentType: string;
 }
 
-type Message = LoadMessage | CheckMessage;
+interface ErrorMessage extends MessageBase {
+	type: "error";
+	message: string;
+}
+
+type Message = LoadMessage | CheckMessage | ErrorMessage;
+
+const callbacks = new Map<string, Function>();
 
 //chrome.webRequest.onHeadersReceived.addListener(onHeadersRecieved, filter, [ "responseHeaders" ]);
-chrome.runtime.onMessage.addListener(async (message: Message, sender, respond) => {
+chrome.runtime.onMessage.addListener((message: Message, sender, respond) => {
 	const tabId = sender.tab?.id;
 	if (tabId == null)
 		return;
 
 	switch (message.type) {
-		case "checkme":
-			if (bag.mimes.includes(message.contentType)) {
-				const url = sender.url && new URL(sender.url);
-				const autoLoad = Boolean(url && bag.whitelist.includes(url.host));
-				await inject(tabId, sender.frameId, autoLoad ? "viewer" : "content", autoLoad);
+		case "error":
+			if (sender.id) {
+				const cb = callbacks.get(sender.id);
+				if (cb)
+					cb(message);
 			}
 
 			respond();
 			break;
-		case "loadme":
-			await inject(tabId, sender.frameId, "viewer", true);
-			respond();
+		case "checkme":
+			if (bag.mimes.includes(message.contentType)) {
+				const url = sender.url && new URL(sender.url);
+				const autoLoad = Boolean(url && bag.whitelist.includes(url.host));
+				inject(tabId, sender.frameId, autoLoad ? "viewer" : "content", autoLoad).then(respond);
+				return true;
+			}
 			break;
+		case "loadme":
+			inject(tabId, sender.frameId, "viewer", true).then(respond);
+			return true;
 	}
 });

@@ -1,14 +1,18 @@
 <script lang="ts" >
     let elem: HTMLElement;
+	let err: string;
 
-    async function onYes() {
-        await chrome.runtime.sendMessage({ type: "loadme" });
-        elem.remove();
-    }
+	async function onYes() {
+		const res = await chrome.runtime.sendMessage({ type: "loadme" });
+		if (res != null)
+			alert(res);
 
-    function onNo() {
-        elem.remove();
-    }
+		elem.remove();
+	}
+
+	function onNo() {
+		elem.remove();
+	}
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
