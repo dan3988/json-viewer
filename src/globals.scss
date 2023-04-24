@@ -1,9 +1,6 @@
 @use "./core.scss" as core;
 
-:root, [data-bs-theme=light] {
-	--flt-bright-hv: brightness(0.97);
-	--flt-bright-focus: brightness(0.9);
-
+:root, :global([data-bs-theme="light"]) {
 	--col-json-key-fg: #18F;
 	--col-json-str-fg: #854;
 	--col-json-num-fg: #992;
@@ -21,14 +18,6 @@
 	--col-indent-7: #C8C;
 	--col-indent-8: #C4C;
 
-	--col-fg: #000;
-	--col-body: #FFF;
-	--col-border: #999;
-	--col-bg-dk: #FFF;
-	--col-bg-lt: #CCC;
-	--col-bg-err: #F99;
-	--col-shadow: #999;
-
 	--col-blue: #00F;
 	--col-red: #F00;
 	--col-grn: #0F0;
@@ -36,40 +25,27 @@
 	--font-family: Calibri;
 }
 
-[data-bs-theme=dark] {
-	:root {
-		--flt-bright-hv: brightness(1.2);
-		--flt-bright-focus: brightness(1.4);
+:global([data-bs-theme="dark"]) {
+	--col-json-key-fg: #8CF;
+	--col-json-str-fg: #C75;
+	--col-json-num-fg: #FF8;
+	--col-json-bln-fg: #38F;
+	--col-json-null-fg: #95F;
+	--col-match-fg: #000;
+	--col-match-bg: #FF0;
 
-		--col-json-key-fg: #8CF;
-		--col-json-str-fg: #C75;
-		--col-json-num-fg: #FF8;
-		--col-json-bln-fg: #38F;
-		--col-json-null-fg: #95F;
-		--col-match-fg: #000;
-		--col-match-bg: #FF0;
+	--col-indent-1: #B44;
+	--col-indent-2: #B84;
+	--col-indent-3: #BB8;
+	--col-indent-4: #8B8;
+	--col-indent-5: #4BB;
+	--col-indent-6: #48B;
+	--col-indent-7: #B8B;
+	--col-indent-8: #B4B;
 
-		--col-indent-1: #B44;
-		--col-indent-2: #B84;
-		--col-indent-3: #BB8;
-		--col-indent-4: #8B8;
-		--col-indent-5: #4BB;
-		--col-indent-6: #48B;
-		--col-indent-7: #B8B;
-		--col-indent-8: #B4B;
-
-		--col-fg: #FFF;
-		--col-body: #111;
-		--col-border: #444;
-		--col-bg-dk: #333;
-		--col-bg-lt: #555;
-		--col-bg-err: #933;
-		--col-shadow: #999;
-
-		--col-blue: #68F;
-		--col-red: #F86;
-		--col-grn: #4F8;
-	}
+	--col-blue: #68F;
+	--col-red: #F86;
+	--col-grn: #4F8;
 }
 
 :global(ul) {

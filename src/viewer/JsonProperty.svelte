@@ -46,8 +46,6 @@
 		display: grid;
 		grid-template-columns: 1em auto auto auto 1fr;
 		grid-template-rows: auto auto auto;
-		border: 1px transparent solid;
-		border-radius: 5px;
 
 		--col-indent: var(--col-shadow);
 
@@ -55,9 +53,12 @@
 			display: none !important;
 		}
 
+		&:not(.selected) {
+			border-color: transparent !important;
+		}
+
 		&.selected {
-			border-color: var(--col-border);
-			background-color: var(--col-bg-dk);
+			background-color: var(--bs-secondary-bg);
 		}
 
 		&.for-container {
@@ -154,7 +155,7 @@
 
 		&:not(.expanded) {
 			> .expander {
-				@include img-btn-url("arrow.svg", 20%, var(--col-shadow));
+				@include img-btn-url("arrow.svg", 20%, var(--bs-body-color));
 			}
 
 			> .expander::before {
@@ -227,7 +228,7 @@
 {#if prop}
 <div
 	hidden={$hidden}
-	class="json-prop for-{prop.value.type} for-{prop.value.subtype}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}"
+	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}"
 	class:expanded={$expanded}
 	class:selected={$selected}>
 	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop} use:renderKey={prop.key}/>
