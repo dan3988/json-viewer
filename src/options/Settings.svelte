@@ -29,9 +29,11 @@
 
 	const loading = settings.get().then(v => {
 		model = new EditorModel(v);
+		model.addListener(() => canSave = true);
 		({ enabled, mimes, whitelist, indentChar, indentCount } = model.props);
 	});
 
+	let canSave = false;
 	let { enabled, mimes, whitelist, indentChar, indentCount } = Object.prototype as typeof model["props"];
 	let model: EditorModel<settings.SettingsBag>;
 </script>
@@ -43,32 +45,14 @@
 		background-color: #553;
 	}
 
+	.grp-indent > select {
+		flex: 0 0 6rem;
+	}
+
 	.base {
-		display: grid;
-		grid-template-columns: 7rem 1fr 7rem;
-		grid-row-gap: 5px;
+		justify-content: stretch;
 		width: 500px;
 		margin: auto;
-
-		> .group {
-			&.list {
-				grid-column: 1 / -1;
-			}
-
-			&:not(.list) {
-				display: contents;
-			}
-
-			&.dirty > * {
-				@extend .dirty;
-			}
-		}
-
-		> .grp-enabled > *,
-		> .grp-limit-enabled > *,
-		> .btn {
-			grid-column: 1 / -1;
-		}
 	}
 
 	@media only screen and (max-width: 500px) {
@@ -80,28 +64,28 @@
 {#await loading}
 	<p>Loading...</p>
 {:then}
-	<div class="base cr">
-		<div class="group grp-enabled" class:dirty={$enabled.changed}>
-			<label class="check">
-				<input class="control border" type="checkbox" bind:checked={$enabled.value}/>
+	<div class="base cr d-flex flex-column p-1 gap-1">
+		<div class="input-group" class:dirty={$enabled.changed}>
+			<label class="input-group-text flex-fill align-items-start gap-1">
+				<input class="form-check-input" type="checkbox" bind:checked={$enabled.value}/>
 				Enabled
 			</label>
 		</div>
-		<div class="group grp-mimes list" class:dirty={$mimes.changed}>
+		<div class="input-group grp-mimes list" class:dirty={$mimes.changed}>
 			<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." bind:items={$mimes.value}/>
 		</div>
-		<div class="group grp-whitelist list" class:dirty={$whitelist.changed}>
+		<div class="input-group grp-whitelist list" class:dirty={$whitelist.changed}>
 			<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." bind:items={$whitelist.value}/>
 		</div>
-		<div class="group grp-indent">
-			<span class="lbl">Indent</span>
-			<input class="control" class:dirty={$indentCount.changed} type="number" inputmode="numeric" bind:value={$indentCount.value}/>
-			<select class="control" class:dirty={$indentChar.changed} bind:value={$indentChar.value}>
+		<div class="input-group grp-indent">
+			<span class="input-group-text">Indent</span>
+			<input class="form-control" class:dirty={$indentCount.changed} type="number" inputmode="numeric" bind:value={$indentCount.value}/>
+			<select class="form-select" class:dirty={$indentChar.changed} bind:value={$indentChar.value}>
 				{#each indents as [key, value]}
 					<option value={value}>{key}</option>
 				{/each}
 			</select>
 		</div>
-		<button class="btn border control lt" on:click={save}>Save</button>
+		<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>
 	</div>
 {/await}

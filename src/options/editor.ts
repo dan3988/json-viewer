@@ -86,8 +86,11 @@ class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 	}
 }
 
+type EditorListener = () => void;
+
 export class EditorModel<T extends Dict = Dict> {
 	readonly #props: PropsTypeInternal<T>;
+	readonly #listeners: EditorListener[];
 
 	get props(): PropsType<T> {
 		return this.#props;
@@ -95,13 +98,25 @@ export class EditorModel<T extends Dict = Dict> {
 
 	constructor(values: T) {
 		const props: any = {};
+		const handler = this.#handler.bind(this);
+
+		this.#props = props;
+		this.#listeners = [];
 
 		for (const key in values) {
 			const value = values[key];
-			props[key] = new EntryImpl(key, value);
+			const entry = new EntryImpl(key, value);
+			entry.subscribe(handler);
+			props[key] = entry;
 		}
+	}
 
-		this.#props = props;
+	addListener(listener: EditorListener) {
+		this.#listeners.push(listener);
+	}
+
+	#handler() {
+		this.#listeners.forEach(v => v());
 	}
 
 	commit() {

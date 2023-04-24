@@ -37,24 +37,25 @@ async function loadSettings() {
 	});
 }
 
-async function inject(tabId: number, frameId: number | undefined, script: string, addJsonic: boolean) {
+async function inject(tabId: number, frameId: number | undefined, script: string, viewer: boolean) {
 	const target = { tabId, frameIds: frameId == undefined ? undefined : [frameId] };
-	const files = [ `lib/${script}.js` ];
+	const scripts = [ `lib/${script}.js` ];
+	const styles = [ `lib/${script}.css` ];
 
-	if (addJsonic)
-		files.unshift("node_modules/json5/dist/index.min.js");
+	if (viewer) {
+		scripts.unshift("node_modules/json5/dist/index.min.js");
+		styles.unshift("https://getbootstrap.com/docs/5.3/dist/css/bootstrap.min.css");
+	}
 
 	await chrome.scripting.insertCSS({
 		target,
-		origin: "AUTHOR",
-		files: [
-			`lib/${script}.css`,
-		]
+		files: styles,
+		origin: "AUTHOR"
 	});
 	
 	const result = await chrome.scripting.executeScript({
 		target,
-		files,
+		files: scripts,
 		world: "ISOLATED"
 	});
 

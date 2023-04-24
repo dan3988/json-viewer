@@ -56,7 +56,7 @@
 	.value {
 		background-color: transparent;
 		outline: none;
-		color: var(--col-fg);
+		color: var(--bs-body-color);
 		border: none;
 	}
 
@@ -93,7 +93,6 @@
 
 		> .head {
 			padding: $pad-med;
-			background-color: var(--col-bg-lt);
 			display: flex;
 			gap: 5px;
 
@@ -109,6 +108,8 @@
 		}
 
 		> .list {
+			margin: 0;
+			padding: 0;
 			max-height: 15rem;
 			flex: 1 1 auto;
 			overflow-y: scroll;
@@ -146,8 +147,8 @@
 		}
 	}
 </style>
-<div class="root">
-	<div class="head">
+<div class="root flex-fill border rounded">
+	<div class="head nav-header border-bottom bg-body-tertiary">
 		{#if help}
 		<span class="button btn-help" title={help}></span>
 		{/if}
@@ -160,7 +161,7 @@
 			<span class="button btn-rm" title="Delete" on:click={() => deleteAt(i)}></span>
 		</li>
 		{/each}
-		<li class="placeholder">
+		<li class="pc">
 			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onKeyDown}/>
 		</li>
 	</ul>
