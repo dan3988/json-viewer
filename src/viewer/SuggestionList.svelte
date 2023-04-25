@@ -105,8 +105,6 @@
 	@use "../core.scss" as *;
 
 	.list {
-		@include font-elem;
-
 		position: absolute;
 		left: 0;
 		right: 0;

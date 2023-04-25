@@ -195,7 +195,6 @@
 	}
 
 	.expander {
-		@include hv-b4;
 		cursor: pointer;
 		position: relative;
 

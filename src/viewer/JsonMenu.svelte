@@ -83,7 +83,6 @@
 
 	.btn-clr {
 		@include img-btn-url("clear.svg", 20%);
-		@include hv-b4;
 	}
 
 	.input-group:not(.field) > .btn,

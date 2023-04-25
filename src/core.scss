@@ -8,68 +8,6 @@ $pad-l: 15px;
 $anim-short: 100ms;
 $anim-med: 200ms;
 
-@mixin group {
-	display: flex;
-	flex-direction: row;
-
-	&:has(.control) {
-		> :global(*) {
-			min-width: 0;
-			flex: 0 0 content;
-		}
-
-		> :global(.control) {
-			flex: 1 1 0;
-		}
-	}
-
-	> :global(*) {
-		min-width: 0;
-		flex: 1 1 0;
-		border-radius: 0 !important;
-
-		&:not(:first-child) {
-			margin-left: -$border-w;
-		}
-
-		&:first-child {
-			border-top-left-radius: $border-rad !important;
-			border-bottom-left-radius: $border-rad !important;
-		}
-
-		&:last-child {
-			border-top-right-radius: $border-rad !important;
-			border-bottom-right-radius: $border-rad !important;
-		}
-	}
-}
-
-@mixin font-elem {
-	font-family: var(--font-family);
-	font-size: medium;
-}
-
-@mixin check {
-	@include border-rnd;
-	@include font-elem;
-	@include hv;
-
-	cursor: pointer;
-	background-color: var(--col-bg-lt);
-	color: var(--col-fg);
-	padding: $pad-med;
-}
-
-@mixin control {
-	@include border-rnd;
-	@include font-elem;
-	@include hv;
-
-	color: var(--col-fg);
-	outline: none;
-	padding: $pad-med;
-}
-
 @mixin img-btn($img, $padding: 0, $color: null) {
 	position: relative;
 
@@ -115,41 +53,8 @@ $anim-med: 200ms;
 	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $padding, $color);
 }
 
-@mixin border {
-	border: solid $border-w var(--col-border);
-}
-
-@mixin border-rnd {
-	@include border;
-	border-radius: $border-rad;
-	overflow: hidden;
-}
-
 @mixin anim-short($props) {
 	transition-property: $props;
 	transition-duration: $anim-short;
 	transition-timing-function: ease-in-out;
-}
-
-@mixin hv {
-	@include anim-short(filter);
-
-	&:hover {
-		z-index: 1;
-		filter: var(--flt-bright-hv);
-	}
-
-	&:focus,
-	&:focus-within
-	&:focus:hover 
-	&:focus-within:hover {
-		z-index: 2;
-		filter: var(--flt-bright-focus);
-	}
-}
-
-@mixin hv-b4 {
-	&::before {
-		@include hv;
-	}
 }

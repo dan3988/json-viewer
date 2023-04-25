@@ -93,8 +93,6 @@
 			gap: 5px;
 
 			> span.button {
-				@include hv;
-
 				flex: 0 0 auto;
 			}
 

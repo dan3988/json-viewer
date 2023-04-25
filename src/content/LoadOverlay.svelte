@@ -18,9 +18,6 @@
 	@import "../globals.scss";
 
 	.root {
-		@include border-rnd;
-		@include font-elem;
-
 		background-color: var(--col-bg-dk);
 		position: absolute;
 		bottom: 1rem;

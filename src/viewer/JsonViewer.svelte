@@ -176,10 +176,13 @@
 		cursor: ew-resize;
 	}
 
-	.w-prop {
+	.w-prop,
+	.w-path {
 		font-family: monospace;
 		font-size: 12px;
+	}
 
+	.w-prop {
 		padding: $pad-small;
 		grid-area: 1 / 1 / -2 / span 1;
 		overflow: scroll;
@@ -191,7 +194,6 @@
 	}
 
 	.w-path {
-		--font-family: monospace;
 		grid-area: -2 / 1 / -1 / -1;
 		padding: $pad-med;
 	}
@@ -217,7 +219,6 @@
 		}
 
 		.w-prop {
-			@include border-rnd;
 			grid-area: 2 / 1 / span 1 / -1;
 			margin: 0 $pad-med;
 		}

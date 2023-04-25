@@ -521,8 +521,6 @@
 	@use "../core.scss" as *;
 
 	.list {
-		@include font-elem;
-
 		outline: none;
 		grid-area: 1 / 1 / span 1 / span 1;
 		display: flex;
