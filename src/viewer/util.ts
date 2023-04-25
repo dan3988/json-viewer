@@ -11,6 +11,8 @@ abstract class AbstractRenderer<T> implements Renderer<T> {
 		this.#target = target;
 		this.#value = value;
 		this.onUpdate(target, value);
+		this.update = this.update.bind(this);
+		this.destroy = this.destroy.bind(this);
 	}
 
 	protected abstract onUpdate(target: HTMLElement, value: T): void;
