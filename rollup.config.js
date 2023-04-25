@@ -44,6 +44,9 @@ function svelteConfig(baseDir, entry, output) {
 					// enable run-time checks when not in production
 					dev: !dist,
 					format: "cjs"
+				},
+				onwarn(warning, handler) {
+					warning.code !== "css-unused-selector" && handler(warning);
 				}
 			}),
 			css({ output: output + ".css" }),
