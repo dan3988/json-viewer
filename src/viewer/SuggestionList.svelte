@@ -116,23 +116,23 @@
 		bottom: calc(100% + $pad-med);
 		overflow-y: hidden;
 
-		background-color: var(--col-bg-dk);
-		border: solid $border-w var(--col-border);
-
 		> li {
 			padding: $pad-small $pad-med;
 			cursor: pointer;
 
 			&.selected {
-				background-color: #44AAFF88;
+				background-color: var(--bs-link-color);
+				color: var(--bs-white);
 
 				&:hover {
-					background-color: #44AAFFCC;
+					color: var(--bs-white);
+					background-color: var(--bs-link-hover-color);
 				}
 			}
 
 			&:hover {
-				background-color: #44AAFF44;
+				color: var(--bs-gray-300);
+				background-color: rgba(var(--bs-link-color-rgb), 0.5);
 			}
 
 			> :global(.match) {
@@ -143,7 +143,7 @@
 	}
 </style>
 <template>
-	<ul class="list" bind:this={list} contenteditable="false">
+	<ul class="list bg-secondary text-body border" bind:this={list} contenteditable="false">
 		{#each results as suggestion, i}
 			<li class:selected={i == index} use:renderListItem={{ suggestion, filter: filterLw, index: i }}></li>
 		{/each}

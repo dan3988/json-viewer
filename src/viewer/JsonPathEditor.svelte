@@ -489,12 +489,7 @@
 				}
 
 				const wrapper = e.parentElement as HTMLDivElement;
-				const { inputType } = evt;
-				switch (inputType) {
-					case "insertText": 
-						showAutocomplete(wrapper, e, wrapper.parentElement as any);
-						break;
-				}
+				showAutocomplete(wrapper, e, wrapper.parentElement as any);
 			},
 			focusout() {
 				if (!(window as any).ignorefocus)
