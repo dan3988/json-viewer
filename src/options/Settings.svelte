@@ -24,7 +24,7 @@
 	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount } = model.props);
 
 	function onModelChange() {
-		canSave = false;
+		canSave = true;
 	}
 
 	const indents = [
