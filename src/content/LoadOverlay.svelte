@@ -1,9 +1,11 @@
 <script lang="ts" >
-	import { onDestroy, onMount } from "svelte";
+	import { SvelteComponent, onDestroy, onMount } from "svelte";
 	import ThemeTracker from "../theme-tracker";
 
 	let elem: HTMLElement;
 	let tracker: ThemeTracker;
+
+	const self: SvelteComponent = arguments[0];
 
 	onMount(() => tracker = new ThemeTracker(elem));
 	onDestroy(() => tracker.destroy());
@@ -13,11 +15,11 @@
 		if (res != null)
 			alert(res);
 
-		elem.remove();
+		self.$destroy();
 	}
 
 	function onNo() {
-		elem.remove();
+		self.$destroy();
 	}
 </script>
 <style lang="scss">
