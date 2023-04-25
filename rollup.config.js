@@ -18,12 +18,12 @@ const dist = !process.env.ROLLUP_WATCH;
  * @param {string} output
  * @returns {rl.RollupOptions}
  */
-function svelteConfig(baseDir, entry, output) {
+function svelteConfig(baseDir, entry, output, format = "cjs") {
 	return {
 		input: path.join(baseDir, entry),
 		output: {
 			sourcemap: !dist,
-			format: 'cjs',
+			format,
 			name: 'app',
 			dir: 'lib',
 			intro: '{',
@@ -122,7 +122,7 @@ const configs = [
 	svelteConfig("src/content", "content.ts", "content"),
 	jsConfig("src/extension", "background.ts", "bg"),
 	svelteConfig("src/viewer", "viewer.ts", "viewer"),
-	svelteConfig("src/options", "options.ts", "options"),
+	svelteConfig("src/options", "options.ts", "options", "esm"),
 ];
 
 if (fs.existsSync("lib"))

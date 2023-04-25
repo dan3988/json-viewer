@@ -115,6 +115,11 @@ export class EditorModel<T extends Dict = Dict> {
 		this.#listeners.push(listener);
 	}
 
+	removeListener(listener: EditorListener) {
+		const ix = this.#listeners.indexOf(listener);
+		ix >= 0 && this.#listeners.splice(ix, 1);
+	}
+
 	#handler() {
 		this.#listeners.forEach(v => v());
 	}
