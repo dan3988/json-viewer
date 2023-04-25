@@ -82,7 +82,7 @@
 	@use "../core.scss" as *;
 
 	.btn-clr {
-		@include img-btn-url("clear.svg");
+		@include img-btn-url("clear.svg", 20%);
 		@include hv-b4;
 	}
 
