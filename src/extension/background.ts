@@ -88,8 +88,17 @@ chrome.runtime.onMessage.addListener((message: Message, sender, respond) => {
 		case "checkme":
 			if (bag.enabled && bag.mimes.includes(message.contentType)) {
 				const url = sender.url && new URL(sender.url);
-				const autoLoad = Boolean(url && bag.whitelist.includes(url.host));
-				inject(tabId, sender.frameId, autoLoad ? "viewer" : "content", autoLoad).then(respond);
+				let autoload = false;
+				if (url) {
+					if (bag.blacklist.includes(url.host)) {
+						respond(false);
+						return;
+					}
+
+					autoload = bag.whitelist.includes(url.host);
+				}
+
+				inject(tabId, sender.frameId, autoload ? "viewer" : "content", autoload).then(() => respond(true));
 				return true;
 			}
 			break;

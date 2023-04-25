@@ -59,6 +59,7 @@ export namespace settings {
 		makeSetting("darkMode", NullableType(Boolean), null),
 		makeSetting("mimes", ArrayType, ["application/json"]),
 		makeSetting("whitelist", ArrayType, []),
+		makeSetting("blacklist", ArrayType, []),
 		makeSetting("enabled", Boolean, true),
 		makeSetting("indentCount", Integer, 1),
 		makeSetting("indentChar", String, "\t")
@@ -81,6 +82,7 @@ export namespace settings {
 		darkMode: null | boolean;
 		mimes: string[];
 		whitelist: string[];
+		blacklist: string[];
 		enabled: boolean;
 		indentCount: number;
 		indentChar: string;

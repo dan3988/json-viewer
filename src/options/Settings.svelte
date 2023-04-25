@@ -17,12 +17,14 @@
 		addIfDirty(bag, enabled);
 		addIfDirty(bag, mimes);
 		addIfDirty(bag, whitelist);
+		addIfDirty(bag, blacklist);
 		addIfDirty(bag, indentChar);
 		addIfDirty(bag, indentCount);
 
 		await settings.setValues(bag);
 
 		model.commit();
+		canSave = false;
 	}
 
 	function addIfDirty<K extends keyof settings.Settings>(bag: settings.SaveType, prop: EntryRef<K, settings.Settings[K]>) {
@@ -33,12 +35,12 @@
 	const loading = settings.get().then(v => {
 		model = new EditorModel(v);
 		model.addListener(() => canSave = true);
-		({ darkMode, enabled, mimes, whitelist, indentChar, indentCount } = model.props);
+		({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount } = model.props);
 		darkMode.subscribe(v => tracker.preferDark = v.value);
 	});
 
 	let canSave = false;
-	let { darkMode, enabled, mimes, whitelist, indentChar, indentCount } = Object.prototype as typeof model["props"];
+	let { darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount } = Object.prototype as typeof model["props"];
 	let model: EditorModel<settings.SettingsBag>;
 </script>
 <style lang="scss">
@@ -94,6 +96,9 @@
 		</div>
 		<div class="input-group grp-whitelist list" class:dirty={$whitelist.changed}>
 			<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." bind:items={$whitelist.value}/>
+		</div>
+		<div class="input-group grp-whitelist list" class:dirty={$blacklist.changed}>
+			<ListEditor title="Blacklist" help="A list of hosts to not load the extension for." bind:items={$blacklist.value}/>
 		</div>
 		<div class="input-group grp-indent">
 			<span class="input-group-text">Indent</span>
