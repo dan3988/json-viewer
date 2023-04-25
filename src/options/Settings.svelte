@@ -23,8 +23,8 @@
 
 	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount } = model.props);
 
-	function onModelChange() {
-		canSave = true;
+	function onModelChange(this: EditorModel) {
+		canSave = this.changed.size > 0;
 	}
 
 	const indents = [

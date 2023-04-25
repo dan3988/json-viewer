@@ -9,9 +9,13 @@ export interface Entry<V> {
 	changed: boolean;
 }
 
+export interface NamedEntry<K extends string = any, V = any> extends Entry<V> {
+	readonly key: K;
+}
+
 export type PropsType<T extends Dict> = { [P in string & keyof T]: EntryRef<P, T[P]> };
 
-export interface EntryRef<K extends string, V> extends Writable<Entry<V>>, Entry<V> {
+export interface EntryRef<K extends string, V> extends Writable<Entry<V>>, NamedEntry<K, V> {
 	readonly key: K;
 	readonly entry: Entry<V>;
 }
@@ -20,7 +24,7 @@ type PropsTypeInternal<T extends Dict> = { [P in string & keyof T]: EntryImpl<P,
 
 class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 	readonly #key: K;
-	readonly #listeners: Subscriber<Entry<V>>[];
+	readonly #listeners: Subscriber<NamedEntry<K, V>>[];
 	#original: V;
 	#current: V;
 	#changed: boolean;
@@ -37,10 +41,11 @@ class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 		return this.#current;
 	}
 
-	get entry(): Entry<V> {
+	get entry(): NamedEntry<K, V> {
+		const key = this.#key;
 		const value = this.#current;
 		const changed = this.#changed;
-		return { value, changed };
+		return { key, value, changed };
 	}
 
 	constructor(key: K, value: V) {
@@ -63,7 +68,7 @@ class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 		if (changed !== this.#changed || value !== this.#current) {
 			this.#changed = changed;
 			this.#current = value;
-			this.#listeners.forEach(fn => fn({ value, changed }));
+			this.#listeners.forEach(fn => fn(this.entry));
 		}
 	}
 
@@ -86,11 +91,16 @@ class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 	}
 }
 
-type EditorListener = () => void;
+type EditorListener<T> = (this: T) => void;
 
 export class EditorModel<T extends Dict = Dict> {
 	readonly #props: PropsTypeInternal<T>;
-	readonly #listeners: EditorListener[];
+	readonly #listeners: EditorListener<this>[];
+	readonly #changed: Set<keyof T>;
+
+	get changed(): ReadonlySet<keyof T> {
+		return this.#changed;
+	}
 
 	get props(): PropsType<T> {
 		return this.#props;
@@ -102,6 +112,7 @@ export class EditorModel<T extends Dict = Dict> {
 
 		this.#props = props;
 		this.#listeners = [];
+		this.#changed = new Set();
 
 		for (const key in values) {
 			const value = values[key];
@@ -111,17 +122,18 @@ export class EditorModel<T extends Dict = Dict> {
 		}
 	}
 
-	addListener(listener: EditorListener) {
+	addListener(listener: EditorListener<this>) {
 		this.#listeners.push(listener);
 	}
 
-	removeListener(listener: EditorListener) {
+	removeListener(listener: EditorListener<this>) {
 		const ix = this.#listeners.indexOf(listener);
 		ix >= 0 && this.#listeners.splice(ix, 1);
 	}
 
-	#handler() {
-		this.#listeners.forEach(v => v());
+	#handler(e: NamedEntry<string & keyof T>) {
+		this.#changed[e.changed ? "add" : "delete"](e.key);
+		this.#listeners.forEach(v => v.call(this));
 	}
 
 	commit() {
