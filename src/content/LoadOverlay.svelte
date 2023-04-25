@@ -1,5 +1,12 @@
 <script lang="ts" >
+	import { onDestroy, onMount } from "svelte";
+	import ThemeTracker from "../theme-tracker";
+
 	let elem: HTMLElement;
+	let tracker: ThemeTracker;
+
+	onMount(() => tracker = new ThemeTracker(elem));
+	onDestroy(() => tracker.destroy());
 
 	async function onYes() {
 		const res = await chrome.runtime.sendMessage({ type: "loadme" });
@@ -15,35 +22,28 @@
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
+	@import "../../node_modules/bootstrap/scss/bootstrap.scss";
 	@import "../globals.scss";
 
 	.root {
-		background-color: var(--col-bg-dk);
+		@extend body, .border, .rounded;
+
 		position: absolute;
-		bottom: 1rem;
+		top: 1rem;
 		left: 50%;
 		translate: -50% 0;
 		padding: $pad-med;
+		background-color: var(--bs-body-bg);
 
 		> span {
 			padding: 0 $pad-med;
 		}
 	}
-
-	.positive {
-		background-color: #00AA00;
-		border-color: #008800;
-	}
-
-	.negative {
-		background-color: #AA0000;
-		border-color: #880000;
-	}
 </style>
 <template>
-	<div class="root" bind:this={elem}>
+	<div class="root" bind:this={elem} data-bs-theme="">
 		<span>Load JSON viewer?</span>
-		<button class="btn positive" on:click={onYes}>Yes</button>
-		<button class="btn negative" on:click={onNo}>No</button>
+		<button class="btn btn-success" on:click={onYes}>Yes</button>
+		<button class="btn btn-danger" on:click={onNo}>No</button>
 	</div>
 </template>
