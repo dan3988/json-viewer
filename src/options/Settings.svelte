@@ -85,7 +85,7 @@
 		</div>
 		<div class="input-group grp-theme" class:dirty={$darkMode.changed}>
 			<span class="input-group-text">Theme</span>
-			<span role="button" class="btn btn-cust-light" class:active={$darkMode.value == null} on:click={() => $darkMode.value = null}>Default</span>
+			<span role="button" class="btn btn-cust-light" class:active={$darkMode.value == null} on:click={() => $darkMode.value = null}>Auto</span>
 			<span role="button" class="btn btn-cust-light" class:active={$darkMode.value === false} on:click={() => $darkMode.value = false}>Light</span>
 			<span role="button" class="btn btn-cust-light" class:active={$darkMode.value === true} on:click={() => $darkMode.value = true}>Dark</span>
 		</div>
