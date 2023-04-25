@@ -1,3 +1,4 @@
+import type messaging from "../messaging.js";
 import settings from "../settings.js";
 
 console.log('launch');
@@ -62,29 +63,27 @@ async function inject(tabId: number, frameId: number | undefined, script: string
 	return result[0].result;
 }
 
-interface MessageBase {
-	type: "checkme" | "loadme" | "error";
-}
-
-interface LoadMessage extends MessageBase {
-	type: "loadme";
-}
-
-interface CheckMessage extends MessageBase {
-	type: "checkme"
-	contentType: string;
-}
-
-type Message = LoadMessage | CheckMessage;
-
 loadSettings();
 
-chrome.runtime.onMessage.addListener((message: Message, sender, respond) => {
+chrome.runtime.onMessage.addListener((message: messaging.WorkerMessage, sender, respond) => {
 	const tabId = sender.tab?.id;
 	if (tabId == null)
 		return;
 
 	switch (message.type) {
+		case "remember": {
+			if (sender.url) {
+				const url = new URL(sender.url);
+				const key = message.autoload ? "whitelist" : "blacklist"
+				const list = bag[key];
+				list.push(url.host);
+				settings.setValue(key, list).then(() => respond(true));
+				return true;
+			}
+
+			respond(false);
+			break;
+		}
 		case "checkme":
 			if (bag.enabled && bag.mimes.includes(message.contentType)) {
 				const url = sender.url && new URL(sender.url);
