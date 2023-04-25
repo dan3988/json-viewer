@@ -1,51 +1,93 @@
 @use "./core.scss" as core;
+@use "sass:color";
 
-:root, :global([data-bs-theme="light"]) {
-	--col-json-key-fg: #18F;
-	--col-json-str-fg: #854;
-	--col-json-num-fg: #992;
-	--col-json-bln-fg: #14A;
-	--col-json-null-fg: #95F;
-	--col-match-fg: #000;
-	--col-match-bg: #CC3;
-
-	--col-indent-1: #C44;
-	--col-indent-2: #C84;
-	--col-indent-3: #CC8;
-	--col-indent-4: #8C8;
-	--col-indent-5: #4CC;
-	--col-indent-6: #48C;
-	--col-indent-7: #C8C;
-	--col-indent-8: #C4C;
-
-	--col-blue: #00F;
-	--col-red: #F00;
-	--col-grn: #0F0;
-
-	--font-family: Calibri;
+@function toRGB($hex) {
+	@return red($hex) + "," + green($hex) + "," + blue($hex);
 }
 
-:global([data-bs-theme="dark"]) {
-	--col-json-key-fg: #8CF;
-	--col-json-str-fg: #C75;
-	--col-json-num-fg: #FF8;
-	--col-json-bln-fg: #38F;
-	--col-json-null-fg: #95F;
-	--col-match-fg: #000;
-	--col-match-bg: #FF0;
+//$cst-dirty-bg: #33361a;
+$cst-dirty-bg-light: #e4e489;
+$cst-dirty-color-light: #000;
+$cst-dirty-border-color-light: #cdcd5f;
 
-	--col-indent-1: #B44;
-	--col-indent-2: #B84;
-	--col-indent-3: #BB8;
-	--col-indent-4: #8B8;
-	--col-indent-5: #4BB;
-	--col-indent-6: #48B;
-	--col-indent-7: #B8B;
-	--col-indent-8: #B4B;
+$cst-dirty-bg-dark: #3e432c;
+$cst-dirty-color-dark: #bcbdad;
+$cst-dirty-border-color-dark: #5c603b;
 
-	--col-blue: #68F;
-	--col-red: #F86;
-	--col-grn: #4F8;
+@include core.theme(light) {
+	:global() {
+		--col-json-key-fg: #18F;
+		--col-json-str-fg: #854;
+		--col-json-num-fg: #992;
+		--col-json-bln-fg: #14A;
+		--col-json-null-fg: #95F;
+		--col-match-fg: #000;
+		--col-match-bg: #CC3;
+
+		--col-indent-1: #C44;
+		--col-indent-2: #C84;
+		--col-indent-3: #CC8;
+		--col-indent-4: #8C8;
+		--col-indent-5: #4CC;
+		--col-indent-6: #48C;
+		--col-indent-7: #C8C;
+		--col-indent-8: #C4C;
+
+		--col-blue: #00F;
+		--col-red: #F00;
+		--col-grn: #0F0;
+
+		--cst-dirty-bg: #{$cst-dirty-bg-light};
+		--cst-dirty-bg-rgb: #{toRGB($cst-dirty-bg-light)};
+		--cst-dirty-color: #{$cst-dirty-color-light};
+		--cst-dirty-border-color: #{$cst-dirty-border-color-light};
+
+		--cst-dirty-hover-bg: #{color.scale($cst-dirty-bg-light, $lightness: -10%)};
+		--cst-dirty-hover-color: #{color.scale($cst-dirty-color-light, $lightness: -10%)};
+		--cst-dirty-hover-border-color: #{color.scale($cst-dirty-border-color-light, $lightness: -10%)};
+
+		--cst-dirty-active-bg: #{color.scale($cst-dirty-bg-light, $lightness: -30%)};
+		--cst-dirty-active-color: #{color.scale($cst-dirty-color-light, $lightness: -30%)};
+		--cst-dirty-active-border-color: #{color.scale($cst-dirty-border-color-light, $lightness: -30%)};
+	}
+}
+
+@include core.theme(dark) {
+	:global() {
+		--col-json-key-fg: #8CF;
+		--col-json-str-fg: #C75;
+		--col-json-num-fg: #FF8;
+		--col-json-bln-fg: #38F;
+		--col-json-null-fg: #95F;
+		--col-match-fg: #000;
+		--col-match-bg: #FF0;
+	
+		--col-indent-1: #B44;
+		--col-indent-2: #B84;
+		--col-indent-3: #BB8;
+		--col-indent-4: #8B8;
+		--col-indent-5: #4BB;
+		--col-indent-6: #48B;
+		--col-indent-7: #B8B;
+		--col-indent-8: #B4B;
+	
+		--col-blue: #68F;
+		--col-red: #F86;
+		--col-grn: #4F8;
+
+		--cst-dirty-bg: #{$cst-dirty-bg-dark};
+		--cst-dirty-bg-rgb: #{toRGB($cst-dirty-bg-dark)};
+		--cst-dirty-color: #{$cst-dirty-color-dark};
+		--cst-dirty-border-color: #{$cst-dirty-border-color-dark};
+
+		--cst-dirty-hover-bg: #{color.scale($cst-dirty-bg-dark, $lightness: 10%)};
+		--cst-dirty-hover-color: #{color.scale($cst-dirty-color-dark, $lightness: 10%)};
+		--cst-dirty-hover-border-color: #{color.scale($cst-dirty-border-color-dark, $lightness: 10%)};
+
+		--cst-dirty-active-bg: #{color.scale($cst-dirty-bg-dark, $lightness: 20%)};
+		--cst-dirty-active-color: #{color.scale($cst-dirty-color-dark, $lightness: 20%)};
+		--cst-dirty-active-border-color: #{color.scale($cst-dirty-border-color-dark, $lightness: 20%)};
+	}
 }
 
 :global(ul) {
@@ -71,13 +113,36 @@
 	--bs-btn-disabled-border-color: #6c757d;
 }
 
-:global([data-bs-theme="dark"] .btn.btn-cust-light) {
-	--bs-btn-hover-bg: #33383d;
-	--bs-btn-hover-border-color: #51585F;
-	--bs-btn-active-color: #89a0a7;
-	--bs-btn-active-bg: #4b5055;
-	--bs-btn-active-border-color: #89a0a7;
-	--bs-btn-disabled-color: #fff;
-	--bs-btn-disabled-bg: #6c757d;
-	--bs-btn-disabled-border-color: #6c757d;
+@include core.theme(dark) {
+	.btn.btn-cust-light {
+		--bs-btn-hover-bg: #33383d;
+		--bs-btn-hover-border-color: #51585F;
+		--bs-btn-active-color: #89a0a7;
+		--bs-btn-active-bg: #4b5055;
+		--bs-btn-active-border-color: #89a0a7;
+		--bs-btn-disabled-color: #fff;
+		--bs-btn-disabled-bg: #6c757d;
+		--bs-btn-disabled-border-color: #6c757d;
+	}
+}
+
+.dirty.input-group > .input-group-text,
+.dirty {
+	--bs-tertiary-bg: var(--cst-dirty-bg);
+	--bs-tertiary-bg-rgb: var(--cst-dirty-bg-rgb);
+	--bs-body-bg: var(--cst-dirty-bg);
+	--bs-body-color: var(--cst-dirty-color);
+	--bs-border-color: var(--cst-dirty-border-color);
+}
+
+.dirty .btn.btn-cust-light {
+	--bs-btn-bg: var(--cst-dirty-bg);
+	--bs-btn-color: var(--cst-dirty-color);
+	--bs-btn-border-color: var(--cst-dirty-border-color);
+	--bs-btn-hover-bg: var(--cst-dirty-hover-bg);
+	--bs-btn-hover-color: var(--cst-dirty-hover-color);
+	--bs-btn-hover-border-color: var(--cst-dirty-hover-border-color);
+	--bs-btn-active-bg: var(--cst-dirty-active-bg);
+	--bs-btn-active-color: var(--cst-dirty-active-color);
+	--bs-btn-active-border-color: var(--cst-dirty-active-border-color);
 }

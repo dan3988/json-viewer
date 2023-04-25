@@ -58,3 +58,9 @@ $anim-med: 200ms;
 	transition-duration: $anim-short;
 	transition-timing-function: ease-in-out;
 }
+
+@mixin theme($mode: light) {
+	:global([data-bs-theme="#{$mode}"]) {
+		@content;
+	}
+}

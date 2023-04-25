@@ -60,10 +60,6 @@
 	@use "../core.scss" as *;
 	@import "../globals.scss";
 
-	.dirty:not(:invalid) {
-		//background-color: #553;
-	}
-
 	.grp-indent > select {
 		flex: 0 0 6rem;
 	}
