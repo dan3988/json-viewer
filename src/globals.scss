@@ -97,14 +97,14 @@ $cst-dirty-border-color-dark: #5c603b;
 }
 
 :global(.btn.btn-cust-light) {
-	--bs-btn-color: var(--bs-color);
+	--bs-btn-color: var(--bs-body-color);
 	--bs-btn-bg: var(--bs-tertiary-bg);
 	--bs-btn-border-color: var(--bs-border-color);
-	--bs-btn-hover-color: var(--bs-color);
+	--bs-btn-hover-color: var(--bs-body-color);
 	--bs-btn-hover-bg: #e8e9ea;
 	--bs-btn-hover-border-color: #bec2c6;
 	--bs-btn-focus-shadow-rgb: 130,138,145;
-	--bs-btn-active-color: var(--bs-color);
+	--bs-btn-active-color: var(--bs-body-color);
 	--bs-btn-active-bg: #b8b9ba;
 	--bs-btn-active-border-color: #888;
 	--bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
@@ -114,7 +114,7 @@ $cst-dirty-border-color-dark: #5c603b;
 }
 
 @include core.theme(dark) {
-	.btn.btn-cust-light {
+	:global(.btn.btn-cust-light) {
 		--bs-btn-hover-bg: #33383d;
 		--bs-btn-hover-border-color: #51585F;
 		--bs-btn-active-color: #89a0a7;
