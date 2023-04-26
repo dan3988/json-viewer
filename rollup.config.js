@@ -9,8 +9,14 @@ import css from 'rollup-plugin-css-only';
 import path from "path";
 import fs from "fs";
 import * as rl from "rollup";
+import Linq from '@daniel.pickett/linq-js';
 
 const dist = !process.env.ROLLUP_WATCH;
+const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
+const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
+	.select(([k, v]) => v === "ignore" && k)
+	.ofType("string")
+	.toSet();
 
 /**
  * @param {string} baseDir
@@ -46,7 +52,7 @@ function svelteConfig(baseDir, entry, output, format = "cjs") {
 					format: "cjs"
 				},
 				onwarn(warning, handler) {
-					warning.code !== "css-unused-selector" && handler(warning);
+					!ignore.has(warning.code) && handler(warning);
 				}
 			}),
 			css({ output: output + ".css" }),
