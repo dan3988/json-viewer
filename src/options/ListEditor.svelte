@@ -11,6 +11,15 @@
 		}
 	}
 
+	function onPlaceholderKeyDown(this: HTMLInputElement, e: KeyboardEvent) {
+		if (e.key === "Enter") {
+			onPlaceholderFocusOut(this);
+		} else if (e.key === "Escape") {
+			this.value = "";
+			this.blur();
+		}
+	}
+
 	function deleteAt(index: number) {
 		let copy = Array(items.length - 1);
 		let i = 0;
@@ -24,30 +33,30 @@
 		items = copy;
 	}
 
-	function onKeyDown(this: HTMLInputElement, e: KeyboardEvent) {
-		if (e.key === "Enter") {
-			const evt = new Event("focusout");
-			this.dispatchEvent(evt);
-		}
-	}
-
-	function onFocusOut(e: HTMLInputElement, index: number) {
+	function tryEdit(e: HTMLInputElement, index: number) {
 		const newValue = e.value;
 		if (newValue === items[index])
 			return;
 
-		let copy = Array(items.length);
-		let i = 0;
+		if (newValue === "") {
+			e.value = items[index];
+			e.blur();
+			return;
+		}
 
-		while (i < index)
-			copy[i] = items[i++];
-
-		copy[i++] = newValue;
-
-		while (i < items.length)
-			copy[i] = items[i++];
-
+		const copy = Array.from(items);
+		copy[index] = newValue;
 		items = copy;
+	}
+
+	function onKeyDown(e: HTMLInputElement, evt: KeyboardEvent, index: number) {
+		if (evt.key === "Enter") {
+			tryEdit(e, index);
+			e.blur();
+		} else if (evt.key === "Escape") {
+			e.value = items[index];
+			e.blur();
+		}
 	}
 </script>
 <style lang="scss">
@@ -134,19 +143,19 @@
 <div class="root flex-fill border rounded overflow-hidden">
 	<div class="head nav-header border-bottom bg-body-tertiary">
 		{#if help}
-		<span class="button btn-help" title={help}></span>
+			<span class="button btn-help" title={help}></span>
 		{/if}
 		<span class="title">{title}</span>
 	</div>
 	<ul class="list list-group list-group-flush overflow-y-scroll">
 		{#each items as item, i}
 		<li class="list-group-item">
-			<input class="value" type="text" placeholder="Empty" on:focusout={evt => onFocusOut(evt.currentTarget, i)} value={item}/>
+			<input class="value" type="text" placeholder="Empty" on:focusout={evt => tryEdit(evt.currentTarget, i)} on:keydown={e => onKeyDown(e.currentTarget, e, i)} value={item}/>
 			<span class="button btn-rm" role="button" title="Delete" on:click={() => deleteAt(i)}></span>
 		</li>
 		{/each}
 		<li class="list-group-item pc">
-			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onKeyDown}/>
+			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onPlaceholderKeyDown}/>
 		</li>
 	</ul>
 </div>
