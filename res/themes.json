@@ -9,6 +9,11 @@
 		"css": "/res/indent.blue.css",
 		"indents": 7
 	},
+	"red": {
+		"name": "Fire",
+		"css": "/res/indent.red.css",
+		"indents": 13
+	},
 	"grey": {
 		"name": "Greyscale",
 		"css": "/res/indent.grey.css",

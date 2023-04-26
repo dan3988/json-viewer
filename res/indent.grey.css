@@ -1,4 +1,12 @@
 :root, [data-bs-theme=light] {
+	--col-indent-1: #111;
+	--col-indent-2: #333;
+	--col-indent-3: #555;
+	--col-indent-4: #777;
+	--col-indent-5: #999;
+}
+
+[data-bs-theme=dark] {
 	--col-indent-1: #666;
 	--col-indent-2: #888;
 	--col-indent-3: #AAA;
