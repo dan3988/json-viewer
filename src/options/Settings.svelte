@@ -33,11 +33,14 @@
 	import type ThemeTracker from "../theme-tracker";
 	import settings from "../settings";
 	import ListEditor from "./ListEditor.svelte";
+	import Linq from "@daniel.pickett/linq-js";
 	import { onDestroy, onMount } from "svelte";
 
 	export let indentStyles: IndentStyles;
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
+
+	$: currentStyle = indentStyles[indentStyle.value];
 
 	let destroy: Action;
 
@@ -104,7 +107,20 @@
 			z-index: 3;
 		}
 	}
+
+	.indent-preview {
+		height: 2.5rem;
+		border-top-left-radius: 0 !important;
+		border-bottom-left-radius: 0 !important;
+
+		> li {
+			background-color: var(--col-indent);
+		}
+	}
 </style>
+<svelte:head>
+	<link rel="stylesheet" href={currentStyle.css} />
+</svelte:head>
 <div class="base cr d-flex flex-column p-1 gap-1">
 	<div class="input-group" class:dirty={$enabled.changed}>
 		<label class="input-group-text flex-fill align-items-start gap-1">
@@ -138,11 +154,16 @@
 	</div>
 	<div class="input-group grp-indent-style">
 		<span class="input-group-text">Intent Style</span>
-		<select class="form-select" class:dirty={$indentStyle.changed} bind:value={$indentStyle.value}>
+		<select class="form-select flex-fill" class:dirty={$indentStyle.changed} bind:value={$indentStyle.value}>
 			{#each Object.entries(indentStyles) as [key, theme]}
 				<option value={key}>{theme.name}</option>
 			{/each}
 		</select>
+		<ul class="indent-preview m-0 p-0 flex-fill d-flex border rounded overflow-hidden">
+			{#each Linq.range(0, currentStyle.indents).toArray() as i}
+				<li class="flex-fill indent-{i}"></li>
+			{/each}
+		</ul>
 	</div>
 	<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>
 </div>
