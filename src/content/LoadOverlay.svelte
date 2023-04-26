@@ -1,5 +1,5 @@
 <script lang="ts" >
-    import type { WorkerMessage } from "../messaging";
+	import type { WorkerMessage } from "../types.d.ts";
 	import { SvelteComponent, onDestroy, onMount } from "svelte";
 	import ThemeTracker from "../theme-tracker";
 

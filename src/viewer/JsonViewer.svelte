@@ -8,6 +8,7 @@
 
 	export let model: ViewerModel;
 	export let indent: string;
+	export let maxIndentClass: number;
 
 	async function copy(token: JsonToken) {
 		let text: string;
@@ -204,7 +205,7 @@
 
 <div class="root bg-body text-body">
 	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
-		<JsonProperty model={model} prop={model.root} indent={0}/>
+		<JsonProperty model={model} prop={model.root} indent={0} {maxIndentClass}/>
 	</div>
 	<div class="gripper" on:mousedown={onMouseDown}/>
 	<div class="w-path">

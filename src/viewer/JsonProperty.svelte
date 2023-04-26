@@ -1,14 +1,14 @@
 <script lang="ts">
 	import type { JsonProperty } from "./json";
 	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
-    import { onDestroy, tick } from "svelte";
-    import { renderKey, renderValue } from "./util";
+	import { onDestroy, tick } from "svelte";
+	import { renderKey, renderValue } from "./util";
 
 	export let model: ViewerModel;
 	export let prop: JsonProperty;
 	export let indent = -1;
+	export let maxIndentClass: number;
 
-	const maxIndentClass = 8;
 	const { expanded, hidden, selected } = prop.bag.readables;
 
 	model.command.addListener(onModelCommand);
@@ -46,8 +46,6 @@
 		display: grid;
 		grid-template-columns: 1em auto auto auto 1fr;
 		grid-template-rows: auto auto auto;
-
-		--col-indent: var(--col-shadow);
 
 		&[hidden] {
 			display: none !important;
@@ -118,38 +116,6 @@
 					width: 2px;
 					border-radius: 1px;
 				}
-			}
-
-			&.indent-0 {
-				--col-indent: var(--col-indent-1);
-			}
-
-			&.indent-1 {
-				--col-indent: var(--col-indent-2);
-			}
-
-			&.indent-2 {
-				--col-indent: var(--col-indent-3);
-			}
-
-			&.indent-3 {
-				--col-indent: var(--col-indent-4);
-			}
-
-			&.indent-4 {
-				--col-indent: var(--col-indent-5);
-			}
-
-			&.indent-5 {
-				--col-indent: var(--col-indent-6);
-			}
-
-			&.indent-6 {
-				--col-indent: var(--col-indent-7);
-			}
-
-			&.indent-7 {
-				--col-indent: var(--col-indent-8);
 			}
 		}
 
@@ -240,7 +206,7 @@
 			<ul class="json-container json-{prop.value.subtype}">
 				{#each [...prop.value.properties()] as p}
 				<li>
-					<svelte:self model={model} prop={p} indent={indent + 1} />
+					<svelte:self model={model} prop={p} indent={indent + 1} {maxIndentClass} />
 				</li>
 				{/each}
 			</ul>

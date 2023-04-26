@@ -28,12 +28,14 @@
 	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
 </script>
 <script lang="ts">
-	import type { EditorModel, EntryRef } from "./editor";
+	import type { IndentStyles } from "../types.d.ts";
+	import type { EditorModel } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
 	import settings from "../settings";
 	import ListEditor from "./ListEditor.svelte";
 	import { onDestroy, onMount } from "svelte";
 
+	export let indentStyles: IndentStyles;
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
 
@@ -50,7 +52,7 @@
 
 	onDestroy(() => destroy())
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle } = model.props);
 
 	function onModelChange(this: EditorModel) {
 		canSave = this.changed.size > 0;
@@ -64,23 +66,13 @@
 	async function save() {
 		const bag: settings.SaveType = {};
 
-		addIfDirty(bag, darkMode);
-		addIfDirty(bag, enabled);
-		addIfDirty(bag, mimes);
-		addIfDirty(bag, whitelist);
-		addIfDirty(bag, blacklist);
-		addIfDirty(bag, indentChar);
-		addIfDirty(bag, indentCount);
+		for (const key of model.changed)
+			bag[key] = <any>model.props[key].value;
 
 		await settings.setValues(bag);
 
 		model.commit();
 		canSave = false;
-	}
-
-	function addIfDirty<K extends keyof settings.Settings>(bag: settings.SaveType, prop: EntryRef<K, settings.Settings[K]>) {
-		if (prop.changed)
-			bag[prop.key] = prop.value;
 	}
 
 	let canSave = false;	
@@ -141,6 +133,14 @@
 		<select class="form-select" class:dirty={$indentChar.changed} bind:value={$indentChar.value}>
 			{#each indents as [key, value]}
 				<option value={value}>{key}</option>
+			{/each}
+		</select>
+	</div>
+	<div class="input-group grp-indent-style">
+		<span class="input-group-text">Intent Style</span>
+		<select class="form-select" class:dirty={$indentStyle.changed} bind:value={$indentStyle.value}>
+			{#each Object.entries(indentStyles) as [key, theme]}
+				<option value={key}>{theme.name}</option>
 			{/each}
 		</select>
 	</div>

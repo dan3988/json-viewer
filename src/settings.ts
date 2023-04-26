@@ -62,7 +62,8 @@ export namespace settings {
 		makeSetting("blacklist", ArrayType, []),
 		makeSetting("enabled", Boolean, true),
 		makeSetting("indentCount", Integer, 1),
-		makeSetting("indentChar", String, "\t")
+		makeSetting("indentChar", String, "\t"),
+		makeSetting("indentStyle", String, "default")
 	]
 
 	const map = list.reduce((map, v) => map.set(v.key, v), new Map<string, settings.Setting>());
@@ -86,6 +87,7 @@ export namespace settings {
 		enabled: boolean;
 		indentCount: number;
 		indentChar: string;
+		indentStyle: string;
 	}
 
 	export function getDefault(): SettingsBag {

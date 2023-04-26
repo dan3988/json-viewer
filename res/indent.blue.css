@@ -1,0 +1,34 @@
+:root, [data-bs-theme=light] {
+	--col-indent-1: #34B;
+	--col-indent-2: #48C;
+	--col-indent-3: #5AF;
+	--col-indent-4: #8CF;
+}
+
+.indent-0 {
+	--col-indent: var(--col-indent-1);
+}
+
+.indent-1 {
+	--col-indent: var(--col-indent-2);
+}
+
+.indent-2 {
+	--col-indent: var(--col-indent-3);
+}
+
+.indent-3 {
+	--col-indent: var(--col-indent-4);
+}
+
+.indent-4 {
+	--col-indent: var(--col-indent-3);
+}
+
+.indent-5 {
+	--col-indent: var(--col-indent-2);
+}
+
+.indent-6 {
+	--col-indent: var(--col-indent-1);
+}

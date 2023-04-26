@@ -1,0 +1,17 @@
+{
+	"default": {
+		"name": "Rainbow",
+		"css": "/res/indent.rainbow.css",
+		"indents": 8
+	},
+	"blue": {
+		"name": "Blue",
+		"css": "/res/indent.blue.css",
+		"indents": 7
+	},
+	"grey": {
+		"name": "Greyscale",
+		"css": "/res/indent.grey.css",
+		"indents": 9
+	}
+}

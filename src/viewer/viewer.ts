@@ -1,5 +1,6 @@
 /// <reference path="../../node_modules/json5/lib/index.d.ts" />
 
+import type { IndentStyles } from "../types";
 import settings from "../settings";
 import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
@@ -58,9 +59,17 @@ try {
 		return parts;
 	}
 
+	async function loadIndentStyle(key: string) {
+		const url = chrome.runtime.getURL("/res/themes.json");
+		const res = await fetch(url);
+		const styles: IndentStyles = await res.json();
+		return styles[key];
+	}
+
 	async function loadAsync() {
-		const bag = await settings.get("darkMode", "indentChar", "indentCount");
+		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle");
 		const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
+		const indentStyle = await loadIndentStyle(bag.indentStyle);
 
 		let indent = bag.indentChar.repeat(bag.indentCount);
 	
@@ -84,10 +93,14 @@ try {
 				viewer.$set({ indent });
 			}
 		}, "local");
-		
+
 		const viewer = new JsonViewer({
 			target: document.body,
-			props: { model, indent }
+			props: {
+				model,
+				indent,
+				maxIndentClass: indentStyle.indents
+			}
 		});
 	}
 	

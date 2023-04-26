@@ -6,11 +6,14 @@ import EditorModel from "./editor";
 const tracker = new ThemeTracker(document.documentElement);
 const bag = await settings.get();
 const model = new EditorModel(bag);
+const themesUrl = chrome.runtime.getURL("/res/themes.json");
+const indentStyles = await fetch(themesUrl).then(v => v.json());
 
 new Settings({
-    target: document.body,
+	target: document.body,
 	props: {
 		model,
-		tracker
+		tracker,
+		indentStyles
 	}
 });

@@ -1,0 +1,53 @@
+:root, [data-bs-theme=light] {
+	--col-indent-1: #C44;
+	--col-indent-2: #C84;
+	--col-indent-3: #CC8;
+	--col-indent-4: #8C8;
+	--col-indent-5: #4CC;
+	--col-indent-6: #48C;
+	--col-indent-7: #C8C;
+	--col-indent-8: #C4C;
+}
+
+[data-bs-theme=dark] {
+	--col-indent-1: #B44;
+	--col-indent-2: #B84;
+	--col-indent-3: #BB8;
+	--col-indent-4: #8B8;
+	--col-indent-5: #4BB;
+	--col-indent-6: #48B;
+	--col-indent-7: #B8B;
+	--col-indent-8: #B4B;
+}
+
+.indent-0 {
+	--col-indent: var(--col-indent-1);
+}
+
+.indent-1 {
+	--col-indent: var(--col-indent-2);
+}
+
+.indent-2 {
+	--col-indent: var(--col-indent-3);
+}
+
+.indent-3 {
+	--col-indent: var(--col-indent-4);
+}
+
+.indent-4 {
+	--col-indent: var(--col-indent-5);
+}
+
+.indent-5 {
+	--col-indent: var(--col-indent-6);
+}
+
+.indent-6 {
+	--col-indent: var(--col-indent-7);
+}
+
+.indent-7 {
+	--col-indent: var(--col-indent-8);
+}
