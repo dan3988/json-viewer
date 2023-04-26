@@ -1,13 +1,28 @@
+<script lang="ts" context="module">
+	export interface ListValidator {
+		validate(items: readonly string[], index: number, item: string): undefined | string;
+	}
+</script>
 <script lang="ts">
 	export let title: string;
 	export let items: string[];
 	export let help: string = "";
+	export let validator: null | ListValidator = null;
 
 	function onPlaceholderFocusOut(target: HTMLInputElement) {
 		const text = target.value;
 		if (text) {
-			target.value = "";
-			items = [...items, text];
+			const validation = validator?.validate(items, -1, text);
+			if (validation == null) {
+				target.value = "";
+				target.setCustomValidity("");
+				items = [...items, text];
+			} else {
+				target.setCustomValidity(validation);
+				target.reportValidity();
+			}
+		} else {
+			target.setCustomValidity("");
 		}
 	}
 
@@ -16,6 +31,7 @@
 			onPlaceholderFocusOut(this);
 		} else if (e.key === "Escape") {
 			this.value = "";
+			this.setCustomValidity("");
 			this.blur();
 		}
 	}
@@ -44,6 +60,14 @@
 			return;
 		}
 
+		const validation = validator?.validate(items, index, newValue);
+		if (validation) {
+			e.setCustomValidity(validation);
+			e.reportValidity();
+			return;
+		}
+
+		e.setCustomValidity("");
 		const copy = Array.from(items);
 		copy[index] = newValue;
 		items = copy;
@@ -55,6 +79,7 @@
 			e.blur();
 		} else if (evt.key === "Escape") {
 			e.value = items[index];
+			e.setCustomValidity("");
 			e.blur();
 		}
 	}

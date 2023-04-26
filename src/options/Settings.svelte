@@ -1,3 +1,32 @@
+<script lang="ts" context="module">
+	import type { ListValidator } from "./ListEditor.svelte";
+
+	class SettingListValidator implements ListValidator {
+		readonly #validation: [] | [RegExp, string];
+
+		constructor()
+		constructor(regex: RegExp, message: string)
+		constructor(...args: [] | [RegExp, string]) {
+			this.#validation = args;
+		}
+
+		validate(items: readonly string[], index: number, item: string): string | undefined {
+			const existing = items.indexOf(item);
+			if (existing >= 0 && existing != index)
+				return "Duplicate";
+
+			if (this.#validation.length) {
+				const [regex, msg] = this.#validation;
+				regex.lastIndex = 0;
+				if (!regex.test(item))
+					return msg;
+			}
+		}
+	}
+
+	const mimeValidator = new SettingListValidator();
+	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
+</script>
 <script lang="ts">
 	import type { EditorModel, EntryRef } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
@@ -98,13 +127,13 @@
 		<span role="button" class="btn btn-cust-light" class:active={$darkMode.value === true} on:click={() => $darkMode.value = true}>Dark</span>
 	</div>
 	<div class="input-group grp-mimes list" class:dirty={$mimes.changed}>
-		<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." bind:items={$mimes.value}/>
+		<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." validator={mimeValidator} bind:items={$mimes.value}/>
 	</div>
 	<div class="input-group grp-whitelist list" class:dirty={$whitelist.changed}>
-		<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." bind:items={$whitelist.value}/>
+		<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." validator={hostValidator} bind:items={$whitelist.value}/>
 	</div>
 	<div class="input-group grp-whitelist list" class:dirty={$blacklist.changed}>
-		<ListEditor title="Blacklist" help="A list of hosts to not load the extension for." bind:items={$blacklist.value}/>
+		<ListEditor title="Blacklist" help="A list of hosts to not load the extension for." validator={hostValidator} bind:items={$blacklist.value}/>
 	</div>
 	<div class="input-group grp-indent">
 		<span class="input-group-text">Indent</span>
