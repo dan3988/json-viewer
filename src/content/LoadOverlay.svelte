@@ -1,5 +1,5 @@
 <script lang="ts" >
-    import type messaging from "../messaging";
+    import type { WorkerMessage } from "../messaging";
 	import { SvelteComponent, onDestroy, onMount } from "svelte";
 	import ThemeTracker from "../theme-tracker";
 
@@ -14,10 +14,10 @@
 
 	async function action(load: boolean) {
 		if (remember)
-			await chrome.runtime.sendMessage<messaging.WorkerMessage>({ type: "remember", autoload: load })
+			await chrome.runtime.sendMessage<WorkerMessage>({ type: "remember", autoload: load })
 
 		if (load)
-			await chrome.runtime.sendMessage<messaging.WorkerMessage>({ type: "loadme" }).then(v => v && alert(v));
+			await chrome.runtime.sendMessage<WorkerMessage>({ type: "loadme" }).then(v => v && alert(v));
 
 		self.$destroy();
 	}

@@ -1,4 +1,4 @@
-import type messaging from "../messaging.js";
+import type { WorkerMessage } from "../messaging.js";
 import settings from "../settings.js";
 
 console.log('launch');
@@ -65,7 +65,7 @@ async function inject(tabId: number, frameId: number | undefined, script: string
 
 loadSettings();
 
-chrome.runtime.onMessage.addListener((message: messaging.WorkerMessage, sender, respond) => {
+chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
 	const tabId = sender.tab?.id;
 	if (tabId == null)
 		return;
