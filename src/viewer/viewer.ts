@@ -12,8 +12,8 @@ try {
 	if (pre == null)
 		throw "Could not find JSON element.";
 
-	const json = lib.parse(pre.innerText);
 	pre.remove();
+	const json = lib.parse(pre.innerText);
 	const root = JsonProperty.create(json);
 	const model = new ViewerModel(root);
 	root.expanded = true;
@@ -59,19 +59,36 @@ try {
 	}
 
 	async function loadAsync() {
-		const { darkMode } = await settings.get("darkMode");
-		const tracker = new ThemeTracker(document.documentElement, darkMode);
+		const bag = await settings.get("darkMode", "indentChar", "indentCount");
+		const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
+
+		let indent = bag.indentChar.repeat(bag.indentCount);
 	
-		settings.addListener(v => {
-			const { darkMode } = v.changes;
-			if (darkMode !== undefined)
-				tracker.preferDark = darkMode.newValue;
+		settings.addListener(({ changes }) => {
+			if (changes.darkMode)
+				tracker.preferDark = changes.darkMode.newValue;
+
+			let changeIndent = false;
+			if (changes.indentChar) {
+				changeIndent = true;
+				bag.indentChar = changes.indentChar.newValue;
+			}
+	
+			if (changes.indentCount) {
+				changeIndent = true;
+				bag.indentCount = changes.indentCount.newValue;
+			}
+
+			if (changeIndent) {
+				indent = bag.indentChar.repeat(bag.indentCount);
+				viewer.$set({ indent });
+			}
 		}, "local");
 		
-		new JsonViewer({
+		const viewer = new JsonViewer({
 			target: document.body,
-			props: { model }
-		})
+			props: { model, indent }
+		});
 	}
 	
 	let popping = false;
