@@ -114,7 +114,7 @@
 		border-bottom-left-radius: 0 !important;
 
 		> li {
-			background-color: var(--col-indent);
+			background-color: var(--json-indent-bg);
 		}
 	}
 </style>
@@ -161,7 +161,7 @@
 		</select>
 		<ul class="indent-preview m-0 p-0 flex-fill d-flex border rounded overflow-hidden">
 			{#each Linq.range(0, currentStyle.indents).toArray() as i}
-				<li class="flex-fill indent-{i}"></li>
+				<li class="flex-fill json-indent-col-{i}"></li>
 			{/each}
 		</ul>
 	</div>

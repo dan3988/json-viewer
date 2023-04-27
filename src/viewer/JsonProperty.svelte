@@ -165,7 +165,7 @@
 		position: relative;
 
 		&:before {
-			background-color: var(--col-indent);
+			background-color: var(--json-indent-bg);
 		}
 	}
 
@@ -193,7 +193,7 @@
 {#if prop}
 <div
 	hidden={$hidden}
-	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype}{indent < 0 ? '' : ' indent-' + (indent % maxIndentClass)}"
+	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype}{indent < 0 ? '' : ' json-indent-col-' + (indent % maxIndentClass)}"
 	class:expanded={$expanded}
 	class:selected={$selected}>
 	<span bind:this={keyElement} class="json-key" on:click={() => model.selected = prop} use:renderKey={prop.key}/>

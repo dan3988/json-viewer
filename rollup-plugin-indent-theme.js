@@ -41,11 +41,12 @@ class CssWriter {
 
 /**
  * @param {string | undefined} indent
+ * @param {string } prefix
  * @param {IndentStyleInput["colors"]} style 
  * @param {boolean} reverse 
  * @returns {[code: string, count: number]}
  */
-function transform(indent, colors, reverse) {
+function transform(indent, prefix, prop, colors, reverse) {
 	const light = [];
 	const dark = [];
 	
@@ -64,7 +65,7 @@ function transform(indent, colors, reverse) {
 	writer.write(":root, [data-bs-theme=light] {");
 	
 	for (let i = 0; i < light.length; i++)
-		writer.newLine(1, "--col-indent-", i, ": ", light[i], ";");
+		writer.newLine(1, "--", prefix, i, ": ", light[i], ";");
 
 	writer.newLine(0, "}");
 
@@ -75,7 +76,7 @@ function transform(indent, colors, reverse) {
 		for (let i = 0; i < dark.length; i++) {
 			const color = dark[i];
 			if (color !== undefined) 
-				writer.newLine(1, "--col-indent-", i, ": ", color, ";");
+				writer.newLine(1, "--", prefix, i, ": ", color, ";");
 		}
 
 		writer.newLine(0, "}");
@@ -85,8 +86,8 @@ function transform(indent, colors, reverse) {
 
 	while (i < light.length) {
 		writer.newLine(0);
-		writer.newLine(0, ".indent-", i, " {");
-		writer.newLine(1, "--col-indent: var(--col-indent-", i, ");");
+		writer.newLine(0, ".", prefix, i, " {");
+		writer.newLine(1, prop, ": var(--", prefix, i, ");");
 		writer.newLine(0, "}");
 		i++;
 	}
@@ -94,8 +95,8 @@ function transform(indent, colors, reverse) {
 	if (reverse) {
 		for (let j = i - 1; --j >= 0; i++) {
 			writer.newLine(0);
-			writer.newLine(0, ".indent-", i, " {");
-			writer.newLine(1, "--col-indent: var(--col-indent-", j, ");");
+			writer.newLine(0, ".", prefix, i, " {");
+			writer.newLine(1, prop, ": var(--", prefix, j, ");");
 			writer.newLine(0, "}");
 		}
 	}
@@ -105,12 +106,14 @@ function transform(indent, colors, reverse) {
 }
 
 /**
- * @param {{ min?: boolean }} options
+ * @param {{ minify?: boolean, prefix?: string, prop?: string }} options
  * @returns {rl.Plugin}
  */
 export default function indentStyles(options = {}) {
 	/** @type {Record<string, IndentStyleInput[]>} */
 	const allThemes = {};
+
+	const { minify, prefix = "col", prop = "background-color" } = options;
 
 	return {
 		name: "rollup-plugin-indent-theme",
@@ -122,7 +125,7 @@ export default function indentStyles(options = {}) {
 			if (indent === true || indent == null)
 				indent = "\t";
 
-			if (options.min)
+			if (minify)
 				indent = undefined;
 
 			/** @type {import("./src/types").IndentStyles} */
@@ -139,7 +142,7 @@ export default function indentStyles(options = {}) {
 				delete bundle[jsName];
 
 				for (const { id, name, colors, reverse } of themes) {
-					const [code, indents] = transform(indent, colors, reverse);
+					const [code, indents] = transform(indent, prefix, prop, colors, reverse);
 					const css = `${filePath.name}.${id}.css`;
 
 					this.emitFile({
