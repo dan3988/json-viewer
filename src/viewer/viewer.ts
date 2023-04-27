@@ -59,24 +59,31 @@ try {
 		return parts;
 	}
 
-	async function loadIndentStyle(key: string) {
+	async function loadIndentStyles(): Promise<IndentStyles> {
 		const url = chrome.runtime.getURL("lib/indent-styles.json");
 		const res = await fetch(url);
-		const styles: IndentStyles = await res.json();
-		return styles[key];
+		return await res.json();
 	}
 
 	async function loadAsync() {
 		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle");
 		const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
-		const indentStyle = await loadIndentStyle(bag.indentStyle);
+		const indentStyles = await loadIndentStyles();
 
 		let indent = bag.indentChar.repeat(bag.indentCount);
+
+		function getStyle(key: string) {
+			const style = indentStyles[key];
+			const url = chrome.runtime.getURL(`/lib/indent-styles.${key}.css`)
+			return [url, style.indents] as const;
+		}
 	
 		settings.addListener(({ changes }) => {
 			if (changes.darkMode)
 				tracker.preferDark = changes.darkMode.newValue;
 
+			let props: any = {};
+			let changeCount = false;
 			let changeIndent = false;
 			if (changes.indentChar) {
 				changeIndent = true;
@@ -89,9 +96,18 @@ try {
 			}
 
 			if (changeIndent) {
-				indent = bag.indentChar.repeat(bag.indentCount);
-				viewer.$set({ indent });
+				changeCount = true;
+				props.indent = indent = bag.indentChar.repeat(bag.indentCount);
 			}
+
+			if (changes.indentStyle) {
+				changeCount = true;
+				props.indentStyle = getStyle(changes.indentStyle.newValue);
+			}
+
+			if (changeCount)
+				viewer.$set(props);
+
 		}, "local");
 
 		const viewer = new JsonViewer({
@@ -99,7 +115,7 @@ try {
 			props: {
 				model,
 				indent,
-				maxIndentClass: indentStyle.indents
+				indentStyle: getStyle(bag.indentStyle)
 			}
 		});
 	}

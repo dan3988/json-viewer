@@ -1,14 +1,14 @@
 <script lang="ts">
 	import type { ViewerModel } from "./viewer-model";
+	import type { JsonToken } from "./json";
 	import JsonProperty from "./JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onMount } from "svelte";
-	import type { JsonToken } from "./json";
 	import JsonPathEditor from "./JsonPathEditor.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
-	export let maxIndentClass: number;
+	export let indentStyle: readonly [url: string, count: number];
 
 	async function copy(token: JsonToken) {
 		let text: string;
@@ -202,10 +202,12 @@
 		}
 	}
 </style>
-
+<svelte:head>
+	<link rel="stylesheet" href={indentStyle[0]} />
+</svelte:head>
 <div class="root bg-body text-body">
 	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
-		<JsonProperty model={model} prop={model.root} indent={0} {maxIndentClass}/>
+		<JsonProperty model={model} prop={model.root} indent={0} maxIndentClass={indentStyle[1]}/>
 	</div>
 	<div class="gripper" on:mousedown={onMouseDown}/>
 	<div class="w-path">

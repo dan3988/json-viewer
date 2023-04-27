@@ -5,7 +5,6 @@
 	export let filter: string;
 	export let index = 0;
 
-
 	let filterLw: string;
 	let results: string[];
 
