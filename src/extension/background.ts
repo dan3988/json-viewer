@@ -1,14 +1,7 @@
-import type { IndentStyles, WorkerMessage } from "../types.js";
+import type { WorkerMessage } from "../types.js";
 import settings from "../settings.js";
 
 console.log('launch');
-
-function fetchResource(mode: "text", path: string): Promise<string>
-function fetchResource<T = any>(mode: "json", path: string): Promise<T>
-function fetchResource(mode: "json" | "text", path: string): Promise<any> {
-	const url = chrome.runtime.getURL(path);
-	return fetch(url).then(v => v[mode]());
-}
 
 function updateIcon(path: Record<string, string>, title: string) {
 	const setIcon = chrome.action.setIcon({ path });
