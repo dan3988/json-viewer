@@ -121,10 +121,6 @@
 			padding: $pad-med;
 		}
 
-		&:not(.expanded) > .preview-wrapper {
-			display: none;
-		}
-
 		&.expanded {
 			height: 20rem;
 
@@ -206,7 +202,7 @@
 			<span class="flex-fill">Preview</span>
 			<span class="expander btn btn-cust-light border-0" on:click={() => showPreview = !showPreview} />
 		</div>
-		<div class="preview-wrapper overflow-auto p-1">
+		<div class="preview-wrapper expandable-content overflow-auto p-1">
 			<ViewerPreview maxIndentClass={currentStyle.indents} />
 		</div>
 	</div>

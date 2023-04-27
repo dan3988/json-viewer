@@ -123,10 +123,6 @@
 		flex-direction: column;
 
 		&:not(.expanded) {
-			> .list {
-				display: none;
-			}
-
 			> .head {
 				border-style: none !important;
 			}
@@ -184,7 +180,7 @@
 		<span class="title">{title}</span>
 		<span role="button" class="expander btn btn-cust-light border-0" on:click={() => expanded = !expanded}></span>
 	</div>
-	<ul class="list list-group list-group-flush overflow-y-scroll">
+	<ul class="list expandable-content list-group list-group-flush overflow-y-scroll">
 		{#each items as item, i}
 		<li class="list-group-item">
 			<input class="value" type="text" placeholder="Empty" on:focusout={evt => tryEdit(evt.currentTarget, i)} on:keydown={e => onKeyDown(e.currentTarget, e, i)} value={item}/>

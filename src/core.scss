@@ -1,3 +1,5 @@
+@use "sass:map";
+
 $border-w: 1px;
 $border-rad: 5px;
 
@@ -5,8 +7,8 @@ $pad-small: 2px;
 $pad-med: 5px;
 $pad-l: 15px;
 
-$anim-short: 100ms;
-$anim-med: 200ms;
+$anim-easing: ("ease": ease-in-out, "spring": cubic-bezier(0.5, 0, 0.5, 1.5));
+$anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 
 @mixin img-btn($img: null, $padding: 0, $color: null) {
 	position: relative;
@@ -57,10 +59,10 @@ $anim-med: 200ms;
 	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $padding, $color);
 }
 
-@mixin anim-short($props) {
+@mixin anim($props, $dur, $ease: "ease") {
 	transition-property: $props;
-	transition-duration: $anim-short;
-	transition-timing-function: ease-in-out;
+	transition-duration: map.get($anim-durations, $dur);
+	transition-timing-function: map.get($anim-easing, $ease);
 }
 
 @mixin theme($mode: light) {
@@ -71,13 +73,20 @@ $anim-med: 200ms;
 
 .expandable {
 	.expander {
-		@include img-btn(null, $pad-small);
-
-		--img-btn-src: #{url("chrome-extension://__MSG_@@extension_id__/res/add.svg")};
+		@include img-btn-url("chevron.svg", $pad-small);
 		aspect-ratio: 1;
+
+		&::before {
+			@include anim(rotate, "medium", "spring");
+			rotate: 180deg;
+		}
 	}
 
-	&.expanded .expander {
-		--img-btn-src: #{url("chrome-extension://__MSG_@@extension_id__/res/sub.svg")};
+	&:not(.expanded) > .expandable-content {
+		display: none;
+	}
+
+	&.expanded .expander::before {
+		rotate: 0deg;
 	}
 }
