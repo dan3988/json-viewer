@@ -179,7 +179,7 @@
 		</select>
 	</div>
 	<div class="input-group grp-indent-style">
-		<span class="input-group-text">Intent Style</span>
+		<span class="input-group-text">Indent Style</span>
 		<select class="form-select flex-fill" class:dirty={$indentStyle.changed} bind:value={$indentStyle.value}>
 			{#each Object.entries(indentStyles) as [key, theme]}
 				<option value={key}>{theme.name}</option>
