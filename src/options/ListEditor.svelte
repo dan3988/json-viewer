@@ -8,6 +8,7 @@
 	export let items: string[];
 	export let help: string = "";
 	export let validator: null | ListValidator = null;
+	export let expanded = false;
 
 	function onPlaceholderFocusOut(target: HTMLInputElement) {
 		const text = target.value;
@@ -121,6 +122,16 @@
 		display: flex;
 		flex-direction: column;
 
+		&:not(.expanded) {
+			> .list {
+				display: none;
+			}
+
+			> .head {
+				border-style: none !important;
+			}
+		}
+
 		> .head {
 			padding: $pad-med;
 			display: flex;
@@ -130,7 +141,7 @@
 				flex: 0 0 auto;
 			}
 
-			> span {
+			> .title {
 				flex: 1 1 auto;
 			}
 		}
@@ -165,12 +176,13 @@
 		}
 	}
 </style>
-<div class="root flex-fill border rounded overflow-hidden">
+<div class="root flex-fill border rounded overflow-hidden expandable" class:expanded>
 	<div class="head nav-header border-bottom bg-body-tertiary">
 		{#if help}
 			<span class="button btn-help" title={help}></span>
 		{/if}
 		<span class="title">{title}</span>
+		<span role="button" class="expander btn btn-cust-light border-0" on:click={() => expanded = !expanded}></span>
 	</div>
 	<ul class="list list-group list-group-flush overflow-y-scroll">
 		{#each items as item, i}

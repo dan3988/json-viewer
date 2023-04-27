@@ -114,19 +114,21 @@
 	.grp-preview {
 		overflow: hidden;
 
-		> span {
+		> .preview-head {
 			flex: 0 0 0px;
 			margin: -1px;
+			display: flex;
+			padding: $pad-med;
 		}
 
-		&:not(.shown) > .preview-wrapper {
+		&:not(.expanded) > .preview-wrapper {
 			display: none;
 		}
 
-		&.shown {
+		&.expanded {
 			height: 20rem;
 
-			> span {
+			> .preview-head {
 				border-bottom-left-radius: 0;
 				border-bottom-right-radius: 0;
 			}
@@ -199,8 +201,11 @@
 			{/each}
 		</select>
 	</div>
-	<div class="grp-preview bg-tetiary border rounded d-flex flex-column overflow-hidden" class:shown={showPreview}>
-		<span class="bg-body-tertiary btn border" on:click={() => showPreview = !showPreview}>Preview</span>
+	<div class="grp-preview bg-tetiary border rounded d-flex flex-column overflow-hidden expandable" class:expanded={showPreview}>
+		<div class="preview-head bg-body-tertiary border">
+			<span class="flex-fill">Preview</span>
+			<span class="expander btn btn-cust-light border-0" on:click={() => showPreview = !showPreview} />
+		</div>
 		<div class="preview-wrapper overflow-auto p-1">
 			<ViewerPreview maxIndentClass={currentStyle.indents} />
 		</div>

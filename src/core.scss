@@ -8,8 +8,12 @@ $pad-l: 15px;
 $anim-short: 100ms;
 $anim-med: 200ms;
 
-@mixin img-btn($img, $padding: 0, $color: null) {
+@mixin img-btn($img: null, $padding: 0, $color: null) {
 	position: relative;
+
+	@if ($img != null) {
+		--img-btn-src: #{$img};
+	}
 
 	@if ($color == null) {
 		&:hover::before {
@@ -38,11 +42,11 @@ $anim-med: 200ms;
 		content: "";
 		position: absolute;
 		inset: $padding;
-		-webkit-mask-image: $img;
+		-webkit-mask-image: var(--img-btn-src);
 		-webkit-mask-repeat: no-repeat;
 		-webkit-mask-size: contain;
 		-webkit-mask-position: center;
-		mask-image: $img;
+		mask-image: var(--img-btn-src);
 		mask-repeat: no-repeat;
 		mask-size: contain;
 		mask-position: center;
@@ -62,5 +66,18 @@ $anim-med: 200ms;
 @mixin theme($mode: light) {
 	:global([data-bs-theme="#{$mode}"]) {
 		@content;
+	}
+}
+
+.expandable {
+	.expander {
+		@include img-btn(null, $pad-small);
+
+		--img-btn-src: #{url("chrome-extension://__MSG_@@extension_id__/res/add.svg")};
+		aspect-ratio: 1;
+	}
+
+	&.expanded .expander {
+		--img-btn-src: #{url("chrome-extension://__MSG_@@extension_id__/res/sub.svg")};
 	}
 }
