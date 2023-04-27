@@ -20,7 +20,6 @@ export type WorkerMessage = LoadMessage | CheckMessage | RememberMessage;
 
 export interface IndentStyle {
 	name: string;
-	css: string;
 	indents: number;
 }
 

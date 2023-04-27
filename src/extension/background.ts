@@ -40,15 +40,12 @@ async function loadExtension() {
 	for (const key in gsIcons)
 		gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
-	const themes = await fetchResource<IndentStyles>("json", "res/themes.json");
-
 	function injectPopup(tabId: number, frameId: undefined | number) {
 		return inject(tabId, frameId, ["lib/content.js"], ["lib/content.css"]);
 	}
 
 	function injectViewer(tabId: number, frameId: undefined | number) {
-		const indentStyle = themes[bag.indentStyle];
-		return inject(tabId, frameId, [lib.json5, "lib/viewer.js"], [lib.bootstrap, indentStyle.css, "lib/viewer.css"]);
+		return inject(tabId, frameId, [lib.json5, "lib/viewer.js"], [lib.bootstrap, `lib/indent-styles.${bag.indentStyle}.css`, "lib/viewer.css"]);
 	}
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {

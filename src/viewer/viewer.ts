@@ -60,7 +60,7 @@ try {
 	}
 
 	async function loadIndentStyle(key: string) {
-		const url = chrome.runtime.getURL("/res/themes.json");
+		const url = chrome.runtime.getURL("lib/indent-styles.json");
 		const res = await fetch(url);
 		const styles: IndentStyles = await res.json();
 		return styles[key];

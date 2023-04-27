@@ -119,7 +119,7 @@
 	}
 </style>
 <svelte:head>
-	<link rel="stylesheet" href={currentStyle.css} />
+	<link rel="stylesheet" href="/lib/indent-styles.{$indentStyle.value}.css" />
 </svelte:head>
 <div class="base cr d-flex flex-column p-1 gap-1">
 	<div class="input-group" class:dirty={$enabled.changed}>

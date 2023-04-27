@@ -10,6 +10,7 @@ import path from "path";
 import fs from "fs";
 import * as rl from "rollup";
 import Linq from '@daniel.pickett/linq-js';
+import indentStyles from './rollup-plugin-indent-theme.js';
 
 const dist = !process.env.ROLLUP_WATCH;
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
@@ -91,7 +92,7 @@ function jsConfig(baseDir, entry, output, addScss) {
 	]
 
 	if (addScss)
-		plugins.push(sass({ 
+		plugins.push(sass({
 			fileName: output + ".css"
 		}));
 
@@ -101,6 +102,7 @@ function jsConfig(baseDir, entry, output, addScss) {
 	return {
 		input: path.join(baseDir, entry),
 		output: {
+			indent: "\t",
 			sourcemap: !dist,
 			format: 'cjs',
 			file: path.join("lib", output + ".js"),
@@ -111,6 +113,7 @@ function jsConfig(baseDir, entry, output, addScss) {
 		}
 	};
 }
+
 
 /** @type {rl.RollupOptions[]} */
 const configs = [
@@ -129,9 +132,22 @@ const configs = [
 	jsConfig("src/extension", "background.ts", "bg"),
 	svelteConfig("src/viewer", "viewer.ts", "viewer"),
 	svelteConfig("src/options", "options.ts", "options", "esm"),
+	{
+		input: "src/indent-styles.json",
+		output: {
+			dir: "lib"
+		},
+		plugins: [
+			indentStyles({
+				min: dist
+			})
+		]
+	}
 ];
 
-if (fs.existsSync("lib"))
-	fs.rm("lib", { recursive: true }, () => fs.mkdir("lib", Function.prototype));
+if (fs.existsSync("lib")) {
+	await fs.promises.rm("lib", { recursive: true });
+	await fs.promises.mkdir("lib", { recursive: true });
+}
 
 export default configs;

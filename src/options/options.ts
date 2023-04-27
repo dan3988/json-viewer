@@ -6,7 +6,7 @@ import EditorModel from "./editor";
 const tracker = new ThemeTracker(document.documentElement);
 const bag = await settings.get();
 const model = new EditorModel(bag);
-const themesUrl = chrome.runtime.getURL("/res/themes.json");
+const themesUrl = chrome.runtime.getURL("lib/indent-styles.json");
 const indentStyles = await fetch(themesUrl).then(v => v.json());
 
 new Settings({
