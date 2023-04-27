@@ -15,7 +15,7 @@
 	},
 	{
 		"id": "blue",
-		"name": "Blue",
+		"name": "Sky",
 		"reverse": true,
 		"colors": [
 			"#34B",
@@ -36,6 +36,17 @@
 			"#F48C06",
 			"#FAA307",
 			"#FFBA08"
+		]
+	},
+	{
+		"id": "green",
+		"name": "Nature",
+		"reverse": true,
+		"colors": [
+			["#BDB", "#484"],
+			["#8B8", "#4B4"],
+			["#484", "#8F8"],
+			["#040", "#BFB"]
 		]
 	},
 	{
