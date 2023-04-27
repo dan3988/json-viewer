@@ -58,6 +58,7 @@ export namespace settings {
 	const list = [
 		makeSetting("darkMode", NullableType(Boolean), null),
 		makeSetting("mimes", ArrayType, ["application/json"]),
+		makeSetting("jsonStyle", String, "default"),
 		makeSetting("whitelist", ArrayType, []),
 		makeSetting("blacklist", ArrayType, []),
 		makeSetting("enabled", Boolean, true),
@@ -88,6 +89,7 @@ export namespace settings {
 		indentCount: number;
 		indentChar: string;
 		indentStyle: string;
+		jsonStyle: string;
 	}
 
 	export function getDefault(): SettingsBag {

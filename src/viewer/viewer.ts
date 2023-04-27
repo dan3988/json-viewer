@@ -66,9 +66,10 @@ try {
 	}
 
 	async function loadAsync() {
-		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle");
+		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle", "jsonStyle");
 		const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
 		const indentStyles = await loadIndentStyles();
+		const jsonStyle = chrome.runtime.getURL(`res/json-theme.${bag.jsonStyle}.css`);
 
 		let indent = bag.indentChar.repeat(bag.indentCount);
 
@@ -100,6 +101,11 @@ try {
 				props.indent = indent = bag.indentChar.repeat(bag.indentCount);
 			}
 
+			if (changes.jsonStyle) {
+				changeCount = true;
+				props.jsonStyle = chrome.runtime.getURL(`res/json-theme.${changes.jsonStyle.newValue}.css`);
+			}
+
 			if (changes.indentStyle) {
 				changeCount = true;
 				props.indentStyle = getStyle(changes.indentStyle.newValue);
@@ -115,6 +121,7 @@ try {
 			props: {
 				model,
 				indent,
+				jsonStyle,
 				indentStyle: getStyle(bag.indentStyle)
 			}
 		});

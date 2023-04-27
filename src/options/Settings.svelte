@@ -35,12 +35,13 @@
 	import ListEditor from "./ListEditor.svelte";
 	import Linq from "@daniel.pickett/linq-js";
 	import { onDestroy, onMount } from "svelte";
+    import themes from "../json-themes.js";
 
 	export let indentStyles: IndentStyles;
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
 
-	$: currentStyle = indentStyles[indentStyle.value];
+	$: currentStyle = indentStyles[indentStyle.value] ?? Object.prototype;
 
 	let destroy: Action;
 
@@ -55,7 +56,7 @@
 
 	onDestroy(() => destroy())
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle, jsonStyle } = model.props);
 
 	function onModelChange(this: EditorModel) {
 		canSave = this.changed.size > 0;
@@ -164,6 +165,14 @@
 				<li class="flex-fill json-indent-col-{i}"></li>
 			{/each}
 		</ul>
+	</div>
+	<div class="input-group grp-json-style">
+		<span class="input-group-text">Json Colour Scheme</span>
+		<select class="form-select flex-fill" class:dirty={$jsonStyle.changed} bind:value={$jsonStyle.value}>
+			{#each Object.entries(themes) as [id, name]}
+				<option value={id}>{name}</option>
+			{/each}
+		</select>
 	</div>
 	<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>
 </div>

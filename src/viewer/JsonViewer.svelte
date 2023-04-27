@@ -9,6 +9,7 @@
 	export let model: ViewerModel;
 	export let indent: string;
 	export let indentStyle: readonly [url: string, count: number];
+	export let jsonStyle: string;
 
 	async function copy(token: JsonToken) {
 		let text: string;
@@ -203,6 +204,7 @@
 	}
 </style>
 <svelte:head>
+	<link rel="stylesheet" href={jsonStyle} />
 	<link rel="stylesheet" href={indentStyle[0]} />
 </svelte:head>
 <div class="root bg-body text-body">

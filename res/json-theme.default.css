@@ -1,0 +1,19 @@
+:root, [data-bs-theme=light] {
+	--col-json-key-fg: #18F;
+	--col-json-str-fg: #854;
+	--col-json-num-fg: #992;
+	--col-json-bln-fg: #14A;
+	--col-json-null-fg: #95F;
+	--col-match-fg: #000;
+	--col-match-bg: #CC3;
+}
+
+[data-bs-theme=dark] {
+	--col-json-key-fg: #8CF;
+	--col-json-str-fg: #C75;
+	--col-json-num-fg: #FF8;
+	--col-json-bln-fg: #38F;
+	--col-json-null-fg: #95F;
+	--col-match-fg: #000;
+	--col-match-bg: #FF0;
+}
