@@ -4,8 +4,8 @@ import type { IndentStyles } from "../types";
 import settings from "../settings";
 import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
-import { JsonProperty } from "./json"
-import { ViewerModel } from "./viewer-model";
+import { JsonProperty } from "../json"
+import { ViewerModel } from "../viewer-model";
 
 try {
 	const lib = typeof JSON5 === "undefined" ? JSON : JSON5;

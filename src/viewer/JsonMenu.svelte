@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { JsonTokenFilterFlags, JsonProperty } from "./json";
-    import JSONPath from "./json-path";
-    import { PropertyBag } from "./prop";
-	import type { ViewerModel } from "./viewer-model";
+	import { JsonTokenFilterFlags, JsonProperty } from "../json";
+	import JSONPath from "./json-path";
+	import type { ViewerModel } from "../viewer-model";
 
 	export let model: ViewerModel;
 

@@ -73,7 +73,7 @@ export class PropertyBag<TRecord extends Record<string, any> = Record<string, an
 			const value = this.#value;
 			run(value);
 			const subNo = this.#subNo++;
-			this.#subs.set(subNo, invalidate ?? run);
+			this.#subs.set(subNo, <any>(invalidate ?? run));
 			return this.#unsubscribe.bind(this, subNo);
 		}
 	}

@@ -1,4 +1,4 @@
-import { EventHandlers } from "./evt";
+import { EventHandlers } from "./viewer/evt";
 import { JsonContainer, JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json";
 import { PropertyBag } from "./prop";
 

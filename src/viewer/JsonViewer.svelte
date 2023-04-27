@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { ViewerModel } from "./viewer-model";
-	import type { JsonToken } from "./json";
-	import JsonProperty from "./JsonProperty.svelte";
+	import type { ViewerModel } from "../viewer-model";
+	import type { JsonToken } from "../json";
+	import JsonProperty from "../JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onMount } from "svelte";
 	import JsonPathEditor from "./JsonPathEditor.svelte";
