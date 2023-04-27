@@ -203,7 +203,7 @@
 		{:else}
 			<span class="expander" on:click={() => prop.toggleExpanded()}></span>
 			<span class="prop-count">{prop.value.count}</span>
-			<ul class="json-container json-{prop.value.subtype}">
+			<ul class="json-container json-{prop.value.subtype} p-0 m-0">
 				{#each [...prop.value.properties()] as p}
 				<li>
 					<svelte:self model={model} prop={p} indent={indent + 1} {maxIndentClass} />

@@ -5,6 +5,8 @@ declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 	new(...args: TArgs): TValue;
 }
 
+declare type Dict<T = any> = Record<string, T>;
+
 declare var JSON5: typeof import("json5");
 
 declare interface Array<T> {

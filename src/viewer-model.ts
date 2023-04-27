@@ -151,3 +151,5 @@ export class ViewerModel {
 		}
 	}
 }
+
+export default ViewerModel;

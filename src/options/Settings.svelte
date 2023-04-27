@@ -32,10 +32,11 @@
 	import type { EditorModel } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
 	import settings from "../settings";
-	import ListEditor from "./ListEditor.svelte";
 	import Linq from "@daniel.pickett/linq-js";
 	import { onDestroy, onMount } from "svelte";
-    import themes from "../json-themes.js";
+	import themes from "../json-themes.js";
+	import ListEditor from "./ListEditor.svelte";
+	import ViewerPreview from "./ViewerPreview.svelte";
 
 	export let indentStyles: IndentStyles;
 	export let model: EditorModel<settings.SettingsBag>;
@@ -43,6 +44,7 @@
 
 	$: currentStyle = indentStyles[indentStyle.value] ?? Object.prototype;
 
+	let showPreview = false;
 	let destroy: Action;
 
 	onMount(() => {
@@ -109,6 +111,28 @@
 		}
 	}
 
+	.grp-preview {
+		overflow: hidden;
+
+		> span {
+			flex: 0 0 0px;
+			margin: -1px;
+		}
+
+		&:not(.shown) > .preview-wrapper {
+			flex: 0 0 0px;
+		}
+
+		&.shown {
+			height: 20rem;
+
+			> span {
+				border-bottom-left-radius: 0;
+				border-bottom-right-radius: 0;
+			}
+		}
+	}
+
 	.indent-preview {
 		height: 2.5rem;
 		border-top-left-radius: 0 !important;
@@ -118,9 +142,14 @@
 			background-color: var(--json-indent-bg);
 		}
 	}
+
+	.preview-wrapper {
+		overflow: auto;
+	}
 </style>
 <svelte:head>
 	<link rel="stylesheet" href="/lib/indent-styles.{$indentStyle.value}.css" />
+	<link rel="stylesheet" href="/res/json-theme.{$jsonStyle.value}.css" />
 </svelte:head>
 <div class="base cr d-flex flex-column p-1 gap-1">
 	<div class="input-group" class:dirty={$enabled.changed}>
@@ -173,6 +202,12 @@
 				<option value={id}>{name}</option>
 			{/each}
 		</select>
+	</div>
+	<div class="grp-preview bg-tetiary border rounded d-flex flex-column overflow-hidden" class:shown={showPreview}>
+		<span class="bg-body-tertiary btn border" on:click={() => showPreview = !showPreview}>Preview</span>
+		<div class="preview-wrapper">
+			<ViewerPreview maxIndentClass={currentStyle.indents} />
+		</div>
 	</div>
 	<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>
 </div>
