@@ -120,7 +120,7 @@
 		}
 
 		&:not(.shown) > .preview-wrapper {
-			flex: 0 0 0px;
+			display: none;
 		}
 
 		&.shown {
@@ -141,10 +141,6 @@
 		> li {
 			background-color: var(--json-indent-bg);
 		}
-	}
-
-	.preview-wrapper {
-		overflow: auto;
 	}
 </style>
 <svelte:head>
@@ -205,7 +201,7 @@
 	</div>
 	<div class="grp-preview bg-tetiary border rounded d-flex flex-column overflow-hidden" class:shown={showPreview}>
 		<span class="bg-body-tertiary btn border" on:click={() => showPreview = !showPreview}>Preview</span>
-		<div class="preview-wrapper">
+		<div class="preview-wrapper overflow-auto p-1">
 			<ViewerPreview maxIndentClass={currentStyle.indents} />
 		</div>
 	</div>
