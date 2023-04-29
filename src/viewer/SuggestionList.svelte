@@ -40,7 +40,7 @@
 	function appendE<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, className: string, content: string): HTMLElementTagNameMap[K] {
 		const e = document.createElement(tag);
 		e.className = className;
-		e.innerText = content;
+		e.textContent = content;
 		parent.append(e);
 		return e;
 	}
