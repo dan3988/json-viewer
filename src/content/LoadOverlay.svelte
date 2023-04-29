@@ -28,12 +28,18 @@
 	@import "../globals.scss";
 
 	.root {
+		display: block;
+		position: absolute;
+		inset: 0;
+	}
+
+	.content {
 		@extend body;
 
-		position: absolute;
+		position: sticky;
+		width: max-content;
+		margin: 0 auto;
 		top: 1rem;
-		left: 50%;
-		translate: -50% 0;
 		padding: $pad-med;
 		background-color: var(--bs-body-bg);
 		display: grid;
@@ -58,14 +64,23 @@
 		}
 	}
 </style>
+<svelte:head>
+	<style>
+		:global(body) {
+			position: relative;
+		}	
+	</style>
+</svelte:head>
 <template>
-	<div class="root border rounded gap-1 text-center px-5" bind:this={elem} data-bs-theme="">
-		<span class="full-row">Load JSON viewer?</span>
-		<label class="full-row d-flex justify-content-center gap-1">
-			<input type="checkbox" class="form-check-input" bind:checked={remember}/>
-			Remember for this host
-		</label>
-		<button class="btn btn-success" on:click={() => action(true)}>Yes</button>
-		<button class="btn btn-danger" on:click={() => action(false)}>No</button>
+	<div class="root">
+		<div class="content border rounded gap-1 text-center px-5" bind:this={elem} data-bs-theme="">
+			<span class="full-row">Load JSON viewer?</span>
+			<label class="full-row d-flex justify-content-center gap-1">
+				<input type="checkbox" class="form-check-input" bind:checked={remember}/>
+				Remember for this host
+			</label>
+			<button class="btn btn-success" on:click={() => action(true)}>Yes</button>
+			<button class="btn btn-danger" on:click={() => action(false)}>No</button>
+		</div>
 	</div>
 </template>
