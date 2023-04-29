@@ -104,16 +104,19 @@
 	@use "../core.scss" as *;
 
 	.list {
+		z-index: 1;
 		position: absolute;
 		left: 0;
 		right: 0;
-		min-width: 10rem;
-		min-height: 1rem;
+		width: 20rem;
 		max-height: 50vh;
 		bottom: calc(100% + $pad-med);
 		overflow-y: hidden;
 
 		> li {
+			text-overflow: ellipsis;
+			overflow: hidden;
+			white-space: nowrap;
 			padding: $pad-small $pad-med;
 			cursor: pointer;
 
