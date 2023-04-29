@@ -353,8 +353,10 @@
 					}
 				} else {
 					const prop = tryResolve();
-					if (prop)
+					if (prop) {
 						model.setSelected(prop, true, true);
+						this.blur();
+					}
 				}
 			},
 			ArrowUp() {
