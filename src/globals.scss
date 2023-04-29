@@ -16,6 +16,8 @@ $cst-dirty-border-color-dark: #5c603b;
 
 @include core.theme(light) {
 	:global() {
+		color-scheme: light;
+
 		--col-blue: #00F;
 		--col-red: #F00;
 		--col-grn: #0F0;
