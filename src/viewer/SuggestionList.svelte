@@ -113,6 +113,16 @@
 		bottom: calc(100% + $pad-med);
 		overflow-y: hidden;
 
+		&:empty {
+			&::before {
+				content: "No Matching properties";
+				display: block;
+				margin: $pad-small $pad-med;
+				font-style: italic;
+				color: var(--bs-tertiary-color);
+			}
+		}
+
 		> li {
 			text-overflow: ellipsis;
 			overflow: hidden;
