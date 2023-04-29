@@ -1,0 +1,13 @@
+diff --git a/node_modules/bootstrap/scss/mixins/_color-mode.scss b/node_modules/bootstrap/scss/mixins/_color-mode.scss
+index 03338b0..b4b0565 100644
+--- a/node_modules/bootstrap/scss/mixins/_color-mode.scss
++++ b/node_modules/bootstrap/scss/mixins/_color-mode.scss
+@@ -13,7 +13,7 @@
+       }
+     }
+   } @else {
+-    [data-bs-theme="#{$mode}"] {
++    :global([data-bs-theme="#{$mode}"]) {
+       @content;
+     }
+   }
