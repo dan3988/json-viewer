@@ -71,7 +71,7 @@
 
 			while (true) {
 				if (ix < 0) {
-					appendE(target, "span", "", suggestion.substring(last));
+					last !== suggestion.length && appendE(target, "span", "", suggestion.substring(last));
 					break;
 				} else if (ix > last) {
 					appendE(target, "span", "", suggestion.substring(last, ix));
