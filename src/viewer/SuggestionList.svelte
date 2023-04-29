@@ -153,7 +153,7 @@
 	}
 </style>
 <template>
-	<ul class="list bg-secondary text-body border" bind:this={list} contenteditable="false">
+	<ul class="list bg-body-tertiary text-body-emphasis border" bind:this={list} contenteditable="false">
 		{#each results as suggestion, i}
 			<li class:selected={i == index} use:renderListItem={{ suggestion, filter: filterLw, index: i }}></li>
 		{/each}
