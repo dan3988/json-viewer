@@ -5,6 +5,15 @@
 
 	export let model: ViewerModel;
 
+	export function focusSearch() {
+		filterInput.focus();
+	}
+
+	export function focusJPath() {
+		jpath.focus();
+	}
+
+	let filterInput: HTMLInputElement;
 	let filter = "";
 	let filterMode = JsonTokenFilterFlags.Both;
 
@@ -120,7 +129,7 @@
 	</div>
 	<div class="input-group field">
 		<span class="input-group-text">Filter</span>
-		<input class="filter-input form-control" type="text" bind:value={filter}/>
+		<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
 		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearFilter}></button>
 		<select class="filter-type form-select" bind:value={filterMode}>
 			<option value={JsonTokenFilterFlags.Both}>All</option>

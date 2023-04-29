@@ -23,17 +23,22 @@
 	}
 
 	function onKeyDown(e: KeyboardEvent) {
-		switch (e.key) {
+		switch (e.code) {
 			case "Escape":
 				model.selected = null;
 				e.preventDefault();
 				break;
-			case " ":
+			case "Space":
 				model.selected?.toggleExpanded();
 				e.preventDefault();
 				break;
-			case "C":
-			case "c":
+			case "KeyF":
+				if (e.ctrlKey) {
+					e.preventDefault();
+					menuC.focusSearch();
+				}
+				break;
+			case "KeyC":
 				if (e.ctrlKey) {
 					const selection = window.getSelection();
 					if (selection != null && selection.type !== "Caret")
@@ -100,6 +105,7 @@
 
 	let prop: HTMLElement;
 	let menu: HTMLElement;
+	let menuC: JsonMenu;
 
 	// function safeSubscribe<T>(v: Readable<T>, s: Subscriber<T>) {
 	// 	onDestroy(v.subscribe(s));
@@ -216,6 +222,6 @@
 		<JsonPathEditor model={model}/>
 	</div>
 	<div class="w-menu" bind:this={menu}>
-		<JsonMenu model={model}/>
+		<JsonMenu {model} bind:this={menuC}/>
 	</div>
 </div>
