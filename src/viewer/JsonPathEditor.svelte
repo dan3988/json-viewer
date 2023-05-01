@@ -18,6 +18,7 @@
 	const zws = "\u200B";
 
 	let dollar: HTMLLIElement;
+	let editing = false;
 
 	const selected = model.bag.readables.selected;
 
@@ -55,7 +56,7 @@
 		}
 
 		const wrapper = document.createElement("div");
-		wrapper.classList.add(dollar.className, "wrapper");
+		wrapper.classList.add(dollar.className, "wrapper", "rounded");
 		wrapper.appendChild(span)
 
 		const slash = document.createElement("span");
@@ -227,21 +228,29 @@
 	function render(target: HTMLElement, selected: null | JsonProperty) {
 		let autocomplete: undefined | AutocompleteHelper = undefined;
 
-		function* getParts(end?: null | HTMLElement) {
+		function* getParts(end?: null | HTMLElement, includeEnd?: boolean) {
 			const first = target.firstElementChild;	
 			if (first == null)
 				return;
 
-			for (let e = first.nextElementSibling; e != null && e != end; e = e.nextElementSibling) {
+			let loop = true
+
+			for (let e = first.nextElementSibling; e != null && loop; e = e.nextElementSibling) {
+				if (end && e == end) {
+					if (!includeEnd)
+						break;
+					loop = false;
+				}
+
 				const span = e.querySelector("span.content");
 				if (span != null)
 					yield getContent(span);
 			}
 		}
 
-		function tryResolve(end?: null | HTMLElement): null | JsonProperty {
+		function tryResolve(end?: null | HTMLElement, includeEnd?: boolean): null | JsonProperty {
 			let e = model.root;
-			for (let part of getParts(end)) {
+			for (let part of getParts(end, includeEnd)) {
 				const prop = e.value.getProperty(part);
 				if (prop == null)
 					return null;
@@ -493,7 +502,11 @@
 				const wrapper = e.parentElement as HTMLDivElement;
 				showAutocomplete(wrapper, e, wrapper.parentElement as any);
 			},
+			focusin() {
+				editing = true;
+			},
 			focusout() {
+				editing = false;
 				if (!(window as any).ignorefocus)
 					update(selected);
 			},
@@ -504,6 +517,19 @@
 			cut(evt) {
 				evt.clipboardData && onCopy(this, evt.clipboardData, true);
 				evt.preventDefault();
+			},
+			mousedown(evt) {
+				if (!editing) {
+					const { target } = evt;
+					const el = target instanceof Element && target.closest("div.wrapper");
+					if (el) {
+						const v = tryResolve(el.parentElement, true);
+						if (v) {
+							evt.preventDefault();
+							window.addEventListener("mouseup", (e) => e.target == target && model.setSelected(v, false, true), { once: true })
+						}
+					}
+				}
 			}
 		})
 
@@ -546,11 +572,20 @@
 				}
 			}
 		}
+
+		&:not(.editing) > li > .wrapper {
+			cursor: pointer;
+			
+			&:hover {
+				color: var(--col-match-fg);
+				background-color: var(--col-match-bg);
+			}
+		}
 	}
 </style>
-<ul class="list" contenteditable="true" use:render={$selected}>
+<ul class="list" class:editing contenteditable="true" use:render={$selected}>
 	<li contenteditable="false">
-		<div class="wrapper">
+		<div class="wrapper rounded">
 			<span class="content">$</span>
 		</div>
 	</li>

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+	import Linq from "@daniel.pickett/linq-js";
+	import { createEventDispatcher } from "svelte";
 
 	export let source: Iterable<number | string>;
 	export let filter: string;
@@ -10,7 +11,7 @@
 
 	$: {
 		filterLw = filter?.toLowerCase();
-		results = source ? [...source].filter((v) => String(v).toLowerCase().includes(filterLw)) : Array.prototype;
+		results = source ? Linq(source).where((v) => String(v).toLowerCase().includes(filterLw)).toArray() : Array.prototype;
 	}
 	
 	let list: HTMLUListElement;
