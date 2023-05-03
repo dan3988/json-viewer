@@ -10,6 +10,17 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 
 $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--bs-btn-hover-border-color), "active": var(--bs-btn-active-border-color), "disabled": var(--bs-btn-disabled-border-color));
 
+@function tran($dur, $ease, $props...) {
+	$dur: map-get($anim-durations, $dur);
+	$ease: map-get($anim-easing, $ease);
+	$rule: null;
+	@each $prop in $props {
+		$prefix: if($rule == null, "", $rule + ", ");
+		$rule: #{$prefix} #{$prop} #{$dur} #{$ease};
+	}
+	@return $rule;
+}
+
 @mixin img-btn($img: null, $padding: 0, $colors: $img-btn-default-colors) {
 	position: relative;
 
@@ -62,10 +73,8 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $padding, $color);
 }
 
-@mixin anim($props, $dur, $ease: "ease") {
-	transition-property: $props;
-	transition-duration: map-get($anim-durations, $dur);
-	transition-timing-function: map-get($anim-easing, $ease);
+@mixin anim($prop, $dur, $ease: "ease") {
+	transition: tran($dur, $ease, $prop...);
 }
 
 @mixin theme($mode: light) {
