@@ -1,4 +1,5 @@
 :root, [data-bs-theme=light] {
+	--col-json-container: var(--bs-emphasis-color);
 	--col-json-key-fg: #C40;
 	--col-json-str-fg: #18F;
 	--col-json-num-fg: #A0F;

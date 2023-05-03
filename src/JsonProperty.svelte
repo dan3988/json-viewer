@@ -60,6 +60,10 @@
 		}
 
 		&.for-container {
+			&:before, &:after {
+				color: var(--col-json-container);
+			}
+
 			&:before {
 				grid-area: 1 / 3 / span 1 / span 1;
 			}
