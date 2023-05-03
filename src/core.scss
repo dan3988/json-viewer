@@ -10,32 +10,30 @@ $pad-l: 15px;
 $anim-easing: ("ease": ease-in-out, "spring": cubic-bezier(0.5, 0, 0.5, 1.5));
 $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 
-@mixin img-btn($img: null, $padding: 0, $color: null) {
+$img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--bs-btn-hover-border-color), "active": var(--bs-btn-active-border-color), "disabled": var(--bs-btn-disabled-border-color));
+
+@mixin img-btn($img: null, $padding: 0, $colors: $img-btn-default-colors) {
 	position: relative;
 
 	@if ($img != null) {
 		--img-btn-src: #{$img};
 	}
 
-	@if ($color == null) {
+	@if ($colors != null) {
 		&:hover::before {
-			background-color: var(--bs-btn-hover-border-color);
+			--img-btn-color: #{map.get($colors, "hover")};
 		}
 	
 		&:active::before {
-			background-color: var(--bs-btn-active-border-color);
+			--img-btn-color: #{map.get($colors, "active")};
 		}
 	
 		&:disabled::before {
-			background-color: var(--bs-btn-disabled-border-color);
+			--img-btn-color: #{map.get($colors, "disabled")};
 		}
 		
 		&::before {
-			background-color: var(--bs-btn-border-color);
-		}
-	} @else {
-		&::before {
-			background-color: $color;
+			--img-btn-color: #{map.get($colors, "default")};
 		}
 	}
 
@@ -44,6 +42,7 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 		content: "";
 		position: absolute;
 		inset: $padding;
+		background-color: var(--img-btn-color);
 		-webkit-mask-image: var(--img-btn-src);
 		-webkit-mask-repeat: no-repeat;
 		-webkit-mask-size: contain;
@@ -55,7 +54,7 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 	}
 }
 
-@mixin img-btn-url($name, $padding: 0, $color: null) {
+@mixin img-btn-url($name, $padding: 0, $color: $img-btn-default-colors) {
 	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $padding, $color);
 }
 

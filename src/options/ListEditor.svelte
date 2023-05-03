@@ -115,7 +115,7 @@
 	}
 
 	.btn-help {
-		@include img-btn-url("info.svg", 2px, var(--bs-blue));
+		@include img-btn-url("info.svg", 2px, ("default": var(--bs-blue)));
 	}
 
 	.root {

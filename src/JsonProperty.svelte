@@ -125,7 +125,7 @@
 
 		&:not(.expanded) {
 			> .expander {
-				@include img-btn-url("arrow.svg", 20%, var(--bs-body-color));
+				@include img-btn-url("arrow.svg", 20%, ("default": var(--bs-secondary-color), "hover": var(--bs-body-color), "active": var(--bs-emphasis-color)));
 			}
 
 			> .expander::before {
