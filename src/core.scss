@@ -20,20 +20,26 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	}
 
 	@if ($colors != null) {
-		&:hover::before {
-			--img-btn-color: #{map.get($colors, "hover")};
-		}
-	
-		&:active::before {
-			--img-btn-color: #{map.get($colors, "active")};
-		}
-	
-		&:disabled::before {
-			--img-btn-color: #{map.get($colors, "disabled")};
-		}
-		
-		&::before {
+		@if map.has-key($colors, "default") {
 			--img-btn-color: #{map.get($colors, "default")};
+		}
+
+		@if map.has-key($colors, "hover") {
+			&:hover {
+				--img-btn-color: #{map.get($colors, "hover")};
+			}
+		}
+	
+		@if map.has-key($colors, "active") {
+			&:active {
+				--img-btn-color: #{map.get($colors, "active")};
+			}
+		}
+	
+		@if map.has-key($colors, "disabled") {
+			&:disabled {
+				--img-btn-color: #{map.get($colors, "disabled")};
+			}
 		}
 	}
 
