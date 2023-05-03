@@ -1,5 +1,3 @@
-@use "sass:map";
-
 $border-w: 1px;
 $border-rad: 5px;
 
@@ -20,25 +18,25 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	}
 
 	@if ($colors != null) {
-		@if map.has-key($colors, "default") {
-			--img-btn-color: #{map.get($colors, "default")};
+		@if map-has-key($colors, "default") {
+			--img-btn-color: #{map-get($colors, "default")};
 		}
 
-		@if map.has-key($colors, "hover") {
+		@if map-has-key($colors, "hover") {
 			&:hover {
-				--img-btn-color: #{map.get($colors, "hover")};
+				--img-btn-color: #{map-get($colors, "hover")};
 			}
 		}
 	
-		@if map.has-key($colors, "active") {
+		@if map-has-key($colors, "active") {
 			&:active {
-				--img-btn-color: #{map.get($colors, "active")};
+				--img-btn-color: #{map-get($colors, "active")};
 			}
 		}
 	
-		@if map.has-key($colors, "disabled") {
+		@if map-has-key($colors, "disabled") {
 			&:disabled {
-				--img-btn-color: #{map.get($colors, "disabled")};
+				--img-btn-color: #{map-get($colors, "disabled")};
 			}
 		}
 	}
@@ -66,8 +64,8 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 
 @mixin anim($props, $dur, $ease: "ease") {
 	transition-property: $props;
-	transition-duration: map.get($anim-durations, $dur);
-	transition-timing-function: map.get($anim-easing, $ease);
+	transition-duration: map-get($anim-durations, $dur);
+	transition-timing-function: map-get($anim-easing, $ease);
 }
 
 @mixin theme($mode: light) {
