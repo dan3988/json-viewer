@@ -37,6 +37,7 @@
 	import themes from "../json-themes.js";
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
+	import NumberEditor from "../NumberEditor.svelte";
 
 	export let indentStyles: IndentStyles;
 	export let model: EditorModel<settings.SettingsBag>;
@@ -87,6 +88,12 @@
 	@use "../core.scss" as *;
 	@import "../globals.scss";
 
+	@media only screen and (max-width: 500px) {
+		.base {
+			width: 100%;
+		}
+	}
+
 	.grp-indent > select {
 		flex: 0 0 6rem;
 	}
@@ -95,12 +102,6 @@
 		justify-content: stretch;
 		width: 500px;
 		margin: auto;
-	}
-
-	@media only screen and (max-width: 500px) {
-		.base {
-			width: 100%;
-		}
 	}
 
 	.input-group-text {
@@ -173,7 +174,7 @@
 	</div>
 	<div class="input-group grp-indent">
 		<span class="input-group-text">Indent</span>
-		<input class="form-control" class:dirty={$indentCount.changed} type="number" inputmode="numeric" bind:value={$indentCount.value}/>
+		<NumberEditor class="form-control {$indentCount.changed ? "dirty" : ""}" bind:value={$indentCount.value} type="integer" min={1} max={10}/>
 		<select class="form-select" class:dirty={$indentChar.changed} bind:value={$indentChar.value}>
 			{#each indents as [key, value]}
 				<option value={value}>{key}</option>

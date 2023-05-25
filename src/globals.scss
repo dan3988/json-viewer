@@ -94,8 +94,8 @@ $cst-dirty-border-color-dark: #5c603b;
 	}
 }
 
-.dirty.input-group > .input-group-text,
-.dirty {
+:global(.dirty.input-group > .input-group-text),
+:global(.dirty) {
 	--bs-tertiary-bg: var(--cst-dirty-bg);
 	--bs-tertiary-bg-rgb: var(--cst-dirty-bg-rgb);
 	--bs-body-bg: var(--cst-dirty-bg);
@@ -103,7 +103,7 @@ $cst-dirty-border-color-dark: #5c603b;
 	--bs-border-color: var(--cst-dirty-border-color);
 }
 
-.dirty .btn.btn-cust-light {
+:global(.dirty .btn.btn-cust-light) {
 	--bs-btn-bg: var(--cst-dirty-bg);
 	--bs-btn-color: var(--cst-dirty-color);
 	--bs-btn-border-color: var(--cst-dirty-border-color);
