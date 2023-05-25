@@ -140,10 +140,6 @@
 			> .expander::before {
 				rotate: -90deg;
 			}
-
-			> :global(.json-container) {
-				display: none;
-			}
 		}
 
 		>.prop-count, >.empty-container {
@@ -164,11 +160,11 @@
 			grid-area: 1 / 1 / -1 / span 1;
 		}
 		
-		> :global(.json-value) {
+		> .json-value {
 			grid-area: 1 / 3 / span 1 / span 1;
 		}
 
-		> :global(.json-container) {
+		> .json-container {
 			grid-area: 2 / 2 / span 1 / -1;
 		}
 	}
@@ -216,13 +212,15 @@
 		{:else}
 			<span class="expander" on:click={() => prop.toggleExpanded()}></span>
 			<span class="prop-count">{prop.value.count}</span>
-			<ul class="json-container json-{prop.value.subtype} p-0 m-0">
-				{#each [...prop.value.properties()] as p}
-				<li>
-					<svelte:self model={model} prop={p} indent={indent + 1} {maxIndentClass} />
-				</li>
-				{/each}
-			</ul>
+			{#if $expanded}
+				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
+					{#each [...prop.value.properties()] as p}
+					<li>
+						<svelte:self model={model} prop={p} indent={indent + 1} {maxIndentClass} />
+					</li>
+					{/each}
+				</ul>
+			{/if}
 		{/if}
 	{:else if prop.value.is("value")}
 	<span class="json-value json-{prop.value.subtype}" use:renderValue={prop.value.value}/>
