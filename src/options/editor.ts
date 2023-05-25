@@ -1,7 +1,6 @@
-import type { Writable, Readable, Subscriber, Unsubscriber, Updater } from "svelte/store";
+import type { Writable, Subscriber, Unsubscriber, Updater } from "svelte/store";
 
 type Dict<V = any> = Record<string, V>;
-type DirtyType<V> = { [K in keyof V]: boolean };
 type Invalidator<T> = (value?: T) => void;
 
 export interface Entry<V> {
