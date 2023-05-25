@@ -4,7 +4,6 @@ import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
 import svelte from 'rollup-plugin-svelte';
 import sveltePreprocess from 'svelte-preprocess';
-import { sass } from 'svelte-preprocess-sass';
 import css from 'rollup-plugin-css-only';
 import path from "path";
 import fs from "fs";
@@ -44,8 +43,7 @@ function svelteConfig(baseDir, entry, output, format = "cjs") {
 						typescript: {
 							tsconfigFile: "./src/tsconfig.svelte.json"
 						}
-					}),
-					sass()
+					})
 				],
 				compilerOptions: {
 					// enable run-time checks when not in production
