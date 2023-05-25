@@ -21,6 +21,17 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	@return $rule;
 }
 
+@mixin img-mask($src, $repeat: no-repeat, $size: contain, $position: center) {
+	-webkit-mask-image: $src;
+	-webkit-mask-repeat: $repeat;
+	-webkit-mask-size: $size;
+	-webkit-mask-position: $position;
+	mask-image: $src;
+	mask-repeat: $repeat;
+	mask-size: $size;
+	mask-position: $position;
+}
+
 @mixin img-btn($img: null, $padding: 0, $colors: $img-btn-default-colors) {
 	position: relative;
 
@@ -54,23 +65,20 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 
 	
 	&:before {
+		@include img-mask(var(--img-btn-src));
 		content: "";
 		position: absolute;
 		inset: $padding;
 		background-color: var(--img-btn-color);
-		-webkit-mask-image: var(--img-btn-src);
-		-webkit-mask-repeat: no-repeat;
-		-webkit-mask-size: contain;
-		-webkit-mask-position: center;
-		mask-image: var(--img-btn-src);
-		mask-repeat: no-repeat;
-		mask-size: contain;
-		mask-position: center;
 	}
 }
 
+@function extUrl($path) {
+	@return url("chrome-extension://__MSG_@@extension_id__/" + $path);
+}
+
 @mixin img-btn-url($name, $padding: 0, $color: $img-btn-default-colors) {
-	@include img-btn(url("chrome-extension://__MSG_@@extension_id__/res/" + $name), $padding, $color);
+	@include img-btn(extUrl("res/" + $name), $padding, $color);
 }
 
 @mixin anim($prop, $dur, $ease: "ease") {
