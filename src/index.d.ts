@@ -12,7 +12,3 @@ declare var JSON5: typeof import("json5");
 declare interface Array<T> {
 	at(index: number): undefined | T
 }
-
-declare module "*.svelte" {
-	export default import("svelte").SvelteComponentTyped;
-}
