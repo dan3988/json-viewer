@@ -91,12 +91,27 @@
 		action();
 	}
 
-	function setSub(index: number) {
-		sub = index;
+	function onEnter(index: number, evt: MouseEvent) {
+		const target = evt.currentTarget;
+		if (!(target instanceof HTMLElement))
+			return;
+
+		const id = setTimeout(onDelay, 500);
+
+		target.addEventListener("mouseleave", onMouseLeave);
+
+		function onMouseLeave() {
+			clearTimeout(id);
+		}
+		
+		function onDelay() {
+			target!.removeEventListener("mouseleave", onMouseLeave);
+			sub = index;
+		}
 	}
 
-	function getAct(item: MenuItem, index: number) {
-		return item.type === "action" ? invoke.bind(undefined, item.action) : setSub.bind(undefined, index);
+	function setSub(index: number) {
+		sub = index;
 	}
 
 	$: [left, top] = unwrapPos(pos);
@@ -112,10 +127,6 @@
 
 		> li {
 			position: relative;
-
-			&:not(:hover) {
-				border-style: hidden;
-			}
 		}
 	}
 
@@ -143,22 +154,32 @@
 				background-color: var(--context-menu-color);
 			}
 		}
-		
+
 		&:hover {
 			--context-menu-color: var(--bs-emphasis-color);
-			background-color: var(--bs-secondary-bg);
 			border-width: var(--bs-border-width);
 			margin: calc(var(--bs-border-width) * -1);
+		}
+		
+		&:hover,
+		&.opened {
+			background-color: var(--bs-secondary-bg);
 		}
 	}
 </style>
 <ul class="root context-menu bg-body-tertiary border" style:left style:top bind:this={elem}>
 	{#each items as item, i}
-		<li class="context-menu-item type-{item.type}" role="button" on:click={getAct(item, i)} title={item.name}>
-			<span class="context-menu-label p-1">{item.name}</span>
-			{#if item.type === "menu" && i === sub}
-				<svelte:self pos={nestedPos} items={item.items}/>
-			{/if}
-		</li>
+		{#if item.type === "action"}
+			<li class="context-menu-item type-{item.type}" role="button" on:click={invoke.bind(undefined, item.action)}>
+				<span class="context-menu-label p-1">{item.name}</span>
+			</li>
+		{:else}
+			<li class="context-menu-item type-{item.type}" class:opened={i === sub} role="button" on:click={() => setSub(i)} on:mouseenter={e => onEnter(i, e)}>
+				<span class="context-menu-label p-1">{item.name}</span>
+				{#if i === sub}
+					<svelte:self pos={nestedPos} items={item.items}/>
+				{/if}
+			</li>
+		{/if}
 	{/each}
 </ul>
