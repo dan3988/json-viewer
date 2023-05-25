@@ -75,7 +75,7 @@
 	@use "../core.scss" as *;
 
 	.btn-clr {
-		@include img-btn-url("clear.svg", 20%);
+		@include bs-icon-btn("x-lg", 20%);
 	}
 
 	.input-group:not(.field) > .btn,

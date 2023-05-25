@@ -106,7 +106,7 @@
 	}
 
 	.btn-rm {
-		@include img-btn-url("delete.svg", $pad-med);
+		@include bs-icon-btn("trash-fill", $pad-med);
 
 		--bs-btn-border-color: #a52834;
 		--bs-btn-hover-border-color: #b02a37;
@@ -115,7 +115,7 @@
 	}
 
 	.btn-help {
-		@include img-btn-url("info.svg", 2px, ("default": var(--bs-link-color), "hover": var(--bs-link-hover-color)));
+		@include bs-icon-btn("info-circle-fill", 2px, ("default": var(--bs-link-color), "hover": var(--bs-link-hover-color)));
 	}
 
 	.root {

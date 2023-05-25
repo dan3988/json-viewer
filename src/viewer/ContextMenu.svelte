@@ -146,8 +146,7 @@
 			}
 
 			&:after {
-				@include img-mask(extUrl("res/chevron.svg"));
-				rotate: 90deg;
+				@include img-mask(bs-icon("chevron-right"));
 				content: "";
 				flex: 0 0 1rem;
 				margin: 0.5rem;

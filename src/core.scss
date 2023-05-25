@@ -73,12 +73,16 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	}
 }
 
+@function bs-icon($name) {
+	@return url("chrome-extension://__MSG_@@extension_id__/node_modules/bootstrap-icons/icons/" + $name + ".svg");
+}
+
 @function extUrl($path) {
 	@return url("chrome-extension://__MSG_@@extension_id__/" + $path);
 }
 
-@mixin img-btn-url($name, $padding: 0, $color: $img-btn-default-colors) {
-	@include img-btn(extUrl("res/" + $name), $padding, $color);
+@mixin bs-icon-btn($name, $padding: 0, $color: $img-btn-default-colors) {
+	@include img-btn(bs-icon($name), $padding, $color);
 }
 
 @mixin anim($prop, $dur, $ease: "ease") {
@@ -93,7 +97,7 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 
 .expandable {
 	.expander {
-		@include img-btn-url("chevron.svg", $pad-small);
+		@include bs-icon-btn("chevron-up", $pad-small);
 		aspect-ratio: 1;
 
 		&::before {
