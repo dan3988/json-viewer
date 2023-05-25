@@ -88,6 +88,12 @@
 	@use "../core.scss" as *;
 	@import "../globals.scss";
 
+	@media only screen and (max-width: 500px) {
+		.base {
+			width: 100%;
+		}
+	}
+
 	.grp-indent > select {
 		flex: 0 0 6rem;
 	}
