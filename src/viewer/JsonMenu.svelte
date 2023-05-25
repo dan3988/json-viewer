@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { JsonTokenFilterFlags, JsonProperty } from "../json";
+	import { JsonTokenFilterFlags } from "../json";
 	import JSONPath from "./json-path";
 	import type { ViewerModel } from "../viewer-model";
 
@@ -23,22 +23,7 @@
 	let jpathResults: string[] = [];
 
 	function setExpanded(expanded: boolean) {
-		const stack: Iterator<JsonProperty>[] = [];
-		let cur: Iterator<JsonProperty> = model.root.value.properties()
-		while (true) {
-			let r = cur.next();
-			if (r.done) {
-				let last = stack.pop();
-				if (last == null)
-					return;
-
-				cur = last;
-			} else {
-				r.value.expanded = expanded;
-				const it = r.value.value.properties();
-				stack.push(it);
-			}
-		}
+		model.root.setExpanded(expanded, true);
 	}
 
 	function onJpathKeyPress(evt: KeyboardEvent) {

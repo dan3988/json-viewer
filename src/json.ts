@@ -216,6 +216,29 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 			prev.#next = this;
 	}
 
+	setExpanded(expanded: boolean, recursive?: boolean) {
+		this.#bag.setValue("expanded", expanded);
+		if (!recursive)
+			return;
+
+		const stack: Iterator<JsonProperty>[] = [];
+		let cur: Iterator<JsonProperty> = this.value.properties()
+		while (true) {
+			let r = cur.next();
+			if (r.done) {
+				let last = stack.pop();
+				if (last == null)
+					return;
+
+				cur = last;
+			} else {
+				r.value.expanded = expanded;
+				const it = r.value.value.properties();
+				stack.push(it);
+			}
+		}
+	}
+
 	toggleExpanded() {
 		const v = !this.#bag.getValue("expanded");
 		this.#bag.setValue("expanded", v);
