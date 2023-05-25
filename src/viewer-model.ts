@@ -10,6 +10,7 @@ interface ChangeProps {
 
 export interface ViewerCommands {
 	scrollTo: [token: JsonProperty];
+	context: [token: JsonProperty, x: number, y: number];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;

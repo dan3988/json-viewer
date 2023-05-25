@@ -21,9 +21,13 @@
 		}
 	}
 
-	function onClick(evt: MouseEvent) {
-		if (evt.button === 0 || evt.button === 2)
-			model.selected = prop;
+	function onClick() {
+		model.selected = prop;
+	}
+
+	function onContextMenu(evt: MouseEvent) {
+		model.selected = prop;
+		model.execute("context", prop, evt.clientX, evt.clientY);
 	}
 
 	let keyElement: HTMLElement;
@@ -205,7 +209,7 @@
 	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype}{indent < 0 ? '' : ' json-indent-col-' + (indent % maxIndentClass)}"
 	class:expanded={$expanded}
 	class:selected={$selected}>
-	<span bind:this={keyElement} class="json-key" on:click={onClick} on:auxclick={onClick} use:renderKey={prop.key}/>
+	<span bind:this={keyElement} class="json-key" on:click={onClick} on:contextmenu|preventDefault={onContextMenu} use:renderKey={prop.key}/>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>

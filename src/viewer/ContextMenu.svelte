@@ -66,7 +66,11 @@
 	if (isNested) {
 		dispatcher = createEventDispatcher();
 		window.addEventListener("click", onWindowClick);
-		onDestroy(() => window.removeEventListener("click", onWindowClick));
+		window.addEventListener("auxclick", onWindowClick);
+		onDestroy(() => {
+			window.removeEventListener("click", onWindowClick);
+			window.removeEventListener("auxclick", onWindowClick);
+		});
 	}
 
 	setContext(nestedKey, dispatcher);
@@ -75,8 +79,11 @@
 	let elem: HTMLElement;
 
 	function onWindowClick(evt: MouseEvent) {
-		if (!dom.isDescendant(evt.target as any, elem))
+		if (!dom.isDescendant(evt.target as any, elem)) {
+			window.removeEventListener("click", onWindowClick);
+			window.removeEventListener("auxclick", onWindowClick);
 			dispatcher("closed");
+		}
 	}
 
 	function invoke(action: MenuAction["action"]) {

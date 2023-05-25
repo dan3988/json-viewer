@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { ViewerModel } from "../viewer-model";
-	import type { JsonToken } from "../json";
-	import JsonProperty from "../JsonProperty.svelte";
+	import type { ViewerCommandEvent, ViewerCommandHandler, ViewerModel } from "../viewer-model";
+	import type { JsonToken, JsonProperty } from "../json";
+	import JsonPropertyComp from "../JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import JsonPathEditor from "./JsonPathEditor.svelte";
 	import ContextMenu, { type Coords, type MenuItem, createMenu, addMenuItems } from "./ContextMenu.svelte";
 
@@ -11,6 +11,10 @@
 	export let indent: string;
 	export let indentStyle: readonly [url: string, count: number];
 	export let jsonStyle: string;
+
+	model.command.addListener(onModelCommand);
+
+	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
 
@@ -25,41 +29,42 @@
 		await navigator.clipboard.writeText(text);
 	}
 
-	function onContextMenu(e: MouseEvent) {
-		const { selected } = model;
-		if (selected) {
-			e.preventDefault();
-			const { clientX, clientY } = e;
+	function onModelCommand(evt: ViewerCommandEvent) {
+		if (evt.command === "context") {
+			const [prop, x, y] = evt.args;
+			openContextMenu(prop, x, y);
+		}
+	}
 
-			let items: MenuItem[];
-			if (selected.value.is("container")) {
-				items = [];
-				if (selected.expanded) {
-					addMenuItems(items, [
-						["Collapse", () => selected.setExpanded(false, true)],
-						["Expand All", () => selected.setExpanded(true, true)]
-					]);
-				} else {
-					addMenuItems(items, [
-						["Expand", () => selected.setExpanded(true)],
-						["Expand All", () => selected.setExpanded(true, true)]
-					]);
-				}
-
+	function openContextMenu(selected: JsonProperty, x: number, y: number) {
+		let items: MenuItem[];
+		if (selected.value.is("container")) {
+			items = [];
+			if (selected.expanded) {
 				addMenuItems(items, [
-					["Copy Value", [
-						["Formatted", () => copy(selected.value)],
-						["Minified", () => copy(selected.value, true)],
-					]],
+					["Collapse", () => selected.setExpanded(false, true)],
+					["Expand All", () => selected.setExpanded(true, true)]
 				]);
 			} else {
-				items = createMenu([
-					["Copy Value", () => copy(selected.value)],
+				addMenuItems(items, [
+					["Expand", () => selected.setExpanded(true)],
+					["Expand All", () => selected.setExpanded(true, true)]
 				]);
 			}
 
-			contextMenu = [[clientX, clientY], items];
+			addMenuItems(items, [
+				["Copy Value", [
+					["Formatted", () => copy(selected.value)],
+					["Minified", () => copy(selected.value, true)],
+				]],
+			]);
+		} else {
+			items = createMenu([
+				["Copy Value", () => copy(selected.value)],
+			]);
 		}
+
+		contextMenu = [[x, y], items];
 	}
 
 	function onKeyDown(e: KeyboardEvent) {
@@ -253,8 +258,8 @@
 	{#if contextMenu}
 		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
 	{/if}
-	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown} on:contextmenu={onContextMenu}>
-		<JsonProperty model={model} prop={model.root} indent={0} maxIndentClass={indentStyle[1]}/>
+	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
+		<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentStyle[1]}/>
 	</div>
 	<div class="gripper" on:mousedown={onMouseDown}/>
 	<div class="w-path">
