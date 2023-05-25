@@ -103,7 +103,11 @@
 		}
 	}
 
-	.grp-theme > * {
+	.input-group-text {
+		flex: 0 0 9rem;
+	}
+
+	.grp-theme > .btn {
 		flex: 1 1 0px;
 
 		&.active {
@@ -190,7 +194,7 @@
 		</ul>
 	</div>
 	<div class="input-group grp-json-style">
-		<span class="input-group-text">Json Colour Scheme</span>
+		<span class="input-group-text">Colour Scheme</span>
 		<select class="form-select flex-fill" class:dirty={$jsonStyle.changed} bind:value={$jsonStyle.value}>
 			{#each Object.entries(themes) as [id, name]}
 				<option value={id}>{name}</option>
