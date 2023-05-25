@@ -2,7 +2,7 @@
 	import type { JsonProperty } from "../json";
 	import type { ViewerModel } from "../viewer-model";
 	import type { KeyCode } from "../keyboard";
-	import * as dom from "./dom-helper";
+	import dom from "./dom-helper";
 	import AutocompleteHelper from "./autocomplete-helper";
 	import Linq from "@daniel.pickett/linq-js";
 	import { def } from "../util";

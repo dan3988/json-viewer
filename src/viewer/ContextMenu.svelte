@@ -56,7 +56,7 @@
 </script>
 <script lang="ts">
 	import { createEventDispatcher, getContext, onDestroy, setContext } from "svelte";
-	import { isDescendant } from "./dom-helper";
+	import dom from "./dom-helper";
 
 	export let pos: Coords | undefined;
 	export let items: ArrayLike<MenuItem>;
@@ -75,7 +75,7 @@
 	let elem: HTMLElement;
 
 	function onWindowClick(evt: MouseEvent) {
-		if (!isDescendant(evt.target as any, elem))
+		if (!dom.isDescendant(evt.target as any, elem))
 			dispatcher("closed");
 	}
 
