@@ -24,3 +24,7 @@ export interface IndentStyle {
 }
 
 export type IndentStyles = Record<string, IndentStyle>;
+
+declare module "*.svelte" {
+	export default import("svelte").SvelteComponentTyped;
+}

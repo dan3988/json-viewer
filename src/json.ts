@@ -1,4 +1,4 @@
-import { PropertyBag } from "./prop";
+import { PropertyBag } from "./prop.js";
 
 const emptyArray: readonly never[] = Object.freeze([]);
 
