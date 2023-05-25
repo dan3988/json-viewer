@@ -1,6 +1,7 @@
 export const themes = {
 	"default": "Default",
-	"alt": "Alternate"
+	"aqua": "Fiery Aqua",
+	"vibrant": "Vibrant"
 };
 
 export default themes;
