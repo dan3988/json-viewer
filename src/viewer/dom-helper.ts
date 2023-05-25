@@ -100,3 +100,16 @@ export function subscribe<T extends HTMLElement>(target: T, handlers: HandlersTy
 
 	return unsubscribe.bind(target, entries);
 }
+
+export function isDescendant(self: Element, parent: Element) {
+	while (true) {
+		const next = self.parentElement;
+		if (next == null)
+			return false;
+
+		if (next == parent)
+			return true;
+
+		self = next;
+	}
+}

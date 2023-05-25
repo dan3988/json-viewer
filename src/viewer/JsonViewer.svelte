@@ -5,21 +5,61 @@
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onMount } from "svelte";
 	import JsonPathEditor from "./JsonPathEditor.svelte";
+	import ContextMenu, { type Coords, type MenuItem, createMenu, addMenuItems } from "./ContextMenu.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
 	export let indentStyle: readonly [url: string, count: number];
 	export let jsonStyle: string;
 
-	async function copy(token: JsonToken) {
+	let contextMenu: [Coords, MenuItem[]] | undefined;
+
+	async function copy(token: JsonToken, minify?: boolean) {
 		let text: string;
 		if (token.is("value")) {
 			text = String(token.value);
 		} else {
-			text = JSON.stringify(token, undefined, indent);
+			text = JSON.stringify(token, undefined, minify ? undefined : indent);
 		}
 		
 		await navigator.clipboard.writeText(text);
+	}
+
+	function onContextMenu(e: MouseEvent) {
+		const { selected } = model;
+		if (selected) {
+			e.preventDefault();
+			const { clientX, clientY } = e;
+
+			let items: MenuItem[];
+			if (selected.value.is("container")) {
+				items = [];
+				if (selected.expanded) {
+					addMenuItems(items, [
+						["Collapse", () => selected.setExpanded(false, true)],
+						["Expand All", () => selected.setExpanded(true, true)]
+					]);
+				} else {
+					addMenuItems(items, [
+						["Expand", () => selected.setExpanded(true)],
+						["Expand All", () => selected.setExpanded(true, true)]
+					]);
+				}
+
+				addMenuItems(items, [
+					["Copy Value", [
+						["Formatted", () => copy(selected.value)],
+						["Minified", () => copy(selected.value, true)],
+					]],
+				]);
+			} else {
+				items = createMenu([
+					["Copy Value", () => copy(selected.value)],
+				]);
+			}
+
+			contextMenu = [[clientX, clientY], items];
+		}
 	}
 
 	function onKeyDown(e: KeyboardEvent) {
@@ -106,10 +146,6 @@
 	let prop: HTMLElement;
 	let menu: HTMLElement;
 	let menuC: JsonMenu;
-
-	// function safeSubscribe<T>(v: Readable<T>, s: Subscriber<T>) {
-	// 	onDestroy(v.subscribe(s));
-	// }
 
 	onMount(() => prop.focus());
 
@@ -214,7 +250,10 @@
 	<link rel="stylesheet" href={indentStyle[0]} />
 </svelte:head>
 <div class="root bg-body text-body">
-	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
+	{#if contextMenu}
+		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
+	{/if}
+	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown} on:contextmenu={onContextMenu}>
 		<JsonProperty model={model} prop={model.root} indent={0} maxIndentClass={indentStyle[1]}/>
 	</div>
 	<div class="gripper" on:mousedown={onMouseDown}/>
