@@ -3,6 +3,7 @@
 	"debug": true,
 	"manifest_version": 3,
 	"name": "JSON Viewer",
+	"description": "Visualize, traverse and search JSON",
 	"version": "1.0.0",
 	"background": {
 		"service_worker": "lib/bg.js",
