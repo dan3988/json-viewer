@@ -155,14 +155,20 @@
 		}
 
 		&:hover {
+			z-index: 1;
 			--context-menu-color: var(--bs-emphasis-color);
-			border-width: var(--bs-border-width);
-			margin: calc(var(--bs-border-width) * -1);
 		}
 		
 		&:hover,
 		&.opened {
 			background-color: var(--bs-secondary-bg);
+			border-width: var(--bs-border-width);
+			margin: calc(var(--bs-border-width) * -1);
+		}
+
+		&:hover + &.opened {
+			border-top-width: 0;
+			margin-top: 0;
 		}
 	}
 </style>
