@@ -1,5 +1,4 @@
 import { sveltePreprocess } from "svelte-preprocess/dist/autoProcess.js";
-import { sass } from "svelte-preprocess-sass";
 
 export default {
 	onwarn(warning, handler) {
@@ -10,7 +9,6 @@ export default {
 			typescript: {
 				tsconfigFile: "./src/tsconfig.svelte.json"
 			}
-		}),
-		sass()
+		})
 	]
 }
