@@ -4,6 +4,7 @@ import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
 import svelte from 'rollup-plugin-svelte';
 import sveltePreprocess from 'svelte-preprocess';
+import sass from "sass";
 import css from 'rollup-plugin-css-only';
 import path from "path";
 import fs from "fs";
@@ -18,6 +19,30 @@ const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarning
 	.ofType("string")
 	.toSet();
 
+const recursive = { recursive: true };
+const icons = Object.create(null);
+const dir = "lib";
+
+function loadBsIcon(name) {
+	let file = icons[name];
+	if (file == null) {
+		name += ".svg";
+		const src = path.join("node_modules", "bootstrap-icons", "icons", name);
+		if (!fs.existsSync(src))
+			throw "Icon not found.";
+
+		const dstDir = path.join(dir, "icons");
+		if (!fs.existsSync(dstDir))
+			fs.mkdirSync(dstDir, recursive);
+
+		const dst = [dir, "icons", name].join("/");
+		fs.copyFileSync(src, dst);
+		icons[name] = file = `url("chrome-extension://__MSG_@@extension_id__/${dst}")`;
+	}
+
+	return file;
+}
+
 /**
  * @param {string} baseDir
  * @param {string} entry
@@ -29,9 +54,9 @@ function svelteConfig(baseDir, entry, output, format = "cjs") {
 		input: path.join(baseDir, entry),
 		output: {
 			sourcemap: !dist,
+			dir,
 			format,
 			name: 'app',
-			dir: 'lib',
 			intro: '{',
 			outro: '}'
 		},
@@ -42,6 +67,17 @@ function svelteConfig(baseDir, entry, output, format = "cjs") {
 						sourceMap: !dist,
 						typescript: {
 							tsconfigFile: "./src/tsconfig.svelte.json"
+						},
+						scss: {
+							functions: {
+								'bs-icon($name)': function(name) {
+									if (!(name instanceof sass.types.String))
+										throw "$name: Expected a string";
+
+									const value = loadBsIcon(name.getValue());
+									return new sass.types.String(value);
+								}
+							}
 						}
 					})
 				],
@@ -120,7 +156,7 @@ const configs = [
 		output: {
 			sourcemap: !dist,
 			format: 'cjs',
-			file: 'lib/content-script.js'
+			file: path.join(dir, 'content-script.js')
 		},
 		watch: {
 			clearScreen: false
@@ -133,7 +169,7 @@ const configs = [
 	{
 		input: "src/indent-styles.json",
 		output: {
-			dir: "lib"
+			dir
 		},
 		plugins: [
 			indentStyles({
@@ -145,9 +181,9 @@ const configs = [
 	}
 ];
 
-if (fs.existsSync("lib")) {
-	await fs.promises.rm("lib", { recursive: true });
-	await fs.promises.mkdir("lib", { recursive: true });
+if (fs.existsSync(dir)) {
+	await fs.promises.rm(dir, recursive);
+	await fs.promises.mkdir(dir, recursive);
 }
 
 export default configs;

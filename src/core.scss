@@ -73,10 +73,6 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	}
 }
 
-@function bs-icon($name) {
-	@return url("chrome-extension://__MSG_@@extension_id__/node_modules/bootstrap-icons/icons/" + $name + ".svg");
-}
-
 @function extUrl($path) {
 	@return url("chrome-extension://__MSG_@@extension_id__/" + $path);
 }
