@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ViewerCommandEvent, ViewerCommandHandler, ViewerModel } from "../viewer-model";
+	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model";
 	import type { JsonToken, JsonProperty } from "../json";
 	import JsonPropertyComp from "../JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
@@ -18,7 +18,11 @@
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
 
-	async function copy(token: JsonToken, minify?: boolean) {
+	function copyKey(property: JsonProperty) {
+		return navigator.clipboard.writeText(String(property.key));
+	}
+
+	function copyValue(token: JsonToken, minify?: boolean) {
 		let text: string;
 		if (token.is("value")) {
 			text = String(token.value);
@@ -26,7 +30,7 @@
 			text = JSON.stringify(token, undefined, minify ? undefined : indent);
 		}
 		
-		await navigator.clipboard.writeText(text);
+		return navigator.clipboard.writeText(text);
 	}
 
 	function onModelCommand(evt: ViewerCommandEvent) {
@@ -53,14 +57,16 @@
 			}
 
 			addMenuItems(items, [
+				["Copy Key", () => copyKey(selected)],
 				["Copy Value", [
-					["Formatted", () => copy(selected.value)],
-					["Minified", () => copy(selected.value, true)],
+					["Formatted", () => copyValue(selected.value)],
+					["Minified", () => copyValue(selected.value, true)],
 				]],
 			]);
 		} else {
 			items = createMenu([
-				["Copy Value", () => copy(selected.value)],
+				["Copy Key", () => copyKey(selected)],
+				["Copy Value", () => copyValue(selected.value)],
 			]);
 		}
 
@@ -92,7 +98,7 @@
 					const value = model.selected?.value;
 					if (value != null) {
 						e.preventDefault();
-						copy(value);
+						copyValue(value);
 					}
 				}
 				break;
