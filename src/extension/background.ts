@@ -1,5 +1,6 @@
 import type { WorkerMessage } from "../types.js";
 import settings from "../settings.js";
+import lib from "../lib.json";
 
 console.log('launch');
 
@@ -84,11 +85,6 @@ async function loadExtension() {
 		}
 	});
 }
-
-const lib = {
-	json5: "node_modules/json5/dist/index.min.js",
-	bootstrap: "node_modules/bootstrap/dist/css/bootstrap.min.css"
-};
 
 async function inject(tabId: number, frameId: number | undefined, scripts: string[], styles: string[]) {
 	const target = { tabId, frameIds: frameId == undefined ? undefined : [frameId] };

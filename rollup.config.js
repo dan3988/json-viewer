@@ -2,15 +2,18 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
+import json from '@rollup/plugin-json';
 import svelte from 'rollup-plugin-svelte';
+import css from 'rollup-plugin-css-only';
+import * as rl from "rollup";
 import sveltePreprocess from 'svelte-preprocess';
 import sass from "sass";
-import css from 'rollup-plugin-css-only';
 import path from "path";
 import fs from "fs";
-import * as rl from "rollup";
 import Linq from '@daniel.pickett/linq-js';
 import indentStyles from './rollup-plugin-indent-theme.js';
+import release from './rollup-plugin-release.js';
+import lib from "./src/lib.json" assert { type: "json" };
 
 const dist = !process.env.ROLLUP_WATCH;
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
@@ -23,21 +26,23 @@ const recursive = { recursive: true };
 const icons = Object.create(null);
 const dir = "lib";
 
+cleanDir(dir);
+
+function cleanDir(dir) {
+	if (fs.existsSync(dir)) {
+		fs.rmSync(dir, recursive);
+		fs.mkdirSync(dir, recursive);
+	}
+}
+
 function loadBsIcon(name) {
 	let file = icons[name];
 	if (file == null) {
-		name += ".svg";
-		const src = path.join("node_modules", "bootstrap-icons", "icons", name);
-		if (!fs.existsSync(src))
+		file = "node_modules/bootstrap-icons/icons/" + name + ".svg";
+		if (!fs.existsSync(file))
 			throw "Icon not found.";
 
-		const dstDir = path.join(dir, "icons");
-		if (!fs.existsSync(dstDir))
-			fs.mkdirSync(dstDir, recursive);
-
-		const dst = [dir, "icons", name].join("/");
-		fs.copyFileSync(src, dst);
-		icons[name] = file = `url("chrome-extension://__MSG_@@extension_id__/${dst}")`;
+		icons[name] = file;
 	}
 
 	return file;
@@ -75,7 +80,7 @@ function svelteConfig(baseDir, entry, output, format = "cjs") {
 										throw "$name: Expected a string";
 
 									const value = loadBsIcon(name.getValue());
-									return new sass.types.String(value);
+									return new sass.types.String(`url("chrome-extension://__MSG_@@extension_id__/${value}")`);
 								}
 							}
 						}
@@ -101,53 +106,17 @@ function svelteConfig(baseDir, entry, output, format = "cjs") {
 				sourceMap: !dist,
 				inlineSources: !dist
 			}),
-			dist && terser()
+			dist && terser({
+				format: {
+					ascii_only: true
+				}
+			})
 		],
 		watch: {
 			clearScreen: false
 		}
 	};
 }
-
-/**
- * @param {string} baseDir
- * @param {string} entry
- * @param {string} output
- * @returns {rl.RollupOptions}
- */
-function jsConfig(baseDir, entry, output, addScss) {
-	/** @type {(rl.Plugin | undefined)[]} */
-	const plugins = [
-		typescript({
-			tsconfig: path.join(baseDir, 'tsconfig.json'),
-			sourceMap: !dist,
-			inlineSources: !dist
-		})
-	]
-
-	if (addScss)
-		plugins.push(sass({
-			fileName: output + ".css"
-		}));
-
-	if (dist)
-		plugins.push(terser());
-
-	return {
-		input: path.join(baseDir, entry),
-		output: {
-			indent: "\t",
-			sourcemap: !dist,
-			format: 'cjs',
-			file: path.join("lib", output + ".js"),
-		},
-		plugins,
-		watch: {
-			clearScreen: false
-		}
-	};
-}
-
 
 /** @type {rl.RollupOptions[]} */
 const configs = [
@@ -163,9 +132,29 @@ const configs = [
 		}
 	},
 	svelteConfig("src/content", "content.ts", "content"),
-	jsConfig("src/extension", "background.ts", "bg"),
 	svelteConfig("src/viewer", "viewer.ts", "viewer"),
 	svelteConfig("src/options", "options.ts", "options", "esm"),
+	{
+		input: "src/extension/background.ts",
+		output: {
+			indent: "\t",
+			sourcemap: !dist,
+			format: 'cjs',
+			file: path.join(dir, "bg.js")
+		},
+		plugins: [
+			typescript({
+				tsconfig: "src/extension/tsconfig.json",
+				sourceMap: !dist,
+				inlineSources: !dist
+			}),
+			json(),
+			dist && terser()
+		],
+		watch: {
+			clearScreen: false
+		},
+	},
 	{
 		input: "src/indent-styles.json",
 		output: {
@@ -181,9 +170,31 @@ const configs = [
 	}
 ];
 
-if (fs.existsSync(dir)) {
-	await fs.promises.rm(dir, recursive);
-	await fs.promises.mkdir(dir, recursive);
+if (dist) {
+	configs.push({
+		input: "manifest.json",
+		plugins: [
+			release({
+				format: "zip",
+				transform(mf) {
+					delete mf.$schema;
+					delete mf.debug;
+				},
+				deps() {
+					const libs = Object.values(lib);
+					const bsIcons = Object.values(icons);
+
+					return [
+						"res/*",
+						"lib/*",
+						"favicon.ico",
+						...libs,
+						...bsIcons
+					]
+				}
+			})
+		]
+	});
 }
 
 export default configs;

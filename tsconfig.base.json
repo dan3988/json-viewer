@@ -12,8 +12,8 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
-		"declaration": true,
-		"outDir": "lib",
+		"declaration": false,
+		"resolveJsonModule": true,
 		"stripInternal": true,
 		"allowJs": true,
 	}

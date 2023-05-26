@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^23.0.2",
+    "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^0.4.1",
     "@rollup/plugin-typescript": "^11.1.0",
@@ -15,6 +16,7 @@
     "@types/chrome": "^0.0.199",
     "@types/cookies": "^0.7.7",
     "@types/esprima": "^4.0.3",
+    "archiver": "^5.3.1",
     "chalk": "^5.1.2",
     "glob": "^8.0.3",
     "http-server": "^14.1.1",
