@@ -1,7 +1,10 @@
 export const themes = {
-	"default": "Default",
+	"default": "Visual Studio",
+	"dracula": "Dracula",
 	"aqua": "Fiery Aqua",
-	"vibrant": "Vibrant"
+	"vibrant": "Vibrant",
+	"abyss": "Abyss",
+	"mat": "Material"
 };
 
 export default themes;

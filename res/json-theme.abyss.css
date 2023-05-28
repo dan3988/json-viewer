@@ -1,0 +1,10 @@
+:root, [data-bs-theme=light] {
+	--col-json-container: var(--bs-emphasis-color);
+	--col-json-key-fg: #6688cc;
+	--col-json-str-fg: #22aa44;
+	--col-json-num-fg: #f280d0;
+	--col-json-bln-fg: #f280d0;
+	--col-json-null-fg: #f280d0;
+	--col-match-fg: #000;
+	--col-match-bg: #CC3;
+}
