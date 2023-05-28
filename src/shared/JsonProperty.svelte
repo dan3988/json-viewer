@@ -21,6 +21,15 @@
 		}
 	}
 
+	function onExpanderClicked() {
+		if (prop.expanded) {
+			prop.expanded = false;
+			model.setSelected(prop, false, true);
+		} else {
+			prop.expanded = true;
+		}
+	}
+
 	function onClick() {
 		model.selected = prop;
 	}
@@ -207,7 +216,7 @@
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
-			<span class="expander" on:click={() => prop.toggleExpanded()}></span>
+			<span class="expander" on:click={onExpanderClicked}></span>
 			<span class="prop-count">{prop.value.count}</span>
 			{#if $expanded}
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
