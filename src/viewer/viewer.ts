@@ -19,12 +19,6 @@ try {
 	const model = new ViewerModel(root);
 	root.expanded = true;
 
-	model.bag.readables.selected.subscribe(v => {
-		if (v != null && !popping) {
-			history.pushState(v.path, "", "#" + encodePath(v.path));
-		}
-	});
-
 	function suppressPush(fn: Fn): any
 	function suppressPush<T, R>(fn: Fn<[], void, T>, thisArg: T): R
 	function suppressPush(fn: Function, thisArg?: any) {
@@ -59,6 +53,11 @@ try {
 		return parts;
 	}
 
+	function pushHistory(v: JsonProperty) {
+		if (v != null && !popping)
+			history.pushState(v.path, "", "#" + encodePath(v.path));
+	}
+
 	async function loadIndentStyles(): Promise<IndentStyles> {
 		const url = chrome.runtime.getURL("lib/indent-styles.json");
 		const res = await fetch(url);
@@ -66,10 +65,13 @@ try {
 	}
 
 	async function loadAsync() {
-		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle", "jsonStyle");
+		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle", "jsonStyle", "useHistory");
 		const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
 		const indentStyles = await loadIndentStyles();
 		const jsonStyle = chrome.runtime.getURL(`res/json-theme.${bag.jsonStyle}.css`);
+
+		if (bag.useHistory)
+			model.bag.readables.selected.subscribe(pushHistory);
 
 		let indent = bag.indentChar.repeat(bag.indentCount);
 
@@ -146,6 +148,7 @@ try {
 	})
 
 	loadAsync();
+	//result for chrome.scripting.executeScript
 	undefined;
 } catch (e) {
 	e instanceof Error ? `${e.name} ${e.message}` : e;

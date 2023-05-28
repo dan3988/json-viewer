@@ -59,7 +59,7 @@
 
 	onDestroy(() => destroy())
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle, jsonStyle } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle, jsonStyle, useHistory } = model.props);
 
 	function onModelChange(this: EditorModel) {
 		canSave = this.changed.size > 0;
@@ -161,6 +161,12 @@
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$enabled.value}/>
 			Enabled
+		</label>
+	</div>
+	<div class="input-group" class:dirty={$useHistory.changed}>
+		<label class="input-group-text flex-fill align-items-start gap-1">
+			<input class="form-check-input" type="checkbox" bind:checked={$useHistory.value}/>
+			Use History
 		</label>
 	</div>
 	<div class="input-group grp-theme" class:dirty={$darkMode.changed}>
