@@ -52,6 +52,7 @@
 		padding-right: 5px;
 
 		&:after {
+			color: var(--col-json-key-fg);
 			content: ":";
 		}
 	}
@@ -118,6 +119,10 @@
 
 			&:after {
 				content: "]"
+			}
+
+			> .json-container > :global(li > .json-prop > .json-key) {
+				color: var(--col-json-num-fg);
 			}
 		}
 
