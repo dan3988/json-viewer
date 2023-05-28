@@ -28,42 +28,6 @@
 		]
 	},
 	{
-		"id": "blue",
-		"name": "Sky",
-		"reverse": true,
-		"colors": [
-			"#34B",
-			"#48C",
-			"#5AF",
-			"#8CF"
-		]
-	},
-	{
-		"id": "red",
-		"name": "Fire",
-		"reverse": true,
-		"colors": [
-			"#9D0208",
-			"#D00000",
-			"#DC2F02",
-			"#E85D04",
-			"#F48C06",
-			"#FAA307",
-			"#FFBA08"
-		]
-	},
-	{
-		"id": "green",
-		"name": "Nature",
-		"reverse": true,
-		"colors": [
-			["#BDB", "#484"],
-			["#8B8", "#4B4"],
-			["#484", "#8F8"],
-			["#040", "#BFB"]
-		]
-	},
-	{
 		"id": "gray",
 		"name": "Gray",
 		"reverse": true,
@@ -73,6 +37,53 @@
 			["#555", "#AAA"],
 			["#777", "#CCC"],
 			["#999", "#EEE"]
+		]
+	},
+	{
+		"id": "glacier",
+		"name": "Glacier",
+		"reverse": true,
+		"colors": [
+			"#44648E",
+			"#5B80AF",
+			"#6893C0",
+			"#71A6D1",
+			"#6AB6D9",
+			"#78CFDE"
+		]
+	},
+	{
+		"id": "red",
+		"name": "Cardinal",
+		"colors": [
+			["#F52E55", "#C41E3A"],
+			["#F60E35", "#B51C36"],
+			["#ED0A30", "#A61A31"],
+			["#DA072A", "#98172D"],
+			["#CA0728", "#891528"],
+			["#BB0725", "#7A1324"]
+		]
+	},
+	{
+		"id": "night",
+		"name": "Ice",
+		"colors": [
+			"#5465FF",
+			"#788BFF",
+			"#9BB1FF",
+			"#BFD7FF",
+			"#E2FDFF"
+		]
+	},
+	{
+		"id": "green",
+		"name": "Nature",
+		"reverse": true,
+		"colors": [
+			"#484",
+			"#4B4",
+			"#8F8",
+			"#BFB"
 		]
 	}
 ]
