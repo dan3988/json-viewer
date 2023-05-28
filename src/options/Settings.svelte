@@ -196,7 +196,7 @@
 		</select>
 		<ul class="indent-preview m-0 p-0 flex-fill d-flex border rounded overflow-hidden">
 			{#each Linq.range(0, currentStyle.indents).toArray() as i}
-				<li class="flex-fill json-indent-col-{i}"></li>
+				<li data-indent={i} class="flex-fill json-indent"></li>
 			{/each}
 		</ul>
 	</div>

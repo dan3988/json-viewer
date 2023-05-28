@@ -163,7 +163,7 @@ const configs = [
 		plugins: [
 			indentStyles({
 				minify: dist,
-				prefix: "json-indent-col-",
+				prefix: "json-indent",
 				prop: "--json-indent-bg"
 			})
 		]

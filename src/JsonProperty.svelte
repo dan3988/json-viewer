@@ -198,7 +198,8 @@
 {#if prop}
 <div
 	hidden={$hidden}
-	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype}{indent < 0 ? '' : ' json-indent-col-' + (indent % maxIndentClass)}"
+	data-indent={indent % maxIndentClass}
+	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype} json-indent"
 	class:expanded={$expanded}
 	class:selected={$selected}>
 	<span bind:this={keyElement} class="json-key" on:click={onClick} on:contextmenu|preventDefault={onContextMenu} use:renderKey={prop.key}/>

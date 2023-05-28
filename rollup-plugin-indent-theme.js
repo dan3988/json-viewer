@@ -86,7 +86,7 @@ function transform(indent, prefix, prop, colors, reverse) {
 
 	while (i < light.length) {
 		writer.newLine(0);
-		writer.newLine(0, ".", prefix, i, " {");
+		writer.newLine(0, ".", prefix, "[data-indent=\"", i, "\"] {");
 		writer.newLine(1, prop, ": var(--", prefix, i, ");");
 		writer.newLine(0, "}");
 		i++;
@@ -95,7 +95,7 @@ function transform(indent, prefix, prop, colors, reverse) {
 	if (reverse) {
 		for (let j = i - 1; --j > 0; i++) {
 			writer.newLine(0);
-			writer.newLine(0, ".", prefix, i, " {");
+			writer.newLine(0, ".", prefix, "[data-indent=\"", i, "\"] {");
 			writer.newLine(1, prop, ": var(--", prefix, j, ");");
 			writer.newLine(0, "}");
 		}
