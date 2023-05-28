@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model";
 	import type { JsonToken, JsonProperty } from "../json";
-	import JsonPropertyComp from "../JsonProperty.svelte";
+	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
 	import JsonPathEditor from "./JsonPathEditor.svelte";

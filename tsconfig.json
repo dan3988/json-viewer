@@ -2,7 +2,7 @@
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
 		"noEmit": true,
-		"moduleResolution": "nodenext",
+		"moduleResolution": "node",
 		"resolveJsonModule": true
 	},
 	"include": [

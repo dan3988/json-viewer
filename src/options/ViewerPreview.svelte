@@ -34,7 +34,7 @@
 	nest(sample, 10);
 </script>
 <script lang="ts">
-	import JsonProperty from "../JsonProperty.svelte"
+	import JsonProperty from "../shared/JsonProperty.svelte"
 	import ViewerModel from "../viewer-model";
 	import * as json from "../json";
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { JsonProperty } from "./json";
-	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
+	import type { JsonProperty } from "../json";
+	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model";
 	import { onDestroy, tick } from "svelte";
-	import { renderKey, renderValue } from "./util";
+	import { renderKey, renderValue } from "../util";
 
 	export let model: ViewerModel;
 	export let prop: JsonProperty;
@@ -33,7 +33,7 @@
 	let keyElement: HTMLElement;
 </script>
 <style lang="scss">
-	@use "./core.scss" as *;
+	@use "src/core.scss" as *;
 
 	.json-key {
 		color: var(--col-json-key-fg);

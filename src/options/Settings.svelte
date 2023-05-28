@@ -37,7 +37,7 @@
 	import themes from "../json-themes.js";
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
-	import NumberEditor from "../NumberEditor.svelte";
+	import NumberEditor from "../shared/NumberEditor.svelte";
 
 	export let indentStyles: IndentStyles;
 	export let model: EditorModel<settings.SettingsBag>;
