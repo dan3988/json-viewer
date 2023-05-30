@@ -44,15 +44,18 @@
 <style lang="scss">
 	@use "src/core.scss" as *;
 
-	.json-key {
+	.json-key,
+	.json-key::before {
 		color: var(--col-json-key-fg);
+	}
+
+	.json-key {
 		grid-area: 1 / 2 / span 1 / span 1;
 		cursor: pointer;
 		white-space: nowrap;
 		padding-right: 5px;
 
 		&:after {
-			color: var(--col-json-key-fg);
 			content: ":";
 		}
 	}
@@ -79,7 +82,8 @@
 		}
 
 		&.for-container {
-			&:before, &:after {
+			&:before,
+			&:after {
 				color: var(--col-json-container);
 			}
 
@@ -199,12 +203,9 @@
 			color: var(--col-json-num-fg);
 		}
 
-		&.json-boolean {
-			color: var(--col-json-bln-fg);
-		}
-
+		&.json-boolean,
 		&.json-null {
-			color: var(--col-json-null-fg);
+			color: var(--col-json-keywd-fg);
 		}
 	}
 

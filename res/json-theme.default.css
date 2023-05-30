@@ -3,8 +3,7 @@
 	--col-json-key-fg: #000000;
 	--col-json-str-fg: #a31515;
 	--col-json-num-fg: #098658;
-	--col-json-bln-fg: #0000ff;
-	--col-json-null-fg: #0000ff;
+	--col-json-keywd-fg: #0000ff;
 	--col-match-fg: #000;
 	--col-match-bg: #CC3;
 }
@@ -13,6 +12,5 @@
 	--col-json-key-fg: #9cdcfe;
 	--col-json-str-fg: #ce9178;
 	--col-json-num-fg: #b5cea8;
-	--col-json-bln-fg: #569cd6;
-	--col-json-null-fg: #569cd6;
+	--col-json-keywd-fg: #569cd6;
 }

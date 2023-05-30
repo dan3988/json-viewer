@@ -56,6 +56,9 @@ export function release({ format = "zip", deps, transform } = {}) {
 			handler(options, bundle, isWrite) {
 				delete bundle[id];
 				delete bundle[id.replace(".json", ".js")];
+
+				if (!isWrite)
+					return;
 				
 				const name = getFileName(options, manifest, format);
 				const out = fs.createWriteStream(name);

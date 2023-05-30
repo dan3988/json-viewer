@@ -3,8 +3,7 @@
 	--col-json-key-fg: #C40;
 	--col-json-str-fg: #18F;
 	--col-json-num-fg: #A0F;
-	--col-json-bln-fg: #44F;
-	--col-json-null-fg: #44F;
+	--col-json-keywd-fg: #44F;
 	--col-match-fg: #000;
 	--col-match-bg: #CC3;
 }
@@ -13,8 +12,7 @@
 	--col-json-key-fg: #F80;
 	--col-json-str-fg: #4BF;
 	--col-json-num-fg: #84F;
-	--col-json-bln-fg: #18F;
-	--col-json-null-fg: #18F;
+	--col-json-keywd-fg: #18F;
 	--col-match-fg: #000;
 	--col-match-bg: #FF0;
 }
