@@ -1,3 +1,4 @@
+import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
 import { PropertyBag } from "./prop.js";
 
 const emptyArray: readonly never[] = Object.freeze([]);
@@ -320,9 +321,9 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 		return this.#proxy;
 	}
 
-	protected constructor(prop: JsonProperty, handler: ProxyHandler<JsonContainer<TKey, T>>) {
+	protected constructor(prop: JsonProperty, handler: ProxyHandler<JsonContainer<TKey, T>> | ((self: any) => any)) {
 		super(prop);
-		this.#proxy = new Proxy(this, handler);
+		this.#proxy = typeof handler === "function" ? handler(this) : new Proxy(this, handler);
 	}
 
 	/** @internal */
@@ -371,39 +372,20 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 }
 
 export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonContainer<number & keyof T, T> {
-	static readonly #proxyHandler: ProxyHandler<JsonArray> = {
-		has(target, p) {
-			return p in target.#items;
+	static readonly #proxyHandler: ReadOnlyArrayLikeProxyHandler<JsonArray, any> = {
+		getAt(self, index) {
+			return self.#items[index].value.toJSON();
 		},
-		ownKeys(target) {
-			const keys: string[] = [];
-			for (let i = 0; i < target.#items.length; i++)
-				keys[i] = String(i);
-
-			return keys;
+		getLength(self) {
+			return self.#items.length;
 		},
-		getOwnPropertyDescriptor(target, p) {
-			let desc = Reflect.getOwnPropertyDescriptor(target.#items, p);
-			if (desc === undefined)
-				return;
-
-			if (desc.value instanceof JsonProperty)
-				desc.value = desc.value.value.proxy;
-
-			desc.configurable = true;
-			desc.writable = false;
-			return desc;
-		},
-		getPrototypeOf() {
-			return Array.prototype;
-		},
-		get(target, p) {
-			let value = Reflect.get(target.#items, p);
-			if (value instanceof JsonProperty)
-				value = value.value.proxy;
-
-			return value;
+		getIterator(self) {
+			return self.#proxyIterator;
 		}
+	}
+
+	static #createProxy(self: JsonArray) {
+		return new ArrayLikeProxy(self, JsonArray.#proxyHandler);
 	}
 
 	readonly #items: JsonProperty<number>[];
@@ -427,7 +409,7 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 	}
 
 	constructor(prop: JsonProperty, value: T[]) {
-		super(prop, JsonArray.#proxyHandler as any);
+		super(prop, JsonArray.#createProxy);
 		if (value && value.length) {
 			let prop = new JsonProperty<number>(this, null, 0, value[0]);
 			this.#items = Array(value.length);
@@ -459,6 +441,11 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 			value[i] = elements[i].value.toJSON();
 
 		return value as any;
+	}
+
+	*#proxyIterator() {
+		for (const prop of this.#items)
+			yield prop.value.toJSON();
 	}
 }
 
