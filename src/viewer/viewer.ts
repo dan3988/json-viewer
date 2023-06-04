@@ -151,5 +151,5 @@ try {
 	//result for chrome.scripting.executeScript
 	undefined;
 } catch (e) {
-	e instanceof Error ? `${e.name} ${e.message}` : e;
+	e instanceof Error ? `${e.name}: ${e.message}` : e;
 }
