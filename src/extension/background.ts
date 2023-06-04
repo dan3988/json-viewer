@@ -75,7 +75,7 @@ async function loadExtension() {
 					}
 
 					const fn = autoload ? injectViewer : injectPopup;
-					fn(tabId, sender.frameId).then(() => respond(true));
+					fn(tabId, sender.frameId).then(respond);
 					return true;
 				}
 				break;
