@@ -1,4 +1,7 @@
 :root, [data-bs-theme=light] {
+	--bs-body-bg: #fafafa;
+	--bs-body-bg-rgb: 250, 250, 250;
+
 	--col-json-container: var(--bs-emphasis-color);
 	--col-json-key-fg: #000000;
 	--col-json-str-fg: #a31515;
@@ -9,6 +12,9 @@
 }
 
 [data-bs-theme=dark] {
+	--bs-body-bg: #1f1f1f;
+	--bs-body-bg-rgb: 31, 31, 31;
+
 	--col-json-key-fg: #9cdcfe;
 	--col-json-str-fg: #ce9178;
 	--col-json-num-fg: #b5cea8;
