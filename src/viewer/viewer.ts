@@ -65,7 +65,7 @@ try {
 	}
 
 	async function loadAsync() {
-		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle", "jsonStyle", "useHistory");
+		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle", "scheme", "useHistory");
 		const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
 		const indentStyles = await loadIndentStyles();
 
@@ -102,9 +102,9 @@ try {
 				props.indent = indent = bag.indentChar.repeat(bag.indentCount);
 			}
 
-			if (changes.jsonStyle) {
+			if (changes.scheme) {
 				changeCount = true;
-				props.scheme = changes.jsonStyle.newValue;
+				props.scheme = changes.scheme.newValue;
 			}
 
 			if (changes.indentStyle) {
@@ -122,7 +122,7 @@ try {
 			props: {
 				model,
 				indent,
-				scheme: bag.jsonStyle,
+				scheme: bag.scheme,
 				indentStyle: getStyle(bag.indentStyle)
 			}
 		});

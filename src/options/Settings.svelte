@@ -60,10 +60,10 @@
 		model.removeListener(onModelChange);
 	});
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle, jsonStyle, useHistory } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle, scheme, useHistory } = model.props);
 	$: {
 		schemeUnsub?.();
-		schemeUnsub = jsonStyle.subscribe(v => document.documentElement.dataset["scheme"] = v.value);
+		schemeUnsub = scheme.subscribe(v => document.documentElement.dataset["scheme"] = v.value);
 	}
 
 	function onModelChange(this: EditorModel) {
@@ -212,7 +212,7 @@
 	</div>
 	<div class="input-group grp-json-style">
 		<span class="input-group-text">Colour Scheme</span>
-		<select class="form-select flex-fill" class:dirty={$jsonStyle.changed} bind:value={$jsonStyle.value}>
+		<select class="form-select flex-fill" class:dirty={$scheme.changed} bind:value={$scheme.value}>
 			{#each Object.entries(themes) as [id, name]}
 				<option value={id}>{name}</option>
 			{/each}
