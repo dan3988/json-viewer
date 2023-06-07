@@ -35,11 +35,11 @@ async function loadExtension() {
 		gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
 	function injectPopup(tabId: number, frameId: undefined | number) {
-		return inject(tabId, frameId, ["lib/content.js"], ["lib/content.css"]);
+		return inject(tabId, frameId, "lib/content.js");
 	}
 
 	function injectViewer(tabId: number, frameId: undefined | number) {
-		return inject(tabId, frameId, [lib.json5, "lib/viewer.js"], [lib.bootstrap, "lib/viewer.css"]);
+		return inject(tabId, frameId, lib.json5, "lib/viewer.js");
 	}
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
@@ -86,17 +86,11 @@ async function loadExtension() {
 	});
 }
 
-async function inject(tabId: number, frameId: number | undefined, scripts: string[], styles: string[]) {
+async function inject(tabId: number, frameId: number | undefined, ...files: string[]) {
 	const target = { tabId, frameIds: frameId == undefined ? undefined : [frameId] };
-	await chrome.scripting.insertCSS({
-		target,
-		files: styles,
-		origin: "AUTHOR"
-	});
-
 	const result = await chrome.scripting.executeScript({
 		target,
-		files: scripts,
+		files,
 		world: "ISOLATED"
 	});
 

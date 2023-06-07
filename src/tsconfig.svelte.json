@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"strictNullChecks": true,
 		"strictBindCallApply": true,
+		"resolveJsonModule": true,
 		"noErrorTruncation": true,
 		"lib": [
 			"ESNext",

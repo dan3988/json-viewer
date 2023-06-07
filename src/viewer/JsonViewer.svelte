@@ -1,3 +1,11 @@
+<script lang="ts" context="module">
+	import lib from "../lib.json";
+
+	const css = [
+		chrome.runtime.getURL(lib.bootstrap),
+		chrome.runtime.getURL("/lib/viewer.css")
+	];
+</script>
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model";
 	import type { JsonToken, JsonProperty } from "../json";
@@ -257,6 +265,9 @@
 	}
 </style>
 <svelte:head>
+	{#each css as href}
+		<link rel="stylesheet" {href} />
+	{/each}
 	<link rel="stylesheet" href={indentStyle[0]} />
 </svelte:head>
 <div class="root bg-body text-body" data-scheme={scheme}>

@@ -106,6 +106,7 @@ function svelteConfig(baseDir, entry, output, format = "cjs") {
 				sourceMap: !dist,
 				inlineSources: !dist
 			}),
+			json(),
 			dist && terser({
 				format: {
 					ascii_only: true
