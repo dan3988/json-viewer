@@ -29,7 +29,7 @@
 	@include scheme($name, light, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif);
 }
 
-@mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $border: #495057, $body: #212529, $tertiary: #2b3035, $secondary: #343a40, $tertiaryModif: -5%, $borderModif: -10%) {
+@mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $border: #495057, $body: #212529, $tertiary: #2b3035, $secondary: #343a40, $tertiaryModif: -5%, $borderModif: -20%) {
 	@include scheme($name, dark, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif);
 }
 
