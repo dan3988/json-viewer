@@ -1,5 +1,6 @@
 @use "./core.scss" as core;
 @use "sass:color";
+@import "./themes.scss";
 
 @function toRGB($hex) {
 	@return red($hex) + "," + green($hex) + "," + blue($hex);
@@ -14,74 +15,49 @@ $cst-dirty-bg-dark: #3e432c;
 $cst-dirty-color-dark: #bcbdad;
 $cst-dirty-border-color-dark: #5c603b;
 
+:root {
+	--col-match-fg: #000;
+	--col-match-bg: #CC3;
+}
+
 @include core.theme(light) {
-	:global() {
-		color-scheme: light;
+	color-scheme: light;
 
-		--col-blue: #00F;
-		--col-red: #F00;
-		--col-grn: #0F0;
+	--col-blue: #00F;
+	--col-red: #F00;
+	--col-grn: #0F0;
 
-		--cst-dirty-bg: #{$cst-dirty-bg-light};
-		--cst-dirty-bg-rgb: #{toRGB($cst-dirty-bg-light)};
-		--cst-dirty-color: #{$cst-dirty-color-light};
-		--cst-dirty-border-color: #{$cst-dirty-border-color-light};
+	--cst-dirty-bg: #{$cst-dirty-bg-light};
+	--cst-dirty-bg-rgb: #{toRGB($cst-dirty-bg-light)};
+	--cst-dirty-color: #{$cst-dirty-color-light};
+	--cst-dirty-border-color: #{$cst-dirty-border-color-light};
 
-		--cst-dirty-hover-bg: #{color.scale($cst-dirty-bg-light, $lightness: -10%)};
-		--cst-dirty-hover-color: #{color.scale($cst-dirty-color-light, $lightness: -10%)};
-		--cst-dirty-hover-border-color: #{color.scale($cst-dirty-border-color-light, $lightness: -10%)};
+	--cst-dirty-hover-bg: #{color.scale($cst-dirty-bg-light, $lightness: -10%)};
+	--cst-dirty-hover-color: #{color.scale($cst-dirty-color-light, $lightness: -10%)};
+	--cst-dirty-hover-border-color: #{color.scale($cst-dirty-border-color-light, $lightness: -10%)};
 
-		--cst-dirty-active-bg: #{color.scale($cst-dirty-bg-light, $lightness: -30%)};
-		--cst-dirty-active-color: #{color.scale($cst-dirty-color-light, $lightness: -30%)};
-		--cst-dirty-active-border-color: #{color.scale($cst-dirty-border-color-light, $lightness: -30%)};
-
-		--cst-btn-color: var(--bs-body-color);
-		--cst-btn-bg: var(--bs-tertiary-bg);
-		--cst-btn-border-color: var(--bs-border-color);
-		--cst-btn-hover-color: var(--bs-body-color);
-		--cst-btn-hover-bg: #e8e9ea;
-		--cst-btn-hover-border-color: #bec2c6;
-		--cst-btn-active-color: var(--bs-body-color);
-		--cst-btn-active-bg: #b8b9ba;
-		--cst-btn-active-border-color: #888;
-		--cst-btn-disabled-color: #fff;
-		--cst-btn-disabled-bg: #6c757d;
-		--cst-btn-disabled-border-color: #6c757d;
-	}
+	--cst-dirty-active-bg: #{color.scale($cst-dirty-bg-light, $lightness: -30%)};
+	--cst-dirty-active-color: #{color.scale($cst-dirty-color-light, $lightness: -30%)};
+	--cst-dirty-active-border-color: #{color.scale($cst-dirty-border-color-light, $lightness: -30%)};
 }
 
 @include core.theme(dark) {
-	:global() {
-		--col-blue: #68F;
-		--col-red: #F86;
-		--col-grn: #4F8;
+	--col-blue: #68F;
+	--col-red: #F86;
+	--col-grn: #4F8;
 
-		--cst-dirty-bg: #{$cst-dirty-bg-dark};
-		--cst-dirty-bg-rgb: #{toRGB($cst-dirty-bg-dark)};
-		--cst-dirty-color: #{$cst-dirty-color-dark};
-		--cst-dirty-border-color: #{$cst-dirty-border-color-dark};
+	--cst-dirty-bg: #{$cst-dirty-bg-dark};
+	--cst-dirty-bg-rgb: #{toRGB($cst-dirty-bg-dark)};
+	--cst-dirty-color: #{$cst-dirty-color-dark};
+	--cst-dirty-border-color: #{$cst-dirty-border-color-dark};
 
-		--cst-dirty-hover-bg: #{color.scale($cst-dirty-bg-dark, $lightness: 10%)};
-		--cst-dirty-hover-color: #{color.scale($cst-dirty-color-dark, $lightness: 10%)};
-		--cst-dirty-hover-border-color: #{color.scale($cst-dirty-border-color-dark, $lightness: 10%)};
+	--cst-dirty-hover-bg: #{color.scale($cst-dirty-bg-dark, $lightness: 10%)};
+	--cst-dirty-hover-color: #{color.scale($cst-dirty-color-dark, $lightness: 10%)};
+	--cst-dirty-hover-border-color: #{color.scale($cst-dirty-border-color-dark, $lightness: 10%)};
 
-		--cst-dirty-active-bg: #{color.scale($cst-dirty-bg-dark, $lightness: 20%)};
-		--cst-dirty-active-color: #{color.scale($cst-dirty-color-dark, $lightness: 20%)};
-		--cst-dirty-active-border-color: #{color.scale($cst-dirty-border-color-dark, $lightness: 20%)};
-
-		--cst-btn-color: var(--bs-body-color);
-		--cst-btn-bg: var(--bs-tertiary-bg);
-		--cst-btn-border-color: var(--bs-border-color);
-		--cst-btn-hover-color: var(--bs-body-color);
-		--cst-btn-hover-bg: #33383d;
-		--cst-btn-hover-border-color: #51585F;
-		--cst-btn-active-color: #89a0a7;
-		--cst-btn-active-bg: #4b5055;
-		--cst-btn-active-border-color: #89a0a7;
-		--cst-btn-disabled-color: #fff;
-		--cst-btn-disabled-bg: #6c757d;
-		--cst-btn-disabled-border-color: #6c757d;
-	}
+	--cst-dirty-active-bg: #{color.scale($cst-dirty-bg-dark, $lightness: 20%)};
+	--cst-dirty-active-color: #{color.scale($cst-dirty-color-dark, $lightness: 20%)};
+	--cst-dirty-active-border-color: #{color.scale($cst-dirty-border-color-dark, $lightness: 20%)};
 }
 
 :global(ul) {
@@ -94,6 +70,7 @@ $cst-dirty-border-color-dark: #5c603b;
 	--bs-btn-color: var(--cst-btn-color);
 	--bs-btn-bg: var(--cst-btn-bg);
 	--bs-btn-border-color: var(--cst-btn-border-color);
+	--bs-btn-hover-color: var(--cst-btn-hover-color);
 	--bs-btn-hover-bg: var(--cst-btn-hover-bg);
 	--bs-btn-hover-border-color: var(--cst-btn-hover-border-color);
 	--bs-btn-active-color: var(--cst-btn-active-color);
@@ -102,6 +79,10 @@ $cst-dirty-border-color-dark: #5c603b;
 	--bs-btn-disabled-color: var(--cst-btn-disabled-color);
 	--bs-btn-disabled-bg: var(--cst-btn-disabled-bg);
 	--bs-btn-disabled-border-color: var(--cst-btn-disabled-border-color);
+}
+
+:global(.input-group .btn:hover) {
+	z-index: 3;
 }
 
 :global(.dirty.input-group > .input-group-text),

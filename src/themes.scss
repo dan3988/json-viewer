@@ -1,0 +1,89 @@
+@use "./core.scss" as core;
+@use "sass:color";
+
+@function toRGB($hex) {
+	@return red($hex) + "," + green($hex) + "," + blue($hex);
+}
+
+@function json-cols($key, $keywd, $str, $num) {
+	@return ("key": $key, "keywd": $keywd, "str": $str, "num": $num);
+}
+
+// scss-docs-start color-functions
+// Tint a color: mix a color with white
+@function tint-color($color, $weight) {
+	@return mix(white, $color, $weight);
+}
+
+// Shade a color: mix a color with black
+@function shade-color($color, $weight) {
+	@return mix(black, $color, $weight);
+}
+
+// Shade the color if the weight is positive, else tint it
+@function shift-color($color, $weight) {
+	@return if($weight > 0, shade-color($color, $weight), tint-color($color, -$weight));
+}
+
+@mixin scheme-lt($name, $key, $keywd, $str, $num, $text: #212529, $border: #dee2e6, $body: #fff, $tertiary: #f8f9fa, $secondary: #e9ecef) {
+	@include scheme($name, light, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary)
+}
+
+@mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $border: #495057, $body: #212529, $tertiary: #2b3035, $secondary: #343a40) {
+	@include scheme($name, dark, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary)
+}
+
+@mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary) {
+	:global([data-bs-theme="#{$mode}"][data-scheme="#{$name}"]),
+	:global([data-bs-theme="#{$mode}"] [data-scheme="#{$name}"]),
+	:global([data-scheme="#{$name}"] [data-bs-theme="#{$mode}"]) {
+		--col-json-key-fg: #{$key};
+		--col-json-keywd-fg: #{$keywd};
+		--col-json-str-fg: #{$str};
+		--col-json-num-fg: #{$num};
+		--bs-border-color: #{$border};
+
+		@include bs-color(body-bg, $body);
+		@include bs-color(body-color, $text);
+		@include bs-color(tertiary-bg, $tertiary);
+		@include bs-color(tertiary-color, rgba($text, 0.5));
+		@include bs-color(secondary-bg, $secondary);
+		@include bs-color(secondary-color, rgba($text, 0.75));
+	
+		@include bs-colors("cst-btn", "bg", $tertiary, 2%);
+		@include bs-colors("cst-btn", "color", $text);
+		@include bs-colors("cst-btn", "border-color", $border, 10%);
+
+		@content;
+	}
+}
+
+@mixin bs-color($key, $value) {
+	--bs-#{$key}: #{$value};
+	--bs-#{$key}-rgb: #{toRGB($value)};
+}
+
+@mixin bs-colors($name, $postfix, $color, $amount: 0%, $hover: 1, $active: 2, $disabled: -2) {
+	--#{$name}-#{$postfix}: #{$color};
+	--#{$name}-hover-#{$postfix}: #{shift-color($color, $amount * $hover)};
+	--#{$name}-active-#{$postfix}: #{shift-color($color, $amount * $active)};
+	--#{$name}-disabled-#{$postfix}: #{shift-color($color, $amount * $disabled)};
+}
+
+@include scheme-lt("default", #000, #0000ff, #a31515, #098658, $body: #fafafa);
+@include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $body: #1f1f1f);
+
+@include scheme-lt("dracula", #D04, #B8E, #1C1, #CA0, $body: #c9cbd6);
+@include scheme-dk("dracula", #D57, #B8E, #8F8, #ED2, $body: #282a36);
+
+@include scheme-lt("mat", #703399, #f76d47, #91b859, #f76d47, $body: #c9cbd6);
+@include scheme-dk("mat", #c792ea, #f78c6c, #c3e88d, #89ddff, $body: #263238);
+
+@include scheme-lt("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $body: #e8f4ff);
+@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $body: #000c18);
+
+@include scheme-lt("vibrant", #D04, #B8E, #1C1, #CA0);
+@include scheme-dk("vibrant", #D57, #B8E, #8F8, #ED2);
+
+@include scheme-lt("aqua", #D04, #18F, #18F, #A0F);
+@include scheme-dk("aqua", #F80, #18F, #4BF, #84F);

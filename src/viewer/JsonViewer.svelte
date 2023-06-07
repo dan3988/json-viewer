@@ -10,7 +10,7 @@
 	export let model: ViewerModel;
 	export let indent: string;
 	export let indentStyle: readonly [url: string, count: number];
-	export let jsonStyle: string;
+	export let scheme: string;
 
 	model.command.addListener(onModelCommand);
 
@@ -257,10 +257,9 @@
 	}
 </style>
 <svelte:head>
-	<link rel="stylesheet" href={jsonStyle} />
 	<link rel="stylesheet" href={indentStyle[0]} />
 </svelte:head>
-<div class="root bg-body text-body">
+<div class="root bg-body text-body" data-scheme={scheme}>
 	{#if contextMenu}
 		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
 	{/if}

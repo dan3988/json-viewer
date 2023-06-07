@@ -154,9 +154,8 @@
 </style>
 <svelte:head>
 	<link rel="stylesheet" href="/lib/indent-styles.{$indentStyle.value}.css" />
-	<link rel="stylesheet" href="/res/json-theme.{$jsonStyle.value}.css" />
 </svelte:head>
-<div class="base cr d-flex flex-column p-1 gap-1">
+<div class="base cr d-flex flex-column p-1 gap-1" data-scheme={$jsonStyle.value}>
 	<div class="input-group" class:dirty={$enabled.changed}>
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$enabled.value}/>
