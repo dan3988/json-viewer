@@ -46,20 +46,25 @@
 	$: currentStyle = indentStyles[indentStyle.value] ?? Object.prototype;
 
 	let showPreview = false;
-	let destroy: Action;
+	let unsub: Action;
+	let schemeUnsub: Action;
 
 	onMount(() => {
-		const unsub = model.props.darkMode.subscribe(v => tracker.preferDark = v.value);
+		unsub = model.props.darkMode.subscribe(v => tracker.preferDark = v.value);
 		model.addListener(onModelChange);
-		destroy = () => {
-			unsub();
-			model.removeListener(onModelChange);
-		}
-	})
+	});
 
-	onDestroy(() => destroy())
+	onDestroy(() => {
+		unsub();
+		schemeUnsub?.();
+		model.removeListener(onModelChange);
+	});
 
 	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle, jsonStyle, useHistory } = model.props);
+	$: {
+		schemeUnsub?.();
+		schemeUnsub = jsonStyle.subscribe(v => document.documentElement.dataset["scheme"] = v.value);
+	}
 
 	function onModelChange(this: EditorModel) {
 		canSave = this.changed.size > 0;
@@ -155,7 +160,7 @@
 <svelte:head>
 	<link rel="stylesheet" href="/lib/indent-styles.{$indentStyle.value}.css" />
 </svelte:head>
-<div class="base cr d-flex flex-column p-1 gap-1" data-scheme={$jsonStyle.value}>
+<div class="base cr d-flex flex-column p-1 gap-1">
 	<div class="input-group" class:dirty={$enabled.changed}>
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$enabled.value}/>
