@@ -79,8 +79,8 @@
 @include scheme-lt("mat", #703399, #f76d47, #91b859, #f76d47, $body: #c9cbd6);
 @include scheme-dk("mat", #c792ea, #f78c6c, #c3e88d, #89ddff, $body: #263238);
 
-@include scheme-lt("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $body: #e8f4ff);
-@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $body: #000c18);
+@include scheme-lt("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $text: #212529, $border: #b3d9ff, $body: #e5f3ff, $tertiary: #d6ebff, $secondary: #c2e1ff);
+@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $text: #adb5bd, $border: #204060, $body: #000d1a, $tertiary: #001a33, $secondary: #00264d);
 
 @include scheme-lt("vibrant", #D04, #B8E, #1C1, #CA0);
 @include scheme-dk("vibrant", #D57, #B8E, #8F8, #ED2);
