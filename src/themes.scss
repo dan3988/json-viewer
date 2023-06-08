@@ -37,10 +37,24 @@
 	}
 }
 
-@mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif) {
-	:global([data-bs-theme="#{$mode}"][data-scheme="#{$name}"]),
-	:global([data-bs-theme="#{$mode}"] [data-scheme="#{$name}"]),
-	:global([data-scheme="#{$name}"] [data-bs-theme="#{$mode}"]) {
+@mixin scheme-selector($scheme, $mode) {
+	@if ($mode == null) {
+		:global([data-bs-theme][data-scheme="#{$scheme}"]),
+		:global([data-bs-theme] [data-scheme="#{$scheme}"]),
+		:global([data-scheme="#{$scheme}"] [data-bs-theme]) {
+			@content;
+		}
+	} @else {
+		:global([data-bs-theme="#{$mode}"][data-scheme="#{$scheme}"]),
+		:global([data-bs-theme="#{$mode}"] [data-scheme="#{$scheme}"]),
+		:global([data-scheme="#{$scheme}"] [data-bs-theme="#{$mode}"]) {
+			@content;
+		}
+	}
+}
+
+@mixin scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary) {
+	@include scheme-selector($name, $mode) {
 		--col-json-key-fg: #{$key};
 		--col-json-keywd-fg: #{$keywd};
 		--col-json-str-fg: #{$str};
@@ -53,7 +67,13 @@
 		@include bs-color(tertiary-color, rgba($text, 0.5));
 		@include bs-color(secondary-bg, $secondary);
 		@include bs-color(secondary-color, rgba($text, 0.75));
-	
+
+		@content;
+	}
+}
+
+@mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif) {
+	@include scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary) {
 		@include bs-colors("cst-btn", "bg", $tertiary, $tertiaryModif);
 		@include bs-colors("cst-btn", "color", $text);
 		@include bs-colors("cst-btn", "border-color", $border, $borderModif);
@@ -74,8 +94,12 @@
 	--#{$name}-disabled-#{$postfix}: #{$disabled};
 }
 
+@mixin bs-colors2($name, $postfix, $color, $mix, $hoverMix, $activeMix, $disabled) {
+	@include bs-effects($name, $postfix, $color, mix($mix, $color, $hoverMix), mix($mix, $color, $activeMix), $disabled);
+}
+
 @mixin bs-colors($name, $postfix, $color, $amount: 0%, $hover: 1, $active: 2, $disabled: -2) {
-	@include bs-effects($name, $postfix, $color, shift-color($color, $amount * $hover), shift-color($color, $amount * $active), shift-color($color, $amount * $disabled))
+	@include bs-effects($name, $postfix, $color, shift-color($color, $amount * $hover), shift-color($color, $amount * $active), shift-color($color, $amount * $disabled));
 }
 
 @include scheme-lt("default", #000000, #0000ff, #a31515, #098658, $base: #fafafa);
@@ -125,8 +149,16 @@
 	}
 }
 
-@include scheme-lt("vibrant", #D04, #B8E, #1C1, #CA0);
-@include scheme-dk("vibrant", #D57, #B8E, #8F8, #ED2);
+@include scheme-base("terminal", null, $key: #0f0, $keywd: #f88, $str: #ff8, $num: #88f, $text: #0c0, $border: #0c0, $body: black, $tertiary: black, $secondary: black) {
+	@include bs-colors2("cst-btn", "bg", #000, #0f0, 15%, 30%, #111);
+	@include bs-colors2("cst-btn", "color", #0c0, #0f0, 50%, 100%, #595);
+	@include bs-colors2("cst-btn", "border-color", #0c0, #0f0, 50%, 100%, #595);
 
-@include scheme-lt("aqua", #D04, #18F, #18F, #A0F);
-@include scheme-dk("aqua", #F80, #18F, #4BF, #84F);
+	color-scheme: dark;
+
+	:global(.btn-primary) {
+		@include bs-colors2("bs-btn", "bg", #000, #0f0, 15%, 30%, #111);
+		@include bs-colors2("bs-btn", "color", #0c0, #0f0, 50%, 100%, #595);
+		@include bs-colors2("bs-btn", "border-color", #0c0, #0f0, 50%, 100%, #595);
+	}
+}

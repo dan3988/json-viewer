@@ -42,6 +42,8 @@ $cst-dirty-border-color-dark: #5c603b;
 }
 
 @include core.theme(dark) {
+	color-scheme: dark;
+
 	--col-blue: #68F;
 	--col-red: #F86;
 	--col-grn: #4F8;
