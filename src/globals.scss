@@ -82,7 +82,11 @@ $cst-dirty-border-color-dark: #5c603b;
 }
 
 :global(.input-group .btn:hover) {
-	z-index: 3;
+	z-index: 5;
+}
+
+:global(.input-group .btn:active) {
+	z-index: 6;
 }
 
 :global(.dirty.input-group > .input-group-text),

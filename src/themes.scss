@@ -26,11 +26,15 @@
 }
 
 @mixin scheme-lt($name, $key, $keywd, $str, $num, $text: #212529, $base: #fff, $bgModif: -3%, $tertiaryModif: 2%, $borderModif: 10%) {
-	@include scheme($name, light, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif);
+	@include scheme($name, light, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif) {
+		@content;
+	}
 }
 
 @mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $base: #212529, $bgModif: 5%, $tertiaryModif: -5%, $borderModif: -20%) {
-	@include scheme($name, dark, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif);
+	@include scheme($name, dark, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif) {
+		@content;
+	}
 }
 
 @mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif) {
@@ -63,24 +67,63 @@
 	--bs-#{$key}-rgb: #{toRGB($value)};
 }
 
-@mixin bs-colors($name, $postfix, $color, $amount: 0%, $hover: 1, $active: 2, $disabled: -2) {
-	--#{$name}-#{$postfix}: #{$color};
-	--#{$name}-hover-#{$postfix}: #{shift-color($color, $amount * $hover)};
-	--#{$name}-active-#{$postfix}: #{shift-color($color, $amount * $active)};
-	--#{$name}-disabled-#{$postfix}: #{shift-color($color, $amount * $disabled)};
+@mixin bs-effects($name, $postfix, $default, $hover: $default, $active: $default, $disabled: $default) {
+	--#{$name}-#{$postfix}: #{$default};
+	--#{$name}-hover-#{$postfix}: #{$hover};
+	--#{$name}-active-#{$postfix}: #{$active};
+	--#{$name}-disabled-#{$postfix}: #{$disabled};
 }
 
-@include scheme-lt("default", #000, #0000ff, #a31515, #098658, $base: #fafafa);
+@mixin bs-colors($name, $postfix, $color, $amount: 0%, $hover: 1, $active: 2, $disabled: -2) {
+	@include bs-effects($name, $postfix, $color, shift-color($color, $amount * $hover), shift-color($color, $amount * $active), shift-color($color, $amount * $disabled))
+}
+
+@include scheme-lt("default", #000000, #0000ff, #a31515, #098658, $base: #fafafa);
 @include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $base: #1f1f1f);
 
-@include scheme-lt("dracula", #D04, #B8E, #1C1, #CA0, $base: #c8cad5);
-@include scheme-dk("dracula", #D57, #B8E, #8F8, #ED2, $base: #272935);
+@include scheme-lt("dracula", #D04, #B8E, #1C1, #CA0, $base: #f1f1f4) {
+	:global(.btn-primary) {
+		@include bs-colors("bs-btn", "bg", hsl(330, 100%, 45%), 10%);
+		@include bs-colors("bs-btn", "border-color", hsl(330, 100%, 45%), 10%);
+	}
+}
 
-@include scheme-lt("mat", #703399, #f76d47, #91b859, #f76d47, $base: #c9cbd6);
-@include scheme-dk("mat", #c792ea, #f78c6c, #c3e88d, #89ddff, $base: #263238);
+@include scheme-dk("dracula", #ff79c6, #bd93f9, #f1fa8c, #50fa7b, $base: #272935) {
+	:global(.btn-primary) {
+		@include bs-colors("bs-btn", "bg", hsl(330, 100%, 45%), 10%);
+		@include bs-colors("bs-btn", "border-color", hsl(330, 100%, 60%), 10%);
+	}
+}
 
-@include scheme-lt("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #e5f3ff);
-@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #000d1a);
+@include scheme-lt("mat", #6182b8, #f76d47, #91b859, #f76d47, $base: hsl(231, 30%, 98%)) {
+	:global(.btn-primary) {
+		@include bs-colors("bs-btn", "bg", hsl(174, 60%, 50%), 10%);
+		@include bs-colors("bs-btn", "color", hsl(174, 60%, 90%), -20%, $disabled: 0.5);
+		@include bs-colors("bs-btn", "border-color", hsl(174, 60%, 80%), -20%, $disabled: 1);
+	}
+}
+
+@include scheme-dk("mat", #c792ea, #82aaff, #c3e88d, #f78c6c, $base: #263238) {
+	:global(.btn-primary) {
+		@include bs-colors("bs-btn", "bg", #3d8f87, -5%);
+		@include bs-colors("bs-btn", "color", #b3e0dc, -50%, $disabled: 0.5);
+		@include bs-colors("bs-btn", "border-color", #94d1cb, -20%);
+	}
+}
+
+@include scheme-lt("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #e5f3ff) {
+	:global(.btn-primary) {
+		@include bs-colors("bs-btn", "bg", #6688cc, 10%);
+		@include bs-colors("bs-btn", "border-color", #b3c4e6, 20%);
+	}
+}
+
+@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #000d1a) {
+	:global(.btn-primary) {
+		@include bs-colors("bs-btn", "bg", #8800cc, -10%);
+		@include bs-colors("bs-btn", "border-color", #aa00ff, -20%);
+	}
+}
 
 @include scheme-lt("vibrant", #D04, #B8E, #1C1, #CA0);
 @include scheme-dk("vibrant", #D57, #B8E, #8F8, #ED2);
