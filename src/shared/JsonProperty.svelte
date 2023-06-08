@@ -222,7 +222,7 @@
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
-			<span class="expander" on:click={onExpanderClicked}></span>
+			<span class="expander" on:click={onExpanderClicked} title={($expanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
 			<span class="prop-count">{prop.value.count}</span>
 			{#if $expanded}
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
