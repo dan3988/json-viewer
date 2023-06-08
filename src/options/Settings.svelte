@@ -142,6 +142,7 @@
 	}
 
 	.indent-preview {
+		margin: 0;
 		height: 2.5rem;
 		border-top-left-radius: 0 !important;
 		border-bottom-left-radius: 0 !important;
@@ -204,7 +205,7 @@
 				<option value={key}>{theme.name}</option>
 			{/each}
 		</select>
-		<ul class="indent-preview m-0 p-0 flex-fill d-flex border rounded overflow-hidden">
+		<ul class="indent-preview p-0 flex-fill d-flex border rounded overflow-hidden">
 			{#each Linq.range(0, currentStyle.indents).toArray() as i}
 				<li data-indent={i} class="flex-fill json-indent"></li>
 			{/each}
