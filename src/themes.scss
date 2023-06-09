@@ -25,14 +25,17 @@
 	@return if($weight > 0, shade-color($color, $weight), tint-color($color, -$weight));
 }
 
-@mixin scheme-lt($name, $key, $keywd, $str, $num, $text: #212529, $base: #fff, $bgModif: -3%, $tertiaryModif: 2%, $borderModif: 10%) {
-	@include scheme($name, light, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif) {
+$def-indent-lt: (#0431fa, #319331, #7b3814);
+$def-indent-dk: (#ffd700, #da70d6, #179fff);
+
+@mixin scheme-lt($name, $key, $keywd, $str, $num, $text: #212529, $base: #fff, $bgModif: -3%, $tertiaryModif: 2%, $borderModif: 10%, $indents: $def-indent-lt) {
+	@include scheme($name, light, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif, $indents) {
 		@content;
 	}
 }
 
-@mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $base: #212529, $bgModif: 5%, $tertiaryModif: -5%, $borderModif: -20%) {
-	@include scheme($name, dark, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif) {
+@mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $base: #212529, $bgModif: 5%, $tertiaryModif: -5%, $borderModif: -20%, $indents: $def-indent-dk) {
+	@include scheme($name, dark, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif, $indents) {
 		@content;
 	}
 }
@@ -53,7 +56,7 @@
 	}
 }
 
-@mixin scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary) {
+@mixin scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $indents: null) {
 	@include scheme-selector($name, $mode) {
 		--col-json-key-fg: #{$key};
 		--col-json-keywd-fg: #{$keywd};
@@ -68,12 +71,24 @@
 		@include bs-color(secondary-bg, $secondary);
 		@include bs-color(secondary-color, rgba($text, 0.75));
 
+		@if ($indents) {
+			@for $i from 1 through length($indents) {
+				--json-indent#{$i}: #{toRGB(nth($indents, $i))};
+			}
+
+			@for $i from 1 through length($indents) {
+				:global(.json-indent[data-indent="#{$i - 1}"]) {
+					--json-indent-bg: var(--json-indent#{$i});
+				}
+			}
+		}
+
 		@content;
 	}
 }
 
-@mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif) {
-	@include scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary) {
+@mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif, $indents: null) {
+	@include scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $indents) {
 		@include bs-colors("cst-btn", "bg", $tertiary, $tertiaryModif);
 		@include bs-colors("cst-btn", "color", $text);
 		@include bs-colors("cst-btn", "border-color", $border, $borderModif);
@@ -105,21 +120,21 @@
 @include scheme-lt("default", #000000, #0000ff, #a31515, #098658, $base: #fafafa);
 @include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $base: #1f1f1f);
 
-@include scheme-lt("dracula", #D04, #B8E, #1C1, #CA0, $base: #f1f1f4) {
+@include scheme-lt("dracula", #e60073, #bf95f9, #bec757, #1fc749, $base: #f1f1f4, $indents: (hsl(60, 30%, 4%), hsl(326, 100%, 54%), hsl(191, 97%, 57%), hsl(135, 94%, 45%), hsl(265, 89%, 58%), hsl(31, 100%, 51%))) {
 	:global(.btn-primary) {
 		@include bs-colors("bs-btn", "bg", hsl(330, 100%, 45%), 10%);
 		@include bs-colors("bs-btn", "border-color", hsl(330, 100%, 45%), 10%);
 	}
 }
 
-@include scheme-dk("dracula", #ff79c6, #bd93f9, #f1fa8c, #50fa7b, $base: #272935) {
+@include scheme-dk("dracula", #ff79c6, #bd93f9, #f1fa8c, #50fa7b, $base: #272935, $indents: (#f8f8f2, #ff79c6, #8be9fd, #50fa7b, #bd93f9, #ffb86c)) {
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", hsl(330, 100%, 45%), 10%);
-		@include bs-colors("bs-btn", "border-color", hsl(330, 100%, 60%), 10%);
+		@include bs-colors("bs-btn", "bg", #e60073, 10%);
+		@include bs-colors("bs-btn", "border-color", #ff3399, 10%);
 	}
 }
 
-@include scheme-lt("mat", #6182b8, #f76d47, #91b859, #f76d47, $base: hsl(231, 30%, 98%)) {
+@include scheme-lt("mat", #6182b8, #f76d47, #91b859, #f76d47, $base: #f8f9fb, $indents: (#7c4dff, #ffb62c, #f76d47, #e53935, #c17e70, #6182b8)) {
 	:global(.btn-primary) {
 		@include bs-colors("bs-btn", "bg", hsl(174, 60%, 50%), 10%);
 		@include bs-colors("bs-btn", "color", hsl(174, 60%, 90%), -20%, $disabled: 0.5);
@@ -127,7 +142,7 @@
 	}
 }
 
-@include scheme-dk("mat", #c792ea, #82aaff, #c3e88d, #f78c6c, $base: #263238) {
+@include scheme-dk("mat", #c792ea, #82aaff, #c3e88d, #f78c6c, $base: #263238, $indents: (#c792ea, #ffcb6b, #f78c6c, #ff5370, #c17e70, #82aaff)) {
 	:global(.btn-primary) {
 		@include bs-colors("bs-btn", "bg", #3d8f87, -5%);
 		@include bs-colors("bs-btn", "color", #b3e0dc, -50%, $disabled: 0.5);
@@ -149,7 +164,7 @@
 	}
 }
 
-@include scheme-base("terminal", null, $key: #0f0, $keywd: #f88, $str: #ff8, $num: #88f, $text: #0c0, $border: #0c0, $body: black, $tertiary: black, $secondary: black) {
+@include scheme-base("terminal", null, $key: #0f0, $keywd: #f88, $str: #ff8, $num: #88f, $text: #0c0, $border: #0c0, $body: black, $tertiary: black, $secondary: #0f01, $indents: (#88f, #ff0, #f00)) {
 	@include bs-colors2("cst-btn", "bg", #000, #0f0, 15%, 30%, #111);
 	@include bs-colors2("cst-btn", "color", #0c0, #0f0, 50%, 100%, #595);
 	@include bs-colors2("cst-btn", "border-color", #0c0, #0f0, 50%, 100%, #595);

@@ -11,7 +11,6 @@ import sass from "sass";
 import path from "path";
 import fs from "fs";
 import Linq from '@daniel.pickett/linq-js';
-import indentStyles from './rollup-plugin-indent-theme.js';
 import release from './rollup-plugin-release.js';
 import lib from "./src/lib.json" assert { type: "json" };
 
@@ -155,19 +154,6 @@ const configs = [
 		watch: {
 			clearScreen: false
 		},
-	},
-	{
-		input: "src/indent-styles.json",
-		output: {
-			dir
-		},
-		plugins: [
-			indentStyles({
-				minify: dist,
-				prefix: "json-indent",
-				prop: "--json-indent-bg"
-			})
-		]
 	}
 ];
 

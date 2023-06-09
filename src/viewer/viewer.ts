@@ -2,6 +2,7 @@
 
 import type { IndentStyles } from "../types";
 import settings from "../settings";
+import themes from "../json-themes.json";
 import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
 import { JsonProperty } from "../json"
@@ -65,20 +66,13 @@ try {
 	}
 
 	async function loadAsync() {
-		const bag = await settings.get("darkMode", "indentChar", "indentCount", "indentStyle", "scheme", "useHistory");
+		const bag = await settings.get("darkMode", "indentChar", "indentCount", "scheme", "useHistory");
 		const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
-		const indentStyles = await loadIndentStyles();
 
 		if (bag.useHistory)
 			model.bag.readables.selected.subscribe(pushHistory);
 
 		let indent = bag.indentChar.repeat(bag.indentCount);
-
-		function getStyle(key: string) {
-			const style = indentStyles[key];
-			const url = chrome.runtime.getURL(`/lib/indent-styles.${key}.css`)
-			return [url, style.indents] as const;
-		}
 	
 		settings.addListener(({ changes }) => {
 			if (changes.darkMode)
@@ -103,13 +97,10 @@ try {
 			}
 
 			if (changes.scheme) {
+				const scheme = changes.scheme.newValue;
 				changeCount = true;
-				props.scheme = changes.scheme.newValue;
-			}
-
-			if (changes.indentStyle) {
-				changeCount = true;
-				props.indentStyle = getStyle(changes.indentStyle.newValue);
+				props.scheme = scheme;
+				props.indentCount = themes[scheme][1];
 			}
 
 			if (changeCount)
@@ -123,7 +114,7 @@ try {
 				model,
 				indent,
 				scheme: bag.scheme,
-				indentStyle: getStyle(bag.indentStyle)
+				indentCount: themes[bag.scheme][1]
 			}
 		});
 	}

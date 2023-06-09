@@ -44,8 +44,7 @@
 <style lang="scss">
 	@use "src/core.scss" as *;
 
-	.json-key,
-	.json-key::before {
+	.json-key {
 		color: var(--col-json-key-fg);
 	}
 
@@ -56,6 +55,7 @@
 		padding-right: 5px;
 
 		&:after {
+			color: var(--bs-body-color);
 			content: ":";
 		}
 	}
@@ -84,7 +84,7 @@
 		&.for-container {
 			&:before,
 			&:after {
-				color: var(--col-json-container);
+				color: rgb(var(--json-indent-bg));
 			}
 
 			&:before {
@@ -134,11 +134,6 @@
 			> .expander {
 				position: relative;
 
-				&:hover::before {
-					width: 4px;
-					border-radius: 2px;
-				}
-
 				&:before {
 					content: "";
 					position: absolute;
@@ -187,8 +182,14 @@
 		cursor: pointer;
 		position: relative;
 
+		--indent-bg: rgb(var(--json-indent-bg), 0.2);
+
+		&:hover {
+			--indent-bg: rgb(var(--json-indent-bg));
+		}
+
 		&:before {
-			background-color: var(--json-indent-bg);
+			background-color: var(--indent-bg);
 		}
 	}
 

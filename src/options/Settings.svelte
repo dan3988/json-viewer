@@ -28,22 +28,17 @@
 	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
 </script>
 <script lang="ts">
-	import type { IndentStyles } from "../types.d.ts";
 	import type { EditorModel } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
 	import settings from "../settings";
-	import Linq from "@daniel.pickett/linq-js";
 	import { onDestroy, onMount } from "svelte";
-	import themes from "../json-themes.js";
+	import themes from "../json-themes.json";
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
 
-	export let indentStyles: IndentStyles;
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
-
-	$: currentStyle = indentStyles[indentStyle.value] ?? Object.prototype;
 
 	let showPreview = false;
 	let unsub: Action;
@@ -60,7 +55,8 @@
 		model.removeListener(onModelChange);
 	});
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, indentStyle, scheme, useHistory } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory } = model.props);
+	$: currentScheme = themes[$scheme.value];
 	$: {
 		schemeUnsub?.();
 		schemeUnsub = scheme.subscribe(v => document.documentElement.dataset["scheme"] = v.value);
@@ -158,9 +154,6 @@
 		}
 	}
 </style>
-<svelte:head>
-	<link rel="stylesheet" href="/lib/indent-styles.{$indentStyle.value}.css" />
-</svelte:head>
 <div class="base cr d-flex flex-column p-1 gap-1">
 	<div class="input-group" class:dirty={$enabled.changed}>
 		<label class="input-group-text flex-fill align-items-start gap-1">
@@ -198,23 +191,10 @@
 			{/each}
 		</select>
 	</div>
-	<div class="input-group grp-indent-style">
-		<span class="input-group-text">Indent Style</span>
-		<select class="form-select flex-fill" class:dirty={$indentStyle.changed} bind:value={$indentStyle.value}>
-			{#each Object.entries(indentStyles) as [key, theme]}
-				<option value={key}>{theme.name}</option>
-			{/each}
-		</select>
-		<ul class="indent-preview p-0 flex-fill d-flex border rounded overflow-hidden">
-			{#each Linq.range(0, currentStyle.indents).toArray() as i}
-				<li data-indent={i} class="flex-fill json-indent"></li>
-			{/each}
-		</ul>
-	</div>
 	<div class="input-group grp-json-style">
 		<span class="input-group-text">Colour Scheme</span>
 		<select class="form-select flex-fill" class:dirty={$scheme.changed} bind:value={$scheme.value}>
-			{#each Object.entries(themes) as [id, name]}
+			{#each Object.entries(themes) as [id, [name]]}
 				<option value={id}>{name}</option>
 			{/each}
 		</select>
@@ -225,7 +205,7 @@
 			<span class="expander btn btn-cust-light border-0" on:click={() => showPreview = !showPreview} />
 		</div>
 		<div class="preview-wrapper expandable-content overflow-auto p-1">
-			<ViewerPreview maxIndentClass={currentStyle.indents} />
+			<ViewerPreview maxIndentClass={currentScheme[1]} />
 		</div>
 	</div>
 	<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>

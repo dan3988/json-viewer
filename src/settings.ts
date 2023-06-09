@@ -64,7 +64,6 @@ export namespace settings {
 		makeSetting("enabled", Boolean, true),
 		makeSetting("indentCount", Integer, 1),
 		makeSetting("indentChar", String, "\t"),
-		makeSetting("indentStyle", String, "default"),
 		makeSetting("useHistory", Boolean, true)
 	]
 
@@ -89,7 +88,6 @@ export namespace settings {
 		enabled: boolean;
 		indentCount: number;
 		indentChar: string;
-		indentStyle: string;
 		scheme: string;
 		useHistory: boolean;
 	}

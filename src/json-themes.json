@@ -1,0 +1,7 @@
+{
+	"default": ["Visual Studio", 3],
+	"dracula": ["Dracula", 6],
+	"abyss": ["Abyss", 3],
+	"mat": ["Material", 6],
+	"terminal": ["Terminal", 3]
+}
