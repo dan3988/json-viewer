@@ -1,10 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" style="width: 30rem;">
+<html lang="en">
 	<head>
 		<meta charset="utf-8">
 		<title>JSON Viewer Settings</title>
 		<link href="../lib/options.css" rel="stylesheet" />
 		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+		<style>
+			html {
+				width: 500px;
+				height: min-content;
+			}
+
+			@-moz-document url-prefix() {
+				html {
+					width: 100%;
+				}
+			}
+		</style>
 	</head>
 	<body>
 		<script src="../lib/options.js" type="module"></script>

@@ -39,7 +39,7 @@ async function loadExtension() {
 	}
 
 	function injectViewer(tabId: number, frameId: undefined | number) {
-		return inject(tabId, frameId, lib.json5, "lib/viewer.js");
+		return inject(tabId, frameId, "res/ffstub.js", lib.json5, "lib/viewer.js");
 	}
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {

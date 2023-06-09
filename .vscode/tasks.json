@@ -4,13 +4,28 @@
 		{
 			"label": "build",
 			"type": "npm",
-			"script": "build",
+			"script": "build (chrome)",
 			"group": "build"
 		},
 		{
 			"label": "watch",
 			"type": "npm",
-			"script": "watch",
+			"script": "watch (chrome)",
+			"group": "build",
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
+		},
+		{
+			"label": "build (firefox)",
+			"type": "npm",
+			"script": "build (firefox)",
+			"group": "build"
+		},
+		{
+			"label": "watch (firefox)",
+			"type": "npm",
+			"script": "watch (firefox)",
 			"group": "build",
 			"runOptions": {
 				"runOn": "folderOpen"

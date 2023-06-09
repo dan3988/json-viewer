@@ -6,8 +6,15 @@
 			"type": "chrome",
 			"userDataDir": "${workspaceFolder}\\.chrome",
 			"request": "launch",
+			"url": "chrome://extensions/",
 			"runtimeArgs": ["--load-extension=${workspaceFolder}"]
-			//"url": "chrome://extensions/"
+		},
+		{
+			"name": "Firefox",
+			"type": "firefox",
+			"addonPath": "${workspaceFolder}",
+			"url": "about:debugging#/runtime/this-firefox",
+			"request": "launch"
 		}
 	]
 }

@@ -4,7 +4,6 @@
 		"module": "ESNext"
 	},
 	"include": [
-		"../*.ts",
-		"./**/*.ts"
+		"./**/*.js"
 	]
 }

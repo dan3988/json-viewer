@@ -6,8 +6,7 @@
 	"description": "Visualize, traverse and search JSON",
 	"version": "1.0.0",
 	"background": {
-		"service_worker": "lib/bg.js",
-		"type": "module"
+		"service_worker": "lib/bg.js"
 	},
 	"action": {
 		"default_title": "JSON Viewer",
@@ -20,7 +19,8 @@
 	},
 	"content_scripts": [
 		{
-			"matches": [ "*://*/*" ],
+			"all_frames": true,
+			"matches": [ "<all_urls>" ],
 			"run_at": "document_end",
 			"js": [
 				"lib/content-script.js"
@@ -34,6 +34,9 @@
 		"256": "res/icon256.png"
 	},
 	"options_page": "res/options.html",
+	"options_ui": {
+		"page": "res/options-popup.html"
+	},
 	"web_accessible_resources": [
 		{
 			"matches": ["<all_urls>"],

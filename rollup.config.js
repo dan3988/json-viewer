@@ -14,7 +14,6 @@ import Linq from '@daniel.pickett/linq-js';
 import release from './rollup-plugin-release.js';
 import lib from "./src/lib.json" assert { type: "json" };
 
-const dist = !process.env.ROLLUP_WATCH;
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
 const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
 	.select(([k, v]) => v === "ignore" && k)
@@ -22,7 +21,6 @@ const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarning
 	.toSet();
 
 const recursive = { recursive: true };
-const icons = Object.create(null);
 const dir = "lib";
 
 cleanDir(dir);
@@ -34,154 +32,195 @@ function cleanDir(dir) {
 	}
 }
 
-function loadBsIcon(name) {
-	let file = icons[name];
-	if (file == null) {
-		file = "node_modules/bootstrap-icons/icons/" + name + ".svg";
-		if (!fs.existsSync(file))
-			throw "Icon not found.";
-
-		icons[name] = file;
-	}
-
-	return file;
-}
+/**
+ * @typedef BrowserInfo
+ * @property {string} extUrlScheme
+ * @property {(mf: chrome.runtime.Manifest) => void} [mfEdit]
+ */
 
 /**
- * @param {string} baseDir
- * @param {string} entry
- * @param {string} output
- * @returns {rl.RollupOptions}
+ * @type {Record<string, BrowserInfo>}
  */
-function svelteConfig(baseDir, entry, output, format = "cjs") {
-	return {
-		input: path.join(baseDir, entry),
-		output: {
-			sourcemap: !dist,
-			dir,
-			format,
-			name: 'app',
-			intro: '{',
-			outro: '}'
-		},
-		plugins: [
-			svelte({
-				preprocess: [
-					sveltePreprocess({
-						sourceMap: !dist,
-						typescript: {
-							tsconfigFile: "./src/tsconfig.svelte.json"
-						},
-						scss: {
-							functions: {
-								'bs-icon($name)': function(name) {
-									if (!(name instanceof sass.types.String))
-										throw "$name: Expected a string";
+const browsers = {
+	"chrome": {
+		extUrlScheme: "chrome-extension"
+	},
+	"firefox": {
+		extUrlScheme: "moz-extension",
+		mfEdit(mf) {
+			mf.background.scripts = [ mf.background.service_worker ],
+			delete mf.background.service_worker;
+			delete mf.background.type;
+		}
+	}
+}
 
-									const value = loadBsIcon(name.getValue());
-									return new sass.types.String(`url("chrome-extension://__MSG_@@extension_id__/${value}")`);
+function loader(args) {
+	const { browser = "chrome", dist = false } = args;
+	const browserInfo = browsers[browser];
+	if (browserInfo == undefined)
+		throw new Error(`Unknown browser: "${browser}"`);
+
+	delete args.browser;
+	delete args.dist;
+
+	const icons = Object.create(null);
+	function loadBsIcon(name) {
+		let file = icons[name];
+		if (file == null) {
+			file = "node_modules/bootstrap-icons/icons/" + name + ".svg";
+			if (!fs.existsSync(file))
+				throw "Icon not found.";
+	
+			icons[name] = file;
+		}
+	
+		return file;
+	}
+	
+	/**
+	 * @param {string} baseDir
+	 * @param {string} entry
+	 * @param {string} output
+	 * @returns {rl.RollupOptions}
+	 */
+	function svelteConfig(baseDir, entry, output, format = "cjs") {
+		return {
+			input: path.join(baseDir, entry),
+			output: {
+				sourcemap: !dist,
+				dir,
+				format,
+				name: 'app',
+				intro: '{',
+				outro: '}'
+			},
+			plugins: [
+				svelte({
+					preprocess: [
+						sveltePreprocess({
+							sourceMap: !dist,
+							typescript: {
+								tsconfigFile: "./src/tsconfig.svelte.json"
+							},
+							scss: {
+								functions: {
+									'bs-icon($name)': function(name) {
+										if (!(name instanceof sass.types.String))
+											throw "$name: Expected a string";
+	
+										const value = loadBsIcon(name.getValue());
+										return new sass.types.String(`url("${browserInfo.extUrlScheme}://__MSG_@@extension_id__/${value}")`);
+									}
 								}
 							}
-						}
-					})
-				],
-				compilerOptions: {
-					// enable run-time checks when not in production
-					dev: !dist,
-					format: "cjs"
-				},
-				onwarn(warning, handler) {
-					!ignore.has(warning.code) && handler(warning);
-				}
-			}),
-			css({ output: output + ".css" }),
-			resolve({
-				browser: true,
-				dedupe: ['svelte']
-			}),
-			commonjs(),
-			typescript({
-				tsconfig: path.join(baseDir, "tsconfig.json"),
-				sourceMap: !dist,
-				inlineSources: !dist
-			}),
-			json(),
-			dist && terser({
-				format: {
-					ascii_only: true
-				}
-			})
-		],
-		watch: {
-			clearScreen: false
-		}
-	};
-}
-
-/** @type {rl.RollupOptions[]} */
-const configs = [
-	{
-		input: "src/content-script/content.js",
-		output: {
-			sourcemap: !dist,
-			format: 'cjs',
-			file: path.join(dir, 'content-script.js')
-		},
-		watch: {
-			clearScreen: false
-		}
-	},
-	svelteConfig("src/content", "content.ts", "content"),
-	svelteConfig("src/viewer", "viewer.ts", "viewer"),
-	svelteConfig("src/options", "options.ts", "options", "esm"),
-	{
-		input: "src/extension/background.ts",
-		output: {
-			indent: "\t",
-			sourcemap: !dist,
-			format: 'cjs',
-			file: path.join(dir, "bg.js")
-		},
-		plugins: [
-			typescript({
-				tsconfig: "src/extension/tsconfig.json",
-				sourceMap: !dist,
-				inlineSources: !dist
-			}),
-			json(),
-			dist && terser()
-		],
-		watch: {
-			clearScreen: false
-		},
+						})
+					],
+					compilerOptions: {
+						// enable run-time checks when not in production
+						dev: !dist,
+						format: "cjs"
+					},
+					onwarn(warning, handler) {
+						!ignore.has(warning.code) && handler(warning);
+					}
+				}),
+				css({ output: output + ".css" }),
+				resolve({
+					browser: true,
+					dedupe: ['svelte']
+				}),
+				commonjs(),
+				typescript({
+					tsconfig: path.join(baseDir, "tsconfig.json"),
+					sourceMap: !dist,
+					inlineSources: !dist
+				}),
+				json(),
+				dist && terser({
+					format: {
+						ascii_only: true
+					}
+				})
+			],
+			watch: {
+				clearScreen: false
+			}
+		};
 	}
-];
+	
+	/** @type {rl.RollupOptions[]} */
+	const configs = [
+		{
+			input: "src/content-script/content.js",
+			output: {
+				sourcemap: !dist,
+				format: 'cjs',
+				file: path.join(dir, 'content-script.js')
+			},
+			watch: {
+				clearScreen: false
+			}
+		},
+		svelteConfig("src/content", "content.ts", "content"),
+		svelteConfig("src/viewer", "viewer.ts", "viewer"),
+		svelteConfig("src/options", "options.ts", "options", "esm"),
+		{
+			input: "src/extension/background.ts",
+			output: {
+				indent: "\t",
+				sourcemap: !dist,
+				format: 'cjs',
+				file: path.join(dir, "bg.js")
+			},
+			plugins: [
+				typescript({
+					tsconfig: "src/extension/tsconfig.json",
+					sourceMap: !dist,
+					inlineSources: !dist
+				}),
+				json(),
+				dist && terser()
+			],
+			watch: {
+				clearScreen: false
+			},
+		}
+	];
 
-if (dist) {
-	configs.push({
-		input: "manifest.json",
-		plugins: [
-			release({
-				format: "zip",
-				transform(mf) {
-					delete mf.$schema;
-					delete mf.debug;
-				},
-				deps() {
-					const libs = Object.values(lib);
-					const bsIcons = Object.values(icons);
+	if (dist) {
+		configs.push({
+			input: "manifest.json",
+			output: {
+				file: "release-" + browser
+			},
+			plugins: [
+				release({
+					format: "zip",
+					transform(mf) {
+						delete mf.$schema;
+						delete mf.debug;
 
-					return [
-						"res/*",
-						"lib/*",
-						"favicon.ico",
-						...libs,
-						...bsIcons
-					]
-				}
-			})
-		]
-	});
+						browserInfo.mfEdit?.(mf);
+					},
+					deps() {
+						const libs = Object.values(lib);
+						const bsIcons = Object.values(icons);
+	
+						return [
+							"res/*",
+							"lib/*",
+							"favicon.ico",
+							...libs,
+							...bsIcons
+						]
+					}
+				})
+			]
+		});
+	}
+	
+	return configs;
 }
 
-export default configs;
+export default loader;

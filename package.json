@@ -2,8 +2,12 @@
   "type": "module",
   "scripts": {
     "postinstall": "patch-package",
-    "build": "rollup -c",
-    "watch": "rollup -c -w",
+	"package (chrome)": "rollup -c --dist",
+	"package (firefox)": "rollup -c --dist --browser firefox",
+	"build (chrome)": "rollup -c",
+	"build (firefox)": "rollup -c --browser firefox",
+	"watch (chrome)": "rollup -c -w",
+	"watch (firefox)": "rollup -c -w --browser firefox",
     "file-server": "npx http-server"
   },
   "devDependencies": {

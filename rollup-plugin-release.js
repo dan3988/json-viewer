@@ -53,13 +53,13 @@ export function release({ format = "zip", deps, transform } = {}) {
 		},
 		generateBundle: {
 			order: "post",
-			handler(options, bundle, isWrite) {
+			handler(options, bundle) {
 				delete bundle[id];
 				delete bundle[id.replace(".json", ".js")];
 
-				if (!isWrite)
-					return;
-				
+				if (options.file)
+					delete bundle[options.file];
+
 				const name = getFileName(options, manifest, format);
 				const out = fs.createWriteStream(name);
 				const zip = archiver(format);
@@ -77,7 +77,7 @@ export function release({ format = "zip", deps, transform } = {}) {
 
 					zip.append(json, { name: "manifest.json" });
 				}
-				
+
 				return zip.finalize();
 			}
 		}
