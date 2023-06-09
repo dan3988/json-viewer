@@ -1,3 +1,6 @@
+<script lang="ts" context="module">
+	const css = chrome.runtime.getURL("/lib/content.css");
+</script>
 <script lang="ts" >
 	import type { WorkerMessage } from "../types.d.ts";
 	import { SvelteComponent, onDestroy, onMount } from "svelte";
@@ -65,10 +68,11 @@
 	}
 </style>
 <svelte:head>
+	<link rel="stylesheet" href={css}/>
 	<style>
 		:global(body) {
 			position: relative;
-		}	
+		}
 	</style>
 </svelte:head>
 <template>
