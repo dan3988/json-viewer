@@ -35,6 +35,10 @@
 		position: absolute;
 		inset: 0;
 	}
+	
+	:global(body) {
+		position: relative;
+	}
 
 	.content {
 		@extend body;
@@ -69,11 +73,6 @@
 </style>
 <svelte:head>
 	<link rel="stylesheet" href={css}/>
-	<style>
-		:global(body) {
-			position: relative;
-		}
-	</style>
 </svelte:head>
 <template>
 	<div class="root">
