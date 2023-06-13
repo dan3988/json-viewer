@@ -77,11 +77,11 @@ function loader(args) {
 			if (!fs.existsSync(file))
 				throw "Icon not found.";
 	
-			const outDir = path.join(baseDir, "node_modules/bootstrap-icons/icons");
+			const outDir = path.join(baseDir, "node_modules", "bootstrap-icons", "icons");
 			const outFile = path.join(outDir, fileName);
 			fs.mkdirSync(outDir, recursive);
 			fs.copyFileSync(file, outFile);
-			icons[name] = outFile;
+			icons[name] = file;
 		}
 	
 		return file;
