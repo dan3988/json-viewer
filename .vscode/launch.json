@@ -7,13 +7,15 @@
 			"userDataDir": "${workspaceFolder}\\.chrome",
 			"request": "launch",
 			"url": "chrome://extensions/",
-			"runtimeArgs": ["--load-extension=${workspaceFolder}"]
+			"runtimeArgs": ["--load-extension=${workspaceFolder}\\out\\chrome"]
 		},
 		{
 			"name": "Firefox",
 			"type": "firefox",
-			"addonPath": "${workspaceFolder}",
+			"addonPath": "${workspaceFolder}\\out\\firefox",
 			"url": "about:debugging#/runtime/this-firefox",
+			"profileDir": "${workspaceFolder}\\.moz",
+			"keepProfileChanges": true,
 			"request": "launch"
 		}
 	]

@@ -1,0 +1,68 @@
+{
+	"$schema": "./custom-manifest.schema.json",
+	"base": {
+		"manifest_version": 3,
+		"name": "JSON Viewer",
+		"description": "Visualize, traverse and search JSON",
+		"version": "1.0.0",
+		"action": {
+			"default_title": "JSON Viewer",
+			"default_icon": {
+				"16": "/res/icon16.png",
+				"24": "/res/icon24.png",
+				"32": "/res/icon32.png"
+			},
+			"default_popup": "res/options-popup.html"
+		},
+		"content_scripts": [
+			{
+				"all_frames": true,
+				"matches": [ "<all_urls>" ],
+				"run_at": "document_end",
+				"js": [
+					"lib/content-script.js"
+				]
+			}
+		],
+		"icons": {
+			"16": "res/icon16.png",
+			"48": "res/icon48.png",
+			"128": "res/icon128.png",
+			"256": "res/icon256.png"
+		},
+		"options_ui": {
+			"page": "res/options-popup.html"
+		},
+		"web_accessible_resources": [
+			{
+				"matches": ["<all_urls>"],
+				"resources": [
+					"favicon.ico",
+					"node_modules/*",
+					"lib/*",
+					"res/*"
+				]
+			}
+		],
+		"host_permissions": [ "<all_urls>" ],
+		"permissions": [
+			"scripting",
+			"storage"
+		]
+	},
+	"browsers": {
+		"firefox": {
+			"background": {
+				"scripts": [
+					"lib/bg.js"
+				]
+			}
+		},
+		"chrome": {
+			"options_page": "res/options.html",
+			"background": {
+				"service_worker": "lib/bg.js"
+			}
+		}
+	}
+}

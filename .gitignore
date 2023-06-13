@@ -2,6 +2,8 @@ lib
 node_modules
 package-lock.json
 dist
+out
 .chrome
+.moz
 *.crx
 *.zip

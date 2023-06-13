@@ -12,7 +12,8 @@ import path from "path";
 import fs from "fs";
 import Linq from '@daniel.pickett/linq-js';
 import release from './rollup-plugin-release.js';
-import lib from "./src/lib.json" assert { type: "json" };
+import customManifest from './rollup-plugin-custom-manifest.js';
+import copyLibs from './rollup-plugin-copy-libs.js';
 
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
 const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
@@ -21,9 +22,6 @@ const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarning
 	.toSet();
 
 const recursive = { recursive: true };
-const dir = "lib";
-
-cleanDir(dir);
 
 function cleanDir(dir) {
 	if (fs.existsSync(dir)) {
@@ -61,6 +59,12 @@ function loader(args) {
 	if (browserInfo == undefined)
 		throw new Error(`Unknown browser: "${browser}"`);
 
+	const baseDir = path.join("out", browser);
+	const lib = path.join(baseDir, "lib");
+	const indent = dist ? "" : "\t";
+
+	cleanDir(baseDir);
+
 	delete args.browser;
 	delete args.dist;
 
@@ -68,11 +72,16 @@ function loader(args) {
 	function loadBsIcon(name) {
 		let file = icons[name];
 		if (file == null) {
-			file = "node_modules/bootstrap-icons/icons/" + name + ".svg";
+			const fileName = name + ".svg";
+			file = "node_modules/bootstrap-icons/icons/" + fileName;
 			if (!fs.existsSync(file))
 				throw "Icon not found.";
 	
-			icons[name] = file;
+			const outDir = path.join(baseDir, "node_modules/bootstrap-icons/icons");
+			const outFile = path.join(outDir, fileName);
+			fs.mkdirSync(outDir, recursive);
+			fs.copyFileSync(file, outFile);
+			icons[name] = outFile;
 		}
 	
 		return file;
@@ -89,8 +98,9 @@ function loader(args) {
 			input: path.join(baseDir, entry),
 			output: {
 				sourcemap: !dist,
-				dir,
+				dir: lib,
 				format,
+				indent,
 				name: 'app',
 				intro: '{',
 				outro: '}'
@@ -152,11 +162,37 @@ function loader(args) {
 	/** @type {rl.RollupOptions[]} */
 	const configs = [
 		{
+			input: "./custom-manifest.json",
+			output: {
+				indent,
+				file: path.join(baseDir, "manifest.json")
+			},
+			plugins: [
+				customManifest({ browser }),
+				copyLibs({
+					libFile: "src/lib.json",
+					outDir: baseDir,
+					inputs: [
+						{
+							mode: "json",
+							path: "src/lib.json",
+							parse: Object.values
+						},
+						{
+							mode: "dir",
+							path: "res"
+						}
+					]
+				})
+			]
+		},
+		{
 			input: "src/content-script/content.js",
 			output: {
+				indent,
 				sourcemap: !dist,
 				format: 'cjs',
-				file: path.join(dir, 'content-script.js')
+				file: path.join(lib, 'content-script.js')
 			},
 			watch: {
 				clearScreen: false
@@ -168,10 +204,10 @@ function loader(args) {
 		{
 			input: "src/extension/background.ts",
 			output: {
-				indent: "\t",
+				indent,
 				sourcemap: !dist,
 				format: 'cjs',
-				file: path.join(dir, "bg.js")
+				file: path.join(lib, "bg.js")
 			},
 			plugins: [
 				typescript({
@@ -187,38 +223,6 @@ function loader(args) {
 			},
 		}
 	];
-
-	if (dist) {
-		configs.push({
-			input: "manifest.json",
-			output: {
-				file: "release-" + browser
-			},
-			plugins: [
-				release({
-					format: "zip",
-					transform(mf) {
-						delete mf.$schema;
-						delete mf.debug;
-
-						browserInfo.mfEdit?.(mf);
-					},
-					deps() {
-						const libs = Object.values(lib);
-						const bsIcons = Object.values(icons);
-	
-						return [
-							"res/*",
-							"lib/*",
-							"favicon.ico",
-							...libs,
-							...bsIcons
-						]
-					}
-				})
-			]
-		});
-	}
 	
 	return configs;
 }
