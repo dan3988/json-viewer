@@ -1,5 +1,20 @@
 {
 	"version": "2.0.0",
+	"inputs": [
+		{
+			"id": "browser",
+			"type": "pickString",
+			"description": "The browser to build for",
+			"options": [
+				{
+					"value": "chrome"
+				},
+				{
+					"value": "firefox"
+				}
+			]
+		}
+	],	
 	"tasks": [
 		{
 			"label": "build",
@@ -10,26 +25,14 @@
 		{
 			"label": "watch",
 			"type": "npm",
-			"script": "watch (chrome)",
+			"script": "watch (${input:browser})",
 			"group": "build"
 		},
 		{
-			"label": "build (firefox)",
+			"label": "build",
 			"type": "npm",
-			"script": "build (firefox)",
+			"script": "build (${input:browser})",
 			"group": "build"
-		},
-		{
-			"label": "watch (firefox)",
-			"type": "npm",
-			"script": "watch (firefox)",
-			"group": "build"
-		},
-		{
-			"type": "shell",
-			"command": "DEL /S /Q lib & MD lib",
-			"group": "build",
-			"label": "clean"
 		}
 	]
 }
