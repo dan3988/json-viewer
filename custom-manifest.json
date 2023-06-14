@@ -31,7 +31,8 @@
 			"256": "res/icon256.png"
 		},
 		"options_ui": {
-			"page": "res/options-popup.html"
+			"open_in_tab": true,
+			"page": "res/options.html"
 		},
 		"web_accessible_resources": [
 			{
@@ -52,9 +53,6 @@
 	},
 	"browsers": {
 		"firefox": {
-			"options_ui": {
-				"open_in_tab": true
-			},
 			"background": {
 				"scripts": [
 					"lib/bg.js"
@@ -62,7 +60,6 @@
 			}
 		},
 		"chrome": {
-			"options_page": "res/options.html",
 			"background": {
 				"service_worker": "lib/bg.js"
 			}
