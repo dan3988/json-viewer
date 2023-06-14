@@ -108,7 +108,7 @@
 </style>
 {#if model}
 <div class="root">
-	<div class="input-group">
+	<div class="btn-group">
 		<button type="button" class="flex-fill btn btn-cust-light" on:click={() => setExpanded(true)}>Expand All</button>
 		<button type="button" class="flex-fill btn btn-cust-light" on:click={() => setExpanded(false)}>Collapse All</button>
 	</div>
