@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+	<head>
+		<meta charset="utf-8">
+		<title>JSON Viewer Setup</title>
+		<link href="../lib/options.css" rel="stylesheet" />
+		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+		<style type="text/css">
+			.code {
+				font-family: monospace;
+				font-weight: bold;
+			}
+
+			.root {
+				width: 600px;
+			}
+
+			@media (max-width: 600px) {
+				.root {
+					width: 100%;
+				}
+			}
+		</style>
+	</head>
+	<body class="d-flex h-100 text-center text-bg-dark">
+		<div class="root d-flex h-100 p-3 mx-auto flex-column">
+			<header class="mb-5">
+				<h3>JSON Viewer</h3>
+			</header>
+			<main class="px-3">
+				Thank you for installing json-viewer for firefox. For the extension to load on pages with an <span class="code">application/json</span> content-type, you will need to disable the built in JSON viewer. To do this, go to <a href="about:config" target="_blank">about:config</a>, and set the value of <span class="code">devtools.jsonview.enabled</span> to <span class="code">false</span>
+			</main>
+		</div>
+	</body>
+</html>

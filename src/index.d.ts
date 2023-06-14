@@ -12,3 +12,16 @@ declare var JSON5: typeof import("json5");
 declare interface Array<T> {
 	at(index: number): undefined | T
 }
+
+declare namespace chrome {
+	declare namespace runtime {
+		declare interface BrowserInfo {
+			name: string;
+			vendor: string;
+			version: string;
+			buildID: string;
+		}
+
+		declare var getBrowserInfo: undefined | (() => Promise<BrowserInfo>);
+	}
+}

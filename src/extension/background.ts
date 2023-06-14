@@ -104,3 +104,18 @@ for (const key in gsIcons)
 	gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
 loadExtension();
+
+chrome.runtime.onInstalled.addListener((det) => {
+	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+		if (chrome.runtime.getBrowserInfo) {
+			chrome.runtime.getBrowserInfo().then(v => {
+				if (v.name === "Firefox") {
+					chrome.tabs.create({
+						active: true,
+						url: chrome.runtime.getURL("res/firefox.html")
+					});
+				}
+			})
+		}
+	}
+})
