@@ -1,3 +1,4 @@
+/// <reference path="rollup-plugin-copy-libs.d.ts" />
 import * as rl from "rollup";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -7,58 +8,8 @@ const r = { recursive: true };
 /** @type {{ bigint: true }} */
 const bi = { bigint: true };
 
-/** 
- * @template {string} T
- * @typedef WatchBase
- * @property {string} path;
- * @property {T} mode;
- */
-
 /**
- * @typedef WatchDirBase
- * @property {string[]} include
- * @property {string[]} exclude
- */
-
-/**
- * Watch a directory for changes and copy its contents to the output directory
- * @typedef {WatchBase<"dir"> & WatchDirBase} WatchDir
- */
- 
-/**
- * @typedef WatchConfigTextBase
- * @property {(text: string) => string[]} parse
- * 
- * @typedef {WatchBase<"text"> & WatchConfigTextBase} WatchConfigText
- */
-
-/**
- * @typedef WatchConfigJsonBase
- * @property {(text: any) => string[]} parse
- * 
- * @typedef {WatchBase<"json"> & WatchConfigJsonBase} WatchConfigJson
- */
-
-/**
- * Use a file to get a list of dependencies and copy them to the output directory
- * @typedef {WatchConfigText | WatchConfigJson} WatchConfigFile
- */
-
-/**
- * @typedef {WatchDir | WatchConfigFile} Watch
- */
-
-/**
- * @typedef {[path: string, mtimeMs: bigint, watch: fs.StatWatcher]} FileInfo
- */
-
-/**
- * @typedef Watcher
- * @prop {() => void} close
- */
-
-/**
- * @param {Watch[]} inputs 
+ * @param {WatchInit[]} inputs 
  * @param {string} outDir 
  * @param {boolean} watch 
  * @param {(msg: string, ...ags: any[]) => void} log
@@ -67,8 +18,6 @@ const bi = { bigint: true };
 function copyFiles(inputs, outDir, watch, log) {
 	/** @type {(() => void)[]} */
 	const dispose = [];
-	/** @type {fs.FSWatcher[]} */
-	const dirs = [];
 
 	for (const input of inputs) {
 		const dirName = path.relative(".", input.path);
@@ -166,36 +115,6 @@ function copyFiles(inputs, outDir, watch, log) {
 
 	return { close };
 }
-
-class Watcher2 {
-	/** @type {fs.StatWatcher[]} */
-	#files;
-	/** @type {fs.FSWatcher[]} */
-	#dirs;
-	#log;
-
-	/**
-	 * @param {string} outDir
-	 * @param {(msg: string, ...ags: any[]) => void} log
-	 * @param {Watch[]} inputs 
-	 */
-	constructor(outDir, log, inputs) {
-		this.#files = [];
-		this.#dirs = [];
-		this.#log = log;
-	}
-
-	close() {
-		this.#files.forEach(v => v.unref());
-		this.#dirs.forEach(v => v.close());
-	}
-}
-
-/**
- * @typedef Options
- * @property {string} outDir
- * @property {Watch[]} inputs
- */
 
 /**
  * @param {Options} options
