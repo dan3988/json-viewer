@@ -3,16 +3,19 @@ import * as rl from "rollup";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createFilter } from "@rollup/pluginutils";
+import chalk from "chalk-template";
 
 const r = { recursive: true };
 /** @type {{ bigint: true }} */
 const bi = { bigint: true };
 
+/** @typedef {(text: TemplateStringsArray, ...placeholders: unknown[]) => void} LogImpl */
+
 /**
  * @param {WatchInit[]} inputs 
  * @param {string} outDir 
  * @param {boolean} watch 
- * @param {(msg: string, ...ags: any[]) => void} log
+ * @param {LogImpl} log
  * @returns {Watcher | undefined}
  */
 function copyFiles(inputs, outDir, watch, log) {
@@ -34,7 +37,7 @@ function copyFiles(inputs, outDir, watch, log) {
 			if (watch) {
 				const watcher = fs.watch(input.path, r, (event, file) => {
 					if (filter(file)) {
-						log?.('File %s "%s": "%s"', event, input.path, file);
+						log && log`{greenBright File ${event}} {green "${input.path}"} {yellow "${file}"}`;
 						const src = path.join(input.path, file);
 						const dst = path.join(outDir, dirName, file);
 						if (!fs.existsSync(src)) {
@@ -65,7 +68,7 @@ function copyFiles(inputs, outDir, watch, log) {
 					if (fileInfo == undefined) {
 						const resolved = path.join(outDir, file);
 						const watcher = watch && fs.watchFile(file, bi, (stat) => {
-							log?.('File change "%s" -> "%s"', file, fileInfo[0]);
+							log && log`{greenBright File change} {green "${input.path}"} {yellow "${file}"}`;
 							fs.cpSync(file, fileInfo[0]);
 							fileInfo[1] = stat.mtimeMs;
 						});
@@ -92,7 +95,7 @@ function copyFiles(inputs, outDir, watch, log) {
 
 			if (watch) {
 				const w = fs.watchFile(input.path, () => {
-					log?.('Input file change detected: "%s"', input.path);
+					log && log`{greenBright Input file change detected} {green "${input.path}"}`;
 					update();
 				});
 
@@ -121,18 +124,26 @@ function copyFiles(inputs, outDir, watch, log) {
  * @returns {rl.Plugin}
  */
 export function copyLibs(options) {
-	const { outDir, inputs } = options;
+	const { outDir, inputs, log } = options;
 	const watch = !!process.env.ROLLUP_WATCH;
-	/** @type {Watcher} */
+	/** @type {Copier} */
 	let watcher;
-	
+	/** @type {LogImpl} */
+	let logImpl;
+	if (log)
+		logImpl = LogImpl.bind(typeof log === "function" ? log : console.log);
 
 	return {
 		name: "rollup-plugin-copy-libs",
 		buildEnd() {
-			watcher ??= copyFiles(inputs, outDir, watch, console.log);
+			watcher ??= copyFiles(inputs, outDir, watch, logImpl);
 		}
 	}
+}
+
+function LogImpl(text, ...placeholders) {
+	const msg = chalk(text, ...placeholders);
+	this(msg);
 }
 
 export default copyLibs;
