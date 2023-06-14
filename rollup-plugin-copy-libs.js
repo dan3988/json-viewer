@@ -25,7 +25,10 @@ function copyFiles(inputs, outDir, watch, log) {
 	for (const input of inputs) {
 		const dirName = path.relative(".", input.path);
 		if (input.mode === "dir") {
-			const filter = createFilter(input.include, input.exclude);
+			const filter = createFilter(input.include, input.exclude, {
+				resolve: false
+			});
+
 			for (const file of fs.readdirSync(input.path)) {
 				if (filter(file)) {
 					const src = path.join(input.path, file);

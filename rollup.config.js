@@ -180,6 +180,7 @@ function loader(args) {
 				copyLibs({
 					libFile: "src/lib.json",
 					outDir: baseDir,
+					log: true,
 					inputs: [
 						{
 							mode: "json",
