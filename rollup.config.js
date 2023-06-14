@@ -11,7 +11,6 @@ import sass from "sass";
 import path from "path";
 import fs from "fs";
 import Linq from '@daniel.pickett/linq-js';
-import release from './rollup-plugin-release.js';
 import customManifest from './rollup-plugin-custom-manifest.js';
 import copyLibs from './rollup-plugin-copy-libs.js';
 
@@ -22,6 +21,15 @@ const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarning
 	.toSet();
 
 const recursive = { recursive: true };
+
+function* addMaps(value) {
+	for (const path of Object.values(value)) {
+		yield path;
+		const map = path + ".map";
+		if (fs.existsSync(map))
+			yield map;
+	}
+}
 
 function cleanDir(dir) {
 	if (fs.existsSync(dir)) {
@@ -176,7 +184,7 @@ function loader(args) {
 						{
 							mode: "json",
 							path: "src/lib.json",
-							parse: Object.values
+							parse: dist ? Object.values : addMaps
 						},
 						{
 							mode: "dir",
