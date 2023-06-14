@@ -52,6 +52,9 @@
 	},
 	"browsers": {
 		"firefox": {
+			"options_ui": {
+				"open_in_tab": true
+			},
 			"background": {
 				"scripts": [
 					"lib/bg.js"
