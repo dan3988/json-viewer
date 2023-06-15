@@ -1,7 +1,7 @@
 # Json Explorer
-A browser extension to visualise, traverse and search JSON.
+A modern browser extension to visualise, traverse and search JSON. Made with [Svelte](https://svelte.dev/) and [bootstrap](https://getbootstrap.com/).
 
-![themes](readme/preview.gif)
+![preview](readme/preview.gif)
 
 ## Features
 * Yes/no prompt to load detected JSON on non-whitelisted domains
@@ -9,6 +9,7 @@ A browser extension to visualise, traverse and search JSON.
 * [JSON5](https://json5.org/) support
 * Copy formatted or minified JSON values
 * Navigate to sibling or child properties using the arrow keys
+* Creates hyperlinks for URL strings
 * A path editor with auto-complete
 * A breadcrumb trail to the current property
 * Navigate to previously selected properties using your browser history
