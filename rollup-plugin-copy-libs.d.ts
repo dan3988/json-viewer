@@ -1,6 +1,6 @@
 import type { Plugin } from "rollup"
 
-interface WatchBase<Mode extends string> {
+export interface WatchBase<Mode extends string> {
 	mode: Mode;
 	path: string;
 }
@@ -8,7 +8,7 @@ interface WatchBase<Mode extends string> {
 /**
  * Watch a directory for changes and copy its contents to the output directory
  */
-interface WatchDir extends WatchBase<"dir"> {
+export interface WatchDir extends WatchBase<"dir"> {
 	include?: string[];
 	exclude?: string[];
 }
@@ -16,25 +16,28 @@ interface WatchDir extends WatchBase<"dir"> {
 /**
  * Use a file to get a list of dependencies and copy them to the output directory
  */
-interface WatchConfigFile<Mode extends string, Data> extends WatchBase<Mode> {
+export interface WatchConfigFile<Mode extends string, Data> extends WatchBase<Mode> {
 	parse(data: Data): Iterable<string>;
 }
 
-type WatchConfigText = WatchConfigFile<"text", string>;
-type WatchConfigJson = WatchConfigFile<"json", any>;
+export type WatchConfigText = WatchConfigFile<"text", string>;
+export type WatchConfigJson = WatchConfigFile<"json", any>;
 
-type WatchInit = WatchDir | WatchConfigJson | WatchConfigText;
+export type WatchInit = WatchDir | WatchConfigJson | WatchConfigText;
 
-interface Copier {
+export interface Copier {
 	close(): void;
 }
 
-type FileInfo = [path: string, mtimeMs: bigint, watch: fs.StatWatcher];
-
-interface Options {
+export interface Options {
 	outDir: string;
 	inputs: WatchInit[];
 	log?: boolean | ((message: string) => void);
+	archive?: {
+		fileName: string;
+		format?: "zip" | "tgz"
+	}
 }
 
-export default function(options: Options): Plugin;
+export function copyLibs(options: Options): Plugin;
+export default copyLibs;

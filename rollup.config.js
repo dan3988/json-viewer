@@ -170,32 +170,6 @@ function loader(args) {
 	/** @type {rl.RollupOptions[]} */
 	const configs = [
 		{
-			input: "./custom-manifest.json",
-			output: {
-				indent,
-				file: path.join(baseDir, "manifest.json")
-			},
-			plugins: [
-				customManifest({ browser }),
-				copyLibs({
-					libFile: "src/lib.json",
-					outDir: baseDir,
-					log: true,
-					inputs: [
-						{
-							mode: "json",
-							path: "src/lib.json",
-							parse: dist ? Object.values : addMaps
-						},
-						{
-							mode: "dir",
-							path: "res"
-						}
-					]
-				})
-			]
-		},
-		{
 			input: "src/content-script/content.js",
 			output: {
 				indent,
@@ -230,6 +204,35 @@ function loader(args) {
 			watch: {
 				clearScreen: false
 			},
+		},
+		{
+			input: "./custom-manifest.json",
+			output: {
+				indent,
+				file: path.join(baseDir, "manifest.json")
+			},
+			plugins: [
+				customManifest({ browser }),
+				copyLibs({
+					libFile: "src/lib.json",
+					outDir: baseDir,
+					log: true,
+					inputs: [
+						{
+							mode: "json",
+							path: "src/lib.json",
+							parse: dist ? Object.values : addMaps
+						},
+						{
+							mode: "dir",
+							path: "res"
+						}
+					],
+					archive: dist && {
+						fileName: "release-" + browser
+					}
+				})
+			]
 		}
 	];
 	

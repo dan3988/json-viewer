@@ -4,19 +4,21 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { createFilter } from "@rollup/pluginutils";
 import chalk from "chalk-template";
+import archiver from "archiver";
 
 const r = { recursive: true };
 /** @type {{ bigint: true }} */
 const bi = { bigint: true };
 
 /** @typedef {(text: TemplateStringsArray, ...placeholders: unknown[]) => void} LogImpl */
+/** @typedef {[path: string, mtimeMs: bigint, watch: fs.StatWatcher]} FileInfo */
 
 /**
- * @param {WatchInit[]} inputs 
+ * @param {import("./rollup-plugin-copy-libs").WatchInit[]} inputs 
  * @param {string} outDir 
  * @param {boolean} watch 
  * @param {LogImpl} log
- * @returns {Watcher | undefined}
+ * @returns {import("./rollup-plugin-copy-libs").Copier | undefined}
  */
 function copyFiles(inputs, outDir, watch, log) {
 	/** @type {(() => void)[]} */
@@ -123,11 +125,10 @@ function copyFiles(inputs, outDir, watch, log) {
 }
 
 /**
- * @param {Options} options
- * @returns {rl.Plugin}
+ * @type {import("./rollup-plugin-copy-libs")["copyLibs"]}
  */
 export function copyLibs(options) {
-	const { outDir, inputs, log } = options;
+	const { outDir, inputs, log, archive } = options;
 	const watch = !!process.env.ROLLUP_WATCH;
 	/** @type {Copier} */
 	let watcher;
@@ -138,6 +139,19 @@ export function copyLibs(options) {
 
 	return {
 		name: "rollup-plugin-copy-libs",
+		closeBundle() {
+			if (archive) {
+				let { fileName, format = "zip" } = archive;
+				if (!fileName.includes("."))
+					fileName += "." + format;
+
+				const output = fs.createWriteStream(fileName);
+				const zip = archiver(format);
+				zip.pipe(output);
+				zip.directory(outDir, false);
+				return zip.finalize();
+			}
+		},
 		buildEnd() {
 			watcher ??= copyFiles(inputs, outDir, watch, logImpl);
 		}
