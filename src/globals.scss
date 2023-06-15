@@ -21,6 +21,8 @@ $cst-dirty-border-color-dark: #5c603b;
 
 	--checkbox-bg-color: #0d6efd;
 	--checkbox-border-color: #0d6efd;
+	--focus-shadow-color: #0d6efd40;
+	--focus-border-color: #0d6efd40;
 }
 
 @include core.theme(light) {
@@ -68,6 +70,13 @@ $cst-dirty-border-color-dark: #5c603b;
 :global(.form-check-input:checked) {
 	background-color: var(--checkbox-bg-color) !important;
 	border-color: var(--checkbox-border-color) !important;
+}
+
+:global(.form-check-input:focus),
+:global(.form-select:focus),
+:global(.form-control:focus) {
+	border-color: var(--focus-border-color) !important;
+	box-shadow: 0 0 0 0.25rem var(--focus-shadow-color) !important;
 }
 
 :global(ul) {
