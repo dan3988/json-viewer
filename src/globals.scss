@@ -18,6 +18,9 @@ $cst-dirty-border-color-dark: #5c603b;
 :root {
 	--col-match-fg: #000;
 	--col-match-bg: #CC3;
+
+	--checkbox-bg-color: #0d6efd;
+	--checkbox-border-color: #0d6efd;
 }
 
 @include core.theme(light) {
@@ -60,6 +63,11 @@ $cst-dirty-border-color-dark: #5c603b;
 	--cst-dirty-active-bg: #{color.scale($cst-dirty-bg-dark, $lightness: 20%)};
 	--cst-dirty-active-color: #{color.scale($cst-dirty-color-dark, $lightness: 20%)};
 	--cst-dirty-active-border-color: #{color.scale($cst-dirty-border-color-dark, $lightness: 20%)};
+}
+
+:global(.form-check-input:checked) {
+	background-color: var(--checkbox-bg-color) !important;
+	border-color: var(--checkbox-border-color) !important;
 }
 
 :global(ul) {

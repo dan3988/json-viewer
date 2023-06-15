@@ -121,46 +121,84 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 @include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $base: #1f1f1f);
 
 @include scheme-lt("dracula", #e60073, #bf95f9, #bec757, #1fc749, $base: #f1f1f4, $indents: (hsl(60, 30%, 4%), hsl(326, 100%, 54%), hsl(191, 97%, 57%), hsl(135, 94%, 45%), hsl(265, 89%, 58%), hsl(31, 100%, 51%))) {
+	$base: #e60073;
+	$border: #e60073;
+
+	--checkbox-bg-color: #{$base};
+	--checkbox-border-color: #{$border};
+
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", hsl(330, 100%, 45%), 10%);
-		@include bs-colors("bs-btn", "border-color", hsl(330, 100%, 45%), 10%);
+		@include bs-colors("bs-btn", "bg", $base, 10%);
+		@include bs-colors("bs-btn", "border-color", $border, 10%);
 	}
 }
 
 @include scheme-dk("dracula", #ff79c6, #bd93f9, #f1fa8c, #50fa7b, $base: #272935, $indents: (#f8f8f2, #ff79c6, #8be9fd, #50fa7b, #bd93f9, #ffb86c)) {
+	$base: #e60073;
+	$border: #ff3399;
+
+	--checkbox-bg-color: #{$base};
+	--checkbox-border-color: #{$border};
+
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", #e60073, 10%);
-		@include bs-colors("bs-btn", "border-color", #ff3399, 10%);
+		@include bs-colors("bs-btn", "bg", $base, 10%);
+		@include bs-colors("bs-btn", "border-color", $border, 10%);
 	}
 }
 
 @include scheme-lt("mat", #6182b8, #f76d47, #91b859, #f76d47, $base: #f8f9fb, $indents: (#7c4dff, #ffb62c, #f76d47, #e53935, #c17e70, #6182b8)) {
+	$base: #33ccbd;
+	$text: #d6f5f2;
+	$border: #adebe4;
+
+	--checkbox-bg-color: #{$base};
+	--checkbox-border-color: #{$base};
+
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", hsl(174, 60%, 50%), 10%);
-		@include bs-colors("bs-btn", "color", hsl(174, 60%, 90%), -20%, $disabled: 0.5);
-		@include bs-colors("bs-btn", "border-color", hsl(174, 60%, 80%), -20%, $disabled: 1);
+		@include bs-colors("bs-btn", "bg", $base, 10%);
+		@include bs-colors("bs-btn", "color", $text, -20%, $disabled: 0.5);
+		@include bs-colors("bs-btn", "border-color", $border, -20%, $disabled: 1);
 	}
 }
 
 @include scheme-dk("mat", #c792ea, #82aaff, #c3e88d, #f78c6c, $base: #263238, $indents: (#c792ea, #ffcb6b, #f78c6c, #ff5370, #c17e70, #82aaff)) {
+	$base: #3d8f87;
+	$text: #b3e0dc;
+	$border: #94d1cb;
+
+	--checkbox-bg-color: #{$base};
+	--checkbox-border-color: #{$base};
+
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", #3d8f87, -5%);
-		@include bs-colors("bs-btn", "color", #b3e0dc, -50%, $disabled: 0.5);
-		@include bs-colors("bs-btn", "border-color", #94d1cb, -20%);
+		@include bs-colors("bs-btn", "bg", $base, -5%);
+		@include bs-colors("bs-btn", "color", $text, -50%, $disabled: 0.5);
+		@include bs-colors("bs-btn", "border-color", $border, -20%);
 	}
 }
 
 @include scheme-lt("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #e5f3ff) {
+	$base: #6688cc;
+	$border: #b3c4e6;
+
+	--checkbox-bg-color: #{$base};
+	--checkbox-border-color: #{$base};
+
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", #6688cc, 10%);
-		@include bs-colors("bs-btn", "border-color", #b3c4e6, 20%);
+		@include bs-colors("bs-btn", "bg", $base, 10%);
+		@include bs-colors("bs-btn", "border-color", $border, 20%);
 	}
 }
 
 @include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #000d1a) {
+	$base: #8800cc;
+	$border: #aa00ff;
+
+	--checkbox-bg-color: #{$base};
+	--checkbox-border-color: #{$base};
+
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", #8800cc, -10%);
-		@include bs-colors("bs-btn", "border-color", #aa00ff, -20%);
+		@include bs-colors("bs-btn", "bg", $base, -10%);
+		@include bs-colors("bs-btn", "border-color", $border, -20%);
 	}
 }
 
@@ -170,6 +208,8 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include bs-colors2("cst-btn", "border-color", #0c0, #0f0, 50%, 100%, #595);
 
 	color-scheme: dark;
+	--checkbox-bg-color: #0c0;
+	--checkbox-border-color: #0c0;
 
 	:global(.btn-primary) {
 		@include bs-colors2("bs-btn", "bg", #000, #0f0, 15%, 30%, #111);
