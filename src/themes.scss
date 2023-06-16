@@ -164,8 +164,8 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#8800cc, -10%);
 }
 
-$terminal-base: #093;
-$terminal-secondary: #080;
+$terminal-base: #3D6;
+$terminal-secondary: #8f8;
 
 @include scheme-base("terminal", null, $key: $terminal-base, $keywd: $terminal-secondary, $str: $terminal-secondary, $num: $terminal-secondary, $text: #0c0, $border: #0c0, $body: #040804, $tertiary: black, $secondary: #0f01, $indents: (#08f, #ff0, #f00)) {
 	--checkbox-bg-color: #{$terminal-base};
