@@ -174,7 +174,7 @@ $terminal-secondary: #080;
 	--focus-border-color: #{adjust-color($terminal-base, $lightness: 20%, $saturation: -50%)};
 	
 	@include bs-colors2("cst-dirty", "bg", #330, #ff0, 20%, 50%, #000);
-	@include bs-colors2("cst-dirty", "color", #111, #fff, 50%, 100%, #595);
+	@include bs-colors2("cst-dirty", "color", #0c0, #fff, 50%, 100%, #595);
 	@include bs-colors2("cst-dirty", "border-color", #0c0, #DD6, 50%, 100%, #595);
 
 	@include bs-colors2("cst-btn", "bg", #000, #3D6, 15%, 30%, #111);
