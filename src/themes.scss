@@ -164,18 +164,24 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#8800cc, -10%);
 }
 
-@include scheme-base("terminal", null, $key: #0f0, $keywd: #f88, $str: #ff8, $num: #88f, $text: #0c0, $border: #0c0, $body: black, $tertiary: black, $secondary: #0f01, $indents: (#88f, #ff0, #f00)) {
-	@include bs-colors2("cst-btn", "bg", #000, #0f0, 15%, 30%, #111);
-	@include bs-colors2("cst-btn", "color", #0c0, #0f0, 50%, 100%, #595);
-	@include bs-colors2("cst-btn", "border-color", #0c0, #0f0, 50%, 100%, #595);
+$terminal-base: #3D6;
+$terminal-secondary: #8f8;
+
+@include scheme-base("terminal", null, $key: $terminal-base, $keywd: $terminal-secondary, $str: $terminal-secondary, $num: $terminal-secondary, $text: #0c0, $border: #0c0, $body: #040804, $tertiary: black, $secondary: #0f01, $indents: (#08f, #ff0, #f00)) {
+	--checkbox-bg-color: #{$terminal-base};
+	--checkbox-border-color: #{$terminal-base};
+	--focus-shadow-color: #{change-color($terminal-base, $alpha: 0.25)};
+	--focus-border-color: #{adjust-color($terminal-base, $lightness: 20%, $saturation: -50%)};
+
+	@include bs-colors2("cst-btn", "bg", #000, #3D6, 15%, 30%, #111);
+	@include bs-colors2("cst-btn", "color", #0c0, #3D6, 50%, 100%, #595);
+	@include bs-colors2("cst-btn", "border-color", #0c0, #3D6, 50%, 100%, #595);
 
 	color-scheme: dark;
-	--checkbox-bg-color: #0c0;
-	--checkbox-border-color: #0c0;
 
 	:global(.btn-primary) {
-		@include bs-colors2("bs-btn", "bg", #000, #0f0, 15%, 30%, #111);
-		@include bs-colors2("bs-btn", "color", #0c0, #0f0, 50%, 100%, #595);
-		@include bs-colors2("bs-btn", "border-color", #0c0, #0f0, 50%, 100%, #595);
+		@include bs-colors2("bs-btn", "bg", #000, $terminal-base, 15%, 30%, #111);
+		@include bs-colors2("bs-btn", "color", #0c0, $terminal-base, 50%, 100%, #595);
+		@include bs-colors2("bs-btn", "border-color", #0c0, $terminal-base, 50%, 100%, #595);
 	}
 }
