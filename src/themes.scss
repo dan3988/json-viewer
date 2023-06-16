@@ -164,14 +164,18 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#8800cc, -10%);
 }
 
-$terminal-base: #3D6;
-$terminal-secondary: #8f8;
+$terminal-base: #093;
+$terminal-secondary: #080;
 
 @include scheme-base("terminal", null, $key: $terminal-base, $keywd: $terminal-secondary, $str: $terminal-secondary, $num: $terminal-secondary, $text: #0c0, $border: #0c0, $body: #040804, $tertiary: black, $secondary: #0f01, $indents: (#08f, #ff0, #f00)) {
 	--checkbox-bg-color: #{$terminal-base};
 	--checkbox-border-color: #{$terminal-base};
 	--focus-shadow-color: #{change-color($terminal-base, $alpha: 0.25)};
 	--focus-border-color: #{adjust-color($terminal-base, $lightness: 20%, $saturation: -50%)};
+	
+	@include bs-colors2("cst-dirty", "bg", #330, #ff0, 20%, 50%, #000);
+	@include bs-colors2("cst-dirty", "color", #111, #fff, 50%, 100%, #595);
+	@include bs-colors2("cst-dirty", "border-color", #0c0, #DD6, 50%, 100%, #595);
 
 	@include bs-colors2("cst-btn", "bg", #000, #3D6, 15%, 30%, #111);
 	@include bs-colors2("cst-btn", "color", #0c0, #3D6, 50%, 100%, #595);
