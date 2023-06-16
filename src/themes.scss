@@ -164,11 +164,11 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#8800cc, -10%);
 }
 
-@include scheme-lt("monokai", #0089b3, #684d99, #998f2f, #684d99, $base: #fafafa) {
+@include scheme-lt("monokai", #f9005a, #684d99, #998f2f, #0089b3, $base: #fafafa) {
 	@include primary(#0060C0, 5%);
 }
 
-@include scheme-dk("monokai", #66d9ef, #ae81ff, #cfcfc2, #ae81ff, $text: #f8f8f2, $base: rgb(39, 40, 34)) {
+@include scheme-dk("monokai", #f92672, #ae81ff, #cfcfc2, #66d9ef, $text: #f8f8f2, $base: rgb(39, 40, 34)) {
 	@include primary(#75715e, -10%);
 }
 
