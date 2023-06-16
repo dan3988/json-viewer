@@ -160,7 +160,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#6688cc, 5%);
 }
 
-@include scheme-dk("abyss", #0b0c0e, #f280d0, #22aa44, #f280d0, $base: #000d1a) {
+@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #000d1a) {
 	@include primary(#8800cc, -10%);
 }
 
