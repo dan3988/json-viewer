@@ -8,8 +8,6 @@ $pad-l: 15px;
 $anim-easing: ("ease": ease-in-out, "spring": cubic-bezier(0.5, 0, 0.5, 1.5));
 $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 
-$img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--bs-btn-hover-border-color), "active": var(--bs-btn-active-border-color), "disabled": var(--bs-btn-disabled-border-color));
-
 @function tran($dur, $ease, $props...) {
 	$dur: map-get($anim-durations, $dur);
 	$ease: map-get($anim-easing, $ease);
@@ -32,7 +30,7 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	mask-position: $position;
 }
 
-@mixin img-btn($img: null, $padding: 0, $colors: $img-btn-default-colors) {
+@mixin img-btn($img: null, $padding: 0, $colors: null) {
 	position: relative;
 
 	@if ($img != null) {
@@ -70,6 +68,8 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 		position: absolute;
 		inset: $padding;
 		background-color: var(--img-btn-color);
+
+		@content;
 	}
 }
 
@@ -77,8 +77,14 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 	@return url("chrome-extension://__MSG_@@extension_id__/" + $path);
 }
 
-@mixin bs-icon-btn($name, $padding: 0, $color: $img-btn-default-colors) {
-	@include img-btn(bs-icon($name), $padding, $color);
+@mixin bs-icon-btn($name, $padding: 0, $color: "border-color") {
+	@if (type-of($color) != "map") {
+		$color: ("default": var(--bs-btn-#{$color}), "hover": var(--bs-btn-hover-#{$color}), "active": var(--bs-btn-active-#{$color}), "disabled": var(--bs-btn-disabled-#{$color}));
+	}
+
+	@include img-btn(bs-icon($name), $padding, $color) {
+		@content;
+	}
 }
 
 @mixin anim($prop, $dur, $ease: "ease") {
@@ -93,13 +99,12 @@ $img-btn-default-colors: ("default": var(--bs-btn-border-color), "hover": var(--
 
 .expandable {
 	.expander {
-		@include bs-icon-btn("chevron-up", $pad-small);
-		aspect-ratio: 1;
-
-		&::before {
+		@include bs-icon-btn("chevron-up", $pad-small) {
 			@include anim(rotate, "medium", "spring");
 			rotate: 180deg;
 		}
+
+		aspect-ratio: 1;
 	}
 
 	&:not(.expanded) > .expandable-content {
