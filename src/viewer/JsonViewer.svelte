@@ -25,6 +25,9 @@
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
+	let menuShown = false;
+	let menuClientWidth: number;
+	let menuWidth: string;
 
 	function copyKey(property: JsonProperty) {
 		return navigator.clipboard.writeText(String(property.key));
@@ -163,7 +166,6 @@
 	}
 
 	let prop: HTMLElement;
-	let menu: HTMLElement;
 	let menuC: JsonMenu;
 
 	onMount(() => prop.focus());
@@ -171,7 +173,7 @@
 	let dragStart: undefined | { x: number, w: number };
 
 	function onMouseDown(evt: MouseEvent) {
-		dragStart = { x: evt.x, w: menu.clientWidth };
+		dragStart = { x: evt.x, w: menuClientWidth };
 		document.addEventListener("mousemove", onMouseMove);
 		document.addEventListener("mouseup", onMouseUp);
 	}
@@ -179,7 +181,8 @@
 	function onMouseMove(evt: MouseEvent) {
 		if (dragStart) {
 			const pos = Math.max(0, dragStart.w + dragStart.x - evt.x);
-			menu.style.width = pos + "px";
+			menuShown = pos >= 250;
+			menuWidth = pos + "px";
 		}
 	}
 
@@ -197,19 +200,42 @@
 		position: absolute;
 		inset: 0;
 		display: grid;
-		grid-template-columns: 1fr 5px auto;
+		grid-template-columns: 1fr auto auto;
 		grid-template-rows: 1fr auto;
 		overflow: hidden;
 
 		> div {
 			position: relative;
 		}
+
+		&[data-menu-shown="false"] {
+			> .gripper,
+			> .w-menu {
+				display: none;
+			}
+		}
+
+		&[data-menu-shown="true"] {
+			> .menu-btn {
+				display: none;
+			}
+		}
+	}
+	
+	.menu-toggle {
+		@include bs-icon-btn("chevron-bar-left", 2px, "color");
+
+		border: none;
+		cursor: pointer;
+		grid-area: 1 / 2 / span 1 / 3;
+		width: .5rem;
 	}
 
 	.gripper {
-		grid-area: 1 / 2 / -1 / 3;
+		grid-area: 1 / 2 / span 1 / 3;
 		user-select: none;
 		cursor: ew-resize;
+		width: 5px;
 	}
 
 	.w-prop,
@@ -219,6 +245,7 @@
 	}
 
 	.w-prop {
+		position: relative;
 		padding: $pad-small;
 		grid-area: 1 / 1 / -2 / span 1;
 		overflow: scroll;
@@ -236,9 +263,21 @@
 
 	.w-menu {
 		grid-area: 1 / -2 / -2 / -1;
-		min-width: 30rem;
+		width: 30rem;
+		min-width: 300px;
 		max-width: 80vw;
 		margin: $pad-med $pad-med 0 0;
+	}
+
+	.menu-btn {
+		@include bs-icon-btn("list", 5px, "color");
+
+		position: absolute;
+		padding: 5px;
+		right: 2rem;
+		top: 1rem;
+		width: 2.5rem;
+		height: 2.5rem;
 	}
 
 	@media only screen and (max-width: 900px) {
@@ -269,18 +308,19 @@
 		<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
-<div class="root bg-body text-body" data-scheme={scheme}>
+<div class="root bg-body text-body" data-scheme={scheme} data-menu-shown={menuShown}>
 	{#if contextMenu}
 		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
 	{/if}
 	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
 		<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
 	</div>
-	<div class="gripper" on:mousedown={onMouseDown}/>
 	<div class="w-path">
 		<JsonPathEditor model={model}/>
 	</div>
-	<div class="w-menu" bind:this={menu}>
+	<div class="gripper" on:mousedown={onMouseDown}/>
+	<div class="w-menu" bind:clientWidth={menuClientWidth} style:width={menuWidth}>
 		<JsonMenu {model} bind:this={menuC}/>
 	</div>
+	<button class="menu-btn btn btn-primary rounded-circle" on:click={() => menuShown = true}></button>
 </div>
