@@ -13,7 +13,7 @@
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
 	import JsonPathEditor from "./JsonPathEditor.svelte";
-	import ContextMenu, { type Coords, type MenuItem, createMenu, addMenuItems } from "./ContextMenu.svelte";
+	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -52,36 +52,30 @@
 	}
 
 	function openContextMenu(selected: JsonProperty, x: number, y: number) {
-		let items: MenuItem[];
+		const builder = menuBuilder();
 		if (selected.value.is("container")) {
-			items = [];
 			if (selected.expanded) {
-				addMenuItems(items, [
-					["Collapse", () => selected.setExpanded(false, true)],
-					["Expand All", () => selected.setExpanded(true, true)]
-				]);
+				builder
+					.item("Collapse", () => selected.setExpanded(false, true))
+					.item("Expand All", () => selected.setExpanded(true, true));
 			} else {
-				addMenuItems(items, [
-					["Expand", () => selected.setExpanded(true)],
-					["Expand All", () => selected.setExpanded(true, true)]
-				]);
+				builder
+					.item("Expand", () => selected.setExpanded(true))
+					.item("Expand All", () => selected.setExpanded(true, true));
 			}
 
-			addMenuItems(items, [
-				["Copy Key", () => copyKey(selected)],
-				["Copy Value", [
-					["Formatted", () => copyValue(selected.value)],
-					["Minified", () => copyValue(selected.value, true)],
-				]],
-			]);
+			builder
+				.item("Copy Key", () => copyKey(selected))
+				.menu("Copy Value")
+					.item("Formatted", () => copyValue(selected.value))
+					.item("Minified", () => copyValue(selected.value, true));
 		} else {
-			items = createMenu([
-				["Copy Key", () => copyKey(selected)],
-				["Copy Value", () => copyValue(selected.value)],
-			]);
+			builder
+				.item("Copy Key", () => copyKey(selected))
+				.item("Copy Value", () => copyValue(selected.value));
 		}
 
-		contextMenu = [[x, y], items];
+		contextMenu = [[x, y], builder.build()];
 	}
 
 	function onKeyDown(e: KeyboardEvent) {

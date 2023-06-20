@@ -10,7 +10,7 @@
 
 	export interface MenuAction extends MenuItemBase {
 		type: "action";
-		action: () => void;
+		action: Action;
 	}
 
 	export interface SubMenu extends MenuItemBase {
@@ -19,8 +19,66 @@
 	}
 
 	export interface EventMap {
-		closed: never;
+		closed: void;
 	}
+
+	export interface MenuBuilder {
+		item(name: string, action: Action): this;
+		menu(name: string, build: Action<MenuBuilder>): this;
+		menu(name: string): SubMenuBuilder<this>;
+
+		build(): MenuItem[];
+	}
+
+	export interface SubMenuBuilder<TParent extends MenuBuilder> extends MenuBuilder {
+		end(): TParent;
+	}
+
+	class MenuBuilderImpl implements MenuBuilder {
+		#items: MenuItem[];
+
+		constructor() {
+			this.#items = [];
+		}
+
+		build(): MenuItem[] {
+			const items = this.#items;
+			this.#items = [];
+			return items;
+		}
+
+		item(name: string, action: Action<never, never, never, never, never>): this {
+			this.#items.push({ type: "action", name, action });
+			return this;
+		}
+
+		menu(name: string, build: Action<MenuBuilder>): this;
+		menu(name: string): SubMenuBuilder<this>;
+		menu(name: string, build?: Action<MenuBuilder>): this | SubMenuBuilder<this> {
+			const builder = new SubMenuBuilderImpl(this);
+			const items = builder.#items;
+			this.#items.push({ type: "menu", name, items });
+			if (build != null) {
+				build(builder);
+				return this;
+			} else {
+				return builder;
+			}
+		}
+	}
+
+	class SubMenuBuilderImpl<TParent extends MenuBuilderImpl> extends MenuBuilderImpl implements SubMenuBuilder<TParent> {
+			readonly #parent: TParent;
+
+			constructor(parent: TParent) {
+				super();
+				this.#parent = parent;
+			}
+
+			end(): TParent {
+				return this.#parent;
+			}
+		}
 
 	const nestedPos = ["100%", "calc(var(--bs-border-width) * -1)"] as const;
 	const nestedKey = Symbol("ContextMenu.nested");
@@ -39,19 +97,8 @@
 		return [x, y];
 	}
 
-	export type MenuInit = [name: string, value: Action | MenuInit[]];
-
-	export function addMenuItems(items: MenuItem[], inits: MenuInit[]) {
-		for (const [name, value] of inits) {
-			const item: MenuItem = Array.isArray(value) ? { name, type: "menu", items: createMenu(value) } : { name, type: "action", action: value }
-			items.push(item);
-		}
-	}
-
-	export function createMenu(inits: MenuInit[]): MenuItem[] {
-		const items: MenuItem[] = [];
-		addMenuItems(items, inits);
-		return items;
+	export function menuBuilder() {
+		return new MenuBuilderImpl();
 	}
 </script>
 <script lang="ts">
