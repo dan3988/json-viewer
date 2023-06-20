@@ -1,8 +1,6 @@
 export namespace settings {
-	export type SettingsBag<K extends SettingKey = SettingKey> = { [P in K]: Settings[P] };
+	export type SettingsBag<K extends _SettingKey = _SettingKey> = { [P in K]: Settings[P] };
 	export type SaveType = { [P in keyof Settings]?: Settings[P] };
-
-	type SettingKey = string & keyof Settings;
 
 	function _get(store: chrome.storage.StorageArea, output: any, settings: Setting[]): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -34,17 +32,21 @@ export namespace settings {
 		})
 	}
 	
-	function makeSetting<K extends SettingKey>(key: K, type: SettingType<Settings[K]>, defaultValue?: Settings[K], synced?: boolean): Setting<Settings[K]> {
+	function makeSetting<K extends string, T>(key: K, type: SettingType<T>, defaultValue?: T, synced?: boolean): NamedSetting<K, T> {
 		synced ??= false;
-		return { key, type, synced, defaultValue } as any;
+		return { key, type, synced, defaultValue };
 	}
 
 	function Integer(v: any) {
 		return typeof v === "number" ? Math.trunc(v) : parseInt(v);
 	}
 
-	function ArrayType(v: any) {
-		return Array.isArray(v) ? v : [...v];
+	function ArrayType<T>(subType: SettingType<T>): SettingType<T[]> {
+		return <any>ArrayType.value.bind(subType);
+	}
+
+	ArrayType.value = function<T>(this: SettingType<T>, value: any): T[] {
+		return Array.prototype.map.call(value, this) as any;
 	}
 
 	function NullableType<T>(v: SettingType<T>): SettingType<T | null> {
@@ -55,19 +57,24 @@ export namespace settings {
 		return value == null ? null : this(value);
 	}
 
-	const list = [
+	const settingsList = [
 		makeSetting("darkMode", NullableType(Boolean), null),
-		makeSetting("mimes", ArrayType, ["application/json"]),
+		makeSetting("mimes", ArrayType(String), ["application/json"]),
 		makeSetting("scheme", String, "default"),
-		makeSetting("whitelist", ArrayType, []),
-		makeSetting("blacklist", ArrayType, []),
+		makeSetting("whitelist", ArrayType(String), []),
+		makeSetting("blacklist", ArrayType(String), []),
 		makeSetting("enabled", Boolean, true),
 		makeSetting("indentCount", Integer, 1),
 		makeSetting("indentChar", String, "\t"),
 		makeSetting("useHistory", Boolean, true)
-	]
+	] as const;
 
-	const map = list.reduce((map, v) => map.set(v.key, v), new Map<string, settings.Setting>());
+	type _SettingsList = typeof settingsList[number];
+	type _SettingKey = _SettingsList["key"];
+
+	export type Settings = { [P in _SettingKey]: Extract<_SettingsList, NamedSetting<P, any>> extends NamedSetting<P, infer T> ? T : never };
+
+	const settings: Record<string, Setting> = settingsList.reduce((x, y) => Object.defineProperty(x, y.key, { value: y, enumerable: true }), Object.create(null));
 
 	export interface SettingType<T = unknown> {
 		(value: any): T;
@@ -80,21 +87,13 @@ export namespace settings {
 		readonly defaultValue: undefined | T;
 	}
 
-	export interface Settings {
-		darkMode: null | boolean;
-		mimes: string[];
-		whitelist: string[];
-		blacklist: string[];
-		enabled: boolean;
-		indentCount: number;
-		indentChar: string;
-		scheme: string;
-		useHistory: boolean;
+	interface NamedSetting<TKey extends string, TType> extends Setting<TType> {
+		readonly key: TKey;
 	}
 
 	export function getDefault(): SettingsBag {
 		const bag: any = {};
-		for (let setting of list)
+		for (let setting of settingsList)
 			bag[setting.key] = setting.defaultValue;
 
 		return bag;
@@ -106,7 +105,7 @@ export namespace settings {
 	}
 
 	export interface SettingChangeEvent {
-		changes: { [P in SettingKey]?: SettingChange<Settings[P]> };
+		changes: { [P in _SettingKey]?: SettingChange<Settings[P]> };
 		synced: boolean;
 	}
 
@@ -121,23 +120,23 @@ export namespace settings {
 			chrome.storage.sync.onChanged.addListener((changes) => handler({ changes, synced: true }));
 	}
 
-	export function getSetting<K extends keyof Settings>(key: K, required: true): Setting<Settings[K]>
-	export function getSetting<K extends keyof Settings>(key: K, required?: false): undefined | Setting<Settings[K]>
-	export function getSetting<K extends keyof Settings>(key: K, required?: boolean): undefined | Setting {
-		const setting = map.get(key);
+	export function getSetting<K extends _SettingKey>(key: K, required: true): Setting<Settings[K]>
+	export function getSetting<K extends _SettingKey>(key: K, required?: false): undefined | Setting<Settings[K]>
+	export function getSetting<K extends _SettingKey>(key: K, required?: boolean): undefined | Setting {
+		const setting = settings[key];
 		if (setting == null && required)
 			throw new TypeError(`Unknown setting: '${key}'`);
 		
 		return setting;
 	}
 
-	export async function get<K extends SettingKey[]>(): Promise<SettingsBag>;
-	export async function get<K extends SettingKey[]>(...keys: K): Promise<SettingsBag<K[number]>>;
+	export async function get<K extends _SettingKey[]>(): Promise<SettingsBag>;
+	export async function get<K extends _SettingKey[]>(...keys: K): Promise<SettingsBag<K[number]>>;
 	export async function get(...keys: string[]) {
 		let local: Setting[] = [];
 		let synced: Setting[] = [];
-		for (const key of keys.length ? keys : map.keys()) {
-			const setting = map.get(key);
+		for (const key of keys.length ? keys : Object.keys(settings)) {
+			const setting = settings[key];
 			if (setting == null)
 				throw new TypeError(`Unknown setting: '${key}'`);
 
@@ -155,8 +154,8 @@ export namespace settings {
 		return output;
 	}
 
-	export function setValue<K extends SettingKey>(key: K, value: Settings[K]) {
-		const setting = map.get(key);
+	export function setValue<K extends _SettingKey>(key: K, value: Settings[K]) {
+		const setting = settings[key];
 		if (setting == null)
 			throw new TypeError(`Unknown setting: '${key}'`);
 
@@ -172,7 +171,7 @@ export namespace settings {
 		let hasSynced = false;
 
 		for (const key in values) {
-			const setting = map.get(key);
+			const setting = settings[key];
 			if (setting == null)
 				throw new TypeError(`Unknown setting: '${key}'`);
 
