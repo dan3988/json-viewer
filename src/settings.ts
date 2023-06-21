@@ -41,11 +41,20 @@ export namespace settings {
 		return typeof v === "number" ? Math.trunc(v) : parseInt(v);
 	}
 
+	function Enum<const T extends readonly any[]>(...values: T): SettingType<T[number]> {
+		return Enum.value.bind(values);
+	}
+
+	Enum.value = function EnumImpl<T>(this: readonly T[], value: any) {
+		var i = this.indexOf(value);
+		return i < 0 ? undefined : this[i];
+	}
+
 	function ArrayType<T>(subType: SettingType<T>): SettingType<T[]> {
 		return <any>ArrayType.value.bind(subType);
 	}
 
-	ArrayType.value = function<T>(this: SettingType<T>, value: any): T[] {
+	ArrayType.value = function ArrayTypeImpl<T>(this: SettingType<T>, value: any): T[] {
 		return Array.prototype.map.call(value, this) as any;
 	}
 
@@ -53,7 +62,7 @@ export namespace settings {
 		return <any>NullableType.value.bind(v);
 	}
 
-	NullableType.value = function<T>(this: SettingType<T>, value: any): T | null {
+	NullableType.value = function NullableTypeImpl<T>(this: SettingType<T>, value: any): T | null {
 		return value == null ? null : this(value);
 	}
 
@@ -66,7 +75,8 @@ export namespace settings {
 		makeSetting("enabled", Boolean, true),
 		makeSetting("indentCount", Integer, 1),
 		makeSetting("indentChar", String, "\t"),
-		makeSetting("useHistory", Boolean, true)
+		makeSetting("useHistory", Boolean, true),
+		makeSetting("menuAlign", Enum("r", "l"), "r")
 	] as const;
 
 	type _SettingsList = typeof settingsList[number];

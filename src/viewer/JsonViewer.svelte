@@ -18,6 +18,7 @@
 	export let model: ViewerModel;
 	export let indent: string;
 	export let indentCount: number;
+	export let menuAlign: string;
 	export let scheme: string;
 
 	model.command.addListener(onModelCommand);
@@ -25,7 +26,7 @@
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
-	let menuShown = true;
+	let menuShown = false;
 	let menuC: JsonMenu;
 	let menu: HTMLElement;
 	let prop: HTMLElement;
@@ -162,26 +163,18 @@
 
 	onMount(() => prop.focus());
 
-	let dragStart: undefined | { x: number, w: number };
-
-	function onMouseDown(evt: MouseEvent) {
-		dragStart = { x: evt.x, w: menu.clientWidth };
-		document.addEventListener("mousemove", onMouseMove);
-		document.addEventListener("mouseup", onMouseUp);
-	}
-
-	function onMouseMove(evt: MouseEvent) {
-		if (dragStart) {
-			const pos = Math.max(0, dragStart.w + dragStart.x - evt.x);
-			menuShown = pos >= 250;
+	function onGrabberMouseDown(evt: MouseEvent) {
+		const startX = evt.x;
+		const startW = menu.clientWidth;
+		const direction = menuAlign === "r" ? 1 : -1;
+		const handler = function(evt: MouseEvent) {
+			const pos = Math.max(0, startW + (startX - evt.x) * direction);
+			menuShown = pos >= 150;
 			menu.style.width = pos + "px";
 		}
-	}
 
-	function onMouseUp() {
-		dragStart = undefined;
-		document.removeEventListener("mousemove", onMouseMove);
-		document.removeEventListener("mouseup", onMouseUp);
+		document.addEventListener("mousemove", handler);
+		document.addEventListener("mouseup", () => document.removeEventListener("mousemove", handler), { once: true });
 	}
 </script>
 <style lang="scss">
@@ -192,12 +185,69 @@
 		position: absolute;
 		inset: 0;
 		display: grid;
-		grid-template-columns: 1fr auto auto;
-		grid-template-rows: 1fr auto;
 		overflow: hidden;
 
-		> div {
-			position: relative;
+		$break: 900px;
+		$gap-h: 5rem;
+		
+		@media only screen and (max-width: $break) {
+			grid-template-columns: 1fr;
+			grid-template-rows: auto auto 1fr auto;
+			grid-template-areas: "menu" "grab" "prop" "path";
+
+			> .w-prop {
+			}
+
+			> .w-menu {
+				width: unset !important;
+				min-height: 20rem;
+				padding: $pad-med;
+			}
+
+			> .gripper {
+				cursor: ns-resize;
+				height: 5px;
+			}
+		}
+		
+		@media only screen and (min-width: $break) {
+			grid-template-rows: 1fr auto;
+			max-height: 100vh;
+
+			&[data-menu-align="l"] {
+				grid-template-columns: auto auto 1fr;
+				grid-template-areas:
+					"menu grab prop"
+					"path path path";
+				
+				> .w-menu {
+					margin-left: $pad-med;
+				}
+			}
+
+			&[data-menu-align="r"] {
+				grid-template-columns: 1fr auto auto;
+				grid-template-areas:
+					"prop grab menu"
+					"path path path";
+				
+				> .w-menu {
+					margin-right: $pad-med;
+				}
+			}
+
+			> .w-menu {
+				height: 100%;
+				width: 30rem;
+				min-width: 350px;
+				max-width: 80vw;
+				margin-top: $pad-med;
+			}
+
+			> .gripper {
+				cursor: ew-resize;
+				width: 5px;
+			}
 		}
 
 		&[data-menu-shown="false"] {
@@ -217,17 +267,14 @@
 	.menu-toggle {
 		@include bs-icon-btn("chevron-bar-left", 2px, "color");
 
-		border: none;
 		cursor: pointer;
-		grid-area: 1 / 2 / span 1 / 3;
+		border: none;
 		width: .5rem;
 	}
 
 	.gripper {
-		grid-area: 1 / 2 / span 1 / 3;
+		grid-area: grab;
 		user-select: none;
-		cursor: ew-resize;
-		width: 5px;
 	}
 
 	.w-prop,
@@ -237,9 +284,9 @@
 	}
 
 	.w-prop {
+		grid-area: prop;
 		position: relative;
 		padding: $pad-small;
-		grid-area: 1 / 1 / -2 / span 1;
 		overflow: scroll;
 
 		&:focus-visible {
@@ -249,18 +296,13 @@
 	}
 
 	.w-path {
-		grid-area: -2 / 1 / -1 / -1;
+		grid-area: path;
 		padding: $pad-med;
 	}
 
 	.w-menu {
+		grid-area: menu;
 		display: grid;
-		grid-area: 1 / -2 / -2 / -1;
-		overflow: hidden;
-		width: 30rem;
-		min-width: 300px;
-		max-width: 80vw;
-		margin: $pad-med $pad-med 0 0;
 	}
 
 	.menu-btn {
@@ -273,36 +315,13 @@
 		width: 2.5rem;
 		height: 2.5rem;
 	}
-
-	@media only screen and (max-width: 900px) {
-		.root {
-			grid-template-columns: 1fr;
-			grid-template-rows: 20rem 1fr auto;
-		}
-
-		.w-menu {
-			grid-area: 1 / 1 / span 1 / -1;
-			width: unset !important;
-			max-width: unset;
-			margin: $pad-med;
-		}
-
-		.w-prop {
-			grid-area: 2 / 1 / span 1 / -1;
-			margin: 0 $pad-med;
-		}
-
-		.w-path {
-			grid-area: 3 / 1 / span 1 / -1;
-		}
-	}
 </style>
 <svelte:head>
 	{#each css as href}
 		<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
-<div class="root bg-body text-body" data-scheme={scheme} data-menu-shown={menuShown}>
+<div class="root bg-body" data-scheme={scheme} data-menu-shown={menuShown} data-menu-align={menuAlign}>
 	{#if contextMenu}
 		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
 	{/if}
@@ -312,7 +331,7 @@
 	<div class="w-path">
 		<JsonPathEditor model={model}/>
 	</div>
-	<div class="gripper" on:mousedown={onMouseDown}/>
+	<div class="gripper" on:mousedown={onGrabberMouseDown}/>
 	<div class="w-menu" bind:this={menu}>
 		<JsonMenu {model} bind:this={menuC}/>
 	</div>

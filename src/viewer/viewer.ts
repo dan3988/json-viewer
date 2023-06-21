@@ -60,7 +60,7 @@ function run() {
 		}
 
 		async function loadAsync() {
-			const bag = await settings.get("darkMode", "indentChar", "indentCount", "scheme", "useHistory");
+			const bag = await settings.get("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign");
 			const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
 	
 			if (bag.useHistory)
@@ -73,28 +73,33 @@ function run() {
 					tracker.preferDark = changes.darkMode.newValue;
 	
 				let props: any = {};
-				let changeCount = false;
+				let changeCount = 0;
 				let changeIndent = false;
 				if (changes.indentChar) {
-					changeIndent = true;
+					changeCount++;
 					bag.indentChar = changes.indentChar.newValue;
 				}
 		
 				if (changes.indentCount) {
-					changeIndent = true;
+					changeCount++;
 					bag.indentCount = changes.indentCount.newValue;
 				}
-	
+
 				if (changeIndent) {
-					changeCount = true;
+					changeCount++;
 					props.indent = indent = bag.indentChar.repeat(bag.indentCount);
 				}
 	
 				if (changes.scheme) {
 					const scheme = changes.scheme.newValue;
-					changeCount = true;
+					changeCount++;
 					props.scheme = scheme;
 					props.indentCount = themes[scheme][1];
+				}
+	
+				if (changes.menuAlign) {
+					changeCount++;
+					props.menuAlign = changes.menuAlign.newValue;
 				}
 	
 				if (changeCount)
@@ -108,6 +113,7 @@ function run() {
 					model,
 					indent,
 					scheme: bag.scheme,
+					menuAlign: bag.menuAlign,
 					indentCount: themes[bag.scheme][1]
 				}
 			});

@@ -1,6 +1,6 @@
 <script lang="ts" context="module">
 	import type { ListValidator } from "./ListEditor.svelte";
-	import type { NamedRadioItem } from "./Radio.svelte"
+	import type { NamedRadioItem } from "./Radio.svelte";
 
 	class SettingListValidator implements ListValidator {
 		readonly #validation: [] | [RegExp, string];
@@ -28,6 +28,7 @@
 	const mimeValidator = new SettingListValidator();
 	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
 
+	const radioMenuAlign: NamedRadioItem<"l" | "r">[] = [["l", "Left"], ["r", "Right"]];
 	const radioTheme: NamedRadioItem<boolean | null>[] = [[null, "Auto"], [false, "Light"], [true, "Dark"]];
 </script>
 <script lang="ts">
@@ -39,7 +40,7 @@
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
-    import Radio from "./Radio.svelte";
+	import Radio from "./Radio.svelte";
 
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
@@ -59,7 +60,7 @@
 		model.removeListener(onModelChange);
 	});
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign } = model.props);
 	$: currentScheme = themes[$scheme.value];
 	$: {
 		schemeUnsub?.();
@@ -171,7 +172,11 @@
 			Use History
 		</label>
 	</div>
-	<div class="btn-group grp-theme" class:dirty={$darkMode.changed}>
+	<div class="btn-group grp-menu-align" role="group" class:dirty={$menuAlign.changed}>
+		<span class="input-group-text">Menu Alignment</span>
+		<Radio class="btn btn-cust-light" items={radioMenuAlign} bind:value={$menuAlign.value}></Radio>
+	</div>
+	<div class="btn-group grp-theme"role="group" class:dirty={$darkMode.changed}>
 		<span class="input-group-text">Theme</span>
 		<Radio class="btn btn-cust-light" items={radioTheme} bind:value={$darkMode.value}/>
 	</div>
