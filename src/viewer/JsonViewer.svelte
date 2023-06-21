@@ -25,9 +25,10 @@
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
-	let menuShown = false;
-	let menuClientWidth: number;
-	let menuWidth: string;
+	let menuShown = true;
+	let menuC: JsonMenu;
+	let menu: HTMLElement;
+	let prop: HTMLElement;
 
 	function copyKey(property: JsonProperty) {
 		return navigator.clipboard.writeText(String(property.key));
@@ -159,15 +160,12 @@
 		}
 	}
 
-	let prop: HTMLElement;
-	let menuC: JsonMenu;
-
 	onMount(() => prop.focus());
 
 	let dragStart: undefined | { x: number, w: number };
 
 	function onMouseDown(evt: MouseEvent) {
-		dragStart = { x: evt.x, w: menuClientWidth };
+		dragStart = { x: evt.x, w: menu.clientWidth };
 		document.addEventListener("mousemove", onMouseMove);
 		document.addEventListener("mouseup", onMouseUp);
 	}
@@ -176,7 +174,7 @@
 		if (dragStart) {
 			const pos = Math.max(0, dragStart.w + dragStart.x - evt.x);
 			menuShown = pos >= 250;
-			menuWidth = pos + "px";
+			menu.style.width = pos + "px";
 		}
 	}
 
@@ -313,7 +311,7 @@
 		<JsonPathEditor model={model}/>
 	</div>
 	<div class="gripper" on:mousedown={onMouseDown}/>
-	<div class="w-menu" bind:clientWidth={menuClientWidth} style:width={menuWidth}>
+	<div class="w-menu" bind:this={menu}>
 		<JsonMenu {model} bind:this={menuC}/>
 	</div>
 	<button class="menu-btn btn btn-primary rounded-circle" on:click={() => menuShown = true}></button>
