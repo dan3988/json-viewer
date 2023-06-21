@@ -57,6 +57,11 @@
 				"scripts": [
 					"lib/bg.js"
 				]
+			},
+			"browser_specific_settings": {
+				"gecko": {
+					"id": "json-viewer@dpickett.co.uk"
+				}
 			}
 		},
 		"chrome": {
