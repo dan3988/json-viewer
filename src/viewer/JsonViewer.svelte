@@ -163,18 +163,23 @@
 
 	onMount(() => prop.focus());
 
-	function onGrabberMouseDown(evt: MouseEvent) {
-		const startX = evt.x;
-		const startW = menu.clientWidth;
-		const direction = menuAlign === "r" ? 1 : -1;
+	function resizeBegin(startPos: number, startSize: number, evtProp: "x" | "y", styleProp: string, direction: number = 1) {
 		const handler = function(evt: MouseEvent) {
-			const pos = Math.max(0, startW + (startX - evt.x) * direction);
+			const pos = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
 			menuShown = pos >= 150;
-			menu.style.width = pos + "px";
+			menu.style[styleProp] = pos + "px";
 		}
 
 		document.addEventListener("mousemove", handler);
 		document.addEventListener("mouseup", () => document.removeEventListener("mousemove", handler), { once: true });
+	}
+
+	function onGrabberHMouseDown(evt: MouseEvent) {
+		resizeBegin(evt.x, menu.clientWidth, "x", "width", menuAlign === "l" ? 1 : -1);
+	}
+
+	function onGrabberVMouseDown(evt: MouseEvent) {
+		resizeBegin(evt.y, menu.clientHeight, "y", "height");
 	}
 </script>
 <style lang="scss">
@@ -193,20 +198,18 @@
 		@media only screen and (max-width: $break) {
 			grid-template-columns: 1fr;
 			grid-template-rows: auto auto 1fr auto;
-			grid-template-areas: "menu" "grab" "prop" "path";
-
-			> .w-prop {
-			}
+			grid-template-areas: "menu" "resize" "prop" "path";
 
 			> .w-menu {
 				width: unset !important;
-				min-height: 20rem;
+				height: 30rem;
+				min-height: 350px;
+				max-height: 80vh;
 				padding: $pad-med;
 			}
 
-			> .gripper {
-				cursor: ns-resize;
-				height: 5px;
+			> .gripper-h {
+				display: none;
 			}
 		}
 		
@@ -217,18 +220,22 @@
 			&[data-menu-align="l"] {
 				grid-template-columns: auto auto 1fr;
 				grid-template-areas:
-					"menu grab prop"
+					"menu resize prop"
 					"path path path";
 				
 				> .w-menu {
 					margin-left: $pad-med;
+				}
+
+				> .gripper-v {
+					display: none;
 				}
 			}
 
 			&[data-menu-align="r"] {
 				grid-template-columns: 1fr auto auto;
 				grid-template-areas:
-					"prop grab menu"
+					"prop resize menu"
 					"path path path";
 				
 				> .w-menu {
@@ -237,16 +244,15 @@
 			}
 
 			> .w-menu {
-				height: 100%;
 				width: 30rem;
+				height: unset !important;
 				min-width: 350px;
 				max-width: 80vw;
 				margin-top: $pad-med;
 			}
 
-			> .gripper {
-				cursor: ew-resize;
-				width: 5px;
+			> .gripper-v {
+				display: none;
 			}
 		}
 
@@ -273,8 +279,18 @@
 	}
 
 	.gripper {
-		grid-area: grab;
+		grid-area: resize;
 		user-select: none;
+	}
+
+	.gripper-v {
+		cursor: ns-resize;
+		height: 5px;
+	}
+
+	.gripper-h {
+		cursor: ew-resize;
+		width: 5px;
 	}
 
 	.w-prop,
@@ -331,7 +347,8 @@
 	<div class="w-path">
 		<JsonPathEditor model={model}/>
 	</div>
-	<div class="gripper" on:mousedown={onGrabberMouseDown}/>
+	<div class="gripper gripper-h" on:mousedown={onGrabberHMouseDown}/>
+	<div class="gripper gripper-v" on:mousedown={onGrabberVMouseDown}/>
 	<div class="w-menu" bind:this={menu}>
 		<JsonMenu {model} bind:this={menuC}/>
 	</div>
