@@ -4,19 +4,19 @@
 		{
 			"name": "Chrome",
 			"type": "chrome",
-			"userDataDir": "${workspaceFolder}\\.chrome",
+			"userDataDir": "${workspaceFolder}/.chrome",
 			"request": "launch",
 			"webRoot": "${workspaceFolder}/out/chrome",
 			"url": "chrome://extensions/",
-			"runtimeArgs": ["--load-extension=${workspaceFolder}\\out\\chrome"]
+			"runtimeArgs": ["--load-extension=${workspaceFolder}/out/chrome"]
 		},
 		{
 			"name": "Firefox",
 			"type": "firefox",
-			"addonPath": "${workspaceFolder}\\out\\firefox",
+			"addonPath": "${workspaceFolder}/out/firefox",
 			"url": "about:debugging#/runtime/this-firefox",
 			"webRoot": "${workspaceFolder}/out/firefox",
-			"profileDir": "${workspaceFolder}\\.moz",
+			"profileDir": "${workspaceFolder}/.moz",
 			"keepProfileChanges": true,
 			"request": "launch"
 		}
