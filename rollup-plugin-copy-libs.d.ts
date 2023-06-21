@@ -9,6 +9,7 @@ export interface WatchBase<Mode extends string> {
  * Watch a directory for changes and copy its contents to the output directory
  */
 export interface WatchDir extends WatchBase<"dir"> {
+	recursive?: boolean;
 	include?: string[];
 	exclude?: string[];
 }

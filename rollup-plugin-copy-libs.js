@@ -40,7 +40,8 @@ function copyFiles(inputs, outDir, watch, log) {
 			}
 
 			if (watch) {
-				const watcher = fs.watch(input.path, r, (event, file) => {
+				const { recursive } = input;
+				const watcher = fs.watch(input.path, { recursive }, (event, file) => {
 					if (filter(file)) {
 						log && log`{greenBright File ${event}} {green "${input.path}"} {yellow "${file}"}`;
 						const src = path.join(input.path, file);
