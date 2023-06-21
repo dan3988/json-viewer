@@ -1,5 +1,6 @@
 <script lang="ts" context="module">
 	import type { ListValidator } from "./ListEditor.svelte";
+	import type { NamedRadioItem } from "./Radio.svelte"
 
 	class SettingListValidator implements ListValidator {
 		readonly #validation: [] | [RegExp, string];
@@ -26,6 +27,8 @@
 
 	const mimeValidator = new SettingListValidator();
 	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
+
+	const radioTheme: NamedRadioItem<boolean | null>[] = [[null, "Auto"], [false, "Light"], [true, "Dark"]];
 </script>
 <script lang="ts">
 	import type { EditorModel } from "./editor";
@@ -36,6 +39,7 @@
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
+    import Radio from "./Radio.svelte";
 
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
@@ -167,11 +171,9 @@
 			Use History
 		</label>
 	</div>
-	<div class="input-group grp-theme" class:dirty={$darkMode.changed}>
+	<div class="btn-group grp-theme" class:dirty={$darkMode.changed}>
 		<span class="input-group-text">Theme</span>
-		<span role="button" class="btn btn-cust-light" class:active={$darkMode.value == null} on:click={() => $darkMode.value = null}>Auto</span>
-		<span role="button" class="btn btn-cust-light" class:active={$darkMode.value === false} on:click={() => $darkMode.value = false}>Light</span>
-		<span role="button" class="btn btn-cust-light" class:active={$darkMode.value === true} on:click={() => $darkMode.value = true}>Dark</span>
+		<Radio class="btn btn-cust-light" items={radioTheme} bind:value={$darkMode.value}/>
 	</div>
 	<div class="input-group grp-mimes list" class:dirty={$mimes.changed}>
 		<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." validator={mimeValidator} bind:items={$mimes.value}/>
