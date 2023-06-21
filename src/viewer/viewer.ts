@@ -1,6 +1,5 @@
 /// <reference path="../../node_modules/json5/lib/index.d.ts" />
 
-import type { IndentStyles } from "../types";
 import settings from "../settings";
 import themes from "../json-themes.json";
 import ThemeTracker from "../theme-tracker";
@@ -59,13 +58,7 @@ function run() {
 			if (v != null && !popping)
 				history.pushState(v.path, "", "#" + encodePath(v.path));
 		}
-	
-		async function loadIndentStyles(): Promise<IndentStyles> {
-			const url = chrome.runtime.getURL("lib/indent-styles.json");
-			const res = await fetch(url);
-			return await res.json();
-		}
-	
+
 		async function loadAsync() {
 			const bag = await settings.get("darkMode", "indentChar", "indentCount", "scheme", "useHistory");
 			const tracker = new ThemeTracker(document.documentElement, bag.darkMode);

@@ -41,7 +41,6 @@ function cleanDir(dir) {
 /**
  * @typedef BrowserInfo
  * @property {string} extUrlScheme
- * @property {(mf: chrome.runtime.Manifest) => void} [mfEdit]
  */
 
 /**
@@ -52,12 +51,7 @@ const browsers = {
 		extUrlScheme: "chrome-extension"
 	},
 	"firefox": {
-		extUrlScheme: "moz-extension",
-		mfEdit(mf) {
-			mf.background.scripts = [ mf.background.service_worker ],
-			delete mf.background.service_worker;
-			delete mf.background.type;
-		}
+		extUrlScheme: "moz-extension"
 	}
 }
 

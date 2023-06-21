@@ -18,13 +18,6 @@ export interface RememberMessage extends MessageBase {
 
 export type WorkerMessage = LoadMessage | CheckMessage | RememberMessage;
 
-export interface IndentStyle {
-	name: string;
-	indents: number;
-}
-
-export type IndentStyles = Record<string, IndentStyle>;
-
 declare module "*.svelte" {
 	export default import("svelte").SvelteComponentTyped;
 }
