@@ -254,7 +254,9 @@
 	}
 
 	.w-menu {
+		display: grid;
 		grid-area: 1 / -2 / -2 / -1;
+		overflow: hidden;
 		width: 30rem;
 		min-width: 300px;
 		max-width: 80vw;

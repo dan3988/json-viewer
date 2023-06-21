@@ -85,13 +85,12 @@
 	}
 
 	.root {
-		position: absolute;
-		inset: 0;
 		display: grid;
+		overflow: auto;
 		grid-template-rows: auto auto auto 1fr;
 		grid-template-columns: 6rem 1fr 2rem 6rem;
 		grid-row-gap: $pad-med;
-		flex-direction: column;
+		align-items: stretch;
 
 		> .field {
 			display: contents;
@@ -128,10 +127,12 @@
 		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
-	<ul class="jpath-results list-group list-group-flush overflow-y-scroll border rounded">
+	<ul class="jpath-results list-group list-group-flush overflow-y-scroll overflow-x-hidden border rounded">
 		{#each jpathResults as path}
-			<li tabindex="0" role="button" class="list-group-item list-group-item-action" on:keypress={e => jpathItemEvent(path, e)} on:click={e => jpathItemEvent(path, e)}>{path}</li>
+			<li tabindex="0" role="button" class="list-group-item list-group-item-action " on:keypress={e => jpathItemEvent(path, e)} on:click={e => jpathItemEvent(path, e)}>
+				<div class="text-truncate">{path}</div>
+			</li>
 		{/each}
-	</ul>	
+	</ul>
 </div>
 {/if}
