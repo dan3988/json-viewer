@@ -6,6 +6,7 @@
 			"type": "chrome",
 			"userDataDir": "${workspaceFolder}\\.chrome",
 			"request": "launch",
+			"webRoot": "${workspaceFolder}/out/chrome",
 			"url": "chrome://extensions/",
 			"runtimeArgs": ["--load-extension=${workspaceFolder}\\out\\chrome"]
 		},
@@ -14,6 +15,7 @@
 			"type": "firefox",
 			"addonPath": "${workspaceFolder}\\out\\firefox",
 			"url": "about:debugging#/runtime/this-firefox",
+			"webRoot": "${workspaceFolder}/out/firefox",
 			"profileDir": "${workspaceFolder}\\.moz",
 			"keepProfileChanges": true,
 			"request": "launch"
