@@ -205,7 +205,6 @@
 				height: 30rem;
 				min-height: 350px;
 				max-height: 80vh;
-				padding: $pad-med;
 			}
 
 			> .gripper-h {
@@ -222,10 +221,6 @@
 				grid-template-areas:
 					"menu resize prop"
 					"path path path";
-				
-				> .w-menu {
-					margin-left: $pad-med;
-				}
 
 				> .gripper-v {
 					display: none;
@@ -237,10 +232,6 @@
 				grid-template-areas:
 					"prop resize menu"
 					"path path path";
-				
-				> .w-menu {
-					margin-right: $pad-med;
-				}
 			}
 
 			> .w-menu {
@@ -248,7 +239,6 @@
 				height: unset !important;
 				min-width: 350px;
 				max-width: 80vw;
-				margin-top: $pad-med;
 			}
 
 			> .gripper-v {
@@ -302,8 +292,11 @@
 	.w-prop {
 		grid-area: prop;
 		position: relative;
-		padding: $pad-small;
-		overflow: scroll;
+
+		> .prop-scroll {
+			padding: $pad-small;
+		}
+
 
 		&:focus-visible {
 			outline: none;
@@ -313,6 +306,7 @@
 
 	.w-path {
 		grid-area: path;
+		margin-top: $pad-small;
 		padding: $pad-med;
 	}
 
@@ -337,12 +331,14 @@
 		<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
-<div class="root bg-body" data-scheme={scheme} data-menu-shown={menuShown} data-menu-align={menuAlign}>
+<div class="root bg-body p-1" data-scheme={scheme} data-menu-shown={menuShown} data-menu-align={menuAlign}>
 	{#if contextMenu}
 		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
 	{/if}
-	<div class="w-prop" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
-		<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
+	<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
+		<div class="prop-scroll overflow-scroll h-100 w-100">
+			<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
+		</div>
 	</div>
 	<div class="w-path">
 		<JsonPathEditor model={model}/>
