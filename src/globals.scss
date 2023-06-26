@@ -104,6 +104,7 @@ $cst-dirty-border-color-dark: #5c603b;
 	z-index: 5;
 }
 
+:global(.btn-check:checked+.btn),
 :global(.input-group .btn:active) {
 	z-index: 6;
 }
