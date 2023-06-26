@@ -16,7 +16,7 @@ function onEnabledChanged(enabled: boolean) {
 		: updateIcon(gsIcons, mf.action.default_title + " (Disabled)");
 }
 
-async function loadExtension() {
+async function loadExtension(isFirefox: boolean) {
 	const bag = await settings.get();
 	if (!bag.enabled)
 		await onEnabledChanged(false);
@@ -39,8 +39,12 @@ async function loadExtension() {
 	}
 
 	function injectViewer(target: chrome.scripting.InjectionTarget) {
-		return inject(target, false, "lib/messaging.js")
-			.then(() => inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js"));
+		if (isFirefox) {
+			return inject(target, true, "lib/messaging.firefox.js", "res/ffstub.js", lib.json5, "lib/viewer.js");
+		} else {
+			return inject(target, false, "lib/messaging.chrome.js")
+				.then(() => inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js"));
+		}
 	}
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
@@ -111,19 +115,25 @@ const gsIcons: Record<number, string> = { ...mf.action.default_icon };
 for (const key in gsIcons)
 	gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
-loadExtension();
+function checkIsFirefox(): Promise<boolean> {
+	if (chrome.runtime.getBrowserInfo) {
+		return chrome.runtime.getBrowserInfo().then(v => v.name === "Firefox");
+	} else {
+		return Promise.resolve(false);
+	}
+}
+
+const isFirefox = checkIsFirefox();
+
+isFirefox.then(loadExtension);
 
 chrome.runtime.onInstalled.addListener((det) => {
 	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-		if (chrome.runtime.getBrowserInfo) {
-			chrome.runtime.getBrowserInfo().then(v => {
-				if (v.name === "Firefox") {
-					chrome.tabs.create({
-						active: true,
-						url: chrome.runtime.getURL("res/firefox.html")
-					});
-				}
-			})
-		}
+		isFirefox.then(v => {
+			v && chrome.tabs.create({
+				active: true,
+				url: chrome.runtime.getURL("res/firefox.html")
+			});
+		})
 	}
 })
