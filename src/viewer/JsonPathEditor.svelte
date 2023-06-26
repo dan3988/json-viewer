@@ -351,21 +351,15 @@
 		} satisfies KeyLookup;
 
 		const handlers: Record<string, KeyHandler> = {
-			Enter(selection, range, li, span) {
-				if (autocomplete != null) {
-					const target = autocomplete.target;
-					if (autocomplete.complete()) {
-						autocomplete = undefined;
-						const prop = tryResolve(target);
-						if (prop && prop.value.is("container"))
-							insertSectionAfter(selection, "", li, span);
-					}
-				} else {
+			Enter() {
+				if (autocomplete == null) {
 					const prop = tryResolve();
 					if (prop) {
 						model.setSelected(prop, true, true);
 						this.blur();
 					}
+				} else if (autocomplete.complete()) {
+					autocomplete = undefined;
 				}
 			},
 			ArrowUp() {
