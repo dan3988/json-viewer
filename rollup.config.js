@@ -7,7 +7,7 @@ import svelte from 'rollup-plugin-svelte';
 import css from 'rollup-plugin-css-only';
 import * as rl from "rollup";
 import sveltePreprocess from 'svelte-preprocess';
-import sass from "sass";
+import * as sass from "sass";
 import path from "path";
 import fs from "fs";
 import Linq from '@daniel.pickett/linq-js';
