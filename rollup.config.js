@@ -95,13 +95,12 @@ function loader(args) {
 	 * @param {string} output
 	 * @returns {rl.RollupOptions}
 	 */
-	function svelteConfig(baseDir, entry, output, format = "cjs") {
+	function svelteConfig(baseDir, entry, output) {
 		return {
 			input: path.join(baseDir, entry),
 			output: {
 				sourcemap: !dist,
 				dir: lib,
-				format,
 				indent,
 				name: 'app',
 				intro: '{',
@@ -130,8 +129,7 @@ function loader(args) {
 					],
 					compilerOptions: {
 						// enable run-time checks when not in production
-						dev: !dist,
-						format: "cjs"
+						dev: !dist
 					},
 					onwarn(warning, handler) {
 						!ignore.has(warning.code) && handler(warning);

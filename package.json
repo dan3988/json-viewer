@@ -30,10 +30,10 @@
 		"rollup": "^3.21.0",
 		"rollup-plugin-css-only": "^4.3.0",
 		"rollup-plugin-livereload": "^2.0.5",
-		"rollup-plugin-svelte": "^7.1.4",
+		"rollup-plugin-svelte": "^7.1.6",
 		"sass": "^1.63.6",
-		"svelte": "^3.58.0",
-		"svelte-preprocess": "^5.0.3",
+		"svelte": "^4.0.0",
+		"svelte-preprocess": "^5.0.4",
 		"tslib": "^2.4.1",
 		"typescript": "^5.0.4"
 	},
