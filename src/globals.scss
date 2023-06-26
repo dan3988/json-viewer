@@ -109,6 +109,12 @@ $cst-dirty-border-color-dark: #5c603b;
 	z-index: 6;
 }
 
+:global(.hoverable-radio > .btn-check+.btn:hover) {
+	color: var(--bs-btn-hover-color);
+	background-color: var(--bs-btn-hover-bg);
+	border-color: var(--bs-btn-hover-border-color);
+}
+
 :global(.dirty.input-group > .input-group-text),
 :global(.dirty) {
 	--bs-tertiary-bg: var(--cst-dirty-bg);

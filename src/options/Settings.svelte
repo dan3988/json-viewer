@@ -176,11 +176,11 @@
 		<span class="input-group-text">Menu Alignment</span>
 		<Radio class="flex-fill btn btn-cust-light" items={radioMenuAlign} bind:value={$menuAlign.value}></Radio>
 	</div>
-	<div class="input-group grp-theme" role="group" class:dirty={$darkMode.changed}>
+	<div class="input-group hoverable-radio grp-theme" role="group" class:dirty={$darkMode.changed}>
 		<span class="input-group-text">Theme</span>
 		<Radio class="flex-fill btn btn-cust-light" items={radioTheme} bind:value={$darkMode.value}/>
 	</div>
-	<div class="input-group grp-mimes list" class:dirty={$mimes.changed}>
+	<div class="input-group hoverable-radio grp-mimes list" class:dirty={$mimes.changed}>
 		<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." validator={mimeValidator} bind:items={$mimes.value}/>
 	</div>
 	<div class="input-group grp-whitelist list" class:dirty={$whitelist.changed}>
