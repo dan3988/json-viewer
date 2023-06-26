@@ -132,11 +132,11 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 @include scheme-lt("default", #000000, #0000ff, #a31515, #098658, $base: #fafafa);
 @include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $base: #1f1f1f);
 
-@include scheme-lt("dracula", #e60073, #bf95f9, #bec757, #1fc749, $base: #f1f1f4, $indents: (hsl(60, 30%, 4%), hsl(326, 100%, 54%), hsl(191, 97%, 57%), hsl(135, 94%, 45%), hsl(265, 89%, 58%), hsl(31, 100%, 51%))) {
+@include scheme-lt("dracula", #e60073, #bf95f9, #bec757, #1fc749, $text: #0d0d08, $base: #f1f1f4, $indents: (hsl(60, 30%, 4%), hsl(326, 100%, 54%), hsl(191, 97%, 57%), hsl(135, 94%, 45%), hsl(265, 89%, 58%), hsl(31, 100%, 51%))) {
 	@include primary(#e60073, 5%);
 }
 
-@include scheme-dk("dracula", #ff79c6, #bd93f9, #f1fa8c, #50fa7b, $base: #272935, $indents: (#f8f8f2, #ff79c6, #8be9fd, #50fa7b, #bd93f9, #ffb86c)) {
+@include scheme-dk("dracula", #ff79c6, #bd93f9, #f1fa8c, #50fa7b, $text: #f8f8f2, $base: #272935, $indents: (#f8f8f2, #ff79c6, #8be9fd, #50fa7b, #bd93f9, #ffb86c)) {
 	@include primary(#e60073, -10%);
 }
 
@@ -148,7 +148,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	}
 }
 
-@include scheme-dk("mat", #c792ea, #82aaff, #c3e88d, #f78c6c, $base: #263238, $indents: (#c792ea, #ffcb6b, #f78c6c, #ff5370, #c17e70, #82aaff)) {
+@include scheme-dk("mat", #c792ea, #82aaff, #c3e88d, #f78c6c, $text: #e1e7ea, $base: #263238, $indents: (#c792ea, #ffcb6b, #f78c6c, #ff5370, #c17e70, #82aaff)) {
 	@include primary(#3d8f87, -10%);
 
 	:global(.btn-primary) {
@@ -160,7 +160,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#6688cc, 5%);
 }
 
-@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $base: #000d1a) {
+@include scheme-dk("abyss", #6688cc, #f280d0, #22aa44, #f280d0, $text: #b3c4e6, $base: #000d1a) {
 	@include primary(#8800cc, -10%);
 }
 
