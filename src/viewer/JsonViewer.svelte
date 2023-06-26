@@ -26,7 +26,7 @@
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
-	let menuShown = false;
+	let menuShown = true;
 	let menuC: JsonMenu;
 	let menu: HTMLElement;
 	let prop: HTMLElement;
@@ -352,5 +352,5 @@
 	<div class="w-menu" bind:this={menu}>
 		<JsonMenu {model} bind:this={menuC}/>
 	</div>
-	<button class="menu-btn btn btn-primary rounded-circle" on:click={() => menuShown = true}></button>
+	<button class="menu-btn btn btn-primary rounded-circle" title="Open Menu" on:click={() => menuShown = true}></button>
 </div>
