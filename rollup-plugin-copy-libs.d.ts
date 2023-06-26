@@ -11,6 +11,7 @@ export interface WatchBase<Mode extends string> {
 export interface WatchDir extends WatchBase<"dir"> {
 	include?: string[];
 	exclude?: string[];
+	output?: string;
 }
 
 /**

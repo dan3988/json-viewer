@@ -34,12 +34,13 @@ async function loadExtension() {
 	for (const key in gsIcons)
 		gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
-	function injectPopup(tabId: number, frameId: undefined | number) {
-		return inject(tabId, frameId, "lib/content.js");
+	function injectPopup(target: chrome.scripting.InjectionTarget) {
+		return inject(target, true, "lib/content.js");
 	}
 
-	function injectViewer(tabId: number, frameId: undefined | number) {
-		return inject(tabId, frameId, "res/ffstub.js", lib.json5, "lib/viewer.js");
+	function injectViewer(target: chrome.scripting.InjectionTarget) {
+		return inject(target, false, "lib/messaging.js")
+			.then(() => inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js"));
 	}
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
@@ -74,24 +75,31 @@ async function loadExtension() {
 						autoload = bag.whitelist.includes(url.host);
 					}
 
+					const target = getTarget(tabId, sender.frameId);
 					const fn = autoload ? injectViewer : injectPopup;
-					fn(tabId, sender.frameId).then(respond);
+					fn(target).then(respond);
 					return true;
 				}
 				break;
-			case "loadme":
-				injectViewer(tabId, sender.frameId).then(respond);
+			case "loadme": {
+				const target = getTarget(tabId, sender.frameId);
+				injectViewer(target).then(respond);
 				return true;
+			}
 		}
 	});
 }
 
-async function inject(tabId: number, frameId: number | undefined, ...files: string[]) {
-	const target = { tabId, frameIds: frameId == undefined ? undefined : [frameId] };
+function getTarget(tabId: number, frameId: number | undefined): chrome.scripting.InjectionTarget {
+	const frameIds = frameId == null ? undefined : [frameId];
+	return { tabId, frameIds };
+}
+
+async function inject(target: chrome.scripting.InjectionTarget, isolated: boolean, ...files: string[]) {
 	const result = await chrome.scripting.executeScript({
 		target,
 		files,
-		world: "ISOLATED"
+		world: isolated ? "ISOLATED" : "MAIN"
 	});
 
 	return result[0].result;

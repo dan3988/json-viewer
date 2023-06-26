@@ -163,18 +163,6 @@ function loader(args) {
 	
 	/** @type {rl.RollupOptions[]} */
 	const configs = [
-		{
-			input: "src/content-script/content.js",
-			output: {
-				indent,
-				sourcemap: !dist,
-				format: 'cjs',
-				file: path.join(lib, 'content-script.js')
-			},
-			watch: {
-				clearScreen: false
-			}
-		},
 		svelteConfig("src/content", "content.ts", "content"),
 		svelteConfig("src/viewer", "viewer.ts", "viewer"),
 		svelteConfig("src/options", "options.ts", "options", "esm"),
@@ -220,6 +208,12 @@ function loader(args) {
 						{
 							mode: "dir",
 							path: "res"
+						},
+						{
+							mode: "dir",
+							path: "src/content-scripts",
+							include: "*.js",
+							output: "lib"
 						}
 					],
 					archive: dist && {

@@ -7,6 +7,10 @@ import JsonViewer from "./JsonViewer.svelte";
 import { JsonProperty } from "../json"
 import { ViewerModel } from "../viewer-model";
 
+async function setGlobal(key: string, value: any) {
+	window.postMessage({ type: "globalSet", key, value });
+}
+
 function run() {
 	try {
 		const lib = typeof JSON5 === "undefined" ? JSON : JSON5;
@@ -14,11 +18,14 @@ function run() {
 		if (pre == null)
 			throw "Could not find JSON element.";
 	
-		pre.remove();
 		const json = lib.parse(pre.innerText);
+		setGlobal("json", json);
+		pre.remove();
+
 		const root = JsonProperty.create(json);
 		const model = new ViewerModel(root);
 		root.expanded = true;
+		
 	
 		function suppressPush(fn: Fn): any
 		function suppressPush<T, R>(fn: Fn<[], void, T>, thisArg: T): R

@@ -25,16 +25,16 @@ function copyFiles(inputs, outDir, watch, log) {
 	const dispose = [];
 
 	for (const input of inputs) {
-		const dirName = path.relative(".", input.path);
 		if (input.mode === "dir") {
-			const filter = createFilter(input.include, input.exclude, {
+			const { include, exclude, output = path.relative(".", input.path) } = input;
+			const filter = createFilter(include, exclude, {
 				resolve: false
 			});
 
 			for (const file of fs.readdirSync(input.path)) {
 				if (filter(file)) {
 					const src = path.join(input.path, file);
-					const dst = path.join(outDir, dirName, file);
+					const dst = path.join(outDir, output, file);
 					fs.cpSync(src, dst, r);
 				}
 			}
@@ -44,7 +44,7 @@ function copyFiles(inputs, outDir, watch, log) {
 					if (filter(file)) {
 						log && log`{greenBright File ${event}} {green "${input.path}"} {yellow "${file}"}`;
 						const src = path.join(input.path, file);
-						const dst = path.join(outDir, dirName, file);
+						const dst = path.join(outDir, output, file);
 						if (!fs.existsSync(src)) {
 							fs.rmSync(dst, r);
 						} else {
