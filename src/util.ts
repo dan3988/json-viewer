@@ -47,7 +47,7 @@ class JsonValueRenderer extends AbstractRenderer<any> {
 		} else {
 			if (value.startsWith("http://") || value.startsWith("https://")) {
 				const a = document.createElement("a");
-				const text = JSON.stringify(value);
+				const text = JSON.stringify(value).slice(1, -1);
 				a.href = value;
 				a.textContent = text;
 				a.target = "_blank";
