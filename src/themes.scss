@@ -172,6 +172,14 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#75715e, -10%);
 }
 
+@include scheme-lt("github", #cf222e, #005cc5, #032f62, #6f42c1, $base: #ffffff, $indents: (#005cc5, #5a32a3, #e36209)) {
+	@include primary(#159739, 5%);
+}
+
+@include scheme-dk("github", #f97583, #79b8ff, #9ecbff, #b392f0, $text: #d1d5da, $base: #24292e, $indents: (#79b8ff, #ffab70, #b392f0)) {
+	@include primary(#176f2c, -10%);
+}
+
 $terminal-base: #3D6;
 $terminal-secondary: #8f8;
 
