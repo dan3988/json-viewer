@@ -164,14 +164,28 @@
 	onMount(() => prop.focus());
 
 	function resizeBegin(startPos: number, startSize: number, evtProp: "x" | "y", styleProp: string, direction: number = 1) {
-		const handler = function(evt: MouseEvent) {
+		function onMove(evt: MouseEvent) {
 			const pos = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
 			menuShown = pos >= 150;
 			menu.style[styleProp] = pos + "px";
 		}
 
-		document.addEventListener("mousemove", handler);
-		document.addEventListener("mouseup", () => document.removeEventListener("mousemove", handler), { once: true });
+		function onEnd(evt: MouseEvent) {
+			document.removeEventListener("mousemove", onMove);
+
+			let size: string | number = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
+			if (size < 150) {
+				const v = menu.getAttribute("data-remember-" + evtProp);
+				if (v != null)
+					menu.style[styleProp] = v + "px";
+			} else {
+				menu.setAttribute("data-remember-" + evtProp, String(size));
+				menu.style[styleProp] = size + "px";
+			}
+		}
+
+		document.addEventListener("mousemove", onMove);
+		document.addEventListener("mouseup", onEnd, { once: true });
 	}
 
 	function onGrabberHMouseDown(evt: MouseEvent) {
