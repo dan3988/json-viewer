@@ -1,6 +1,10 @@
 <script lang="ts" context="module">
 	import type { ListValidator } from "./ListEditor.svelte";
 	import type { NamedRadioItem } from "./Radio.svelte";
+	import themes from "../json-themes.json";
+
+	type ThemesType = typeof themes;
+	type Theme = { [P in keyof ThemesType as string]: ThemesType[P] }
 
 	class SettingListValidator implements ListValidator {
 		readonly #validation: [] | [RegExp, string];
@@ -36,7 +40,6 @@
 	import type ThemeTracker from "../theme-tracker";
 	import settings from "../settings";
 	import { onDestroy, onMount } from "svelte";
-	import themes from "../json-themes.json";
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
@@ -46,25 +49,20 @@
 	export let tracker: ThemeTracker;
 
 	let showPreview = false;
-	let unsub: Action;
-	let schemeUnsub: Action;
 
 	onMount(() => {
-		unsub = model.props.darkMode.subscribe(v => tracker.preferDark = v.value);
 		model.addListener(onModelChange);
 	});
 
 	onDestroy(() => {
-		unsub();
-		schemeUnsub?.();
 		model.removeListener(onModelChange);
 	});
 
 	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign } = model.props);
 	$: currentScheme = themes[$scheme.value];
 	$: {
-		schemeUnsub?.();
-		schemeUnsub = scheme.subscribe(v => document.documentElement.dataset["scheme"] = v.value);
+		tracker.preferDark = $darkMode.value;
+		document.documentElement.dataset["scheme"] = $scheme.value;
 	}
 
 	function onModelChange(this: EditorModel) {
