@@ -1,10 +1,9 @@
 <script lang="ts" context="module">
 	import type { ListValidator } from "./ListEditor.svelte";
 	import type { NamedRadioItem } from "./Radio.svelte";
+	import Linq from "@daniel.pickett/linq-js";
 	import themes from "../json-themes.json";
-
-	type ThemesType = typeof themes;
-	type Theme = { [P in keyof ThemesType as string]: ThemesType[P] }
+	import themeModes, { getValueByMode, type Scheme } from "../scheme-modes";
 
 	class SettingListValidator implements ListValidator {
 		readonly #validation: [] | [RegExp, string];
@@ -29,6 +28,14 @@
 		}
 	}
 
+	const groupedThemes = Linq.fromObject(themes)
+		.select(([id, { mode, name }]) => ({ id, mode, name }))
+		.orderBy(v => v.name)
+		.groupBy(v => v.mode)
+		.orderBy(v => v.key)
+		.select(v => [themeModes[v.key][1], Linq(v).select(({ id, name }) => [id, name] as const).toArray()] as const)
+		.toArray();
+
 	const mimeValidator = new SettingListValidator();
 	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
 
@@ -50,6 +57,10 @@
 
 	let showPreview = false;
 
+	function updateTheme(scheme: Scheme, userPref: null | boolean) {
+		tracker.preferDark = getValueByMode(scheme.mode, userPref);
+	}
+
 	onMount(() => {
 		model.addListener(onModelChange);
 	});
@@ -61,7 +72,7 @@
 	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign } = model.props);
 	$: currentScheme = themes[$scheme.value];
 	$: {
-		tracker.preferDark = $darkMode.value;
+		updateTheme(currentScheme, $darkMode.value);
 		document.documentElement.dataset["scheme"] = $scheme.value;
 	}
 
@@ -86,7 +97,7 @@
 		canSave = false;
 	}
 
-	let canSave = false;	
+	let canSave = false;
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
@@ -109,7 +120,7 @@
 	}
 
 	.input-group-text {
-		flex: 0 0 9rem;
+		flex: 0 0 9.5rem;
 	}
 
 	.grp-theme > .btn {
@@ -199,8 +210,12 @@
 	<div class="input-group grp-json-style">
 		<span class="input-group-text">Colour Scheme</span>
 		<select class="form-select flex-fill" class:dirty={$scheme.changed} bind:value={$scheme.value}>
-			{#each Object.entries(themes) as [id, [name]]}
-				<option value={id}>{name}</option>
+			{#each groupedThemes as [ label, themes ]}
+				<optgroup {label}>
+					{#each themes as [ id, name ]}
+						<option value={id}>{name}</option>
+					{/each}
+				</optgroup>
 			{/each}
 		</select>
 	</div>

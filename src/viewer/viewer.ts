@@ -2,6 +2,7 @@
 
 import settings from "../settings";
 import themes from "../json-themes.json";
+import { getValue } from "../scheme-modes";
 import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
 import { JsonProperty } from "../json"
@@ -17,7 +18,7 @@ function run() {
 		const pre = document.querySelector("body > pre") as null | HTMLPreElement;
 		if (pre == null)
 			throw "Could not find JSON element.";
-	
+
 		const json = lib.parse(pre.innerText);
 		setGlobal("json", json);
 		pre.remove();
@@ -25,8 +26,7 @@ function run() {
 		const root = JsonProperty.create(json);
 		const model = new ViewerModel(root);
 		root.expanded = true;
-		
-	
+
 		function suppressPush(fn: Fn): any
 		function suppressPush<T, R>(fn: Fn<[], void, T>, thisArg: T): R
 		function suppressPush(fn: Function, thisArg?: any) {
@@ -49,7 +49,7 @@ function run() {
 		
 			return parts.join("\\");
 		}
-		
+
 		function decodePath(path: string): string[] {
 			const parts: string[] = ["$"];
 			for (let part of path.split("\\")) {
@@ -60,7 +60,7 @@ function run() {
 		
 			return parts;
 		}
-	
+
 		function pushHistory(v: JsonProperty) {
 			if (v != null && !popping)
 				history.pushState(v.path, "", "#" + encodePath(v.path));
@@ -68,7 +68,7 @@ function run() {
 
 		async function loadAsync() {
 			const bag = await settings.get("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign");
-			const tracker = new ThemeTracker(document.documentElement, bag.darkMode);
+			const tracker = new ThemeTracker(document.documentElement, getValue(bag.scheme, bag.darkMode));
 	
 			if (bag.useHistory)
 				model.bag.readables.selected.subscribe(pushHistory);
@@ -76,9 +76,7 @@ function run() {
 			let indent = bag.indentChar.repeat(bag.indentCount);
 		
 			settings.addListener(({ changes }) => {
-				if (changes.darkMode)
-					tracker.preferDark = changes.darkMode.newValue;
-	
+				let updateTracker = false;
 				let props: any = {};
 				let changeCount = 0;
 				let changeIndent = false;
@@ -86,7 +84,7 @@ function run() {
 					changeCount++;
 					bag.indentChar = changes.indentChar.newValue;
 				}
-		
+
 				if (changes.indentCount) {
 					changeCount++;
 					bag.indentCount = changes.indentCount.newValue;
@@ -96,18 +94,28 @@ function run() {
 					changeCount++;
 					props.indent = indent = bag.indentChar.repeat(bag.indentCount);
 				}
-	
-				if (changes.scheme) {
-					const scheme = changes.scheme.newValue;
-					changeCount++;
-					props.scheme = scheme;
-					props.indentCount = themes[scheme][1];
-				}
-	
+
 				if (changes.menuAlign) {
 					changeCount++;
 					props.menuAlign = changes.menuAlign.newValue;
 				}
+	
+				if (changes.darkMode) {
+					bag.darkMode = changes.darkMode.newValue;
+					updateTracker = true;
+				}
+
+				if (changes.scheme) {
+					bag.scheme = changes.scheme.newValue;
+					const scheme = changes.scheme.newValue;
+					changeCount++;
+					props.scheme = scheme;
+					props.indentCount = themes[scheme][1];
+					updateTracker = true;
+				}
+
+				if (updateTracker)
+					tracker.preferDark = getValue(bag.scheme, bag.darkMode);
 	
 				if (changeCount)
 					viewer.$set(props);

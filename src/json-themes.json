@@ -1,9 +1,37 @@
 {
-	"default": ["Visual Studio", 3],
-	"dracula": ["Dracula", 6],
-	"abyss": ["Abyss", 3],
-	"mat": ["Material", 6],
-	"monokai": ["Monokai", 3],
-	"github": ["GitHub", 3],
-	"terminal": ["Matrix", 3]
+	"default": {
+		"name": "Visual Studio",
+		"indents": 3,
+		"mode": "auto"
+	},
+	"dracula": {
+		"name": "Dracula",
+		"indents": 6,
+		"mode": "auto"
+	},
+	"abyss": {
+		"name": "Abyss",
+		"indents": 3,
+		"mode": "dark"
+	},
+	"mat": {
+		"name": "Material",
+		"indents": 6,
+		"mode": "auto"
+	},
+	"monokai": {
+		"name": "Monokai",
+		"indents": 3,
+		"mode": "auto"
+	},
+	"github": {
+		"name": "GitHub",
+		"indents": 3,
+		"mode": "auto"
+	},
+	"terminal": {
+		"name": "Matrix",
+		"indents": 3,
+		"mode": "dark"
+	}
 }

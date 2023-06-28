@@ -8,6 +8,8 @@ declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 
 type UntilNever<T extends any[], Prev extends any[] = []> = T extends [never, ...any[]] ? Prev : (T extends [infer Start, ...infer Rest] ? UntilNever<Rest, [...Prev, Start]> : Prev);
 
+declare type Expand<T> = { [P in keyof T]: T[P] };
+
 declare type Dict<T = any> = Record<string, T>;
 
 declare var JSON5: typeof import("json5");
