@@ -1,5 +1,5 @@
 /// <reference path="../../node_modules/json5/lib/index.d.ts" />
-
+import "../dom-extensions";
 import settings from "../settings";
 import themes from "../json-themes.json";
 import { getValue } from "../scheme-modes";

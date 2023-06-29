@@ -440,7 +440,7 @@
 				selection.deleteFromDocument();
 		}
 
-		const unsub = dom.subscribe(target, {
+		const unsub = target.subscribe({
 			keydown(evt) {
 				if (evt.keyCode === 17 || evt.keyCode === 16)
 					return;
@@ -520,7 +520,7 @@
 						const v = tryResolve(el.parentElement, true);
 						if (v) {
 							evt.preventDefault();
-							window.addEventListener("mouseup", (e) => e.target == target && model.setSelected(v, false, true), { once: true })
+							window.once("mouseup", e => e.target == target && model.setSelected(v, false, true));
 						}
 					}
 				}

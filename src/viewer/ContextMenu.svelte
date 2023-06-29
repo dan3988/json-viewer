@@ -109,15 +109,16 @@
 	export let items: ArrayLike<MenuItem>;
 
 	let dispatcher: ReturnType<typeof createEventDispatcher<EventMap>> = getContext(nestedKey);
-	let isNested = dispatcher == null;
-	if (isNested) {
+	let isRoot = dispatcher == null;
+	if (isRoot) {
 		dispatcher = createEventDispatcher();
-		window.addEventListener("click", onWindowClick);
-		window.addEventListener("auxclick", onWindowClick);
-		onDestroy(() => {
-			window.removeEventListener("click", onWindowClick);
-			window.removeEventListener("auxclick", onWindowClick);
+
+		const unsub = document.subscribe({
+			click: onWindowClick,
+			auxclick: onWindowClick
 		});
+
+		onDestroy(unsub);
 	}
 
 	setContext(nestedKey, dispatcher);
@@ -126,11 +127,8 @@
 	let elem: HTMLElement;
 
 	function onWindowClick(evt: MouseEvent) {
-		if (!dom.isDescendant(evt.target as any, elem)) {
-			window.removeEventListener("click", onWindowClick);
-			window.removeEventListener("auxclick", onWindowClick);
+		if (!dom.isDescendant(evt.target as any, elem))
 			dispatcher("closed");
-		}
 	}
 
 	function invoke(action: MenuAction["action"]) {
@@ -144,15 +142,14 @@
 			return;
 
 		const id = setTimeout(onDelay, 500);
-
-		target.addEventListener("mouseleave", onMouseLeave);
+		const unsub = target.subscribe("mouseleave", onMouseLeave);
 
 		function onMouseLeave() {
 			clearTimeout(id);
 		}
 		
 		function onDelay() {
-			target!.removeEventListener("mouseleave", onMouseLeave);
+			unsub();
 			sub = index;
 		}
 	}

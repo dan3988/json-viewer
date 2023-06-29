@@ -48,7 +48,7 @@
 		} catch (e) {
 			jpath.setCustomValidity(e.message);
 			jpath.reportValidity();
-			jpath.addEventListener("input", clearValidation, { once: true });
+			jpath.once("input", clearValidation);
 			jpathResults = [];
 			console.error(e);
 		}

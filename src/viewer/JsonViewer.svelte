@@ -171,7 +171,7 @@
 		}
 
 		function onEnd(evt: MouseEvent) {
-			document.removeEventListener("mousemove", onMove);
+			document.off("mousemove", onMove);
 
 			let size: string | number = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
 			if (size < 150) {
@@ -184,8 +184,8 @@
 			}
 		}
 
-		document.addEventListener("mousemove", onMove);
-		document.addEventListener("mouseup", onEnd, { once: true });
+		document.on("mousemove", onMove);
+		document.once("mouseup", onEnd);
 	}
 
 	function onGrabberHMouseDown(evt: MouseEvent) {

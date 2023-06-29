@@ -56,13 +56,6 @@ const cfBackward: CaretFinder = {
 	}
 }
 
-type HandlersType<T> = { [K in keyof HTMLElementEventMap]?: Fn<[evt: HTMLElementEventMap[K]], void, T> };
-
-function unsubscribe(this: HTMLElement, entries: [key: string, value: Fn][]): void {
-	for (var [key, value] of entries)
-		this.removeEventListener(key, value);
-}
-
 export namespace dom {
 	export function getSelectionFor(element: HTMLElement): null | Selection {
 		const selection = window.getSelection();
@@ -88,16 +81,7 @@ export namespace dom {
 		selection.addRange(range);
 		return range;
 	}
-	
-	export function subscribe<T extends HTMLElement>(target: T, handlers: HandlersType<T>): () => void {
-		const entries = Object.entries(handlers);
-	
-		for (var [key, value] of entries)
-			target.addEventListener(key, value);
-	
-		return unsubscribe.bind(target, entries);
-	}
-	
+
 	export function isDescendant(self: Element, parent: Element) {
 		while (true) {
 			const next = self.parentElement;
