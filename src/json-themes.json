@@ -29,6 +29,11 @@
 		"indents": 3,
 		"mode": "auto"
 	},
+	"cyberpunk": {
+		"name": "Cyberpunk",
+		"indents": 3,
+		"mode": "dark"
+	},
 	"terminal": {
 		"name": "Matrix",
 		"indents": 3,

@@ -176,6 +176,28 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#176f2c, -10%);
 }
 
+@include scheme-base("cyberpunk", null, #ff0055, #d57bff, #76c1ff, #fffc58, $text: #ff0055, $border: #80002f, $body: #110019, $tertiary: #110019, $secondary: #330013, $indents: (#ff00d5, #55cc00, #00d5ff)) {
+	--checkbox-bg-color: #ff0055;
+	--checkbox-border-color: #ff0055;
+	--focus-shadow-color: #ff00aa40;
+	--focus-border-color: #ff00aa;
+	--bs-link-color: #ff0055;
+
+	@include bs-colors2("cst-dirty", "bg", hsl(320, 100%, 10%), hsl(320, 100%, 50%), 20%, 50%, #000);
+	@include bs-colors2("cst-dirty", "color", hsl(320, 100%, 50%), hsl(320, 100%, 70%), 50%, 100%, #595);
+	@include bs-colors2("cst-dirty", "border-color", hsl(320, 100%, 30%), hsl(320, 100%, 70%), 50%, 100%, #ff0055);
+
+	@include bs-colors2("cst-btn", "bg", #110019, #ff0055, 25%, 50%, #111);
+	@include bs-colors2("cst-btn", "color", #ff0055, #ff0055, 50%, 100%, #ff0055);
+	@include bs-colors2("cst-btn", "border-color", #80002f, #ff0055, 50%, 100%, #ff0055);
+
+	:global(.btn-primary) {
+		@include bs-colors2("bs-btn", "bg", #4d001c, #ff0055, 20%, 40%, #110019);
+		@include bs-colors2("bs-btn", "color", #ff0055, #fff, 10%, 20%, #80002a);
+		@include bs-colors2("bs-btn", "border-color", #80002f, #ff0055, 50%, 100%, #80002a);
+	}
+}
+
 $terminal-base: #3D6;
 $terminal-secondary: #8f8;
 
@@ -192,8 +214,6 @@ $terminal-secondary: #8f8;
 	@include bs-colors2("cst-btn", "bg", #000, #3D6, 15%, 30%, #111);
 	@include bs-colors2("cst-btn", "color", #0c0, #3D6, 50%, 100%, #595);
 	@include bs-colors2("cst-btn", "border-color", #0c0, #3D6, 50%, 100%, #595);
-
-	color-scheme: dark;
 
 	:global(.btn-primary) {
 		@include bs-colors2("bs-btn", "bg", #000, $terminal-base, 15%, 30%, #111);
