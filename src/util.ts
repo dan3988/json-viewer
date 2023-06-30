@@ -65,7 +65,7 @@ export function renderValue(target: HTMLElement, value: any): Renderer {
 
 function appendSpan(parent: HTMLElement, className: string, text: string, start?: number, end?: number) {
 	const span = document.createElement("span");
-	span.textContent = start == null ? text : text.substring(start, end);
+	span.textContent = start == null ? text : text.slice(start, end);
 	span.className = className;
 	parent.appendChild(span);
 	return span;
@@ -82,7 +82,7 @@ function renderEscapedText(target: HTMLElement, value: string) {
 	while (true) {
 		let next = json.indexOf("\\", i);
 		if (next < 0) {
-			appendSpan(target, "", json, last, json.length - 1);
+			appendSpan(target, "", json, last, -1);
 			appendSpan(target, "quot", "\"");
 			break;
 		} else {
