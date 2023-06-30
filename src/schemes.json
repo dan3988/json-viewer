@@ -38,5 +38,10 @@
 		"name": "Matrix",
 		"indents": 3,
 		"mode": "dark"
+	},
+	"solarized": {
+		"name": "Solarized",
+		"indents": 3,
+		"mode": "auto"
 	}
 }

@@ -146,7 +146,9 @@ function loader(args) {
 					sourceMap: !dist,
 					inlineSources: !dist
 				}),
-				json(),
+				json({
+					preferConst: true
+				}),
 				dist && terser({
 					format: {
 						ascii_only: true

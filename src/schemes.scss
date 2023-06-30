@@ -176,6 +176,14 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#176f2c, -10%);
 }
 
+@include scheme-lt("solarized", rgb(133, 153, 0), rgb(181, 137, 0), rgb(42, 161, 152), rgb(211, 54, 130), $text: #657b83, $base: #fdf6e3, $indents: (#0431fa, #319331, #7b3814)) {
+	@include primary(#ac9d57, 5%);
+}
+
+@include scheme-dk("solarized", #859900, #b58900, #2aa198, #d33682, $text: #839496, $base: #002b36, $indents: (#cdcdcd, #b58900, #d33682)) {
+	@include primary(#2aa198, -10%);
+}
+
 @include scheme-base("cyberpunk", null, #ff0055, #d57bff, #76c1ff, #fffc58, $text: #ff0055, $border: #80002f, $body: #110019, $tertiary: #110019, $secondary: #330013, $indents: (#ff00d5, #55cc00, #00d5ff)) {
 	--checkbox-bg-color: #ff0055;
 	--checkbox-border-color: #ff0055;
