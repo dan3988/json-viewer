@@ -1,6 +1,6 @@
 @use "./core.scss" as core;
 @use "sass:color";
-@import "./themes.scss";
+@import "./schemes.scss";
 
 @function toRGB($hex) {
 	@return red($hex) + "," + green($hex) + "," + blue($hex);

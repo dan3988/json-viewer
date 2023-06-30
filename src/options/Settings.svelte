@@ -2,8 +2,8 @@
 	import type { ListValidator } from "./ListEditor.svelte";
 	import type { NamedRadioItem } from "./Radio.svelte";
 	import Linq from "@daniel.pickett/linq-js";
-	import themes from "../json-themes.json";
-	import themeModes, { getValueByMode, type Scheme } from "../scheme-modes";
+	import schemes from "../schemes.json";
+	import schemeModes, { getValueByMode, type Scheme } from "../scheme-modes";
 
 	class SettingListValidator implements ListValidator {
 		readonly #validation: [] | [RegExp, string];
@@ -28,12 +28,12 @@
 		}
 	}
 
-	const groupedThemes = Linq.fromObject(themes)
+	const groupedSchemes = Linq.fromObject(schemes)
 		.select(([id, { mode, name }]) => ({ id, mode, name }))
 		.orderBy(v => v.name)
 		.groupBy(v => v.mode)
 		.orderBy(v => v.key)
-		.select(v => [themeModes[v.key][1], Linq(v).select(({ id, name }) => [id, name] as const).toArray()] as const)
+		.select(v => [schemeModes[v.key][1], Linq(v).select(({ id, name }) => [id, name] as const).toArray()] as const)
 		.toArray();
 
 	const mimeValidator = new SettingListValidator();
@@ -70,7 +70,7 @@
 	});
 
 	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign } = model.props);
-	$: currentScheme = themes[$scheme.value];
+	$: currentScheme = schemes[$scheme.value];
 	$: {
 		updateTheme(currentScheme, $darkMode.value);
 		document.documentElement.dataset["scheme"] = $scheme.value;
@@ -125,10 +125,6 @@
 
 	.grp-theme > .btn {
 		flex: 1 1 0px;
-
-		&.active {
-			z-index: 3;
-		}
 	}
 
 	.grp-preview {
@@ -210,7 +206,7 @@
 	<div class="input-group grp-json-style">
 		<span class="input-group-text">Colour Scheme</span>
 		<select class="form-select flex-fill" class:dirty={$scheme.changed} bind:value={$scheme.value}>
-			{#each groupedThemes as [ label, themes ]}
+			{#each groupedSchemes as [ label, themes ]}
 				<optgroup {label}>
 					{#each themes as [ id, name ]}
 						<option value={id}>{name}</option>

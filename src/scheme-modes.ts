@@ -1,19 +1,19 @@
-import themes from "./json-themes.json";
+import schemes from "./schemes.json";
 
 const _modes = {
-	auto: [null, "Auto"] as const,
+	auto: [null, "Light/Dark"] as const,
 	light: [false, "Light Only"] as const,
 	dark: [true, "Dark Only"] as const
 }
 
-export type ThemesType = typeof themes;
-export type Scheme = Expand<ThemesType[keyof ThemesType]>;
+export type SchemesType = typeof schemes;
+export type Scheme = Expand<SchemesType[keyof SchemesType]>;
 
 type KnownModes = typeof _modes;
 type ModeTypes = KnownModes & Dict<readonly [null | boolean, string]>;
 
 export function getValue(scheme: string, userPref: null | boolean) {
-	const schemeValue = (themes as Dict<Scheme>)[scheme] ?? themes.default;
+	const schemeValue = (schemes as Dict<Scheme>)[scheme] ?? schemes.default;
 	return getValueByMode(schemeValue.mode, userPref);
 }
 

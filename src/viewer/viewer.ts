@@ -1,7 +1,7 @@
 /// <reference path="../../node_modules/json5/lib/index.d.ts" />
 import "../dom-extensions";
 import settings from "../settings";
-import themes from "../json-themes.json";
+import schemes from "../schemes.json";
 import { getValue } from "../scheme-modes";
 import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
@@ -110,7 +110,7 @@ function run() {
 					const scheme = changes.scheme.newValue;
 					changeCount++;
 					props.scheme = scheme;
-					props.indentCount = themes[scheme][1];
+					props.indentCount = schemes[scheme][1];
 					updateTracker = true;
 				}
 
@@ -129,7 +129,7 @@ function run() {
 					indent,
 					scheme: bag.scheme,
 					menuAlign: bag.menuAlign,
-					indentCount: themes[bag.scheme].indents
+					indentCount: schemes[bag.scheme].indents
 				}
 			});
 		}
