@@ -46,10 +46,10 @@ function copyFiles(inputs, outDir, watch, log) {
 						log && log`{greenBright File ${event}} {green "${input.path}"} {yellow "${file}"}`;
 						const src = path.join(input.path, file);
 						const dst = path.join(outDir, output, file);
-						if (!fs.existsSync(src)) {
-							fs.rmSync(dst, r);
-						} else {
+						if (fs.existsSync(src)) {
 							fs.cpSync(src, dst, r);
+						} else if (fs.existsSync(dst)) {
+							fs.rmSync(dst, r);
 						}
 					}
 				});
