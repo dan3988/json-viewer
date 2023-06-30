@@ -129,7 +129,7 @@ function run() {
 					indent,
 					scheme: bag.scheme,
 					menuAlign: bag.menuAlign,
-					indentCount: themes[bag.scheme][1]
+					indentCount: themes[bag.scheme].indents
 				}
 			});
 		}
