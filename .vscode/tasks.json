@@ -27,6 +27,14 @@
 			"type": "npm",
 			"script": "build (${input:browser})",
 			"group": "build"
+		},
+		{
+			"label": "File Server",
+			"type": "npm",
+			"script": "file-server",
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
 		}
 	]
 }
