@@ -14,6 +14,20 @@ const bi = { bigint: true };
 /** @typedef {[path: string, mtimeMs: bigint, watch: fs.StatWatcher]} FileInfo */
 
 /**
+ * @param {LogImpl} log 
+ * @param {keyof import("fs")} key
+ * @param {number} ix
+ */
+function safeOp(log, key, ix, ...args) {
+	function callback(err) {
+		err && log && log`{red ${key} call failed for \"${args[ix]}\" - ${err}}`;
+	}
+
+	args.push(callback);
+	fs[key].apply(fs, args);
+}
+
+/**
  * @param {import("./rollup-plugin-copy-libs").WatchInit[]} inputs 
  * @param {string} outDir 
  * @param {boolean} watch 
@@ -47,9 +61,9 @@ function copyFiles(inputs, outDir, watch, log) {
 						const src = path.join(input.path, file);
 						const dst = path.join(outDir, output, file);
 						if (fs.existsSync(src)) {
-							fs.cpSync(src, dst, r);
+							safeOp(log, "cp", 0, src, dst, r);
 						} else if (fs.existsSync(dst)) {
-							fs.rmSync(dst, r);
+							safeOp(log, "rm", 0, dst, r);
 						}
 					}
 				});
@@ -75,7 +89,7 @@ function copyFiles(inputs, outDir, watch, log) {
 						const resolved = path.join(outDir, file);
 						const watcher = watch && fs.watchFile(file, bi, (stat) => {
 							log && log`{greenBright File change} {green "${input.path}"} {yellow "${file}"}`;
-							fs.cpSync(file, fileInfo[0]);
+							safeOp(log, "cp", 0, file, fileInfo[0]);
 							fileInfo[1] = stat.mtimeMs;
 						});
 
@@ -95,7 +109,7 @@ function copyFiles(inputs, outDir, watch, log) {
 				for (const [key, [file, _modif, watch]] of uncopied) {
 					copied.delete(key);
 					watch.unref();
-					fs.rmSync(file);
+					safeOp(log, "rm", 0, file);
 				}
 			}
 
