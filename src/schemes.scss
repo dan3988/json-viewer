@@ -164,7 +164,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#0060C0, 5%);
 }
 
-@include scheme-dk("monokai", #f92672, #ae81ff, #a6e22e, #66d9ef, $text: #f8f8f2, $base: rgb(39, 40, 34)) {
+@include scheme-dk("monokai", #f92672, #ae81ff, #a6e22e, #66d9ef, $text: #f8f8f2, $base: #272822) {
 	@include primary(#75715e, -10%);
 }
 
@@ -176,7 +176,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#176f2c, -10%);
 }
 
-@include scheme-lt("solarized", rgb(133, 153, 0), rgb(181, 137, 0), rgb(42, 161, 152), rgb(211, 54, 130), $text: #657b83, $base: #fdf6e3, $indents: (#0431fa, #319331, #7b3814)) {
+@include scheme-lt("solarized", #859900, #b58900, #2aa198, #d33682, $text: #657b83, $base: #fdf6e3, $indents: (#0431fa, #319331, #7b3814)) {
 	@include primary(#ac9d57, 5%);
 }
 
