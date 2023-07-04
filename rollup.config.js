@@ -116,6 +116,13 @@ function loader(args) {
 							},
 							scss: {
 								functions: {
+									'ext-url($name)': function(name) {
+										if (!(name instanceof sass.types.String))
+											throw "$name: Expected a string";
+
+										const value = `url("${browserInfo.extUrlScheme}://__MSG_@@extension_id__/${name.getValue()}")`;
+										return new sass.types.String(value);
+									},
 									'bs-icon($name)': function(name) {
 										if (!(name instanceof sass.types.String))
 											throw "$name: Expected a string";

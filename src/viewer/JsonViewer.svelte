@@ -20,6 +20,7 @@
 	export let indentCount: number;
 	export let menuAlign: string;
 	export let scheme: string;
+	export let background: string;
 
 	model.command.addListener(onModelCommand);
 
@@ -304,8 +305,16 @@
 	}
 
 	.w-prop {
+		display: grid;
 		grid-area: prop;
+		grid-template-areas: "main";
+		grid-template-rows: 1fr;
+		grid-template-columns: 1fr;
 		position: relative;
+
+		> * {
+			grid-area: main;
+		}
 
 		> .prop-scroll {
 			padding: $pad-small;
@@ -329,6 +338,11 @@
 		display: grid;
 	}
 
+	.editor-bg {
+		pointer-events: none;
+		z-index: -1;
+	}
+
 	.menu-btn {
 		@include bs-icon-btn("list", 5px, "color");
 
@@ -345,11 +359,12 @@
 		<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
-<div class="root bg-body p-1" data-scheme={scheme} data-menu-shown={menuShown} data-menu-align={menuAlign}>
+<div class="root bg-body p-1" data-scheme={scheme} data-menu-shown={menuShown} data-menu-align={menuAlign} data-editor-bg={background}>
 	{#if contextMenu}
 		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
 	{/if}
 	<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
+		<div class="editor-bg h-100 w-100"></div>
 		<div class="prop-scroll overflow-scroll h-100 w-100">
 			<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
 		</div>

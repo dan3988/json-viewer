@@ -69,7 +69,7 @@
 		model.removeListener(onModelChange);
 	});
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign, background } = model.props);
 	$: currentScheme = schemes[$scheme.value];
 	$: {
 		updateTheme(currentScheme, $darkMode.value);
@@ -158,13 +158,34 @@
 		}
 	}
 
+	.preview-wrapper {
+		overflow: hidden;
+		flex: 1 1 0px;
+		position: relative;
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-template-rows: 1fr;
+		grid-template-areas: "main";
+
+		> * {
+			grid-area: main;
+		}
+	}
+
+	.editor-bg {
+		position: absolute;
+		pointer-events: none;
+		inset: 0;
+		z-index: -1;
+	}
+
 	@media only screen and (max-width: 500px) {
 		.base {
 			width: 100%;
 		}
 	}
 </style>
-<div class="base cr d-flex flex-column p-1 gap-1">
+<div class="base cr d-flex flex-column p-1 gap-1" data-editor-bg={$background.value}>
 	<div class="input-group" class:dirty={$enabled.changed}>
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$enabled.value}/>
@@ -203,6 +224,15 @@
 			{/each}
 		</select>
 	</div>
+	<div class="input-group grp-json-bg">
+		<span class="input-group-text">Background</span>
+		<select class="form-select flex-fill" class:dirty={$background.changed} bind:value={$background.value}>
+			<option value="">None</option>
+			<option value="cubes">Cubes</option>
+			<option value="cyber">Cyber</option>
+			<option value="hive">Honeycomb</option>
+		</select>
+	</div>
 	<div class="input-group grp-json-style">
 		<span class="input-group-text">Colour Scheme</span>
 		<select class="form-select flex-fill" class:dirty={$scheme.changed} bind:value={$scheme.value}>
@@ -220,8 +250,11 @@
 			<span class="flex-fill">Preview</span>
 			<span class="expander btn btn-cust-light border-0" on:click={() => showPreview = !showPreview} />
 		</div>
-		<div class="preview-wrapper expandable-content overflow-auto p-1">
-			<ViewerPreview maxIndentClass={currentScheme[1]} />
+		<div class="preview-wrapper expandable-content">
+			<div class="overflow-auto p-1">
+				<ViewerPreview maxIndentClass={currentScheme.indents} />
+			</div>
+			<div class="editor-bg"></div>
 		</div>
 	</div>
 	<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>

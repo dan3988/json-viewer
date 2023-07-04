@@ -107,6 +107,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	--checkbox-border-color: #{$color};
 	--focus-shadow-color: #{change-color($color, $alpha: 0.25)};
 	--focus-border-color: #{adjust-color($color, $lightness: 20%, $saturation: -50%)};
+	--editor-bg-color: #{change-color($color, $alpha: 0.5)};
 
 	:global(.btn-primary) {
 		@include bs-colors("bs-btn", "bg", $color, $modif);
@@ -129,8 +130,13 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include bs-effects($name, $postfix, $color, shift-color($color, $amount * $hover), shift-color($color, $amount * $active), shift-color($color, $amount * $disabled));
 }
 
-@include scheme-lt("default", #000000, #0000ff, #a31515, #098658, $base: #fafafa);
-@include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $base: #1f1f1f);
+@include scheme-lt("default", #000000, #0000ff, #a31515, #098658, $base: #fafafa) {
+	--editor-bg-color: #0d6efd40
+}
+
+@include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $base: #1f1f1f) {
+	--editor-bg-color: #0d6efd40;
+}
 
 @include scheme-lt("dracula", #e60073, #bf95f9, #bec757, #1fc749, $text: #0d0d08, $base: #f1f1f4, $indents: (hsl(60, 30%, 4%), hsl(326, 100%, 54%), hsl(191, 97%, 57%), hsl(135, 94%, 45%), hsl(265, 89%, 58%), hsl(31, 100%, 51%))) {
 	@include primary(#e60073, 5%);
@@ -194,6 +200,7 @@ $cyberpunk-border: #80002f;
 	--focus-shadow-color: #8800ff40;
 	--focus-border-color: #8800ff;
 	--bs-link-color: #{$cyberpunk-text};
+	--editor-bg-color: #f004;
 
 	@include bs-colors2("cst-dirty", "bg", #330022, #ff00aa, 20%, 50%, #000);
 	@include bs-colors2("cst-dirty", "color", #ff00aa, #ff66cc, 50%, 100%, $cyberpunk-text);
@@ -220,6 +227,7 @@ $terminal-secondary: #8f8;
 	--checkbox-border-color: #{$terminal-base};
 	--focus-shadow-color: #{change-color($terminal-base, $alpha: 0.25)};
 	--focus-border-color: #{adjust-color($terminal-base, $lightness: 20%, $saturation: -50%)};
+	--editor-bg-color: #{rgba($terminal-base, 0.25)};
 	
 	@include bs-colors2("cst-dirty", "bg", #330, #ff0, 20%, 50%, #000);
 	@include bs-colors2("cst-dirty", "color", $terminal-text, #fff, 50%, 100%, $terminal-disabled);
@@ -235,3 +243,15 @@ $terminal-secondary: #8f8;
 		@include bs-colors2("bs-btn", "border-color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
 	}
 }
+
+@mixin bg($name, $filename: "res/" + $name + ".png", $repeat: null, $size: null) {
+	:global([data-editor-bg="#{$name}"] .editor-bg) {
+		background-color: var(--editor-bg-color);
+		@include core.img-mask(ext-url($filename), $repeat, $size);
+		@content;
+	}
+}
+
+@include bg("cubes", $size: 32px);
+@include bg("cyber", $size: 96px);
+@include bg("hive", $size: 32px);

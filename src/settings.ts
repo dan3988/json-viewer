@@ -76,7 +76,8 @@ export namespace settings {
 		makeSetting("indentCount", Integer, 1),
 		makeSetting("indentChar", String, "\t"),
 		makeSetting("useHistory", Boolean, true),
-		makeSetting("menuAlign", Enum("r", "l"), "r")
+		makeSetting("menuAlign", Enum("r", "l"), "r"),
+		makeSetting("background", String, "")
 	] as const;
 
 	type _SettingsList = typeof settingsList[number];

@@ -67,9 +67,9 @@ function run() {
 		}
 
 		async function loadAsync() {
-			const bag = await settings.get("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign");
+			const bag = await settings.get("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background");
 			const tracker = new ThemeTracker(document.documentElement, getValue(bag.scheme, bag.darkMode));
-	
+
 			if (bag.useHistory)
 				model.bag.readables.selected.subscribe(pushHistory);
 	
@@ -106,12 +106,18 @@ function run() {
 				}
 
 				if (changes.scheme) {
-					bag.scheme = changes.scheme.newValue;
 					const scheme = changes.scheme.newValue;
+					bag.scheme = scheme;
 					changeCount++;
 					props.scheme = scheme;
 					props.indentCount = schemes[scheme][1];
 					updateTracker = true;
+				}
+
+				if (changes.background) {
+					changeCount++;
+					bag.background = changes.background.newValue;
+					props.background = bag.background;
 				}
 
 				if (updateTracker)
@@ -127,6 +133,7 @@ function run() {
 				props: {
 					model,
 					indent,
+					background: bag.background,
 					scheme: bag.scheme,
 					menuAlign: bag.menuAlign,
 					indentCount: schemes[bag.scheme].indents

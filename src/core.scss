@@ -19,15 +19,27 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 	@return $rule;
 }
 
-@mixin img-mask($src, $repeat: no-repeat, $size: contain, $position: center) {
-	-webkit-mask-image: $src;
-	-webkit-mask-repeat: $repeat;
-	-webkit-mask-size: $size;
-	-webkit-mask-position: $position;
-	mask-image: $src;
-	mask-repeat: $repeat;
-	mask-size: $size;
-	mask-position: $position;
+@mixin mask-prop($name, $value) {
+	-webkit-mask-#{$name}: #{$value};
+	mask-#{$name}: #{$value};
+}
+
+@mixin img-mask($image: null, $repeat: null, $size: null, $position: null) {
+	@if ($image != null) {
+		@include mask-prop("image", $image);
+	}
+
+	@if ($repeat != null) {
+		@include mask-prop("repeat", $repeat);
+	}
+
+	@if ($size != null) {
+		@include mask-prop("size", $size);
+	}
+
+	@if ($position != null) {
+		@include mask-prop("position", $position);
+	}
 }
 
 @mixin img-btn($img: null, $padding: 0, $colors: null) {
@@ -63,7 +75,7 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 
 	
 	&:before {
-		@include img-mask(var(--img-btn-src));
+		@include img-mask(var(--img-btn-src), no-repeat, contain, center);
 		content: "";
 		position: absolute;
 		inset: $padding;
