@@ -1,3 +1,13 @@
+<script lang="ts" context="module">
+	export interface ClickEventDetail {
+		suggestion: string;
+		index: number;
+	}
+
+	export interface Events {
+		click: ClickEventDetail;
+	}
+</script>
 <script lang="ts">
 	import Linq from "@daniel.pickett/linq-js";
 	import { createEventDispatcher } from "svelte";
@@ -46,7 +56,7 @@
 		return e;
 	}
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<Events>();
 
 	interface RenderArg {
 		suggestion: string;
