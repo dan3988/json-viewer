@@ -20,10 +20,8 @@
 
 	export { _class as class, _value as value };
 	export let items: RadioItem<T>[];
-	export let selectedValue: undefined | T = undefined;
 	export let id: string = crypto.randomUUID();
 
-	$: console.log(selectedValue)
 	$: _fixedItems = fixItems(items);
 </script>
 {#each _fixedItems as [value, text], i}

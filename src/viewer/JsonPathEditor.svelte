@@ -474,7 +474,6 @@
 				}
 			},
 			input(evt: InputEventHelper) {
-				console.debug(evt.inputType);
 				const selection = dom.getSelectionFor(this);
 				if (selection == null)
 					return;

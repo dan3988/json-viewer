@@ -2,8 +2,6 @@ import type { WorkerMessage } from "../types.js";
 import settings from "../settings.js";
 import lib from "../lib.json";
 
-console.log('launch');
-
 function updateIcon(path: Record<string, string>, title: string) {
 	const setIcon = chrome.action.setIcon({ path });
 	const setTitle = chrome.action.setTitle({ title });

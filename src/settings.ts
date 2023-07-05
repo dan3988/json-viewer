@@ -6,7 +6,6 @@ export namespace settings {
 		return new Promise((resolve, reject) => {
 			const keys = settings.map(v => v.key);
 			store.get(keys, items => {
-				console.debug("settings get:", items);
 				const e = chrome.runtime.lastError;
 				if (e)
 					return reject(e);
@@ -23,7 +22,6 @@ export namespace settings {
 	}
 	
 	function _set(store: chrome.storage.StorageArea, bag: any): Promise<void> {
-		console.debug("settings set:", bag);
 		return new Promise((resolve, reject) => {
 			store.set(bag, () => {
 				const e = chrome.runtime.lastError;
