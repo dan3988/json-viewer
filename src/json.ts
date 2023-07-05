@@ -211,7 +211,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		this.#path = parent == null ? [] : Array.from(parent.parentProperty.path)
 		this.#path.push(key);
 		this.#value = new ctor(this, value);
-		this.#bag = new PropertyBag({ expanded: false, hidden: false, selected: false });
+		this.#bag = new PropertyBag<ChangeProps>({ expanded: false, hidden: false, selected: false });
 
 		if (prev != null)
 			prev.#next = this;

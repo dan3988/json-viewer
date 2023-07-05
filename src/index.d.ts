@@ -11,6 +11,7 @@ type UntilNever<T extends any[], Prev extends any[] = []> = T extends [never, ..
 declare type Expand<T> = { [P in keyof T]: T[P] };
 
 declare type Dict<T = any> = Record<string, T>;
+declare type OneOrMany<T> = T | T[];
 
 declare var JSON5: typeof import("json5");
 

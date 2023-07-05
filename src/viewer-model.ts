@@ -52,7 +52,7 @@ export class ViewerModel {
 
 	constructor(root: JsonProperty) {
 		this.#root = root;
-		this.#bag = new PropertyBag({ selected: null, filterFlags: JsonTokenFilterFlags.Both, filterText: "" });
+		this.#bag = new PropertyBag<ChangeProps>({ selected: null, filterFlags: JsonTokenFilterFlags.Both, filterText: "" });
 		this.#command = new EventHandlers();
 	}
 
