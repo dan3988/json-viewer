@@ -8,5 +8,10 @@
 		"a11y-click-events-have-key-events": "ignore",
 		"a11y-interactive-supports-focus": "ignore",
 		"css-unused-selector": "ignore"
+	},
+	"files.watcherExclude": {
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true,
+		"**/node_modules/*/**": true
 	}
 }
