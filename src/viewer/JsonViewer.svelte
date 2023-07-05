@@ -338,9 +338,12 @@
 		display: grid;
 	}
 
+	.prop-scroll {
+		z-index: 1;
+	}
+
 	.editor-bg {
 		pointer-events: none;
-		z-index: -1;
 	}
 
 	.menu-btn {
