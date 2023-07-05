@@ -19,13 +19,13 @@
 		{
 			"label": "watch",
 			"type": "npm",
-			"script": "watch (${input:browser})",
+			"script": "watch-${input:browser}",
 			"group": "build"
 		},
 		{
 			"label": "build",
 			"type": "npm",
-			"script": "build (${input:browser})",
+			"script": "build-${input:browser}",
 			"group": "build"
 		},
 		{
