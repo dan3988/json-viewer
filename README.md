@@ -6,7 +6,7 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 ## Features
 * Yes/no prompt to load detected JSON on non-whitelisted domains
 * Expand and collapse objects and arrays recursively
-* [JSON5](https://json5.org/) support
+* [JSON5](https://json5.org/) syntax support
 * Copy formatted or minified JSON values
 * Navigate to sibling or child properties using the arrow keys
 * Creates hyperlinks for URL strings
@@ -17,3 +17,15 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 * Evaluate JPath expressions
 * Dark and light mode
 * Customizable colour schemes
+
+## Building
+The project is built using rollup. The following options can be passed into rollup to be used by the build script:
+ * `--browser <name>` - Currently only supports "chrome" or "firefox"
+ * `--dist` - If specified, will minify files and archive the output
+
+The build script uses the following files:
+ * "src/content/content.ts": The UI for the prompt that is shown on non-whitelisted pages
+ * "src/content-script/content-script.js": The content script of the extension.
+ * "src/options/options.ts": The UI for the options page
+ * "src/viewer/viewer.ts": The UI for the main viewer component
+ * "custom-manifest.json": Used to generate a browser-specific manifest.json file
