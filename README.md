@@ -20,12 +20,14 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 
 ## Building
 The project is built using rollup. The following options can be passed into rollup to be used by the build script:
- * `--browser <name>` - Currently only supports "chrome" or "firefox"
- * `--dist` - If specified, will minify files and archive the output
-
+ * `--browser <name>` - Currently only supports "chrome" or "firefox". Defaults to "chrome" if not specified.
+ * `--dist` - If specified, will minify files and archive the output.
 The build script uses the following files:
- * "src/content/content.ts": The UI for the prompt that is shown on non-whitelisted pages
- * "src/content-script/content-script.js": The content script of the extension.
- * "src/options/options.ts": The UI for the options page
- * "src/viewer/viewer.ts": The UI for the main viewer component
- * "custom-manifest.json": Used to generate a browser-specific manifest.json file
+ * `src/content/content.ts`:` The UI for the prompt that is shown on non-whitelisted pages.
+ * `src/content-script/content-script.js`: The content script of the extension.
+ * `src/options/options.ts`: The UI for the options page.
+ * `src/viewer/viewer.ts`: The UI for the main viewer component.
+ * `custom-manifest.json`: Used to generate a browser-specific manifest.json file.
+ * `res`: The contents of this folder are copied to the output directory.
+
+The build will output the extension to `./out/<browser>`.
