@@ -73,7 +73,7 @@ function run() {
 			const bound = new MappedBagBuilder(bag)
 				.map(["background", "menuAlign", "scheme"])
 				.map(["indentChar", "indentCount"], "indent", (char, count) => char.repeat(count))
-				.map("scheme", "indentCount", v => schemes[v].indentCount)
+				.map("scheme", "indentCount", v => schemes[v].indents)
 				.build();
 
 			function preferDark() {
