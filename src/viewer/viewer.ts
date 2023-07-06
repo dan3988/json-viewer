@@ -85,11 +85,11 @@ function run() {
 				model.bag.readables.selected.subscribe(pushHistory);
 
 			bag.onChange(v => {
-				if (v.darkMode || v.scheme)
+				if ("darkMode" in v || "scheme" in v)
 					tracker.preferDark = preferDark();
 			});
 	
-			const tracker = new ThemeTracker(document.documentElement);
+			const tracker = new ThemeTracker(document.documentElement, preferDark());
 			const component = createComponent(JsonViewer, document.body, bound, { model });
 		}
 		
