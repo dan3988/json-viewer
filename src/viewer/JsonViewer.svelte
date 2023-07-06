@@ -336,6 +336,7 @@
 	.w-menu {
 		grid-area: menu;
 		display: grid;
+		overflow: hidden;
 	}
 
 	.prop-scroll {
