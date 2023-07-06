@@ -1,5 +1,5 @@
-import { PropertyBag, type ReadOnlyPropertyBag } from "./prop";
-import settings from "./settings";
+import { PropertyBag, type ReadOnlyPropertyBag } from "./prop.js";
+import settings from "./settings.js";
 
 const enum WatchTypes {
 	None,
