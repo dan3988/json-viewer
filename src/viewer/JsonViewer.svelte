@@ -356,6 +356,7 @@
 		top: 1rem;
 		width: 2.5rem;
 		height: 2.5rem;
+		z-index: 1;
 	}
 </style>
 <svelte:head>
