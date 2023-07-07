@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+	<head>
+		<meta charset="utf-8">
+		<title>dev</title>
+		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+		<style type="text/css">
+			body {
+				position: absolute;
+				inset: 0;
+				display: grid;
+				grid-template-columns: 1fr 5rem 20rem 1fr;
+				grid-template-rows: repeat(4, auto) 1fr;
+				margin: 5px auto;
+				row-gap: 5px;
+			}
+
+			.input-group {
+				display: contents;
+			}
+
+			.input-group > .input-group-text {
+				grid-column: 2 / span 1;
+			}
+
+			.input-group > .form-control,
+			.input-group > .form-select {
+				grid-column: 3 / span 1;
+				width: 100%;
+			}
+
+			.btn-group {
+				grid-column: 2 / -2;
+			}
+
+			#view-wrapper {
+				grid-column: 1 / -1;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+		</style>
+		<script type="module" src="theme-lite.js"></script>
+	</head>
+	<body>
+		<div class="input-group">
+			<span class="input-group-text">Width</span>
+			<input id="dw" type="number" class="form-control" value="800"/>
+		</div>
+		<div class="input-group">
+			<span class="input-group-text">Height</span>
+			<input id="dh" type="number" class="form-control" value="500"/>
+		</div>
+		<div class="input-group">
+			<span class="input-group-text">URL</span>
+			<input id="url" class="form-control" value="https://json.schemastore.org/chrome-manifest"/>
+		</div>
+		<div class="btn-group">
+			<button id="btn-go" class="btn btn-primary">Go</button>
+			<button id="btn-start" class="btn btn-primary">Start</button>
+		</div>
+		<div id="view-wrapper">
+			<iframe id="view"></iframe>
+		</div>
+		<script type="module" src="dev.js"></script>
+	</body>
+</html>
