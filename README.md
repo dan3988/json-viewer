@@ -2,6 +2,87 @@
 A modern browser extension to visualise, traverse and search JSON. Made with [Svelte](https://svelte.dev/) and [bootstrap](https://getbootstrap.com/).
 
 ![preview](readme/preview.gif)
+<details>
+	<summary>See all themes</summary>
+	<table style="overflow-x:scroll;">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Light</th>
+				<th>Dark</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Abyss</td>
+				<td>N/A</td>
+				<td>
+					<img src="readme/themes/abyss.png" />
+				</td>
+			</tr>
+			<tr>
+				<td>Cyberpunk</td>
+				<td>N/A</td>
+				<td>
+					<img src="readme/themes/cyberpunk.png" />
+				</td>
+			</tr>
+			<tr>
+				<td>Dracula</td>
+				<td>
+					<img src="readme/themes/dracula-lt.png" />
+				</td>
+				<td>
+					<img src="readme/themes/dracula-dk.png" />
+				</td>
+			</tr>
+			<tr>
+				<td>GitHub</td>
+				<td>
+					<img src="readme/themes/github-lt.png" />
+				</td>
+				<td>
+					<img src="readme/themes/github-dk.png" />
+				</td>
+			</tr>
+			<tr>
+				<td>Material</td>
+				<td>
+					<img src="readme/themes/material-lt.png" />
+				</td>
+				<td>
+					<img src="readme/themes/material-dk.png" />
+				</td>
+			</tr>
+			<tr>
+				<td>Matrix</td>
+				<td>N/A</td>
+				<td>
+					<img src="readme/themes/terminal.png" />
+				</td>
+			</tr>
+			<tr>
+				<td>Monokai</td>
+				<td>
+					<img src="readme/themes/monokai-lt.png" />
+				</td>
+				<td>
+					<img src="readme/themes/monokai-dk.png" />
+				</td>
+			</tr>
+			<tr>
+				<td>Solarized</td>
+				<td>
+					<img src="readme/themes/solarized-lt.png" />
+				</td>
+				<td>
+					<img src="readme/themes/solarized-dk.png" />
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</details>
+
 
 ## Features
 * Yes/no prompt to load detected JSON on non-whitelisted domains
