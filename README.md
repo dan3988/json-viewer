@@ -1,7 +1,7 @@
 # Json Explorer
 A modern browser extension to visualise, traverse and search JSON. Made with [Svelte](https://svelte.dev/) and [bootstrap](https://getbootstrap.com/).
 
-![preview](readme/preview.gif)
+![preview](readme/preview.png)
 <details>
 	<summary>See all themes</summary>
 	<table style="overflow-x:scroll;">
@@ -13,6 +13,15 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 			</tr>
 		</thead>
 		<tbody>
+			<tr>
+				<td>Visual Studio</td>
+				<td>
+					<img src="readme/themes/default-lt.png" />
+				</td>
+				<td>
+					<img src="readme/themes/default-dk.png" />
+				</td>
+			</tr>
 			<tr>
 				<td>Abyss</td>
 				<td>N/A</td>
@@ -48,10 +57,10 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 			<tr>
 				<td>Material</td>
 				<td>
-					<img src="readme/themes/material-lt.png" />
+					<img src="readme/themes/mat-lt.png" />
 				</td>
 				<td>
-					<img src="readme/themes/material-dk.png" />
+					<img src="readme/themes/mat-dk.png" />
 				</td>
 			</tr>
 			<tr>
