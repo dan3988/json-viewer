@@ -91,6 +91,8 @@ function run() {
 	
 			const tracker = new ThemeTracker(document.documentElement, preferDark());
 			const component = createComponent(JsonViewer, document.body, bound, { model });
+
+			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}
 		
 		let popping = false;
