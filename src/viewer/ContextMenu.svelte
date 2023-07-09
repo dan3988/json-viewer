@@ -190,7 +190,7 @@
 			}
 
 			&:after {
-				@include img-mask(bs-icon("chevron-right"));
+				@include img-mask(bs-icon("chevron-right"), no-repeat, contain, center);
 				content: "";
 				flex: 0 0 1rem;
 				margin: 0.5rem;
