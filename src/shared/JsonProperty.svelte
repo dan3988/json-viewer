@@ -78,7 +78,7 @@
 		}
 
 		&.selected {
-			background-color: var(--bs-secondary-bg);
+			background-color: rgba(var(--bs-secondary-bg-rgb), 0.5);
 		}
 
 		&.for-container {
@@ -228,9 +228,9 @@
 			{#if $expanded}
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
 					{#each [...prop.value.properties()] as p}
-					<li>
-						<svelte:self model={model} prop={p} indent={indent + 1} {maxIndentClass} />
-					</li>
+						<li>
+							<svelte:self model={model} prop={p} indent={indent + 1} {maxIndentClass} />
+						</li>
 					{/each}
 				</ul>
 			{/if}
