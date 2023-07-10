@@ -96,7 +96,7 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 ## Features
 * Yes/no prompt to load detected JSON on non-whitelisted domains
 * Expand and collapse objects and arrays recursively
-* [JSON5](https://json5.org/) syntax support
+* Support for [JSON5](https://json5.org/) syntax
 * Copy formatted or minified JSON values
 * Navigate to sibling or child properties using the arrow keys
 * Creates hyperlinks for URL strings
