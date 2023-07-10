@@ -75,16 +75,15 @@ interface HTMLElement extends ExtendedEventTarget<HTMLElementEventMap> {
 		}
 	}
 
-	const def = function(ctor: Function, value: Function) {
-		Object.defineProperty(ctor.prototype, value.name, {
-			configurable: true,
-			writable: true,
-			value,
-		});
+	const def = function(ctor: Function, functions: Dict<Fn>) {
+		for (const [key, value] of Object.entries(functions)) {
+			Object.defineProperty(ctor.prototype, key, {
+				configurable: true,
+				writable: true,
+				value,
+			});
+		}
 	}
 
-	def(EventTarget, once);
-	def(EventTarget, on);
-	def(EventTarget, off);
-	def(EventTarget, subscribe);
+	def(EventTarget, { once, on, off, subscribe });
 }
