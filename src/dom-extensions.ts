@@ -62,26 +62,16 @@ interface HTMLElement extends ExtendedEventTarget<HTMLElementEventMap> {
 	const subscribe: ExtendedEventTarget["subscribe"] = function(this: EventTarget, arg0: any, arg1?: any) {
 		if (typeof arg0 === "string") {
 			this.addEventListener(arg0, arg1);
-			return unsub.bind(this, [arg0, arg1]);
+			return EventTarget.prototype.removeEventListener.bind(this, arg0, arg1);
 		} else {
-			const listeners: any[] = [];
+			const controller = new AbortController();
+			const { signal } = controller;
 			for (const key in arg0) {
 				const handler = arg0[key];
-				this.addEventListener(key, handler);
-				listeners.push(key, handler);
+				this.addEventListener(key, handler, { signal });
 			}
-			return unsub.bind(this, listeners);
-		}
-	}
 
-	const unsub = function(this: EventTarget, values: any[]) {
-		const it = values[Symbol.iterator]();
-		while (true) {
-			const [type, handler] = it;
-			if (type == undefined)
-				break;
-
-			this.removeEventListener(type, handler);
+			return AbortController.prototype.abort.bind(controller);
 		}
 	}
 
