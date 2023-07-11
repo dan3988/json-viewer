@@ -115,7 +115,9 @@ function run() {
 
 		loadAsync();
 	} catch (e) {
-		return e instanceof Error ? `${e.name}: ${e.message}` : e;
+		console.error("JSON Viewer failed to load: ", e);
+		const msg = e instanceof Error ? `${e.name}: ${e.message}` : e;
+		alert("JSON Viewer: " + msg);
 	}
 }
 

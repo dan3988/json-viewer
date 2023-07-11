@@ -4,5 +4,5 @@
 		contentType: document.contentType
 	};
 
-	chrome.runtime.sendMessage(msg).then(r => r && alert(r));
+	chrome.runtime.sendMessage(msg);
 }

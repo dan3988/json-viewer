@@ -4,10 +4,10 @@ function run() {
 	try {
 		const target = document.body;
 		const overlay = new LoadOverlay({ target });
-		//result for chrome.scripting.executeScript
-		undefined;
 	} catch (e) {
-		e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+		console.error("JSON Viewer load overlay failed to load: ", e);
+		const msg = e instanceof Error ? `${e.name}: ${e.message}` : e;
+		alert("JSON Viewer: " + msg);
 	}
 }
 
