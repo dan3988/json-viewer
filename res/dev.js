@@ -22,7 +22,7 @@ function dataUrlToBlob(url, x, y, w, h) {
 	});
 }
 
-const [dw, dh, url, update, start, frame] = get("dw", "dh", "url", "btn-go", "btn-start", "view");
+const [dw, dh, url, delayVal, update, single, start, frame] = get("dw", "dh", "url", "delay", "btn-go", "btn-single", "btn-start", "view");
 
 update.addEventListener("click", () => {
 	const w = dw.valueAsNumber;
@@ -35,9 +35,20 @@ update.addEventListener("click", () => {
 	frame.height = h;
 });
 
+single.addEventListener("click", () => {
+	capture().then(v => window.open(URL.createObjectURL(v)));
+})
+
 start.addEventListener("click", () => {
 	showDirectoryPicker({ id: "screenshot", mode: "readwrite" }).then(takeScreenshots);
-})
+});
+
+async function capture() {
+	await delay(delayVal.valueAsNumber * 1000)
+	const { clientWidth: w, clientHeight: h, offsetLeft: x, offsetTop: y } = frame;
+	const url = await chrome.tabs.captureVisibleTab();
+	return await dataUrlToBlob(url, -x, document.documentElement.scrollTop - y, w, h);
+}
 
 /**
  * 
@@ -61,9 +72,7 @@ async function takeScreenshots(dir) {
 		await chrome.storage.local.set({ darkMode, scheme });
 		await delay(600);
 
-		const { clientWidth: w, clientHeight: h, offsetLeft: x, offsetTop: y } = frame;
-		const url = await chrome.tabs.captureVisibleTab();
-		const blob = await dataUrlToBlob(url, -x, -y, w, h);
+		const blob = await capture();
 		await saveBlob(blob, fileName);
 	}
 

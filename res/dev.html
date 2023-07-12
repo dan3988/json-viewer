@@ -10,7 +10,7 @@
 				inset: 0;
 				display: grid;
 				grid-template-columns: 1fr 5rem 20rem 1fr;
-				grid-template-rows: repeat(4, auto) 1fr;
+				grid-template-rows: repeat(5, auto) 1fr;
 				margin: 5px auto;
 				row-gap: 5px;
 			}
@@ -55,9 +55,14 @@
 			<span class="input-group-text">URL</span>
 			<input id="url" class="form-control" value="https://json.schemastore.org/chrome-manifest"/>
 		</div>
+		<div class="input-group">
+			<span class="input-group-text">Delay</span>
+			<input id="delay" type="number" class="form-control" value="0"/>
+		</div>
 		<div class="btn-group">
 			<button id="btn-go" class="btn btn-primary">Go</button>
-			<button id="btn-start" class="btn btn-primary">Start</button>
+			<button id="btn-single" class="btn btn-primary">Current Theme</button>
+			<button id="btn-start" class="btn btn-primary">All Themes</button>
 		</div>
 		<div id="view-wrapper">
 			<iframe id="view"></iframe>
