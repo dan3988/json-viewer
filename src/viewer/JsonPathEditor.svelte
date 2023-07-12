@@ -315,6 +315,8 @@
 					const span = prev.querySelector("span.content") as HTMLSpanElement;
 					const content = span.firstChild as Text;
 					content.appendData(txt);
+				} else {
+					destroyAutocomplete();
 				}
 				dom.setCaret(selection, prev, txt.length, true);
 			},

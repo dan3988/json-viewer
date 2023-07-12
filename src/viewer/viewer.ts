@@ -59,7 +59,7 @@ function run() {
 				part = decodeURIComponent(part);
 				parts.push(part);
 			}
-		
+
 			return parts;
 		}
 
@@ -88,13 +88,13 @@ function run() {
 				if ("darkMode" in v || "scheme" in v)
 					tracker.preferDark = preferDark();
 			});
-	
+
 			const tracker = new ThemeTracker(document.documentElement, preferDark());
 			const component = createComponent(JsonViewer, document.body, bound, { model });
 
 			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}
-		
+
 		let popping = false;
 		if (location.hash)
 			suppressPush(() => {
