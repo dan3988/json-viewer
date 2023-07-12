@@ -12,8 +12,8 @@
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
-	import JsonPathEditor from "./JsonPathEditor.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
+    import JsonPathViewer from "./JsonPathViewer.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -375,7 +375,7 @@
 		</div>
 	</div>
 	<div class="w-path">
-		<JsonPathEditor model={model}/>
+		<JsonPathViewer {model}/>
 	</div>
 	<div class="gripper gripper-h" on:mousedown={onGrabberHMouseDown}/>
 	<div class="gripper gripper-v" on:mousedown={onGrabberVMouseDown}/>
