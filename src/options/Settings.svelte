@@ -228,9 +228,14 @@
 		<span class="input-group-text">Background</span>
 		<select class="form-select flex-fill" class:dirty={$background.changed} bind:value={$background.value}>
 			<option value="">None</option>
+			<option value="bricks">Bricks</option>
 			<option value="cubes">Cubes</option>
-			<option value="cyber">Cyber</option>
+			<option value="cross">Cross</option>
 			<option value="hive">Honeycomb</option>
+			<option value="plaid">Plaid</option>
+			<option value="tiles">Tiles</option>
+			<option value="triangles">Triangles</option>
+			<option value="web">Web</option>
 		</select>
 	</div>
 	<div class="input-group grp-json-style">

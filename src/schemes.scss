@@ -252,6 +252,11 @@ $terminal-secondary: #8f8;
 	}
 }
 
+@include bg("bricks", $size: 32px);
 @include bg("cubes", $size: 32px);
-@include bg("cyber", $size: 96px);
+@include bg("cross");
 @include bg("hive", $size: 32px);
+@include bg("plaid");
+@include bg("tiles", $size: 32px);
+@include bg("triangles", $size: 64px);
+@include bg("waves", $size: 64px);
