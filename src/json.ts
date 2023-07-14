@@ -173,8 +173,8 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.#key;
 	}
 
-	get value(): ToToken<TValue> {
-		return this.#value as any;
+	get value(): JsonToken<TValue> {
+		return this.#value;
 	}
 
 	get bag() {

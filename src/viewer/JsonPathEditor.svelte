@@ -2,26 +2,35 @@
 	import type { JsonProperty } from "../json";
 
 	export interface EventMap {
-		"finished": JsonProperty | null;
-		"cancelled": void;
+		finished: JsonProperty | null;
+		cancelled: void;
 	}
 </script>
+
 <script lang="ts">
 	import type { ViewerModel } from "../viewer-model";
 	import { createEventDispatcher, onMount, tick } from "svelte";
 	import dom from "./dom-helper";
+	import AutocompleteHelper from "./autocomplete-helper";
 
 	export let model: ViewerModel;
 
 	$: ({ selected } = model.bag.readables);
 	$: prop = $selected ?? model.root;
 
+	onMount(update);
+
+	let acWrapper: HTMLElement;
+	let acHelper: undefined | AutocompleteHelper;
+
 	const dispatcher = createEventDispatcher<EventMap>();
 
 	let target: HTMLElement;
+	let x: number;
+	let ignoreSelectionEvents = 0;
 
-	function update() {
-		target.innerText = prop.path.join("/");
+	export function focus() {
+		tick().then(() => dom.setCaret(target, 0, true));
 	}
 
 	function unfocus() {
@@ -29,8 +38,34 @@
 		update();
 	}
 
-	export function focus() {
-		tick().then(() => dom.setCaret(target, 0, true));
+	function update() {
+		target.innerText = prop.path.join("/");
+	}
+
+	function getIndexes(range: Range): [number, number] {
+		return [range.startOffset, range.endOffset];
+	}
+
+	function splitSelection(range: Range): [before: string, current: string, after?: string] {
+		const text = target.textContent ?? "";
+		const [start, end] = getIndexes(range);
+
+		let i = text.lastIndexOf("/", start - 1);
+		const before = text.slice(0, i);
+
+		i = text.indexOf("/", i + 1);
+		if (i < 0) {
+			const middle = text.slice(before.length + 1);
+			return [before, middle]
+		} else {
+			const middle = text.slice(before.length + 1, i);
+			const after = text.slice(i + 1);
+			return [before, middle, after];
+		}
+	}
+
+	function onFocusIn() {
+		ignoreSelectionEvents = 1;
 	}
 
 	function onFocusOut() {
@@ -38,38 +73,131 @@
 		dispatcher("cancelled");
 	}
 
-	function onInput(evt: Event) {
+	function tryEnd<K extends keyof EventMap>(key: K, parameter?: EventMap[K]) {
+		dispatcher(key as any, parameter, { cancelable: true }) && unfocus();
+	}
 
+	function onAutoCompleteFinish(value?: string) {
+		acHelper = undefined;
+
+		if (value == null)
+			return;
+
+		const selection = dom.getSelectionFor(target);
+		if (!selection)
+			return;
+
+		const range = selection.getRangeAt(0);
+		const [start] = splitSelection(range);
+		target.innerText = start + "/" + value;
+		ignoreSelectionEvents = 2;
+		dom.setCaret(selection, target, 0, true);
+	}
+	
+	function destroyAutoComplete() {
+		if (acHelper) {
+			acHelper.destroy();
+			acHelper = undefined;
+		}
+	}
+
+	function updateAutoComplete(selection: Selection, changeProp: boolean) {
+		const range = selection.getRangeAt(0);
+		const [start, mid] = splitSelection(range);
+		const previous = model.resolve(start);
+		if (!previous)
+			return;
+
+		if (changeProp) {
+			acHelper ??= new AutocompleteHelper(acWrapper, onAutoCompleteFinish);
+			acHelper.update(previous.value, mid, changeProp);
+		} else if (acHelper == null) {
+			return;
+		} else if (!acHelper.update(previous.value, mid, changeProp)) {
+			acHelper.destroy();
+			acHelper = undefined;
+			return;
+		}
+
+		const { x: rangeX } = range.getBoundingClientRect();
+		const { x: targetX } = target.getBoundingClientRect();
+		x = rangeX - targetX;
+	}
+
+	function onInput(this: HTMLElement, evt: Event) {
+		const selection = dom.getSelectionFor(this);
+		if (selection)
+			updateAutoComplete(selection, true);
 	}
 
 	function onKeyDown(evt: KeyboardEvent) {
+		if (acHelper && acHelper.handleKeyPress(evt)) {
+			evt.preventDefault();
+			return;
+		}
+
 		if (evt.key === "Escape") {
-			if (dispatcher("cancelled"))
-				unfocus();
+			tryEnd("cancelled");
 		} else if (evt.key === "Enter") {
 			evt.preventDefault();
 			const path = target.innerText;
 			const resolved = model.resolve(path);
-			if (dispatcher("finished", resolved, { cancelable: true }))
-				unfocus();
+			tryEnd("finished", resolved);
 		}
 	}
 
-	onMount(update);
+	function onKeyPress(evt: KeyboardEvent) {
+		acHelper?.handleKeyPress(evt);
+	}
+
+	function onSelectionChange() {
+		if (ignoreSelectionEvents) {
+			ignoreSelectionEvents--;
+			return;
+		}
+
+		const selection = dom.getSelectionFor(target);
+		if (selection == null) {
+			destroyAutoComplete();
+		} else if (acHelper) {
+			updateAutoComplete(selection, true);
+		}
+	}
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
 
-	.root {
+	.path-text {
 		outline: none;
+		display: block;
+	}
+
+	.root {
+		position: relative;
+	}
+
+	.ac-wrapper {
+		z-index: 1;
+		position: absolute;
+		overflow-y: auto;
+		bottom: 0;
+		width: 20rem;
+		max-height: 50vh;
+		bottom: 100%;
 	}
 </style>
-<svelte:window on:selectionchange={e => e}/>
-<div class="root"
-	tabindex="-1"
-	role="textbox"
-	contenteditable="true"
-	bind:this={target}
-	on:input={onInput}
-	on:focusout={onFocusOut}
-	on:keydown={onKeyDown}/>
+<svelte:document on:selectionchange={onSelectionChange} />
+<div class="root">
+	<span
+		class="path-text"
+		tabindex="-1"
+		role="textbox"
+		contenteditable="true"
+		on:input={onInput}
+		on:focusin={onFocusIn}
+		on:focusout={onFocusOut}
+		on:keydown={onKeyDown}
+		on:keypress={onKeyPress}
+		bind:this={target}/>
+	<div class="ac-wrapper" style:left={x && (x + "px")} bind:this={acWrapper}/>
+</div>

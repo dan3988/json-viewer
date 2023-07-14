@@ -56,13 +56,24 @@ const cfBackward: CaretFinder = {
 	}
 }
 
+function isDescendantImpl<T extends { [P in K]: T | null }, K extends string>(self: T, parent: T, key: K) {
+	while (true) {
+		const next = self[key];
+		if (next == null)
+			return false;
+
+		if (next == parent)
+			return true;
+
+		self = next;
+	}
+}
+
 export namespace dom {
 	export function getSelectionFor(element: HTMLElement): null | Selection {
 		const selection = window.getSelection();
-		if (selection != null)
-			for (let node = selection.focusNode; node != null; node = node.parentNode)
-				if (node == element)
-					return selection;
+		if (selection && selection.focusNode && isDescendantNode(selection.focusNode, element))
+			return selection;
 	
 		return null;
 	}
@@ -82,17 +93,12 @@ export namespace dom {
 		return range;
 	}
 
+	export function isDescendantNode(self: Node, parent: Node) {
+		return isDescendantImpl(self, parent, "parentNode");
+	}
+
 	export function isDescendant(self: Element, parent: Element) {
-		while (true) {
-			const next = self.parentElement;
-			if (next == null)
-				return false;
-	
-			if (next == parent)
-				return true;
-	
-			self = next;
-		}
+		return isDescendantImpl(self, parent, "parentElement");
 	}
 }
 

@@ -1,39 +1,72 @@
+import type { ComponentProps } from "svelte";
+import type { JsonToken } from "../json";
 import SuggestionList from "./SuggestionList.svelte";
-import dom from "./dom-helper";
+import Linq from "@daniel.pickett/linq-js";
 
 export default class AutocompleteHelper {
-	#target: HTMLElement;
+	readonly #target: HTMLElement;
+	readonly #setter: (value?: string) => void;
 	#list: SuggestionList;
+	#prop: null | JsonToken;
 
 	get target() {
 		return this.#target;
 	}
 
-	constructor(target: HTMLElement, source: Iterable<number | string>, filter: string) {
+	constructor(target: HTMLElement, setter: (value?: string) => void) {
 		this.#target = target;
-		this.#list = new SuggestionList({
-			target,
-			props: { source, filter }
-		});
-
+		this.#setter = setter;
+		this.#list = new SuggestionList({ target });
 		this.#list.$on("click", this.#onClick.bind(this));
+		this.#prop = null;
 	}
 
-	#complete(selected: null | string) {
-		this.destroy();
-		if (selected == null) {
-			return false;
-		} else {
-			const el = this.#target;
-			const span = el.querySelector("span.content") as HTMLSpanElement;
-			const text = document.createTextNode(selected);
-			span.removeAttribute("placeholder");
-			span.innerHTML = "";
-			span.appendChild(text);
-
-			dom.setCaret(text, 0, true);
-			return true;
+	handleKeyPress(evt: KeyboardEvent): boolean {
+		switch (evt.key) {
+			case "ArrowDown":
+				this.next();
+				return true;
+			case "ArrowUp":
+				this.prev();
+				return true;
+			case "Tab":
+			case "Enter":
+				this.complete();
+				return true;
+			case "Escape":
+				this.cancel();
+				return true;
 		}
+
+		return false;
+	}
+
+	update(prop: JsonToken, filter: string, changeProp?: boolean) {
+		const props: Partial<ComponentProps<SuggestionList>> = { filter };
+		if (this.#prop !== prop) {
+			if (!changeProp)
+				return false;
+
+			this.#prop = prop;
+			props.source = Linq(prop.properties()).select("key").select(String).toArray();
+		}
+
+		this.#list.$set(props);
+		return true;
+	}
+
+	cancel() {
+		this.#complete(undefined);
+	}
+
+	complete() {
+		const selected = this.#list.getSelected();
+		this.#complete(selected);
+	}
+
+	#complete(selected: undefined | string) {
+		this.destroy();
+		this.#setter.call(undefined, selected);
 	}
 
 	#onClick(arg: CustomEvent) {
@@ -49,22 +82,7 @@ export default class AutocompleteHelper {
 	}
 
 	destroy() {
+		this.#prop = null;
 		this.#list.$destroy();
-	}
-
-	update(target: HTMLElement, source: Iterable<number | string>, filter: string) {
-		const props = { source, filter };
-		if (this.#target == target) {
-			this.#list.$set(props);
-		} else {
-			this.#list.$destroy();
-			this.#list = new SuggestionList({ target, props });
-			this.#target = target;
-		}
-	}
-
-	complete(): boolean {
-		const selected = this.#list.getSelected();
-		return this.#complete(selected);
 	}
 }

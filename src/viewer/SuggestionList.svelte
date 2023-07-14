@@ -12,8 +12,8 @@
 	import Linq from "@daniel.pickett/linq-js";
 	import { createEventDispatcher } from "svelte";
 
-	export let source: Iterable<number | string>;
-	export let filter: string;
+	export let source: Iterable<number | string> = Linq.empty();
+	export let filter: string = "";
 	export let index = 0;
 
 	let filterLw: string;
@@ -115,15 +115,6 @@
 	@use "../core.scss" as *;
 
 	.list {
-		z-index: 1;
-		position: absolute;
-		left: 0;
-		right: 0;
-		width: 20rem;
-		max-height: 50vh;
-		bottom: calc(100% + $pad-med);
-		overflow-y: hidden;
-
 		&:empty {
 			&::before {
 				content: "No Matching properties";
