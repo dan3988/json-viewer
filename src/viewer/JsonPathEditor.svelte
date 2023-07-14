@@ -101,24 +101,15 @@
 		}
 	}
 
-	function updateAutoComplete(selection: Selection, changeProp: boolean) {
+	function updateAutoComplete(selection: Selection) {
 		const range = selection.getRangeAt(0);
 		const [start, mid] = splitSelection(range);
 		const previous = model.resolve(start);
 		if (!previous)
 			return;
 
-		if (changeProp) {
-			acHelper ??= new AutocompleteHelper(acWrapper, onAutoCompleteFinish);
-			acHelper.update(previous.value, mid, changeProp);
-		} else if (acHelper == null) {
-			return;
-		} else if (!acHelper.update(previous.value, mid, changeProp)) {
-			acHelper.destroy();
-			acHelper = undefined;
-			return;
-		}
-
+		acHelper ??= new AutocompleteHelper(acWrapper, onAutoCompleteFinish);
+		acHelper.update(previous.value, mid, true);
 		const { x: rangeX } = range.getBoundingClientRect();
 		const { x: targetX } = target.getBoundingClientRect();
 		x = rangeX - targetX;
@@ -127,7 +118,7 @@
 	function onInput(this: HTMLElement, evt: Event) {
 		const selection = dom.getSelectionFor(this);
 		if (selection)
-			updateAutoComplete(selection, true);
+			updateAutoComplete(selection);
 	}
 
 	function onKeyDown(evt: KeyboardEvent) {
@@ -143,11 +134,19 @@
 			const path = target.innerText;
 			const resolved = model.resolve(path);
 			tryEnd("finished", resolved);
+		} else if (evt.key === " " && evt.ctrlKey && acHelper == null) {
+			const selection = getSelection();
+			selection && updateAutoComplete(selection);
+			evt.preventDefault();
 		}
 	}
 
 	function onKeyPress(evt: KeyboardEvent) {
-		acHelper?.handleKeyPress(evt);
+		if (acHelper && acHelper.handleKeyPress(evt)) {
+			evt.preventDefault();
+			return;
+		}
+
 	}
 
 	function onSelectionChange() {
@@ -160,7 +159,7 @@
 		if (selection == null) {
 			destroyAutoComplete();
 		} else if (acHelper) {
-			updateAutoComplete(selection, true);
+			updateAutoComplete(selection);
 		}
 	}
 </script>
