@@ -95,17 +95,20 @@
 		
 		update(arg);
 
-		function onClick() {
-			const { suggestion, index } = arg;
-			dispatch("click", { suggestion, index });
-		}
-
-		target.addEventListener('click', onClick);
+		const unsub = target.subscribe({
+			mousedown(evt) {
+				evt.preventDefault()
+			},
+			click() {
+				const { suggestion, index } = arg;
+				dispatch("click", { suggestion, index });
+			}
+		})
 
 		return {
 			update,
 			destroy() {
-				target.removeEventListener('click', onClick);
+				unsub();
 				target.innerHTML = "";
 			}
 		}
