@@ -45,9 +45,9 @@ start.addEventListener("click", () => {
 
 async function capture() {
 	await delay(delayVal.valueAsNumber * 1000)
-	const { clientWidth: w, clientHeight: h, offsetLeft: x, offsetTop: y } = frame;
+	const { x, y, width, height } = frame.getBoundingClientRect();
 	const url = await chrome.tabs.captureVisibleTab();
-	return await dataUrlToBlob(url, -x, document.documentElement.scrollTop - y, w, h);
+	return await dataUrlToBlob(url, -x, -y, width, height);
 }
 
 /**
