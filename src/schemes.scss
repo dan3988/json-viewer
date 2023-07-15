@@ -260,3 +260,4 @@ $terminal-secondary: #8f8;
 @include bg("tiles", $size: 32px);
 @include bg("triangles", $size: 64px);
 @include bg("waves", $size: 64px);
+@include bg("web");
