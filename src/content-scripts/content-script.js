@@ -1,5 +1,4 @@
 (() => {
-	debugger;
 	const pre = document.querySelector("body > pre:first-child:last-child")
 	if (!pre) 
 		return;
