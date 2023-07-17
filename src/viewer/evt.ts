@@ -1,21 +1,23 @@
-export interface IEvent<THandler extends Fn> {
-	addListener(handler: THandler): void;
-	removeListener(handler: THandler): void;
+export interface IEvent<TSelf, TArgs extends any[]> {
+	addListener(handler: Handler<TSelf, TArgs>): void;
+	removeListener(handler: Handler<TSelf, TArgs>): void;
 }
 
-export class EventHandlers<THandler extends Fn> {
-	static readonly #Event = class Event<THandler extends Fn> implements IEvent<THandler> {
-		readonly #source: EventHandlers<THandler>;
+type Handler<TSelf, TArgs extends any[]> = (this: TSelf, ...args: TArgs) => any;
 
-		constructor(source: EventHandlers<THandler>) {
+export class EventHandlers<TSelf, TArgs extends any[]> {
+	static readonly #Event = class Event<TSelf, TArgs extends any[]> implements IEvent<TSelf, TArgs > {
+		readonly #source: EventHandlers<TSelf, TArgs>;
+
+		constructor(source: EventHandlers<TSelf, TArgs>) {
 			this.#source = source;
 		}
 
-		addListener(handler: THandler): void {
+		addListener(handler: Handler<TSelf, TArgs>): void {
 			this.#source.#handlers.push(handler);
 		}
 
-		removeListener(handler: THandler): void {
+		removeListener(handler: Handler<TSelf, TArgs>): void {
 			const ls = this.#source.#handlers;
 			const i = ls.indexOf(handler);
 			if (i >= 0)
@@ -23,8 +25,8 @@ export class EventHandlers<THandler extends Fn> {
 		}
 	}
 	
-	readonly #handlers: THandler[];
-	readonly #event: IEvent<THandler>;
+	readonly #handlers: Handler<TSelf, TArgs>[];
+	readonly #event: IEvent<TSelf, TArgs>;
 
 	get hasListeners() {
 		return this.#handlers.length > 0;
@@ -39,7 +41,7 @@ export class EventHandlers<THandler extends Fn> {
 		this.#event = new EventHandlers.#Event(this);
 	}
 
-	fire(thisArg: ThisParameterType<THandler>, ...args: Parameters<THandler>) {
+	fire(thisArg: TSelf, ...args: TArgs) {
 		for (let handler of this.#handlers)
 			handler.apply(thisArg, args);
 	}

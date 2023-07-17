@@ -20,7 +20,7 @@ export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, ar
 export class ViewerModel {
 	readonly #root: JsonProperty;
 	readonly #bag: PropertyBag<ChangeProps>;
-	readonly #command: EventHandlers<ViewerCommandHandler<this>>;
+	readonly #command: EventHandlers<this, [evt: ViewerCommandEvent]>;
 
 	get root() {
 		return this.#root;
