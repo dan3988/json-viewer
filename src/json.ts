@@ -189,7 +189,7 @@ export class JsonProperty<TKey extends Key = Key, TValue = any> extends JsonBase
 	}
 
 	get hidden() {
-		return this.#bag.getValue("selected");
+		return this.#bag.getValue("hidden");
 	}
 
 	get selected() {
