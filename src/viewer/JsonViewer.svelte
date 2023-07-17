@@ -7,13 +7,13 @@
 	];
 </script>
 <script lang="ts">
-	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model";
+	import type { ViewerCommandEvent, ViewerModel } from "./viewer-model";
 	import type { JsonToken, JsonProperty } from "../json";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
-    import JsonPathViewer from "./JsonPathViewer.svelte";
+	import JsonPathViewer from "./JsonPathViewer.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -77,6 +77,8 @@
 				.item("Copy Key", () => copyKey(selected))
 				.item("Copy Value", () => copyValue(selected.value));
 		}
+
+		builder.item("delete", () => selected.remove())
 
 		contextMenu = [[x, y], builder.build()];
 	}
