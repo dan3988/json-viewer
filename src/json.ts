@@ -18,6 +18,8 @@ export interface JsonTokenSubTypeMap {
 	"null": JsonValue<null>;
 }
 
+type Key = string | number;
+
 // export enum JsonTokenType {
 // 	None		= 0,
 // 	Null		= 1 << 0,
@@ -48,16 +50,16 @@ const enum JsonIteratorMode {
 	Property, Key, Value
 }
 
-class JsonIterator<TKey extends string | number, TResult> implements Iterable<TResult>, Iterator<TResult, void> {
-	static properties<TKey extends string | number>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonProperty<TKey>> {
+class JsonIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterator<TResult, void> {
+	static properties<TKey extends Key>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonProperty<TKey>> {
 		return new JsonIterator(container, JsonIteratorMode.Property);
 	}
 
-	static keys<TKey extends string | number>(container: JsonContainer<TKey, any>): JsonIterator<TKey, TKey> {
+	static keys<TKey extends Key>(container: JsonContainer<TKey, any>): JsonIterator<TKey, TKey> {
 		return new JsonIterator(container, JsonIteratorMode.Key);
 	}
 
-	static values<TKey extends string | number>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonToken> {
+	static values<TKey extends Key>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonToken> {
 		return new JsonIterator(container, JsonIteratorMode.Value);
 	}
 
@@ -136,7 +138,7 @@ interface ChangeProps {
 	selected: boolean;
 }
 
-export class JsonProperty<TKey extends number | string = number | string, TValue = any> extends JsonBase {
+export class JsonProperty<TKey extends Key = Key, TValue = any> extends JsonBase {
 	static create<T>(value: T): JsonProperty<"$", T> {
 		return new JsonProperty(null, null, "$", value);
 	}
@@ -146,7 +148,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 	#next: null | JsonProperty<TKey>;
 	readonly #key: TKey;
 	readonly #value: JsonToken<TValue>;
-	readonly #path: (string | number)[];
+	readonly #path: Key[];
 	readonly #bag: PropertyBag<ChangeProps>;
 
 	get type() {
@@ -165,7 +167,7 @@ export class JsonProperty<TKey extends number | string = number | string, TValue
 		return this.#next;
 	}
 
-	get path(): readonly (string | number)[] {
+	get path(): readonly Key[] {
 		return this.#path;
 	}
 
@@ -298,15 +300,15 @@ export abstract class JsonToken<T = any> extends JsonBase {
 
 	abstract toJSON(): T;
 
-	abstract resolve(path: (number | string)[]): null | JsonToken;
+	abstract resolve(path: Key[]): null | JsonToken;
 
 	abstract properties(): IterableIterator<JsonProperty>;
-	abstract get(key: number | string): undefined | JsonToken;
-	abstract getProperty(key: number | string): undefined | JsonProperty;
-	abstract keys(): IterableIterator<number | string>;
+	abstract get(key: Key): undefined | JsonToken;
+	abstract getProperty(key: Key): undefined | JsonProperty;
+	abstract keys(): IterableIterator<Key>;
 }
 
-export abstract class JsonContainer<TKey extends string | number = string | number, T = any> extends JsonToken<T> {
+export abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<T> {
 	readonly #proxy: any;
 
 	get type() {
@@ -337,7 +339,7 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 		return show;
 	}
 
-	resolve(path: (number | string)[]) {
+	resolve(path: Key[]) {
 		let container: JsonContainer = this;
 		let i = 0;
 		while (true) {
@@ -368,7 +370,7 @@ export abstract class JsonContainer<TKey extends string | number = string | numb
 		return JsonIterator.values(this);
 	}
 
-	abstract override getProperty(key: string | number): undefined | JsonProperty<TKey>;
+	abstract override getProperty(key: Key): undefined | JsonProperty<TKey>;
 }
 
 export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonContainer<number & keyof T, T> {
@@ -426,11 +428,11 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 		}
 	}
 
-	getProperty(key: string | number): undefined | JsonProperty<number & keyof T> {
+	getProperty(key: Key): undefined | JsonProperty<number & keyof T> {
 		return this.#items.at(Number(key));
 	}
 
-	get(key: string | number): undefined | JsonToken {
+	get(key: Key): undefined | JsonToken {
 		return this.getProperty(key)?.value;
 	}
 
@@ -542,11 +544,11 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 		this.#last = null;
 	}
 
-	getProperty(key: string | number): undefined | JsonProperty<string & keyof T> {
+	getProperty(key: Key): undefined | JsonProperty<string & keyof T> {
 		return this.#props.get(String(key));
 	}
 
-	get(key: string | number): undefined | JsonToken {
+	get(key: Key): undefined | JsonToken {
 		return this.getProperty(key)?.value;
 	}
 
