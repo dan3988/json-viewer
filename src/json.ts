@@ -19,6 +19,10 @@ export interface JsonTokenSubTypeMap {
 	"null": JsonValue<null>;
 }
 
+function defaultCompare(x: JsonProperty<string>, y: JsonProperty<string>) {
+	return x.key.localeCompare(y.key, undefined, { sensitivity: "base" });
+}
+
 type Key = string | number;
 
 // export enum JsonTokenType {
@@ -362,7 +366,7 @@ interface ChildrenChangedEvents<TKey extends Key = any> {
 	addedRange: [added: JsonProperty<TKey>[]]
 	removed: [removed: JsonProperty<TKey>];
 	removedRange: [removed: JsonProperty<TKey>[]];
-	cleared: [];
+	reset: [];
 	replaced: [key: TKey, old: JsonProperty<TKey>, new: JsonProperty<TKey>];
 }
 
@@ -444,6 +448,11 @@ export abstract class JsonContainer<TKey extends Key = Key, T = any> extends Jso
 		this.#childrenChanged.fire(this, "removed", child);
 	}
 
+	/** @internal */
+	protected __fire(...args: ChildrenChangedArgs<TKey>) {
+		this.#childrenChanged.fire(this, ...args);
+	}
+
 	resolve(path: Key[]) {
 		let container: JsonContainer = this;
 		let i = 0;
@@ -479,6 +488,7 @@ export abstract class JsonContainer<TKey extends Key = Key, T = any> extends Jso
 		return this.properties();
 	}
 
+	abstract clear(): boolean;
 	abstract remove(key: TKey): undefined | JsonProperty<TKey>;
 	abstract override getProperty(key: Key): undefined | JsonProperty<TKey>;
 }
@@ -538,6 +548,20 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 
 		this.__removed(prop);
 		return prop;
+	}
+
+	clear(): boolean {
+		const items = this.#items;
+		if (items.length === 0)
+			return false;
+
+		const removed = items.splice(0, items.length);
+		for (const prop of removed)
+			prop.__removed();
+
+		this.__init(null, null);
+		this.__fire("removedRange", removed);
+		return true;
 	}
 
 	getProperty(key: Key): undefined | JsonProperty<number & keyof T> {
@@ -643,6 +667,31 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 		}
 	}
 
+	sort(reverse?: boolean) {
+		const props = this.#props;
+		if (props.size === 0)
+			return;
+
+		const sorted = [...props.values()].sort(defaultCompare);
+		if (reverse)
+			sorted.reverse();
+
+		const first = sorted[0];
+		let last = first;
+		first.__setPrev(null);
+
+		for (let i = 1; i < sorted.length; i++) {
+			const next = sorted[i];
+			next.__setPrev(last);
+			last.__setNext(next);
+			last = next;
+		}
+
+		last.__setNext(null);
+		this.__init(first, last);
+		this.__fire("reset");
+	}
+
 	remove(key: Key): JsonProperty<string & keyof T, any> | undefined {
 		key = String(key);
 		const prop = this.#props.get(key);
@@ -651,6 +700,21 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 			this.__removed(prop);
 			return prop;
 		}
+	}
+
+	clear(): boolean {
+		const items = this.#props;
+		if (items.size === 0)
+			return false;
+
+		const removed = [...items.values()];
+		for (const prop of removed)
+			prop.__removed();
+
+		items.clear();
+		this.__init(null, null);
+		this.__fire("removedRange", removed);
+		return true;
 	}
 
 	getProperty(key: Key): undefined | JsonProperty<string & keyof T> {

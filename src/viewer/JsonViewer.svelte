@@ -8,7 +8,7 @@
 </script>
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
-	import type { JsonToken, JsonProperty } from "../json.js";
+	import type { JsonToken, JsonProperty, JsonContainer, JsonObject } from "../json.js";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
@@ -54,6 +54,11 @@
 		}
 	}
 
+	function clearProp(value: JsonContainer) {
+		value.clear();
+		value.parentProperty.expanded = false;
+	}
+
 	function deleteProp(prop: JsonProperty) {
 		const { parent, next, previous } = prop;
 		prop.remove();
@@ -78,17 +83,28 @@
 			}
 
 			builder
+				.menu("Modify", builder => {
+					builder
+						.item("Clear", clearProp.bind(undefined, selected.value))
+						.item("Delete", deleteProp.bind(undefined, selected));
+
+					if (selected.value.is("object")) {
+						builder.menu("Sort")
+							.item("A-Z", () => (selected.value as JsonObject).sort())
+							.item("Z-A", () => (selected.value as JsonObject).sort(true));
+					}
+				})
 				.item("Copy Key", () => copyKey(selected))
 				.menu("Copy Value")
 					.item("Formatted", () => copyValue(selected.value))
-					.item("Minified", () => copyValue(selected.value, true));
+					.item("Minified", () => copyValue(selected.value, true))
+					.end();
 		} else {
 			builder
 				.item("Copy Key", () => copyKey(selected))
-				.item("Copy Value", () => copyValue(selected.value));
+				.item("Copy Value", () => copyValue(selected.value))
+				.item("Delete", () => deleteProp(selected));
 		}
-
-		builder.item("Delete", () => deleteProp(selected))
 
 		contextMenu = [[x, y], builder.build()];
 	}
