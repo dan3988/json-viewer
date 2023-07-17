@@ -9,11 +9,13 @@
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import type { JsonToken, JsonProperty, JsonContainer, JsonObject } from "../json.js";
+	import type { PopupCustomEvents } from "../types";
+	import type { ComponentConstructorOptions, SvelteComponent } from "svelte";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
+	import JsonPathViewer from "./JsonPathViewer.svelte";
+	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
-	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
-	import JsonPathViewer from "./JsonPathViewer.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -26,11 +28,13 @@
 
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
+	let showningPopup = 0;
 	let contextMenu: [Coords, MenuItem[]] | undefined;
 	let menuShown = true;
 	let menuC: JsonMenu;
 	let menu: HTMLElement;
 	let prop: HTMLElement;
+	let popups: HTMLElement;
 
 	function copyKey(property: JsonProperty) {
 		return navigator.clipboard.writeText(String(property.key));
@@ -45,6 +49,24 @@
 		}
 		
 		return navigator.clipboard.writeText(text);
+	}
+
+	type PopupConstructor<TProps extends Dict, TResult> = new(props: ComponentConstructorOptions<TProps>) => SvelteComponent<TProps, PopupCustomEvents<TResult>>;
+
+	function showPopup<TProps extends Dict, TResult>(target: HTMLElement, popup: PopupConstructor<TProps, TResult>, props: TProps) {
+		return new Promise<TResult | void>(resolve => {
+			function complete(result: CustomEvent<TResult | void>) {
+				showningPopup--;
+				component.$destroy();
+				resolve(result.detail);
+			}
+
+			const component = new popup({ target, props });
+			component.$on("canceled", complete);
+			component.$on("confirmed", complete);
+
+			showningPopup++;
+		});
 	}
 
 	function onModelCommand(evt: ViewerCommandEvent) {
@@ -88,11 +110,10 @@
 						.item("Clear", clearProp.bind(undefined, selected.value))
 						.item("Delete", deleteProp.bind(undefined, selected));
 
-					if (selected.value.is("object")) {
+					if (selected.value.is("object"))
 						builder.menu("Sort")
 							.item("A-Z", () => (selected.value as JsonObject).sort())
 							.item("Z-A", () => (selected.value as JsonObject).sort(true));
-					}
 				})
 				.item("Copy Key", () => copyKey(selected))
 				.menu("Copy Value")
@@ -378,6 +399,23 @@
 		pointer-events: none;
 	}
 
+	.popups {
+		background-color: #fff4;
+		z-index: 10;
+		position: absolute;
+		inset: 0;
+		display: none;
+
+		&.showning {
+			display: flex;
+		}
+
+		> .popup-display {
+			z-index: 11;
+			margin: auto;
+		}
+	}
+
 	.menu-btn {
 		@include bs-icon-btn("list", 5px, "color");
 
@@ -414,4 +452,7 @@
 		<JsonMenu {model} bind:this={menuC}/>
 	</div>
 	<button class="menu-btn btn btn-primary rounded-circle" title="Open Menu" on:click={() => menuShown = true}></button>
+	<div class="popups" class:showning={showningPopup}>
+		<div class="popup-display" bind:this={popups}/>
+	</div>
 </div>

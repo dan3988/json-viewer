@@ -17,3 +17,12 @@ export interface RememberMessage extends MessageBase {
 }
 
 export type WorkerMessage = LoadMessage | CheckMessage | RememberMessage;
+
+type ToCustom<T> = { [P in keyof T]: CustomEvent<T[P]> };
+
+export interface PopupEvents<T> {
+	canceled: void;
+	confirmed: T;
+}
+
+export type PopupCustomEvents<T> = ToCustom<PopupEvents<T>>
