@@ -17,7 +17,3 @@ export interface RememberMessage extends MessageBase {
 }
 
 export type WorkerMessage = LoadMessage | CheckMessage | RememberMessage;
-
-declare module "*.svelte" {
-	export default import("svelte").SvelteComponentTyped;
-}

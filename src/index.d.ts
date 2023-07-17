@@ -31,3 +31,7 @@ declare namespace chrome {
 		declare var getBrowserInfo: undefined | (() => Promise<BrowserInfo>);
 	}
 }
+
+declare module "*.svelte" {
+	export default import("svelte").SvelteComponentTyped;
+}
