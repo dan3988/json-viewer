@@ -3,13 +3,26 @@
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import { onDestroy, tick } from "svelte";
 	import { renderKey, renderValue } from "../util.js";
-
 	export let model: ViewerModel;
 	export let prop: JsonProperty;
 	export let indent = -1;
 	export let maxIndentClass: number;
 
-	const { expanded, hidden, selected } = prop.bag.readables;
+	$: ({ expanded, hidden, selected } = prop.bag.readables);
+	
+	let props: JsonProperty[] = [];
+
+	function update() {
+		props = [...prop.value];
+		console.log(props.map(v => v.key))
+	}
+
+	if (prop.value.is("container")) {
+		const container = prop.value;
+		props = [...container];
+		container.childrenChanged.addListener(update);
+		onDestroy(() => container.childrenChanged.removeListener(update));
+	}
 
 	model.command.addListener(onModelCommand);
 
@@ -227,16 +240,16 @@
 			<span class="prop-count">{prop.value.count}</span>
 			{#if $expanded}
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
-					{#each [...prop.value.properties()] as p}
+					{#each props as prop}
 						<li>
-							<svelte:self model={model} prop={p} indent={indent + 1} {maxIndentClass} />
+							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
 						</li>
 					{/each}
 				</ul>
 			{/if}
 		{/if}
 	{:else if prop.value.is("value")}
-	<span class="json-value json-{prop.value.subtype}" use:renderValue={prop.value.value}/>
+		<span class="json-value json-{prop.value.subtype}" use:renderValue={prop.value.value}/>
 	{/if}
 </div>
 {/if}

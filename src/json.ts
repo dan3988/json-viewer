@@ -1,5 +1,6 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
 import { PropertyBag } from "./prop.js";
+import { EventHandlers } from "./evt.js";
 
 const emptyArray: readonly never[] = Object.freeze([]);
 
@@ -143,10 +144,10 @@ export class JsonProperty<TKey extends Key = Key, TValue = any> extends JsonBase
 		return new JsonProperty(null, null, "$", value);
 	}
 
-	readonly #parent: null | JsonContainer<TKey, any>;
+	#parent: null | JsonContainer<TKey, any>;
 	#prev: null | JsonProperty<TKey>;
 	#next: null | JsonProperty<TKey>;
-	readonly #key: TKey;
+	#key: TKey;
 	readonly #value: JsonToken<TValue>;
 	readonly #path: Key[];
 	readonly #bag: PropertyBag<ChangeProps>;
@@ -219,6 +220,45 @@ export class JsonProperty<TKey extends Key = Key, TValue = any> extends JsonBase
 			prev.#next = this;
 	}
 
+	/** @internal */
+	__setKey(key: TKey) {
+		this.#key = key;
+	}
+
+	/** @internal */
+	__setNext(prop: null | JsonProperty<TKey>) {
+		this.#next = prop;
+	}
+
+	/** @internal */
+	__setPrev(prop: null | JsonProperty<TKey>) {
+		this.#prev = prop;
+	}
+
+	/** @internal */
+	__setSiblings(prev: null | JsonProperty<TKey>, next: null | JsonProperty<TKey>) {
+		this.#prev = prev;
+		this.#next = next;
+	}
+
+	/** @internal */
+	__removed() {
+		const [prev, next] = [this.#prev, this.#next];
+		if (prev) {
+			next && (next.#prev = prev);
+			this.#prev = null;
+		}
+
+		if (next) {
+			prev && (prev.#next = next);
+			this.#next = null;
+		}
+
+		this.#prev = null;
+		this.#next = null;
+		this.#parent = null;
+	}
+
 	setExpanded(expanded: boolean, recursive?: boolean) {
 		this.#bag.setValue("expanded", expanded);
 		if (!recursive)
@@ -240,6 +280,11 @@ export class JsonProperty<TKey extends Key = Key, TValue = any> extends JsonBase
 				stack.push(it);
 			}
 		}
+	}
+
+	remove() {
+		const p = this.#parent;
+		return !!(p && p.remove(this.#key));
 	}
 
 	toggleExpanded() {
@@ -264,7 +309,7 @@ export class JsonProperty<TKey extends Key = Key, TValue = any> extends JsonBase
 	}
 }
 
-export abstract class JsonToken<T = any> extends JsonBase {
+export abstract class JsonToken<T = any> extends JsonBase implements Iterable<JsonProperty> {
 	readonly #root: JsonProperty;
 	readonly #prop: JsonProperty;
 
@@ -306,26 +351,57 @@ export abstract class JsonToken<T = any> extends JsonBase {
 	abstract get(key: Key): undefined | JsonToken;
 	abstract getProperty(key: Key): undefined | JsonProperty;
 	abstract keys(): IterableIterator<Key>;
+	
+	[Symbol.iterator]() {
+		return this.properties();
+	}
 }
 
-export abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<T> {
+interface ChildrenChangedEvents<TKey extends Key = any> {
+	added: [added: JsonProperty<TKey>];
+	addedRange: [added: JsonProperty<TKey>[]]
+	removed: [removed: JsonProperty<TKey>];
+	removedRange: [removed: JsonProperty<TKey>[]];
+	cleared: [];
+	replaced: [key: TKey, old: JsonProperty<TKey>, new: JsonProperty<TKey>];
+}
+
+type ChildrenChangedArgs<TKey extends Key> = { [P in keyof ChildrenChangedEvents]: [type: P, ...args: ChildrenChangedEvents<TKey>[P]] }[keyof ChildrenChangedEvents]
+
+export abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<T> implements Iterable<JsonProperty<TKey>> {
 	readonly #proxy: any;
+	readonly #childrenChanged: EventHandlers<any, ChildrenChangedArgs<Key>>;
+	#first: null | JsonProperty<TKey>;
+	#last: null | JsonProperty<TKey>;
+
+	get first() {
+		return this.#first;
+	}
+
+	get last() {
+		return this.#last;
+	}
 
 	get type() {
 		return "container" as const;
 	}
 
-	abstract get count(): number;
-	abstract get first(): null | JsonProperty<TKey>;
-	abstract get last(): null | JsonProperty<TKey>;
+	get childrenChanged() {
+		return this.#childrenChanged.event;
+	}
 
-	get proxy() {
+	abstract get count(): number;
+
+	get proxy(): T {
 		return this.#proxy;
 	}
 
 	protected constructor(prop: JsonProperty, handler: ProxyHandler<JsonContainer<TKey, T>> | ((self: any) => any)) {
 		super(prop);
+		this.#first = null;
+		this.#last = null;
 		this.#proxy = typeof handler === "function" ? handler(this) : new Proxy(this, handler);
+		this.#childrenChanged = new EventHandlers();
 	}
 
 	/** @internal */
@@ -337,6 +413,35 @@ export abstract class JsonContainer<TKey extends Key = Key, T = any> extends Jso
 				show = true;
 
 		return show;
+	}
+
+	/** @internal */
+	protected __init(first: null | JsonProperty<TKey>, last: null | JsonProperty<TKey>) {
+		this.#first = first;
+		this.#last = last;
+	}
+
+	/** @internal */
+	protected __removed(child: JsonProperty<TKey>) {
+		const { previous, next } = child;
+		if (previous == null) {
+			if (next == null) {
+				this.#first = null;
+				this.#last = null;
+			} else {
+				this.#first = next;
+				next.__setPrev(null);
+			}
+		} else if (next == null) {
+			this.#last = previous;
+			previous.__setNext(null);
+		} else {
+			next.__setPrev(previous);
+			previous.__setNext(next);
+		}
+
+		child.__removed();
+		this.#childrenChanged.fire(this, "removed", child);
 	}
 
 	resolve(path: Key[]) {
@@ -370,6 +475,11 @@ export abstract class JsonContainer<TKey extends Key = Key, T = any> extends Jso
 		return JsonIterator.values(this);
 	}
 
+	[Symbol.iterator]() {
+		return this.properties();
+	}
+
+	abstract remove(key: TKey): undefined | JsonProperty<TKey>;
 	abstract override getProperty(key: Key): undefined | JsonProperty<TKey>;
 }
 
@@ -391,16 +501,6 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 	}
 
 	readonly #items: JsonProperty<number>[];
-	readonly #first: null | JsonProperty<number>;
-	readonly #last: null | JsonProperty<number>;
-
-	get first() {
-		return this.#first;
-	}
-
-	get last() {
-		return this.#last;
-	}
 
 	get subtype() {
 		return "array" as const;
@@ -413,19 +513,31 @@ export class JsonArray<T extends readonly any[] = readonly any[]> extends JsonCo
 	constructor(prop: JsonProperty, value: T[]) {
 		super(prop, JsonArray.#createProxy);
 		if (value && value.length) {
-			let prop = new JsonProperty<number>(this, null, 0, value[0]);
+			const first = new JsonProperty<number>(this, null, 0, value[0]);
 			this.#items = Array(value.length);
-			this.#items[0] = prop;
-			this.#first = prop;
+			this.#items[0] = first;
+			let prop = first;
 			for (let i = 1; i < value.length; i++)
 				this.#items[i] = prop = new JsonProperty<number>(this, prop, i, value[i]);
 
-			this.#last = prop;
+			this.__init(first, prop);
 		} else {
 			this.#items = [];
-			this.#first = null;
-			this.#last = null;
+			this.__init(null, null);
 		}
+	}
+
+	remove(key: Key): JsonProperty<number & keyof T> | undefined {
+		key = Number(key);
+		const [prop] = this.#items.splice(key, 1);
+		if (!prop)
+			return;
+
+		while (key < this.#items.length)
+			this.#items[key].__setKey(key++);
+
+		this.__removed(prop);
+		return prop;
 	}
 
 	getProperty(key: Key): undefined | JsonProperty<number & keyof T> {
@@ -495,16 +607,6 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 	}
 
 	readonly #props: Map<string, JsonProperty<string & keyof T>>;
-	readonly #first: null | JsonProperty<string & keyof T>;
-	readonly #last: null | JsonProperty<string & keyof T>;
-
-	get first() {
-		return this.#first;
-	}
-
-	get last() {
-		return this.#last;
-	}
 
 	get count() {
 		return this.#props.size;
@@ -527,7 +629,7 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 				let prop = new JsonProperty<Key>(this, null, key, item);
 
 				this.#props.set(key, prop);
-				this.#first = prop;
+				const first = prop;
 				for (let i = 1; i < keys.length; i++) {
 					key = keys[i];
 					item = (value as any)[key];
@@ -535,13 +637,20 @@ export class JsonObject<T extends object = any> extends JsonContainer<string & k
 					this.#props.set(key, prop);
 				}
 
-				this.#last = prop;
+				this.__init(first, prop);
 				return;
 			}
 		}
+	}
 
-		this.#first = null;
-		this.#last = null;
+	remove(key: Key): JsonProperty<string & keyof T, any> | undefined {
+		key = String(key);
+		const prop = this.#props.get(key);
+		if (prop) {
+			this.#props.delete(key);
+			this.__removed(prop);
+			return prop;
+		}
 	}
 
 	getProperty(key: Key): undefined | JsonProperty<string & keyof T> {

@@ -78,6 +78,8 @@
 				.item("Copy Value", () => copyValue(selected.value));
 		}
 
+		builder.item("Delete", () => selected.remove())
+
 		contextMenu = [[x, y], builder.build()];
 	}
 
@@ -90,6 +92,14 @@
 			case "Space":
 				model.selected?.toggleExpanded();
 				e.preventDefault();
+				break;
+			case "Delete":
+				if (model.selected) {
+					const next = model.selected.next;
+					model.selected.remove();
+					model.selected = next;
+				}
+				
 				break;
 			case "KeyF":
 				if (e.ctrlKey) {

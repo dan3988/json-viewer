@@ -141,12 +141,13 @@ export class ViewerModel {
 			if (old)
 				old.selected = false;
 
+			this.#bag.setValue("selected", selected);
+
 			if (selected) {
 				selected.selected = true;
 				this.#onSelected(selected, expand ?? false, scrollTo ?? false);
 			}
 
-			this.#bag.setValue("selected", selected);
 		} else if (old) {
 			this.#onSelected(old, expand ?? false, scrollTo ?? false);
 		}
