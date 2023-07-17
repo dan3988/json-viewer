@@ -54,6 +54,16 @@
 		}
 	}
 
+	function deleteProp(prop: JsonProperty) {
+		const { parent, next, previous } = prop;
+		prop.remove();
+		if (parent && parent.first == null)
+			parent.parentProperty.expanded = false;
+
+		const p  = (next ?? previous);
+		model.setSelected(p, false, true);
+	}
+
 	function openContextMenu(selected: JsonProperty, x: number, y: number) {
 		const builder = menuBuilder();
 		if (selected.value.is("container")) {
@@ -78,7 +88,7 @@
 				.item("Copy Value", () => copyValue(selected.value));
 		}
 
-		builder.item("Delete", () => selected.remove())
+		builder.item("Delete", () => deleteProp(selected))
 
 		contextMenu = [[x, y], builder.build()];
 	}
@@ -94,12 +104,7 @@
 				e.preventDefault();
 				break;
 			case "Delete":
-				if (model.selected) {
-					const next = model.selected.next;
-					model.selected.remove();
-					model.selected = next;
-				}
-				
+				model.selected && deleteProp(model.selected);
 				break;
 			case "KeyF":
 				if (e.ctrlKey) {

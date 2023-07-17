@@ -147,7 +147,6 @@ export class ViewerModel {
 				selected.selected = true;
 				this.#onSelected(selected, expand ?? false, scrollTo ?? false);
 			}
-
 		} else if (old) {
 			this.#onSelected(old, expand ?? false, scrollTo ?? false);
 		}

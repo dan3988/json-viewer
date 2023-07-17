@@ -14,12 +14,11 @@
 
 	function update() {
 		props = [...prop.value];
-		console.log(props.map(v => v.key))
 	}
 
 	if (prop.value.is("container")) {
 		const container = prop.value;
-		props = [...container];
+		update();
 		container.childrenChanged.addListener(update);
 		onDestroy(() => container.childrenChanged.removeListener(update));
 	}
@@ -30,7 +29,7 @@
 
 	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
 		if (command === "scrollTo" && arg0 === prop) {
-			tick().then(() => keyElement.scrollIntoView({ block: "center" }));
+			keyElement.scrollIntoView({ block: "center" });
 		}
 	}
 
