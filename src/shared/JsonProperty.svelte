@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { JsonProperty } from "../json";
-	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model";
+	import type { JsonProperty } from "../json.js";
+	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import { onDestroy, tick } from "svelte";
-	import { renderKey, renderValue } from "../util";
+	import { renderKey, renderValue } from "../util.js";
 
 	export let model: ViewerModel;
 	export let prop: JsonProperty;

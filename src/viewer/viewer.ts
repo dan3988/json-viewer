@@ -7,7 +7,7 @@ import { getValue } from "../scheme-modes";
 import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
 import { JsonProperty } from "../json"
-import { ViewerModel } from "./viewer-model";
+import { ViewerModel } from "../viewer-model";
 import { MappedBagBuilder } from "../prop";
 
 async function setGlobal(key: string, value: any) {

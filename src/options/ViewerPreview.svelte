@@ -35,8 +35,8 @@
 </script>
 <script lang="ts">
 	import JsonProperty from "../shared/JsonProperty.svelte"
-	import ViewerModel from "../viewer-model";
-	import * as json from "../json";
+	import ViewerModel from "../viewer-model.js";
+	import * as json from "../json.js";
 
 	export let maxIndentClass: number;
 	
