@@ -1,4 +1,4 @@
-import { EventHandlers } from "./evt.js";
+import { EventHandlers } from "../evt.js";
 import { JsonContainer, JsonProperty, JsonToken, JsonTokenFilterFlags } from "../json.js";
 import { PropertyBag } from "../prop.js";
 
