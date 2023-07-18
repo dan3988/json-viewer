@@ -1,5 +1,6 @@
 lib
 node_modules
+mochawesome-report
 package-lock.json
 dist
 out
