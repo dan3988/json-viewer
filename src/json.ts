@@ -27,7 +27,7 @@ interface ChildrenChangedEvents<TKey extends Key = any> {
 
 type ChildrenChangedArgs<TKey extends Key = Key> = { [P in keyof ChildrenChangedEvents]: [type: P, ...args: ChildrenChangedEvents<TKey>[P]] }[keyof ChildrenChangedEvents]
 
-const enum JsonTokenFilterFlags {
+enum FilterFlags {
 	None,
 	Keys = 1,
 	Values = 2,
@@ -341,7 +341,7 @@ class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken>
 		if (isAppend && this.isHidden)
 			return false;
 
-		const showKey = Boolean(filterMode & JsonTokenFilterFlags.Keys) && String.prototype.toLowerCase.call(this.#key).includes(filter);
+		const showKey = Boolean(filterMode & json.JsonTokenFilterFlags.Keys) && String.prototype.toLowerCase.call(this.#key).includes(filter);
 		const showValue = this.#value.__shown(filter, filterMode, isAppend);
 		const show = showKey || showValue;
 		this.#bag.setValue("isHidden", !show);
@@ -470,7 +470,7 @@ class JsonValue extends JsonToken implements json.JsonValue {
 
 	/** @internal */
 	__shown(filter: string, filterMode: json.JsonTokenFilterFlags): boolean {
-		if ((filterMode & JsonTokenFilterFlags.Values) === 0) 
+		if ((filterMode & json.JsonTokenFilterFlags.Values) === 0) 
 			return false;
 
 		const str = this.#value === null ? "null" :  String.prototype.toLowerCase.call(this.#value);
@@ -1021,5 +1021,11 @@ export function json(value: any, key: string = "$"): json.JsonProperty<string> {
 	prop.value.value = value;
 	return prop;
 }
+
+Object.defineProperty(json, "JsonTokenFilterFlags", {
+	configurable: false,
+	writable: false,
+	value: FilterFlags
+})
 
 export default json;
