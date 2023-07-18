@@ -25,7 +25,7 @@
 			"type": "node",
 			"request": "launch",
 			"args": [
-				"./node_modules/.bin/mocha",
+				"./node_modules/mocha/bin/mocha.js",
 				"./lib/main.js"
 			]
 		}
