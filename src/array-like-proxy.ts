@@ -215,9 +215,9 @@ interface ArrayLikeProxyConstructor {
 }
 
 var _ArrayLikeProxy = function ArrayLikeProxy(self: any, handler: any) {
-	const wrapper = {
-		self
-	};
+	//make the proxy target an array so that Array.isArray() returns true
+	const wrapper: any = [];
+	wrapper.self = self;
 	return new Proxy(wrapper, new HandlerImpl(handler));
 }
 
