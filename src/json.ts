@@ -590,6 +590,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			this.#first = value;
 			this.#last = value;
 		} else {
+			value.previous = this.#last;
 			this.#last.next = value;
 			this.#last = value;
 		}
@@ -612,6 +613,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			this.#first = value;
 			this.#last = value;
 		} else {
+			value.next = this.#first;
 			this.#first.previous = value;
 			this.#first = value;
 		}
