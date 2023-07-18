@@ -17,8 +17,7 @@
 
 	$: ({ selected } = model.bag.readables);
 	$: prop = $selected ?? model.root;
-
-	onMount(update);
+	$: prop && target && update();
 
 	let acWrapper: HTMLElement;
 	let acHelper: undefined | AutocompleteHelper;
