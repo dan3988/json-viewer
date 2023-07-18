@@ -491,9 +491,11 @@ class JsonValue extends JsonToken implements json.JsonValue {
 	}
 
 	get(): undefined {
+		return undefined;
 	}
 
 	getProperty(): undefined {
+		return undefined;
 	}
 
 	keys(): IterableIterator<never> {
