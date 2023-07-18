@@ -1,5 +1,5 @@
 import type { ComponentProps } from "svelte";
-import type { JsonToken } from "../json";
+import type json from "../json";
 import SuggestionList from "./SuggestionList.svelte";
 import Linq from "@daniel.pickett/linq-js";
 
@@ -7,7 +7,7 @@ export default class AutocompleteHelper {
 	readonly #target: HTMLElement;
 	readonly #setter: (value?: string) => void;
 	#list: SuggestionList;
-	#prop: null | JsonToken;
+	#prop: null | json.JsonToken;
 
 	get target() {
 		return this.#target;
@@ -41,14 +41,14 @@ export default class AutocompleteHelper {
 		return false;
 	}
 
-	update(prop: JsonToken, filter: string, changeProp?: boolean) {
+	update(prop: json.JsonToken, filter: string, changeProp?: boolean) {
 		const props: Partial<ComponentProps<SuggestionList>> = { filter };
 		if (this.#prop !== prop) {
 			if (!changeProp)
 				return false;
 
 			this.#prop = prop;
-			props.source = Linq(prop.properties()).select("key").select(String).toArray();
+			props.source = Linq(prop).select("key").select(String).toArray();
 		}
 
 		this.#list.$set(props);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { JsonTokenFilterFlags } from "../json";
+	import json from "../json";
 	import JSONPath from "./json-path";
 	import type { ViewerModel } from "../viewer-model";
 
@@ -15,7 +15,7 @@
 
 	let filterInput: HTMLInputElement;
 	let filter = "";
-	let filterMode = JsonTokenFilterFlags.Both;
+	let filterMode = json.JsonTokenFilterFlags.Both;
 
 	$: model.filter(filter, filterMode);
 
@@ -116,9 +116,9 @@
 		<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
 		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearFilter}></button>
 		<select class="filter-type form-select" bind:value={filterMode}>
-			<option value={JsonTokenFilterFlags.Both}>All</option>
-			<option value={JsonTokenFilterFlags.Keys}>Keys</option>
-			<option value={JsonTokenFilterFlags.Values}>Values</option>
+			<option value={json.JsonTokenFilterFlags.Both}>All</option>
+			<option value={json.JsonTokenFilterFlags.Keys}>Keys</option>
+			<option value={json.JsonTokenFilterFlags.Values}>Values</option>
 		</select>
 	</div>
 	<div class="input-group field">

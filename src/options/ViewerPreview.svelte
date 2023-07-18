@@ -36,12 +36,12 @@
 <script lang="ts">
 	import JsonProperty from "../shared/JsonProperty.svelte"
 	import ViewerModel from "../viewer-model.js";
-	import * as json from "../json.js";
+	import json from "../json.js";
 
 	export let maxIndentClass: number;
 	
-	const prop = json.JsonProperty.create(sample);
-	prop.expanded = true;
+	const prop = json(sample);
+	prop.isExpanded = true;
 	const model = new ViewerModel(prop);
 </script>
 <JsonProperty indent={0} {maxIndentClass} {model} {prop}></JsonProperty>

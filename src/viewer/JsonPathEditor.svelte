@@ -1,8 +1,8 @@
 <script lang="ts" context="module">
-	import type { JsonProperty } from "../json";
+	import type json from "../json";
 
 	export interface EventMap {
-		finished: JsonProperty | null;
+		finished: json.JsonProperty | null;
 		cancelled: void;
 	}
 </script>

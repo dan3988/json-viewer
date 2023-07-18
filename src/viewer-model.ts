@@ -1,16 +1,16 @@
 import { EventHandlers } from "./evt.js";
-import { JsonContainer, JsonProperty, JsonToken, JsonTokenFilterFlags } from "./json.js";
+import json from "./json.js"
 import { PropertyBag } from "./prop.js";
 
 interface ChangeProps {
-	selected: null | JsonProperty;
+	selected: null | json.JsonProperty;
 	filterText: string;
-	filterFlags: JsonTokenFilterFlags;
+	filterFlags: json.JsonTokenFilterFlags;
 }
 
 export interface ViewerCommands {
-	scrollTo: [token: JsonProperty];
-	context: [token: JsonProperty, x: number, y: number];
+	scrollTo: [token: json.JsonProperty];
+	context: [token: json.JsonProperty, x: number, y: number];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
@@ -18,7 +18,7 @@ export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent]
 export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
 
 export class ViewerModel {
-	readonly #root: JsonProperty;
+	readonly #root: json.JsonProperty;
 	readonly #bag: PropertyBag<ChangeProps>;
 	readonly #command: EventHandlers<this, [evt: ViewerCommandEvent]>;
 
@@ -50,9 +50,9 @@ export class ViewerModel {
 		return this.#bag.getValue("filterFlags");
 	}
 
-	constructor(root: JsonProperty) {
+	constructor(root: json.JsonProperty) {
 		this.#root = root;
-		this.#bag = new PropertyBag<ChangeProps>({ selected: null, filterFlags: JsonTokenFilterFlags.Both, filterText: "" });
+		this.#bag = new PropertyBag<ChangeProps>({ selected: null, filterFlags: json.JsonTokenFilterFlags.Both, filterText: "" });
 		this.#command = new EventHandlers();
 	}
 
@@ -62,7 +62,7 @@ export class ViewerModel {
 			handlers.fire(this, <any>{ command, args });
 	}
 
-	filter(text: string, flags?: JsonTokenFilterFlags) {
+	filter(text: string, flags?: json.JsonTokenFilterFlags) {
 		text = text.toLowerCase();
 		const oldText = this.#bag.getValue("filterText");
 		const oldFlags = this.#bag.getValue("filterFlags");
@@ -82,12 +82,12 @@ export class ViewerModel {
 		this.#root.filter(text, flags, append);
 	}
 
-	resolve(path: string | readonly (number | string)[]): JsonProperty | undefined {
+	resolve(path: string | readonly (number | string)[]): json.JsonProperty | undefined {
 		if (typeof path === "string")
 			path = path.split("/");
 
 		let i = 0;
-		let baseProp: JsonProperty;
+		let baseProp: json.JsonProperty;
 		if (path[0] !== "$") {
 			const selected = this.#bag.getValue("selected");
 			if (selected == null)
@@ -101,7 +101,7 @@ export class ViewerModel {
 			baseProp = this.#root;
 		}
 	
-		for (let curr = baseProp; curr.value instanceof JsonContainer; ) {
+		for (let curr = baseProp; curr.value.is("container"); ) {
 			const key = path[i];
 			const child = curr.value.getProperty(key);
 			if (child == null)
@@ -124,27 +124,27 @@ export class ViewerModel {
 		return true;
 	}
 
-	#onSelected(selected: JsonProperty, expand: boolean, scrollTo: boolean) {
+	#onSelected(selected: json.JsonProperty, expand: boolean, scrollTo: boolean) {
 		if (expand)
-			for (let p: null | JsonToken = selected.parent; p != null; p = p.parent)
-				p.parentProperty.expanded = true;
+			for (let p: null | json.JsonToken = selected.parent; p != null; p = p.parent)
+				p.owner.isExpanded = true;
 
 		if (scrollTo)
 			this.execute("scrollTo", selected);
 	}
 
 	setSelected(selected: null): void;
-	setSelected(selected: null | JsonProperty, expand: boolean, scrollTo: boolean): void
-	setSelected(selected: null | JsonProperty, expand?: boolean, scrollTo?: boolean) {
+	setSelected(selected: null | json.JsonProperty, expand: boolean, scrollTo: boolean): void
+	setSelected(selected: null | json.JsonProperty, expand?: boolean, scrollTo?: boolean) {
 		const old = this.#bag.getValue("selected");
 		if (old !== selected) {
 			if (old)
-				old.selected = false;
+				old.isSelected = false;
 
 			this.#bag.setValue("selected", selected);
 
 			if (selected) {
-				selected.selected = true;
+				selected.isSelected = true;
 				this.#onSelected(selected, expand ?? false, scrollTo ?? false);
 			}
 		} else if (old) {

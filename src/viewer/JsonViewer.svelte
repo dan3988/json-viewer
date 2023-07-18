@@ -8,7 +8,7 @@
 </script>
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
-	import type { JsonToken, JsonProperty, JsonContainer, JsonObject } from "../json.js";
+	import type json from "../json.js";
 	import type { PopupCustomEvents } from "../types";
 	import type { ComponentConstructorOptions, SvelteComponent } from "svelte";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
@@ -36,11 +36,11 @@
 	let prop: HTMLElement;
 	let popups: HTMLElement;
 
-	function copyKey(property: JsonProperty) {
+	function copyKey(property: json.JsonProperty) {
 		return navigator.clipboard.writeText(String(property.key));
 	}
 
-	function copyValue(token: JsonToken, minify?: boolean) {
+	function copyValue(token: json.JsonToken, minify?: boolean) {
 		let text: string;
 		if (token.is("value")) {
 			text = String(token.value);
@@ -76,25 +76,25 @@
 		}
 	}
 
-	function clearProp(value: JsonContainer) {
+	function clearProp(value: json.JsonContainer) {
 		value.clear();
-		value.parentProperty.expanded = false;
+		value.owner.isExpanded = false;
 	}
 
-	function deleteProp(prop: JsonProperty) {
+	function deleteProp(prop: json.JsonProperty) {
 		const { parent, next, previous } = prop;
 		prop.remove();
 		if (parent && parent.first == null)
-			parent.parentProperty.expanded = false;
+			parent.owner.isExpanded = false;
 
 		const p  = (next ?? previous);
 		model.setSelected(p, false, true);
 	}
 
-	function openContextMenu(selected: JsonProperty, x: number, y: number) {
+	function openContextMenu(selected: json.JsonProperty, x: number, y: number) {
 		const builder = menuBuilder();
 		if (selected.value.is("container")) {
-			if (selected.expanded) {
+			if (selected.isExpanded) {
 				builder
 					.item("Collapse", () => selected.setExpanded(false, true))
 					.item("Expand All", () => selected.setExpanded(true, true));
@@ -112,8 +112,8 @@
 
 					if (selected.value.is("object"))
 						builder.menu("Sort")
-							.item("A-Z", () => (selected.value as JsonObject).sort())
-							.item("Z-A", () => (selected.value as JsonObject).sort(true));
+							.item("A-Z", () => (selected.value as json.JsonObject).sort())
+							.item("Z-A", () => (selected.value as json.JsonObject).sort(true));
 				})
 				.item("Copy Key", () => copyKey(selected))
 				.menu("Copy Value")
@@ -194,7 +194,7 @@
 				if (!e.shiftKey) {
 					const selected = model.selected;
 					if (selected && selected.value.is("container") && selected.value.first != null) {
-						selected.expanded = true;
+						selected.isExpanded = true;
 						model.setSelected(selected.value.first, false, true);
 						e.preventDefault();
 					}
@@ -205,7 +205,7 @@
 				if (!e.shiftKey) {
 					const selected = model.selected;
 					if (selected && selected.parent)
-						model.setSelected(selected.parent.parentProperty, true, true);
+						model.setSelected(selected.parent.owner, true, true);
 
 					e.preventDefault();
 				}

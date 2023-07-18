@@ -6,7 +6,7 @@ import schemes from "../schemes.json";
 import { getValue } from "../scheme-modes";
 import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
-import { JsonProperty } from "../json"
+import json from "../json"
 import { ViewerModel } from "../viewer-model";
 import { MappedBagBuilder } from "../prop";
 
@@ -21,13 +21,13 @@ function run() {
 		if (pre == null)
 			throw "Could not find JSON element.";
 
-		const json = lib.parse(pre.innerText);
-		setGlobal("json", json);
+		const doc =  lib.parse(pre.innerText);
+		setGlobal("json", doc);
 		pre.remove();
 
-		const root = JsonProperty.create(json);
+		const root = json(doc);
 		const model = new ViewerModel(root);
-		root.expanded = true;
+		root.isExpanded = true;
 
 		function suppressPush(fn: Fn): any
 		function suppressPush<T, R>(fn: Fn<[], R, T>, thisArg: T): R
@@ -63,7 +63,7 @@ function run() {
 			return parts;
 		}
 
-		function pushHistory(v: JsonProperty) {
+		function pushHistory(v: json.JsonProperty) {
 			if (v != null && !popping)
 				history.pushState(v.path, "", "#" + encodePath(v.path));
 		}

@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { JsonProperty } from "../json.js";
+	import type json from "../json.js";
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
-	import { onDestroy, tick } from "svelte";
+	import { onDestroy } from "svelte";
 	import { renderKey, renderValue } from "../util.js";
+
 	export let model: ViewerModel;
-	export let prop: JsonProperty;
+	export let prop: json.JsonProperty;
 	export let indent = -1;
 	export let maxIndentClass: number;
 
-	$: ({ expanded, hidden, selected } = prop.bag.readables);
+	$: ({ isExpanded, isHidden, isSelected } = prop.bag.readables);
 	
-	let props: JsonProperty[] = [];
+	let props: json.JsonProperty[] = [];
 
 	function update() {
 		props = [...prop.value];
@@ -19,8 +20,8 @@
 	if (prop.value.is("container")) {
 		const container = prop.value;
 		update();
-		container.childrenChanged.addListener(update);
-		onDestroy(() => container.childrenChanged.removeListener(update));
+		container.changed.addListener(update);
+		onDestroy(() => container.changed.removeListener(update));
 	}
 
 	model.command.addListener(onModelCommand);
@@ -34,11 +35,11 @@
 	}
 
 	function onExpanderClicked() {
-		if (prop.expanded) {
-			prop.expanded = false;
+		if (prop.isExpanded) {
+			prop.isExpanded = false;
 			model.setSelected(prop, false, true);
 		} else {
-			prop.expanded = true;
+			prop.isExpanded = true;
 		}
 	}
 
@@ -225,19 +226,19 @@
 </style>
 {#if prop}
 <div
-	hidden={$hidden}
+	hidden={$isHidden}
 	data-indent={indent % maxIndentClass}
 	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype} json-indent"
-	class:expanded={$expanded}
-	class:selected={$selected}>
+	class:expanded={$isExpanded}
+	class:selected={$isSelected}>
 	<span bind:this={keyElement} class="json-key" on:click={onClick} on:contextmenu|preventDefault={onContextMenu} use:renderKey={prop.key}/>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
-			<span class="expander" on:click={onExpanderClicked} title={($expanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
+			<span class="expander" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
 			<span class="prop-count">{prop.value.count}</span>
-			{#if $expanded}
+			{#if $isExpanded}
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
 					{#each props as prop}
 						<li>
