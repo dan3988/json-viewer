@@ -1,9 +1,21 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
 import { PropertyBag } from "./prop.js";
 import { EventHandlers, type IEvent } from "./evt.js";
+import * as util from "./util.js";
 
 type Key = string | number;
 type JsonValueType = string | number | boolean | null;
+
+interface JsonPropertyBag {
+	isHidden: boolean;
+	isExpanded: boolean;
+	isSelected: boolean;
+}
+
+interface JsonClass<T extends json.JsonToken = json.JsonToken> {
+	readonly prototype: T;
+	new(owner: JsonProperty): T;
+}
 
 function defaultCompare(x: JsonPropertyController<string>, y: JsonPropertyController<string>) {
 	return x.key.localeCompare(y.key, undefined, { sensitivity: "base" });
@@ -75,6 +87,12 @@ export declare namespace json {
 		toggleExpanded(): boolean;
 		filter(filter: string, filterMode: JsonTokenFilterFlags, isAppend: boolean): boolean;
 	}
+
+	export const JsonToken: JsonClass<JsonToken>;
+	export const JsonValue: JsonClass<JsonValue>;
+	export const JsonContainer: JsonClass<JsonContainer>;
+	export const JsonArray: JsonClass<JsonArray>;
+	export const JsonObject: JsonClass<JsonObject>;
 
 	export interface JsonToken<T = any> extends Iterable<JsonProperty> {
 		readonly type: keyof JsonTokenTypeMap;
@@ -149,21 +167,10 @@ export declare namespace json {
 
 const empty = Object.freeze([]);
 
-interface JsonPropertyBag {
-	isHidden: boolean;
-	isExpanded: boolean;
-	isSelected: boolean;
-}
-
 interface InternalJsonContainerAddMap {
 	"value": JsonValue;
 	"array": JsonArray;
 	"object": JsonObject;
-}
-
-interface JsonClass<T extends JsonToken = JsonToken> {
-	readonly prototype: T;
-	new(owner: JsonProperty): T;
 }
 
 function resolveClass<K extends keyof json.JsonContainerAddMap>(type: K): JsonClass<InternalJsonContainerAddMap[K]>
@@ -1034,10 +1041,11 @@ export function json(value: any, key: string = "$"): json.JsonProperty<string> {
 	return create(key, value).prop;
 }
 
-Object.defineProperty(json, "JsonTokenFilterFlags", {
-	configurable: false,
-	writable: false,
-	value: FilterFlags
-})
+util.defValue(json, "JsonTokenFilterFlags", FilterFlags, true);
+util.defValue(json, "JsonToken", JsonToken, true);
+util.defValue(json, "JsonValue", JsonValue, true);
+util.defValue(json, "JsonContainer", JsonContainer, true);
+util.defValue(json, "JsonObject", JsonObject, true);
+util.defValue(json, "JsonArray", JsonArray, true);
 
 export default json;
