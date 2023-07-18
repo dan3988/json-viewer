@@ -240,7 +240,6 @@ class JsonIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iter
 class JsonPropertyController<TKey extends Key = Key, TValue extends JsonToken = JsonToken> {
 	readonly #prop: JsonProperty<TKey, TValue>;
 	parent: null | JsonContainer<TKey>;
-	path: readonly Key[];
 	key: TKey;
 	previous: null | JsonPropertyController<TKey>;
 	next: null | JsonPropertyController<TKey>;
@@ -256,22 +255,13 @@ class JsonPropertyController<TKey extends Key = Key, TValue extends JsonToken = 
 	constructor(key: TKey, clazz: JsonClass<TValue>) {
 		this.#prop = new JsonProperty(this, clazz);
 		this.parent = null;
-		this.path = empty;
 		this.key = key;
 		this.previous = null;
 		this.next = null;
 	}
 
-	setParent(parent: JsonContainer<TKey>) {
-		if (this.parent !== parent) {
-			this.parent = parent;
-			this.path = parent ? Object.freeze([...parent.owner.path, this.key]) : empty;
-		}
-	}
-
 	removed() {
 		this.parent = null;
-		this.path = empty;
 		this.previous = null;
 		this.next = null;
 	}
@@ -305,7 +295,9 @@ class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken>
 	}
 
 	get path() {
-		return this.#controller.path;
+		const p: Key[] = [];
+		this.#buildPath(p);
+		return p;
 	}
 
 	get bag() {
@@ -336,6 +328,13 @@ class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken>
 		this.#controller = controller;
 		this.#value = new clazz(this);
 		this.#bag = new PropertyBag<JsonPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
+	}
+
+	#buildPath(path: Key[]) {
+		if (this.parent != null)
+			this.parent.owner.#buildPath(path);
+
+		path.push(this.key);
 	}
 
 	setExpanded(expanded: boolean, recursive?: boolean) {
