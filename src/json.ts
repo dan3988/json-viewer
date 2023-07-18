@@ -155,19 +155,18 @@ interface JsonPropertyBag {
 	isSelected: boolean;
 }
 
-const enum JsonIteratorMode {
-	Property, Key, Value
-}
-
-interface JsonContainerAddMap {
+interface InternalJsonContainerAddMap {
 	"value": JsonValue;
 	"array": JsonArray;
 	"object": JsonObject;
 }
 
-type JsonClass<T extends JsonToken = JsonToken> = new(owner: JsonProperty) => T;
+interface JsonClass<T extends JsonToken = JsonToken> {
+	readonly prototype: T;
+	new(owner: JsonProperty): T;
+}
 
-function resolveClass<K extends keyof json.JsonContainerAddMap>(type: K): JsonClass<JsonContainerAddMap[K]>
+function resolveClass<K extends keyof json.JsonContainerAddMap>(type: K): JsonClass<InternalJsonContainerAddMap[K]>
 function resolveClass(type: string): JsonClass {
 	switch (type) {
 		case "value":
@@ -179,6 +178,10 @@ function resolveClass(type: string): JsonClass {
 	}
 
 	throw new TypeError('Unknown type: "' + type + '"');
+}
+
+const enum JsonIteratorMode {
+	Property, Key, Value
 }
 
 class JsonIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterator<TResult, void> {
@@ -498,6 +501,23 @@ class JsonValue extends JsonToken implements json.JsonValue {
 	}
 }
 
+interface InternalJsonObject extends json.JsonObject {
+	add<K extends keyof InternalJsonContainerAddMap>(key: string, type: K): InternalJsonContainerAddMap[K];
+}
+
+interface InternalJsonArray extends json.JsonArray {
+	add<K extends keyof InternalJsonContainerAddMap>(type: K, index?: number): InternalJsonContainerAddMap[K];
+}
+
+type JsonObject = JsonContainer<string> & InternalJsonObject;
+type JsonObjectConstructor = JsonClass<JsonObject>;
+
+type JsonArray = JsonContainer<number> & InternalJsonArray;
+type JsonArrayConstructor = JsonClass<JsonArray>;
+
+let JsonObject: JsonObjectConstructor;
+let JsonArray: JsonArrayConstructor;
+
 abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<T> implements json.JsonContainer<TKey, T> {
 	readonly #changed: EventHandlers<any, ChildrenChangedArgs>;
 	#first: null | JsonProperty<TKey>;
@@ -544,13 +564,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 		return show;
 	}
 
-	/** @internal */
-	__fire(...args: ChildrenChangedArgs) {
-		this.#changed.fire(this, ...args);
-	}
-
-	/** @internal */
-	__insertAfter(value: JsonProperty<TKey>, prev?: null | JsonProperty<TKey>) {
+	#insertAfter(value: JsonProperty<TKey>, prev?: null | JsonProperty<TKey>) {
 		if (prev != null) {
 			prev.__setNext(value);
 			value.__setPrevious(prev);
@@ -569,11 +583,10 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 		}
 
 		value.__setParent(this);
-		this.__fire("added", value);
+		this.#changed.fire(this, "added", value);
 	}
 
-	/** @internal */
-	__insertBefore(value: JsonProperty<TKey>, next?: null | JsonProperty<TKey>) {
+	#insertBefore(value: JsonProperty<TKey>, next?: null | JsonProperty<TKey>) {
 		if (next != null) {
 			next.__setPrevious(value);
 			value.__setNext(next);
@@ -592,27 +605,11 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 		}
 
 		value.__setParent(this);
-		this.__fire("added", value);
+		this.#changed.fire(this, "added", value);
 	}
 
 	/** @internal */
-	__setFirst(value: null | JsonProperty<TKey>) {
-		this.#first = value;
-	}
-
-	/** @internal */
-	__setLast(value: null | JsonProperty<TKey>) {
-		this.#last = value;
-	}
-
-	/** @internal */
-	__init(first: null | JsonProperty<TKey>, last: null | JsonProperty<TKey>) {
-		this.#first = first;
-		this.#last = last;
-	}
-
-	/** @internal */
-	__replaced(old: JsonProperty<TKey>, value: JsonProperty<TKey>) {
+	#replaced(old: JsonProperty<TKey>, value: JsonProperty<TKey>) {
 		if (old.previous) {
 			old.previous.__setNext(value);
 		} else {
@@ -627,11 +624,10 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 
 		old.__removed();
 		value.__setParent(this);
-		this.__fire("replaced", old, value);
+		this.#changed.fire(this, "replaced", old, value);
 	}
 
-	/** @internal */
-	__removed(prop: JsonProperty<TKey>) {
+	#removed(prop: JsonProperty<TKey>) {
 		const { previous, next } = prop;
 		if (previous == null) {
 			if (next == null) {
@@ -664,294 +660,302 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 	[Symbol.iterator]() {
 		return JsonIterator.properties(this);
 	}
-}
 
-class JsonObject extends JsonContainer<string> implements json.JsonObject {
-	static readonly #proxyHandler: ProxyHandler<JsonObject> = {
-		has(target, p) {
-			return typeof p === "string" ? target.#props.has(p) : p === Symbol.toPrimitive;
-		},
-		ownKeys(target) {
-			const keys: (string | symbol)[] = Array.from(target.#props.keys());
-			keys.push(Symbol.toPrimitive);
-			return keys;
-		},
-		getOwnPropertyDescriptor(target, p) {
-			const value = target.#reflectGet(p, true);
-			if (value === undefined)
-				return;
-
-			return {
-				configurable: true,
-				enumerable: value[1],
-				value: value[0]
-			}
-		},
-		getPrototypeOf() {
-			return Object.prototype;
-		},
-		get(target, p) {
-			return target.#reflectGet(p);
-		}
-	}
-
-	readonly #props: Map<string, JsonProperty<string>>;
-	readonly #proxy: any;
-
-	get subtype() {
-		return "object" as const;
-	}
-
-	get count() {
-		return this.#props.size;
-	}
-
-	get proxy() {
-		return this.#proxy;
-	}
-
-	constructor(owner: JsonProperty) {
-		super(owner);
-		this.#props = new Map();
-		this.#proxy = new Proxy(this, JsonObject.#proxyHandler);
-	}
-
-	#reflectGet(key: string | symbol, wrap: true): undefined | [value: any, enumerable: boolean]
-	#reflectGet(key: string | symbol, wrap?: false): any 
-	#reflectGet(key: string | symbol, wrap?: boolean): any {
-		if (typeof key === "string") {
-			const prop = this.#props.get(key);
-			if (prop == null)
-				return undefined;
-
-			return wrap ? [prop.value.proxy, true] : prop.value.proxy;
-		} else if (key === Symbol.toPrimitive) {
-			return wrap ? [Object.prototype.toString, false] : Object.prototype.toString;
-		}
-	}
-
-	get(key: Key): JsonToken | undefined {
-		const prop = typeof key === "string" && this.#props.get(key);
-		return prop ? prop.value : undefined;
-	}
-
-	getProperty(key: Key): JsonProperty<string> | undefined {
-		const prop = typeof key === "string" && this.#props.get(key);
-		return prop || undefined;
-	}
-
-	sort(reverse?: boolean) {
-		const props = this.#props;
-		if (props.size === 0)
-			return;
-
-		const sorted = [...props.values()].sort(defaultCompare);
-		if (reverse)
-			sorted.reverse();
-
-		const first = sorted[0];
-		let last = first;
-		first.__setPrevious(null);
-
-		for (let i = 1; i < sorted.length; i++) {
-			const next = sorted[i];
-			next.__setPrevious(last);
-			last.__setNext(next);
-			last = next;
-		}
-
-		last.__setNext(null);
-		this.__init(first, last);
-		this.__fire("reset");
-	}
-
-	add<K extends keyof json.JsonContainerAddMap>(key: string, type: K): JsonContainerAddMap[K]
-	add(key: string, type: keyof json.JsonContainerAddMap): JsonToken {
-		const props = this.#props;
-		const old = props.get(key);
-		const clazz = resolveClass(type);
-		const prop = new JsonProperty(key, clazz);
-
-		if (old) {
-			this.__replaced(old, prop);
-		} else {
-			this.__insertAfter(prop);
-		}
-
-		props.set(key, prop);
-		return prop.value;
-	}
-
-	remove(key: Key): JsonProperty<string> | undefined {
-		const prop = typeof key === "string" && this.#props.get(key);
-		if (prop) {
-			this.#props.delete(key);
-			this.__removed(prop);
-			return prop;
-		}
-	}
-
-	clear(): boolean {
-		const items = this.#props;
-		if (items.size === 0)
-			return false;
-
-		const removed = [...items.values()];
-		for (const prop of removed)
-			prop.__removed();
-
-		items.clear();
-		this.__init(null, null);
-		this.__fire("removedRange", removed);
-		return true;
-	}
-
-	toJSON() {
-		const obj: any = {};
-		for (const prop of this)
-			obj[prop.key] = prop.value.toJSON();
-
-		return obj;
-	}
-}
-
-class JsonArray extends JsonContainer<number> implements json.JsonArray {
-	static readonly #proxyHandler: ReadOnlyArrayLikeProxyHandler<JsonArray, any> = {
-		getAt(self, index) {
-			return self.#items[index].value.proxy;
-		},
-		getLength(self) {
-			return self.#items.length;
-		},
-		getIterator(self) {
-			return self.#proxyIterator;
-		}
-	}
-
-	readonly #items: JsonProperty<number>[];
-	readonly #proxy: any;
-
-	get subtype() {
-		return "array" as const;
-	}
-
-	get count() {
-		return this.#items.length;
-	}
-
-	get proxy() {
-		return this.#proxy;
-	}
-
-	constructor(owner: JsonProperty) {
-		super(owner);
-		this.#items = [];
-		this.#proxy = new ArrayLikeProxy(this, JsonArray.#proxyHandler);
-	}
-
-	get(key: Key): JsonToken | undefined {
-		const prop = typeof key === "number" && this.#items.at(key);
-		return prop ? prop.value : undefined;
-	}
-
-	getProperty(key: Key): JsonProperty<number> | undefined {
-		const prop = typeof key === "number" && this.#items.at(key);
-		return prop || undefined;
-	}
-
-	add<K extends keyof json.JsonContainerAddMap>(type: K, index?: number | undefined): JsonContainerAddMap[K]
-	add(type: keyof json.JsonContainerAddMap, index?: number | undefined): JsonToken {
-		let prop: JsonProperty<number>;
-		const clazz = resolveClass(type);
-		const items = this.#items;
-		if (index == null) {
-			prop = new JsonProperty(items.length, clazz);
-			items.push(prop);
-			this.__insertAfter(prop);
-		} else if (index < 0) {
-			throw new TypeError("Index must be greater than or equal to 0");
-		} else {
-			prop = new JsonProperty(index, clazz);
-
-			if (index < items.length) {
-				const next = items[index];
-				const { previous } = next;
-				items.splice(index, 0, prop);
-
-				while (++index < items.length)
-					items[index].__setKey(index);
-
-				if (previous) {
-					this.__insertBefore(next);
-				} else {
-					this.__insertAfter(next);
-				}
-			} else {
-				const range: JsonProperty<number>[] = [];
-				let last = this.last;
-
-				for (let i = items.length; i < index; i++) {
-					const prop = new JsonProperty(i, JsonValue);
-					if (last) {
-						last.__setNext(prop);
-						prop.__setPrevious(last);
-					} else {
-						this.__setFirst(prop);
-					}
-
-					range.push(prop);
-					last = prop;
-					last.__setParent(this);
-				}
-				
-				range.push(prop);
-				items.push(...range);
-				this.__setLast(prop);
-				this.__fire("addedRange", range);
-			}
-		}
-
-		return prop.value;
-	}
-
-	remove(key: Key): JsonProperty<number> | undefined {
-		const prop = typeof key === "number" && this.#items.at(key);
-		if (prop) {
-			key = +key;
-			while (key < this.#items.length)
-				this.#items[key].__setKey(key++);
+	static readonly #object = class JsonObject extends JsonContainer<string> implements json.JsonObject {
+		static readonly #proxyHandler: ProxyHandler<JsonObject> = {
+			has(target, p) {
+				return typeof p === "string" ? target.#props.has(p) : p === Symbol.toPrimitive;
+			},
+			ownKeys(target) {
+				const keys: (string | symbol)[] = Array.from(target.#props.keys());
+				keys.push(Symbol.toPrimitive);
+				return keys;
+			},
+			getOwnPropertyDescriptor(target, p) {
+				const value = target.#reflectGet(p, true);
+				if (value === undefined)
+					return;
 	
-			this.__removed(prop);
-			return prop;
+				return {
+					configurable: true,
+					enumerable: value[1],
+					value: value[0]
+				}
+			},
+			getPrototypeOf() {
+				return Object.prototype;
+			},
+			get(target, p) {
+				return target.#reflectGet(p);
+			}
+		}
+	
+		readonly #props: Map<string, JsonProperty<string>>;
+		readonly #proxy: any;
+	
+		get subtype() {
+			return "object" as const;
+		}
+	
+		get count() {
+			return this.#props.size;
+		}
+	
+		get proxy() {
+			return this.#proxy;
+		}
+	
+		constructor(owner: JsonProperty) {
+			super(owner);
+			this.#props = new Map();
+			this.#proxy = new Proxy(this, JsonObject.#proxyHandler);
+		}
+	
+		#reflectGet(key: string | symbol, wrap: true): undefined | [value: any, enumerable: boolean]
+		#reflectGet(key: string | symbol, wrap?: false): any 
+		#reflectGet(key: string | symbol, wrap?: boolean): any {
+			if (typeof key === "string") {
+				const prop = this.#props.get(key);
+				if (prop == null)
+					return undefined;
+	
+				return wrap ? [prop.value.proxy, true] : prop.value.proxy;
+			} else if (key === Symbol.toPrimitive) {
+				return wrap ? [Object.prototype.toString, false] : Object.prototype.toString;
+			}
+		}
+	
+		get(key: Key): JsonToken | undefined {
+			const prop = typeof key === "string" && this.#props.get(key);
+			return prop ? prop.value : undefined;
+		}
+	
+		getProperty(key: Key): JsonProperty<string> | undefined {
+			const prop = typeof key === "string" && this.#props.get(key);
+			return prop || undefined;
+		}
+	
+		sort(reverse?: boolean) {
+			const props = this.#props;
+			if (props.size === 0)
+				return;
+	
+			const sorted = [...props.values()].sort(defaultCompare);
+			if (reverse)
+				sorted.reverse();
+	
+			const first = sorted[0];
+			let last = first;
+			first.__setPrevious(null);
+	
+			for (let i = 1; i < sorted.length; i++) {
+				const next = sorted[i];
+				next.__setPrevious(last);
+				last.__setNext(next);
+				last = next;
+			}
+	
+			last.__setNext(null);
+			this.#first = first;
+			this.#last = last;
+			this.#changed.fire(this, "reset");
+		}
+	
+		add<K extends keyof json.JsonContainerAddMap>(key: string, type: K): InternalJsonContainerAddMap[K]
+		add(key: string, type: keyof json.JsonContainerAddMap): JsonToken {
+			const props = this.#props;
+			const old = props.get(key);
+			const clazz = resolveClass(type);
+			const prop = new JsonProperty(key, clazz);
+	
+			if (old) {
+				this.#replaced(old, prop);
+			} else {
+				this.#insertAfter(prop);
+			}
+	
+			props.set(key, prop);
+			return prop.value;
+		}
+	
+		remove(key: Key): JsonProperty<string> | undefined {
+			const prop = typeof key === "string" && this.#props.get(key);
+			if (prop) {
+				this.#props.delete(key);
+				this.#removed(prop);
+				return prop;
+			}
+		}
+	
+		clear(): boolean {
+			const items = this.#props;
+			if (items.size === 0)
+				return false;
+	
+			const removed = [...items.values()];
+			for (const prop of removed)
+				prop.__removed();
+	
+			items.clear();
+			this.#first = null;
+			this.#last = null;
+			this.#changed.fire(this, "removedRange", removed);
+			return true;
+		}
+	
+		toJSON() {
+			const obj: any = {};
+			for (const prop of this)
+				obj[prop.key] = prop.value.toJSON();
+	
+			return obj;
+		}
+	}
+	
+	static readonly #array = class JsonArray extends JsonContainer<number> implements json.JsonArray {
+		static readonly #proxyHandler: ReadOnlyArrayLikeProxyHandler<JsonArray, any> = {
+			getAt(self, index) {
+				return self.#items[index].value.proxy;
+			},
+			getLength(self) {
+				return self.#items.length;
+			},
+			getIterator(self) {
+				return self.#proxyIterator;
+			}
+		}
+	
+		readonly #items: JsonProperty<number>[];
+		readonly #proxy: any;
+	
+		get subtype() {
+			return "array" as const;
+		}
+	
+		get count() {
+			return this.#items.length;
+		}
+	
+		get proxy() {
+			return this.#proxy;
+		}
+	
+		constructor(owner: JsonProperty) {
+			super(owner);
+			this.#items = [];
+			this.#proxy = new ArrayLikeProxy(this, JsonArray.#proxyHandler);
+		}
+	
+		get(key: Key): JsonToken | undefined {
+			const prop = typeof key === "number" && this.#items.at(key);
+			return prop ? prop.value : undefined;
+		}
+	
+		getProperty(key: Key): JsonProperty<number> | undefined {
+			const prop = typeof key === "number" && this.#items.at(key);
+			return prop || undefined;
+		}
+	
+		add<K extends keyof json.JsonContainerAddMap>(type: K, index?: number | undefined): InternalJsonContainerAddMap[K]
+		add(type: keyof json.JsonContainerAddMap, index?: number | undefined): JsonToken {
+			let prop: JsonProperty<number>;
+			const clazz = resolveClass(type);
+			const items = this.#items;
+			if (index == null) {
+				prop = new JsonProperty(items.length, clazz);
+				items.push(prop);
+				this.#insertAfter(prop);
+			} else if (index < 0) {
+				throw new TypeError("Index must be greater than or equal to 0");
+			} else {
+				prop = new JsonProperty(index, clazz);
+	
+				if (index < items.length) {
+					const next = items[index];
+					const { previous } = next;
+					items.splice(index, 0, prop);
+	
+					while (++index < items.length)
+						items[index].__setKey(index);
+	
+					if (previous) {
+						this.#insertBefore(next);
+					} else {
+						this.#insertAfter(next);
+					}
+				} else {
+					const range: JsonProperty<number>[] = [];
+					let last = this.last;
+	
+					for (let i = items.length; i < index; i++) {
+						const prop = new JsonProperty(i, JsonValue);
+						if (last) {
+							last.__setNext(prop);
+							prop.__setPrevious(last);
+						} else {
+							this.#first = prop;
+						}
+	
+						range.push(prop);
+						last = prop;
+						last.__setParent(this);
+					}
+					
+					range.push(prop);
+					items.push(...range);
+					this.#last = prop;
+					this.#changed.fire(this, "addedRange", range);
+				}
+			}
+	
+			return prop.value;
+		}
+	
+		remove(key: Key): JsonProperty<number> | undefined {
+			const prop = typeof key === "number" && this.#items.at(key);
+			if (prop) {
+				key = +key;
+				while (key < this.#items.length)
+					this.#items[key].__setKey(key++);
+		
+				this.#removed(prop);
+				return prop;
+			}
+		}
+	
+		clear(): boolean {
+			const items = this.#items;
+			if (items.length === 0)
+				return false;
+	
+			const removed = items.splice(0, items.length);
+			for (const prop of removed)
+				prop.__removed();
+	
+			this.#first = null;
+			this.#last = null;
+			this.#changed.fire(this, "removedRange", removed);
+			return true;
+		}
+	
+		toJSON() {
+			const items = this.#items;
+			const arr = Array<any>(items.length);
+			for (let i = 0; i < items.length; i++)
+				arr[i] = items[i].value.toJSON();
+	
+			return arr;
+		}
+	
+		*#proxyIterator() {
+			for (const prop of this.#items)
+				yield prop.value.toJSON();
 		}
 	}
 
-	clear(): boolean {
-		const items = this.#items;
-		if (items.length === 0)
-			return false;
-
-		const removed = items.splice(0, items.length);
-		for (const prop of removed)
-			prop.__removed();
-
-		this.__init(null, null);
-		this.__fire("removedRange", removed);
-		return true;
-	}
-
-	toJSON() {
-		const items = this.#items;
-		const arr = Array<any>(items.length);
-		for (let i = 0; i < items.length; i++)
-			arr[i] = items[i].value.toJSON();
-
-		return arr;
-	}
-
-	*#proxyIterator() {
-		for (const prop of this.#items)
-			yield prop.value.toJSON();
+	static {
+		JsonObject = this.#object;
+		JsonArray = this.#array;
 	}
 }
 
