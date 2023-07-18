@@ -19,6 +19,15 @@
 			"profileDir": "${workspaceFolder}/.moz",
 			"keepProfileChanges": true,
 			"request": "launch"
+		},
+		{
+			"name": "Tests",
+			"type": "node",
+			"request": "launch",
+			"args": [
+				"./node_modules/.bin/mocha",
+				"./lib/main.js"
+			]
 		}
 	]
 }

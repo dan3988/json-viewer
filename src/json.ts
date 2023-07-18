@@ -1,7 +1,7 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
 import { PropertyBag } from "./prop.js";
 import { EventHandlers, type IEvent } from "./evt.js";
-import * as util from "./util.js";
+import Linq from "@daniel.pickett/linq-js";
 
 type Key = string | number;
 type JsonValueType = string | number | boolean | null;
@@ -165,7 +165,7 @@ export declare namespace json {
 	}
 }
 
-const empty = Object.freeze([]);
+const empty = Linq.empty();
 
 interface InternalJsonContainerAddMap {
 	"value": JsonValue;
@@ -1041,11 +1041,15 @@ export function json(value: any, key: string = "$"): json.JsonProperty<string> {
 	return create(key, value).prop;
 }
 
-util.defValue(json, "JsonTokenFilterFlags", FilterFlags, true);
-util.defValue(json, "JsonToken", JsonToken, true);
-util.defValue(json, "JsonValue", JsonValue, true);
-util.defValue(json, "JsonContainer", JsonContainer, true);
-util.defValue(json, "JsonObject", JsonObject, true);
-util.defValue(json, "JsonArray", JsonArray, true);
+function defValue(object: object, p: PropertyKey, value: any, enumerable?: boolean, writable?: boolean, configurable?: boolean): void {
+	Object.defineProperty(object, p, { value, enumerable, writable, configurable });
+}
+
+defValue(json, "JsonTokenFilterFlags", FilterFlags, true);
+defValue(json, "JsonToken", JsonToken, true);
+defValue(json, "JsonValue", JsonValue, true);
+defValue(json, "JsonContainer", JsonContainer, true);
+defValue(json, "JsonObject", JsonObject, true);
+defValue(json, "JsonArray", JsonArray, true);
 
 export default json;

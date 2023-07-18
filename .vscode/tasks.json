@@ -11,6 +11,9 @@
 				},
 				{
 					"value": "firefox"
+				},
+				{
+					"value": "tests"
 				}
 			]
 		}
