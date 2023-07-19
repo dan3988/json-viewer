@@ -23,9 +23,8 @@ export function conversionTestContainer<T extends json.JContainer>(value: json.J
 	it(`Has the correct value for the property "proxy"`, () => expect(value.proxy).deep.eq(expected));
 	it("Returns the correct value when calling toJSON()", () => expect(value.toJSON()).deep.eq(expected));
 	it("Returns the correct text when calling toString()", () => expect(value.toString()).eq(JSON.stringify(expected)));
-	it("Has a valid linked structure", () => testLinks(value));
+	testLinks(value);
 }
-
 
 export function testProp<T extends string | number>(parent: json.JContainer<T>, key: T, callback?: (value: json.JToken) => void) {
 	path.push(key);
@@ -47,31 +46,33 @@ export function testProp<T extends string | number>(parent: json.JContainer<T>, 
 		it = oldIt;
 		path.pop();
 	}
-};
+}
 
 export function testLinks(value: json.JContainer) {
-	if (value.count === 0) {
-		expect(value.first, "\"first\" should be null on an empty container").null;
-		expect(value.last, "\"last\" should be null on an empty container").null;
-	} else if (value.count === 1) {
-		expect(value.first).eq(value.last, "\"first\" should be equal to \"last\" on a container with one property");
-		expect(value.first.previous, "property should have no siblings on a container with one property").null;
-		expect(value.first.next, "property should have no siblings on a container with one property").null;
-	} else {
-		let last: json.JProperty | null = null;
-		let current = value.first;
-		let count = 0;
-		do {
-			expect(current.parent).eq(value, "child property's parent does not match");
-			expect(current.previous).eq(last, "property's previous sibling does not match");
-			expect(value.getProperty(current.key)).eq(current, "getProperty() returned the wrong value");
-
-			count++;
-			last = current;
-			current = last.next;
-		} while (current != null)
-
-		expect(value.last).eq(last, "containers last property does not match actual last property")
-		expect(value.count).eq(count, "containers property count does not match");
-	}
+	it("Has a valid linked structure", () => {
+		if (value.count === 0) {
+			expect(value.first, "\"first\" should be null on an empty container").to.be.null;
+			expect(value.last, "\"last\" should be null on an empty container").to.be.null;
+		} else if (value.count === 1) {
+			expect(value.first).eq(value.last, "\"first\" should be equal to \"last\" on a container with one property");
+			expect(value.first.previous, "property should have no siblings on a container with one property").to.be.null;
+			expect(value.first.next, "property should have no siblings on a container with one property").to.be.null;
+		} else {
+			let last: json.JProperty | null = null;
+			let current = value.first;
+			let count = 0;
+			do {
+				expect(current.parent).eq(value, "child property's parent does not match");
+				expect(current.previous).eq(last, "property's previous sibling does not match");
+				expect(value.getProperty(current.key)).eq(current, "getProperty() returned the wrong value");
+	
+				count++;
+				last = current;
+				current = last.next;
+			} while (current != null)
+	
+			expect(value.last).eq(last, "containers last property does not match actual last property")
+			expect(value.count).eq(count, "containers property count does not match");
+		}
+	});
 }

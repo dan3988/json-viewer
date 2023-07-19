@@ -1,5 +1,5 @@
 import json from "../src/json.js";
-import * as r from "./json-shared.js";
+import * as s from "./json-shared.js";
 
 describe("JObject", () => {
 	describe("simple object", () => {
@@ -11,12 +11,24 @@ describe("JObject", () => {
 		};
 
 		const prop = json(og);
-		r.conversionTestContainer(prop.value, json.JObject, "object", og);
-		r.testProp(prop.value, "number", v => r.conversionTestValue(v, "number", 5));
-		r.testProp(prop.value, "string", v => r.conversionTestValue(v, "string", "text"));
-		r.testProp(prop.value, "boolean", v => r.conversionTestValue(v, "boolean", true));
-		r.testProp(prop.value, "null", v => r.conversionTestValue(v, "null", null));
+		s.conversionTestContainer(prop.value, json.JObject, "object", og);
+		s.testProp(prop.value, "number", v => s.conversionTestValue(v, "number", 5));
+		s.testProp(prop.value, "string", v => s.conversionTestValue(v, "string", "text"));
+		s.testProp(prop.value, "boolean", v => s.conversionTestValue(v, "boolean", true));
+		s.testProp(prop.value, "null", v => s.conversionTestValue(v, "null", null));
 	});
 	
-	describe("empty object", () => r.conversionTestContainer(json({}).value, json.JObject, "object", {}));
+	describe("empty object", () => s.conversionTestContainer(json({}).value, json.JObject, "object", {}));
+
+	describe("adding", () => {
+		const root = new json.JObject();
+		const jValue = root.add("jValue", "value");
+		const jArray = root.add("jArray", "array");
+		const jObject = root.add("jObject", "object");
+
+		s.testLinks(root);
+		s.testProp(root, "jValue", v => s.conversionTestCommon(v, json.JValue, "value", "null"));
+		s.testProp(root, "jArray", v => s.conversionTestCommon(v, json.JArray, "container", "array"));
+		s.testProp(root, "jObject", v => s.conversionTestCommon(v, json.JObject, "container", "object"));
+	});
 });

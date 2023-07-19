@@ -20,4 +20,15 @@ describe("JArray", () => {
 
 	describe("empty array", () => s.conversionTestContainer(json([]).value, json.JArray, "array", []));
 
+	describe("adding", () => {
+		const root = new json.JArray();
+		const jValue = root.add("value");
+		const jArray = root.add("array");
+		const jObject = root.add("object");
+
+		s.testLinks(root);
+		s.testProp(root, 0, v => s.conversionTestCommon(v, json.JValue, "value", "null"));
+		s.testProp(root, 1, v => s.conversionTestCommon(v, json.JArray, "container", "array"));
+		s.testProp(root, 2, v => s.conversionTestCommon(v, json.JObject, "container", "object"));
+	});
 });
