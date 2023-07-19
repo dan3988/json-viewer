@@ -28,17 +28,17 @@ describe("JArray", () => {
 
 		s.testLinks(root);
 		s.testProp(root, 0, v => {
-			it("Is the same as the value returned by add()", () => expect(v).eq(jValue));
+			it("Is the same as the value returned by add()", () => expect(v.owner).eq(jValue));
 			s.conversionTestCommon(v, json.JValue, "value", "null");
 		});
 
 		s.testProp(root, 1, v => {
-			it("Is the same as the value returned by add()", () => expect(v).eq(jArray));
+			it("Is the same as the value returned by add()", () => expect(v.owner).eq(jArray));
 			s.conversionTestCommon(v, json.JArray, "container", "array");
 		});
 
 		s.testProp(root, 2, v => {
-			it("Is the same as the value returned by add()", () => expect(v).eq(jObject));
+			it("Is the same as the value returned by add()", () => expect(v.owner).eq(jObject));
 			s.conversionTestCommon(v, json.JObject, "container", "object");
 		});
 	});

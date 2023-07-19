@@ -164,13 +164,13 @@ export declare namespace json {
 	export interface JArray<T = any> extends JContainer<number, readonly T[]> {
 		readonly subtype: "array";
 
-		add<K extends keyof JContainerAddMap>(type: K, index?: number): JContainerAddMap[K];
+		add<K extends keyof JContainerAddMap>(type: K, index?: number): JProperty<number, JContainerAddMap[K]>;
 	}
 
 	export interface JObject<T = any> extends JContainer<string, Readonly<Dict<T>>> {
 		readonly subtype: "object";
 
-		add<K extends keyof JContainerAddMap>(key: string, type: K): JContainerAddMap[K];
+		add<K extends keyof JContainerAddMap>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
 		sort(reverse?: boolean): void;
 	}
 }
@@ -580,11 +580,11 @@ class JValue extends JToken implements json.JValue {
 }
 
 interface InternalJObject extends json.JObject {
-	add<K extends keyof InternalJContainerAddMap>(key: string, type: K): InternalJContainerAddMap[K];
+	add<K extends keyof InternalJContainerAddMap>(key: string, type: K): JProperty<string, InternalJContainerAddMap[K]>;
 }
 
 interface InternalJArray extends json.JArray {
-	add<K extends keyof InternalJContainerAddMap>(type: K, index?: number): InternalJContainerAddMap[K];
+	add<K extends keyof InternalJContainerAddMap>(type: K, index?: number): JProperty<number, InternalJContainerAddMap[K]>;
 }
 
 type JObject = JContainer<string> & InternalJObject;
@@ -845,8 +845,8 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			this.#changed.fire(this, "reset");
 		}
 
-		add<K extends keyof json.JContainerAddMap>(key: string, type: K): InternalJContainerAddMap[K]
-		add(key: string, type: keyof json.JContainerAddMap): JToken {
+		add<K extends keyof json.JContainerAddMap>(key: string, type: K): JProperty<string, InternalJContainerAddMap[K]>
+		add(key: string, type: keyof json.JContainerAddMap): JProperty<string> {
 			const props = this.#props;
 			const old = props.get(key);
 			const clazz = resolveClass(type);
@@ -859,7 +859,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			}
 	
 			props.set(key, cont);
-			return cont.prop.value;
+			return cont.prop;
 		}
 
 		remove(key: Key): JProperty<string> | undefined {
@@ -942,8 +942,8 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			return c ? c.prop : undefined;
 		}
 	
-		add<K extends keyof json.JContainerAddMap>(type: K, index?: number | undefined): InternalJContainerAddMap[K]
-		add(type: keyof json.JContainerAddMap, index?: number | undefined): JToken {
+		add<K extends keyof json.JContainerAddMap>(type: K, index?: number | undefined): JProperty<number, InternalJContainerAddMap[K]>
+		add(type: keyof json.JContainerAddMap, index?: number | undefined): JProperty<number> {
 			let cont: JPropertyController<number>;
 			const clazz = resolveClass(type);
 			const items = this.#items;
@@ -994,7 +994,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 				}
 			}
 	
-			return cont.prop.value;
+			return cont.prop;
 		}
 	
 		remove(key: Key): JProperty<number> | undefined {
@@ -1067,14 +1067,14 @@ function addArray(token: JArray, value: any[]) {
 		} else if (typeof item === "object") {
 			if (Array.isArray(item)) {
 				const child = token.add("array");
-				addArray(child, item);
+				addArray(child.value, item);
 			} else {
 				const child = token.add("object");
-				addObject(child, item);
+				addObject(child.value, item);
 			}
 		} else {
 			const child = token.add("value");
-			child.value = item;
+			child.value.value = item;
 		}
 	}
 }
@@ -1087,14 +1087,14 @@ function addObject(token: JObject, value: Dict) {
 		} else if (typeof item === "object") {
 			if (Array.isArray(item)) {
 				const child = token.add(key, "array");
-				addArray(child, item);
+				addArray(child.value, item);
 			} else {
 				const child = token.add(key, "object");
-				addObject(child, item);
+				addObject(child.value, item);
 			}
 		} else {
 			const child = token.add(key, "value");
-			child.value = item;
+			child.value.value = item;
 		}
 	}
 }
