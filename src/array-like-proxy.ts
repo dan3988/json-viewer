@@ -99,6 +99,9 @@ class HandlerImpl<Target extends object, Element> implements ProxyHandler<Wrappe
 		if (p === "length" || p === Symbol.iterator)
 			return true;
 
+		if (typeof p === "symbol")
+			return false;
+
 		const n = Number(p);
 		const len = this.#handler.getLength(self);
 		return Number.isInteger(n) && n >= 0 && n < len;
@@ -111,6 +114,9 @@ class HandlerImpl<Target extends object, Element> implements ProxyHandler<Wrappe
 
 		if (p === Symbol.iterator)
 			return handler.getIterator(self);
+
+		if (typeof p === "symbol")
+			return;
 
 		const n = Number(p);
 		if (Number.isInteger(n))
@@ -142,6 +148,9 @@ class HandlerImpl<Target extends object, Element> implements ProxyHandler<Wrappe
 			});
 			return desc(value, false, false, false)
 		}
+
+		if (typeof p === "symbol")
+			return;
 
 		const n = Number(p);
 		if (Number.isInteger(n)) {
