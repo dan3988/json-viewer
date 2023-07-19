@@ -42,4 +42,28 @@ describe("JObject", () => {
 			s.conversionTestCommon(v, json.JObject, "container", "object");
 		});
 	});
+
+	describe("replace", () => {
+		const object = { a: 1, b: 2, c: 3 };
+
+		function testReplace(key: string, value: any) {
+			describe("Replace property " + JSON.stringify(key), () => {
+				const { value: tkn } = json(object);
+				const old = tkn.getProperty(key);
+				const val = tkn.add(key, "value");
+				val.value.value = value;
+
+				const expected = { ...object };
+				expected[key] = value;
+
+				it("has removed the parent of the old property", () => expect(old.parent).to.be.null);
+				s.testLinks(tkn);
+				it("returns the updated value when calling toJSON()", () => expect(tkn.toJSON()).to.be.deep.equal(expected));
+			});
+		}
+		
+		testReplace("a", "replaced a");
+		testReplace("b", "replaced b");
+		testReplace("c", "replaced c");
+	});
 });
