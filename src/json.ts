@@ -253,47 +253,94 @@ class JIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterato
 	}
 }
 
+let getController: <TKey extends Key, TValue extends JToken>(prop: JProperty<TKey, TValue>) => JPropertyController<TKey, TValue>;
+
 /** properties that should not be exposed outside this file */
-class JPropertyController<TKey extends Key = Key, TValue extends JToken = JToken> {
-	readonly #prop: JProperty<TKey, TValue>;
+interface JPropertyController<TKey extends Key, TValue extends JToken = JToken> {
+	readonly prop: JProperty<TKey, TValue>;
+	readonly value: TValue;
 	parent: null | JContainer<TKey>;
 	key: TKey;
 	previous: null | JPropertyController<TKey>;
 	next: null | JPropertyController<TKey>;
 
-	get prop() {
-		return this.#prop;
-	}
-
-	get value() {
-		return this.#prop.value;
-	}
-
-	constructor(key: TKey, clazz: JsonClass<TValue>, instance?: TValue)
-	constructor(key: TKey, instance: TValue)
-	constructor(key: TKey, value: JsonClass<TValue> | TValue)
-	constructor(key: TKey, value: JsonClass<TValue> | TValue) {
-		this.#prop = new JProperty(this, value);
-		this.parent = null;
-		this.key = key;
-		this.previous = null;
-		this.next = null;
-	}
-
-	removed() {
-		this.parent = null;
-		this.previous = null;
-		this.next = null;
-	}
+	removed(): void
 }
 
 class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implements json.JProperty<TKey, TValue> {
-	readonly #controller: JPropertyController<TKey>;
+	static readonly #Controller = class Controller<TKey extends Key = Key, TValue extends JToken = JToken> implements JPropertyController<TKey, TValue> {
+		readonly #prop: JProperty<TKey, TValue>;
+
+		get prop() {
+			return this.#prop;
+		}
+
+		get value() {
+			return this.#prop.#value;
+		}
+
+		get key() {
+			return this.#prop.#key;
+		}
+
+		set key(value) {
+			this.#prop.#key = value;
+		}
+
+		get parent() {
+			return this.#prop.#parent;
+		}
+
+		set parent(value) {
+			this.#prop.#parent = value;
+		}
+
+		get previous() {
+			const prev = this.#prop.#previous;
+			return prev && prev.#controller;
+		}
+
+		set previous(value) {
+			this.#prop.#previous = value ? value.prop : null;
+		}
+
+		get next() {
+			const next = this.#prop.#next;
+			return next && next.#controller;
+		}
+
+		set next(value) {
+			this.#prop.#next = value ? value.prop : null;
+		}
+
+		constructor(prop: JProperty<TKey, TValue>) {
+			this.#prop = prop;
+		}
+
+		removed(): void {
+			this.#prop.#removed();
+		}
+	}
+
+	static {
+		getController = p => p.#controller;
+	}
+
+	static create<TKey extends Key = Key, TValue extends JToken = JToken>(key: TKey, value: JsonClass<TValue> | TValue) {
+		return new this(key, value).#controller;
+	}
+
+	readonly #controller: JPropertyController<TKey, TValue>;
+	#key: TKey;
 	readonly #value: TValue;
 	readonly #bag: PropertyBag<JPropertyBag>;
 
+	#parent: null | JContainer<TKey>;
+	#previous: null | JProperty<TKey>;
+	#next: null | JProperty<TKey>;
+
 	get key() {
-		return this.#controller.key;
+		return this.#key;
 	}
 
 	get value() {
@@ -301,17 +348,15 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	}
 
 	get parent() {
-		return this.#controller.parent;
+		return this.#parent;
 	}
 
 	get previous() {
-		const prev = this.#controller.previous;
-		return prev && prev.prop;
+		return this.#previous;
 	}
 
 	get next() {
-		const next = this.#controller.next;
-		return next && next.prop;
+		return this.#next;
 	}
 
 	get path() {
@@ -344,10 +389,14 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		this.#bag.setValue("isSelected", value);
 	}
 
-	constructor(controller: JPropertyController<TKey>, value: JsonClass<TValue> | TValue) {
-		this.#controller = controller;
+	constructor(key: TKey, value: JsonClass<TValue> | TValue) {
+		this.#controller = new JProperty.#Controller(this);
+		this.#key = key;
 		this.#value = typeof value === "function" ? new value(this) : value;
 		this.#bag = new PropertyBag<JPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
+		this.#parent = null;
+		this.#previous = null;
+		this.#next = null;
 	}
 
 	#buildPath(path: Key[]) {
@@ -355,6 +404,12 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 			this.parent.owner.#buildPath(path);
 
 		path.push(this.key);
+	}
+
+	#removed() {
+		this.#parent = null;
+		this.#previous = null;
+		this.#next = null;
 	}
 
 	setExpanded(expanded: boolean, recursive?: boolean) {
@@ -419,7 +474,7 @@ abstract class JToken<T = any> implements json.JToken<T> {
 	abstract get proxy(): T;
 
 	constructor(owner?: JProperty) {
-		this.#owner = owner ?? new JPropertyController("$", this).prop;
+		this.#owner = owner ?? new JProperty("$", this);
 	}
 
 	/** @internal */
@@ -789,13 +844,13 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			this.#last = last;
 			this.#changed.fire(this, "reset");
 		}
-	
+
 		add<K extends keyof json.JContainerAddMap>(key: string, type: K): InternalJContainerAddMap[K]
 		add(key: string, type: keyof json.JContainerAddMap): JToken {
 			const props = this.#props;
 			const old = props.get(key);
 			const clazz = resolveClass(type);
-			const cont = new JPropertyController(key, clazz);
+			const cont = JProperty.create(key, clazz);
 	
 			if (old) {
 				this.#replaced(old, cont);
@@ -804,9 +859,9 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			}
 	
 			props.set(key, cont);
-			return cont.value;
+			return cont.prop.value;
 		}
-	
+
 		remove(key: Key): JProperty<string> | undefined {
 			const cont = typeof key === "string" && this.#props.get(key);
 			if (cont) {
@@ -893,14 +948,14 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			const clazz = resolveClass(type);
 			const items = this.#items;
 			if (index == null) {
-				cont = new JPropertyController(items.length, clazz);
+				cont = JProperty.create(items.length, clazz);
 				items.push(cont);
 				this.#insertAfter(cont);
 			} else if (index < 0) {
 				throw new TypeError("Index must be greater than or equal to 0");
 			} else {
-				cont = new JPropertyController(index, clazz);
-	
+				cont = JProperty.create(index, clazz);
+
 				if (index < items.length) {
 					const next = items[index];
 					const { previous } = next;
@@ -919,7 +974,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 					let last = this.#last;
 	
 					for (let i = items.length; i < index; i++) {
-						const c = new JPropertyController(i, JValue);
+						const c = JProperty.create(i, JValue);
 						if (last) {
 							last.next = c;
 							c.previous = last;
@@ -939,7 +994,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 				}
 			}
 	
-			return cont.value;
+			return cont.prop.value;
 		}
 	
 		remove(key: Key): JProperty<number> | undefined {
@@ -994,13 +1049,13 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 }
 
 function createArray(key: string, value: any[]) {
-	const root = new JPropertyController(key, JArray);
+	const root = new JProperty(key, JArray);
 	addArray(root.value, value);
 	return root;
 }
 
 function createObject(key: string, value: Dict) {
-	const root = new JPropertyController(key, JObject);
+	const root = new JProperty(key, JObject);
 	addObject(root.value, value);
 	return root;
 }
@@ -1044,24 +1099,20 @@ function addObject(token: JObject, value: Dict) {
 	}
 }
 
-function create(key: string, value: any) {
-	if (value === null)
-		return new JPropertyController(key, JValue);
-
-	if (typeof value === "object")
-		return (Array.isArray(value) ? createArray : createObject)(key, value);
-
-	const prop = new JPropertyController(key, JValue);
-	prop.value.value = value;
-	return prop;
-}
-
 export function json(value: JValueType, key?: string): json.JProperty<string, JValue>
 export function json(value: any[], key?: string): json.JProperty<string, JArray>
 export function json(value: object, key?: string): json.JProperty<string, JObject>
 export function json(value: unknown, key: string): json.JProperty<string>
 export function json(value: any, key: string = "$"): json.JProperty<string> {
-	return create(key, value).prop;
+	if (value === null)
+		return new JProperty(key, JValue);
+
+	if (typeof value === "object")
+		return (Array.isArray(value) ? createArray : createObject)(key, value);
+
+	const prop = new JProperty(key, JValue);
+	prop.value.value = value;
+	return prop;
 }
 
 function def<T>(target: T, properties: Record<keyof T, any>, enumerable?: boolean, writable?: boolean, configurable?: boolean): void {
