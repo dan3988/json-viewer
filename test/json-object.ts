@@ -27,8 +27,19 @@ describe("JObject", () => {
 		const jObject = root.add("jObject", "object");
 
 		s.testLinks(root);
-		s.testProp(root, "jValue", v => s.conversionTestCommon(v, json.JValue, "value", "null"));
-		s.testProp(root, "jArray", v => s.conversionTestCommon(v, json.JArray, "container", "array"));
-		s.testProp(root, "jObject", v => s.conversionTestCommon(v, json.JObject, "container", "object"));
+		s.testProp(root, "jValue", v => {
+			it("Is the same as the value returned by add()", () => expect(v).eq(jValue));
+			s.conversionTestCommon(v, json.JValue, "value", "null");
+		});
+
+		s.testProp(root, "jArray", v => {
+			it("Is the same as the value returned by add()", () => expect(v).eq(jArray));
+			s.conversionTestCommon(v, json.JArray, "container", "array");
+		});
+
+		s.testProp(root, "jObject", v => {
+			it("Is the same as the value returned by add()", () => expect(v).eq(jObject));
+			s.conversionTestCommon(v, json.JObject, "container", "object");
+		});
 	});
 });
