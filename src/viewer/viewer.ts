@@ -63,7 +63,7 @@ function run() {
 			return parts;
 		}
 
-		function pushHistory(v: json.JsonProperty) {
+		function pushHistory(v: json.JProperty) {
 			if (v != null && !popping)
 				history.pushState(v.path, "", "#" + encodePath(v.path));
 		}

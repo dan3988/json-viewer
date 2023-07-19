@@ -15,7 +15,7 @@
 
 	let filterInput: HTMLInputElement;
 	let filter = "";
-	let filterMode = json.JsonTokenFilterFlags.Both;
+	let filterMode = json.JTokenFilterFlags.Both;
 
 	$: model.filter(filter, filterMode);
 
@@ -116,9 +116,9 @@
 		<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
 		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearFilter}></button>
 		<select class="filter-type form-select" bind:value={filterMode}>
-			<option value={json.JsonTokenFilterFlags.Both}>All</option>
-			<option value={json.JsonTokenFilterFlags.Keys}>Keys</option>
-			<option value={json.JsonTokenFilterFlags.Values}>Values</option>
+			<option value={json.JTokenFilterFlags.Both}>All</option>
+			<option value={json.JTokenFilterFlags.Keys}>Keys</option>
+			<option value={json.JTokenFilterFlags.Values}>Values</option>
 		</select>
 	</div>
 	<div class="input-group field">

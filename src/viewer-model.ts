@@ -3,14 +3,14 @@ import json from "./json.js"
 import { PropertyBag } from "./prop.js";
 
 interface ChangeProps {
-	selected: null | json.JsonProperty;
+	selected: null | json.JProperty;
 	filterText: string;
-	filterFlags: json.JsonTokenFilterFlags;
+	filterFlags: json.JTokenFilterFlags;
 }
 
 export interface ViewerCommands {
-	scrollTo: [token: json.JsonProperty];
-	context: [token: json.JsonProperty, x: number, y: number];
+	scrollTo: [token: json.JProperty];
+	context: [token: json.JProperty, x: number, y: number];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
@@ -18,7 +18,7 @@ export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent]
 export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
 
 export class ViewerModel {
-	readonly #root: json.JsonProperty;
+	readonly #root: json.JProperty;
 	readonly #bag: PropertyBag<ChangeProps>;
 	readonly #command: EventHandlers<this, [evt: ViewerCommandEvent]>;
 
@@ -50,9 +50,9 @@ export class ViewerModel {
 		return this.#bag.getValue("filterFlags");
 	}
 
-	constructor(root: json.JsonProperty) {
+	constructor(root: json.JProperty) {
 		this.#root = root;
-		this.#bag = new PropertyBag<ChangeProps>({ selected: null, filterFlags: json.JsonTokenFilterFlags.Both, filterText: "" });
+		this.#bag = new PropertyBag<ChangeProps>({ selected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "" });
 		this.#command = new EventHandlers();
 	}
 
@@ -62,7 +62,7 @@ export class ViewerModel {
 			handlers.fire(this, <any>{ command, args });
 	}
 
-	filter(text: string, flags?: json.JsonTokenFilterFlags) {
+	filter(text: string, flags?: json.JTokenFilterFlags) {
 		text = text.toLowerCase();
 		const oldText = this.#bag.getValue("filterText");
 		const oldFlags = this.#bag.getValue("filterFlags");
@@ -82,12 +82,12 @@ export class ViewerModel {
 		this.#root.filter(text, flags, append);
 	}
 
-	resolve(path: string | readonly (number | string)[]): json.JsonProperty | undefined {
+	resolve(path: string | readonly (number | string)[]): json.JProperty | undefined {
 		if (typeof path === "string")
 			path = path.split("/");
 
 		let i = 0;
-		let baseProp: json.JsonProperty;
+		let baseProp: json.JProperty;
 		if (path[0] !== "$") {
 			const selected = this.#bag.getValue("selected");
 			if (selected == null)
@@ -124,9 +124,9 @@ export class ViewerModel {
 		return true;
 	}
 
-	#onSelected(selected: json.JsonProperty, expand: boolean, scrollTo: boolean) {
+	#onSelected(selected: json.JProperty, expand: boolean, scrollTo: boolean) {
 		if (expand)
-			for (let p: null | json.JsonToken = selected.parent; p != null; p = p.parent)
+			for (let p: null | json.JToken = selected.parent; p != null; p = p.parent)
 				p.owner.isExpanded = true;
 
 		if (scrollTo)
@@ -134,8 +134,8 @@ export class ViewerModel {
 	}
 
 	setSelected(selected: null): void;
-	setSelected(selected: null | json.JsonProperty, expand: boolean, scrollTo: boolean): void
-	setSelected(selected: null | json.JsonProperty, expand?: boolean, scrollTo?: boolean) {
+	setSelected(selected: null | json.JProperty, expand: boolean, scrollTo: boolean): void
+	setSelected(selected: null | json.JProperty, expand?: boolean, scrollTo?: boolean) {
 		const old = this.#bag.getValue("selected");
 		if (old !== selected) {
 			if (old)

@@ -5,13 +5,13 @@
 	import { renderKey, renderValue } from "../util.js";
 
 	export let model: ViewerModel;
-	export let prop: json.JsonProperty;
+	export let prop: json.JProperty;
 	export let indent = -1;
 	export let maxIndentClass: number;
 
 	$: ({ isExpanded, isHidden, isSelected } = prop.bag.readables);
 	
-	let props: json.JsonProperty[] = [];
+	let props: json.JProperty[] = [];
 
 	function update() {
 		props = [...prop.value];

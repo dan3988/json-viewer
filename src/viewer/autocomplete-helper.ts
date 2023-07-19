@@ -7,7 +7,7 @@ export default class AutocompleteHelper {
 	readonly #target: HTMLElement;
 	readonly #setter: (value?: string) => void;
 	#list: SuggestionList;
-	#prop: null | json.JsonToken;
+	#prop: null | json.JToken;
 
 	get target() {
 		return this.#target;
@@ -41,7 +41,7 @@ export default class AutocompleteHelper {
 		return false;
 	}
 
-	update(prop: json.JsonToken, filter: string, changeProp?: boolean) {
+	update(prop: json.JToken, filter: string, changeProp?: boolean) {
 		const props: Partial<ComponentProps<SuggestionList>> = { filter };
 		if (this.#prop !== prop) {
 			if (!changeProp)

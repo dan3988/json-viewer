@@ -2,7 +2,7 @@
 	import type json from "../json";
 
 	export interface EventMap {
-		finished: json.JsonProperty | null;
+		finished: json.JProperty | null;
 		cancelled: void;
 	}
 </script>

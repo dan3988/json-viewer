@@ -4,20 +4,20 @@ import { EventHandlers, type IEvent } from "./evt.js";
 import Linq from "@daniel.pickett/linq-js";
 
 type Key = string | number;
-type JsonValueType = string | number | boolean | null;
+type JValueType = string | number | boolean | null;
 
-interface JsonPropertyBag {
+interface JPropertyBag {
 	isHidden: boolean;
 	isExpanded: boolean;
 	isSelected: boolean;
 }
 
-interface JsonClass<T extends json.JsonToken = json.JsonToken> {
+interface JsonClass<T extends json.JToken = json.JToken> {
 	readonly prototype: T;
-	new(owner: JsonProperty): T;
+	new(owner: JProperty): T;
 }
 
-function defaultCompare(x: JsonPropertyController<string>, y: JsonPropertyController<string>) {
+function defaultCompare(x: JPropertyController<string>, y: JPropertyController<string>) {
 	return x.key.localeCompare(y.key, undefined, { sensitivity: "base" });
 }
 
@@ -29,12 +29,12 @@ function iterres(done: boolean, value?: any): IteratorResult<any> {
 }
 
 interface ChildrenChangedEvents<TKey extends Key = any> {
-	added: [added: JsonProperty<TKey>];
-	addedRange: [added: JsonProperty<TKey>[]]
-	removed: [removed: JsonProperty<TKey>];
-	removedRange: [removed: JsonProperty<TKey>[]];
+	added: [added: JProperty<TKey>];
+	addedRange: [added: JProperty<TKey>[]]
+	removed: [removed: JProperty<TKey>];
+	removedRange: [removed: JProperty<TKey>[]];
 	reset: [];
-	replaced: [old: JsonProperty<TKey>, new: JsonProperty<TKey>];
+	replaced: [old: JProperty<TKey>, new: JProperty<TKey>];
 }
 
 type ChildrenChangedArgs<TKey extends Key = Key> = { [P in keyof ChildrenChangedEvents]: [type: P, ...args: ChildrenChangedEvents<TKey>[P]] }[keyof ChildrenChangedEvents]
@@ -47,36 +47,36 @@ enum FilterFlags {
 }
 
 export declare namespace json {
-	export interface JsonTokenTypeMap {
-		"container": JsonContainer;
-		"property": JsonProperty;
-		"value": JsonValue;
+	export interface JTokenTypeMap {
+		"container": JContainer;
+		"property": JProperty;
+		"value": JValue;
 	}
 	
-	export interface JsonTokenSubTypeMap {
-		"object": JsonObject;
-		"array": JsonArray;
-		"string": JsonValue<string>;
-		"number": JsonValue<number>;
-		"boolean": JsonValue<boolean>;
-		"null": JsonValue<null>;
+	export interface JTokenSubTypeMap {
+		"object": JObject;
+		"array": JArray;
+		"string": JValue<string>;
+		"number": JValue<number>;
+		"boolean": JValue<boolean>;
+		"null": JValue<null>;
 	}
 
-	export enum JsonTokenFilterFlags {
+	export enum JTokenFilterFlags {
 		None,
 		Keys = 1,
 		Values = 2,
 		Both = Keys | Values
 	}
 	
-	export interface JsonProperty<TKey extends Key = Key> {
+	export interface JProperty<TKey extends Key = Key> {
 		readonly key: TKey;
-		readonly value: JsonToken;
-		readonly parent: null | JsonContainer<TKey>;
-		readonly previous: null | JsonProperty<TKey>;
-		readonly next: null | JsonProperty<TKey>;
+		readonly value: JToken;
+		readonly parent: null | JContainer<TKey>;
+		readonly previous: null | JProperty<TKey>;
+		readonly next: null | JProperty<TKey>;
 		readonly path: readonly Key[];
-		readonly bag: PropertyBag<JsonPropertyBag>;
+		readonly bag: PropertyBag<JPropertyBag>;
 
 		readonly isHidden: boolean;
 		isExpanded: boolean;
@@ -85,38 +85,38 @@ export declare namespace json {
 		setExpanded(expanded: boolean, recursive?: boolean): void;
 		remove(): boolean;
 		toggleExpanded(): boolean;
-		filter(filter: string, filterMode: JsonTokenFilterFlags, isAppend: boolean): boolean;
+		filter(filter: string, filterMode: JTokenFilterFlags, isAppend: boolean): boolean;
 	}
 
-	export const JsonToken: JsonClass<JsonToken>;
-	export const JsonValue: JsonClass<JsonValue>;
-	export const JsonContainer: JsonClass<JsonContainer>;
-	export const JsonArray: JsonClass<JsonArray>;
-	export const JsonObject: JsonClass<JsonObject>;
+	export const JToken: JsonClass<JToken>;
+	export const JValue: JsonClass<JValue>;
+	export const JContainer: JsonClass<JContainer>;
+	export const JArray: JsonClass<JArray>;
+	export const JObject: JsonClass<JObject>;
 
-	export interface JsonToken<T = any> extends Iterable<JsonProperty> {
-		readonly type: keyof JsonTokenTypeMap;
-		readonly subtype: keyof JsonTokenSubTypeMap;
+	export interface JToken<T = any> extends Iterable<JProperty> {
+		readonly type: keyof JTokenTypeMap;
+		readonly subtype: keyof JTokenSubTypeMap;
 		readonly proxy: T;
-		readonly parent: null | JsonContainer;
-		readonly owner: JsonProperty;
+		readonly parent: null | JContainer;
+		readonly owner: JProperty;
 
-		is<K extends keyof JsonTokenTypeMap>(type: K): this is JsonTokenTypeMap[K];
-		is<K extends keyof JsonTokenSubTypeMap>(type: K): this is JsonTokenSubTypeMap[K];
+		is<K extends keyof JTokenTypeMap>(type: K): this is JTokenTypeMap[K];
+		is<K extends keyof JTokenSubTypeMap>(type: K): this is JTokenSubTypeMap[K];
 
-		get(key: Key): undefined | JsonToken;
-		getProperty(key: Key): undefined | JsonProperty;
+		get(key: Key): undefined | JToken;
+		getProperty(key: Key): undefined | JProperty;
 
 		keys(): IterableIterator<Key>;
-		values(): IterableIterator<JsonToken>;
+		values(): IterableIterator<JToken>;
 
-		[Symbol.iterator](): IterableIterator<JsonProperty>;
+		[Symbol.iterator](): IterableIterator<JProperty>;
 
 		toJSON(): T;
 		toString(indent?: string): string;
 	}
 
-	export interface JsonValue<T extends JsonValueType = JsonValueType> extends JsonToken<T> {
+	export interface JValue<T extends JValueType = JValueType> extends JToken<T> {
 		readonly type: "value";
 		readonly subtype: "string" | "number" | "boolean" | "null";
 		value: T;
@@ -130,92 +130,92 @@ export declare namespace json {
 		[Symbol.iterator](): IterableIterator<never>;
 	}
 
-	export interface JsonContainerAddMap {
-		"value": JsonValue;
-		"array": JsonArray;
-		"object": JsonObject;
+	export interface JContainerAddMap {
+		"value": JValue;
+		"array": JArray;
+		"object": JObject;
 	}
 	
-	export interface JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<T> {
+	export interface JContainer<TKey extends Key = Key, T = any> extends JToken<T> {
 		readonly type: "container";
 		readonly subtype: "array" | "object";
-		readonly first: null | JsonProperty<TKey>;
-		readonly last: null | JsonProperty<TKey>;
+		readonly first: null | JProperty<TKey>;
+		readonly last: null | JProperty<TKey>;
 		readonly count: number;
 		readonly changed: IEvent<this, ChildrenChangedArgs>;
 
-		getProperty(key: Key): undefined | JsonProperty<TKey>;
-		remove(key: Key): undefined | JsonProperty<TKey>;
+		getProperty(key: Key): undefined | JProperty<TKey>;
+		remove(key: Key): undefined | JProperty<TKey>;
 		clear(): boolean;
 
-		[Symbol.iterator](): IterableIterator<JsonProperty<TKey>>;
+		[Symbol.iterator](): IterableIterator<JProperty<TKey>>;
 	}
 
-	export interface JsonArray<T = any> extends JsonContainer<number, readonly T[]> {
+	export interface JArray<T = any> extends JContainer<number, readonly T[]> {
 		readonly subtype: "array";
 
-		add<K extends keyof JsonContainerAddMap>(type: K, index?: number): JsonContainerAddMap[K];
+		add<K extends keyof JContainerAddMap>(type: K, index?: number): JContainerAddMap[K];
 	}
 
-	export interface JsonObject<T = any> extends JsonContainer<string, Readonly<Dict<T>>> {
+	export interface JObject<T = any> extends JContainer<string, Readonly<Dict<T>>> {
 		readonly subtype: "object";
 
-		add<K extends keyof JsonContainerAddMap>(key: string, type: K): JsonContainerAddMap[K];
+		add<K extends keyof JContainerAddMap>(key: string, type: K): JContainerAddMap[K];
 		sort(reverse?: boolean): void;
 	}
 }
 
 const empty = Linq.empty();
 
-interface InternalJsonContainerAddMap {
-	"value": JsonValue;
-	"array": JsonArray;
-	"object": JsonObject;
+interface InternalJContainerAddMap {
+	"value": JValue;
+	"array": JArray;
+	"object": JObject;
 }
 
-function resolveClass<K extends keyof json.JsonContainerAddMap>(type: K): JsonClass<InternalJsonContainerAddMap[K]>
+function resolveClass<K extends keyof json.JContainerAddMap>(type: K): JsonClass<InternalJContainerAddMap[K]>
 function resolveClass(type: string): JsonClass {
 	switch (type) {
 		case "value":
-			return JsonValue;
+			return JValue;
 		case "array":
-			return JsonArray;
+			return JArray;
 		case "object":
-			return JsonObject;
+			return JObject;
 	}
 
 	throw new TypeError('Unknown type: "' + type + '"');
 }
 
-const enum JsonIteratorMode {
+const enum JIteratorMode {
 	Property, Key, Value
 }
 
-class JsonIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterator<TResult, void> {
-	static properties<TKey extends Key>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonProperty<TKey>> {
-		return new JsonIterator(container, JsonIteratorMode.Property);
+class JIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterator<TResult, void> {
+	static properties<TKey extends Key>(container: JContainer<TKey, any>): JIterator<TKey, JProperty<TKey>> {
+		return new JIterator(container, JIteratorMode.Property);
 	}
 
-	static keys<TKey extends Key>(container: JsonContainer<TKey, any>): JsonIterator<TKey, TKey> {
-		return new JsonIterator(container, JsonIteratorMode.Key);
+	static keys<TKey extends Key>(container: JContainer<TKey, any>): JIterator<TKey, TKey> {
+		return new JIterator(container, JIteratorMode.Key);
 	}
 
-	static values<TKey extends Key>(container: JsonContainer<TKey, any>): JsonIterator<TKey, JsonToken> {
-		return new JsonIterator(container, JsonIteratorMode.Value);
+	static values<TKey extends Key>(container: JContainer<TKey, any>): JIterator<TKey, JToken> {
+		return new JIterator(container, JIteratorMode.Value);
 	}
 
-	readonly #container: JsonContainer<TKey, any>;
-	readonly #mode: JsonIteratorMode;
-	#current: null | JsonProperty<TKey>;
+	readonly #container: JContainer<TKey, any>;
+	readonly #mode: JIteratorMode;
+	#current: null | JProperty<TKey>;
 
-	constructor(container: JsonContainer<TKey, any>, mode: JsonIteratorMode) {
+	constructor(container: JContainer<TKey, any>, mode: JIteratorMode) {
 		this.#container = container;
 		this.#mode = mode;
 		this.#current = null;
 	}
 
 	next(): IteratorResult<TResult> {
-		let next: null | JsonProperty<TKey>
+		let next: null | JProperty<TKey>
 		if (this.#current == null) {
 			next = this.#container.first;
 		} else {
@@ -227,11 +227,11 @@ class JsonIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iter
 			return iterres(true);
 
 		switch (this.#mode) {
-			case JsonIteratorMode.Property:
+			case JIteratorMode.Property:
 				return iterres(false, <any>next);
-			case JsonIteratorMode.Key:
+			case JIteratorMode.Key:
 				return iterres(false, <any>next.key);
-			case JsonIteratorMode.Value:
+			case JIteratorMode.Value:
 				return iterres(false, <any>next.value);
 		}
 		
@@ -244,12 +244,12 @@ class JsonIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iter
 }
 
 /** properties that should not be exposed outside this file */
-class JsonPropertyController<TKey extends Key = Key, TValue extends JsonToken = JsonToken> {
-	readonly #prop: JsonProperty<TKey, TValue>;
-	parent: null | JsonContainer<TKey>;
+class JPropertyController<TKey extends Key = Key, TValue extends JToken = JToken> {
+	readonly #prop: JProperty<TKey, TValue>;
+	parent: null | JContainer<TKey>;
 	key: TKey;
-	previous: null | JsonPropertyController<TKey>;
-	next: null | JsonPropertyController<TKey>;
+	previous: null | JPropertyController<TKey>;
+	next: null | JPropertyController<TKey>;
 
 	get prop() {
 		return this.#prop;
@@ -260,7 +260,7 @@ class JsonPropertyController<TKey extends Key = Key, TValue extends JsonToken = 
 	}
 
 	constructor(key: TKey, clazz: JsonClass<TValue>) {
-		this.#prop = new JsonProperty(this, clazz);
+		this.#prop = new JProperty(this, clazz);
 		this.parent = null;
 		this.key = key;
 		this.previous = null;
@@ -274,10 +274,10 @@ class JsonPropertyController<TKey extends Key = Key, TValue extends JsonToken = 
 	}
 }
 
-class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken> implements json.JsonProperty<TKey> {
-	readonly #controller: JsonPropertyController<TKey>;
+class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implements json.JProperty<TKey> {
+	readonly #controller: JPropertyController<TKey>;
 	readonly #value: TValue;
-	readonly #bag: PropertyBag<JsonPropertyBag>;
+	readonly #bag: PropertyBag<JPropertyBag>;
 
 	get key() {
 		return this.#controller.key;
@@ -331,10 +331,10 @@ class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken>
 		this.#bag.setValue("isSelected", value);
 	}
 
-	constructor(controller: JsonPropertyController<TKey>, clazz: JsonClass<TValue>) {
+	constructor(controller: JPropertyController<TKey>, clazz: JsonClass<TValue>) {
 		this.#controller = controller;
 		this.#value = new clazz(this);
-		this.#bag = new PropertyBag<JsonPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
+		this.#bag = new PropertyBag<JPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
 	}
 
 	#buildPath(path: Key[]) {
@@ -349,8 +349,8 @@ class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken>
 		if (!recursive)
 			return;
 
-		const stack: Iterator<JsonProperty>[] = [];
-		let cur: Iterator<JsonProperty> = this.value[Symbol.iterator]()
+		const stack: Iterator<JProperty>[] = [];
+		let cur: Iterator<JProperty> = this.value[Symbol.iterator]()
 		while (true) {
 			let r = cur.next();
 			if (r.done) {
@@ -378,11 +378,11 @@ class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken>
 		return v;
 	}
 
-	filter(filter: string, filterMode: json.JsonTokenFilterFlags, isAppend: boolean) {
+	filter(filter: string, filterMode: json.JTokenFilterFlags, isAppend: boolean) {
 		if (isAppend && this.isHidden)
 			return false;
 
-		const showKey = Boolean(filterMode & json.JsonTokenFilterFlags.Keys) && String.prototype.toLowerCase.call(this.key).includes(filter);
+		const showKey = Boolean(filterMode & json.JTokenFilterFlags.Keys) && String.prototype.toLowerCase.call(this.key).includes(filter);
 		const showValue = this.#value.__shown(filter, filterMode, isAppend);
 		const show = showKey || showValue;
 		this.#bag.setValue("isHidden", !show);
@@ -390,8 +390,8 @@ class JsonProperty<TKey extends Key = Key, TValue extends JsonToken = JsonToken>
 	}
 }
 
-abstract class JsonToken<T = any> implements json.JsonToken<T> {
-	readonly #owner: JsonProperty;
+abstract class JToken<T = any> implements json.JToken<T> {
+	readonly #owner: JProperty;
 
 	get parent() {
 		return this.#owner.parent;
@@ -401,27 +401,27 @@ abstract class JsonToken<T = any> implements json.JsonToken<T> {
 		return this.#owner;
 	}
 
-	abstract get type(): keyof json.JsonTokenTypeMap;
-	abstract get subtype(): keyof json.JsonTokenSubTypeMap;
+	abstract get type(): keyof json.JTokenTypeMap;
+	abstract get subtype(): keyof json.JTokenSubTypeMap;
 	abstract get proxy(): T;
 
-	constructor(owner: JsonProperty) {
+	constructor(owner: JProperty) {
 		this.#owner = owner;
 	}
 
 	/** @internal */
-	abstract __shown(filter: string, filterMode: json.JsonTokenFilterFlags, isAppend: boolean): boolean;
+	abstract __shown(filter: string, filterMode: json.JTokenFilterFlags, isAppend: boolean): boolean;
 
-	abstract get(key: Key): undefined | JsonToken;
-	abstract getProperty(key: Key): undefined | JsonProperty;
+	abstract get(key: Key): undefined | JToken;
+	abstract getProperty(key: Key): undefined | JProperty;
 
 	abstract keys(): IterableIterator<Key>;
-	abstract values(): IterableIterator<JsonToken>;
+	abstract values(): IterableIterator<JToken>;
 
-	abstract [Symbol.iterator](): IterableIterator<JsonProperty>;
+	abstract [Symbol.iterator](): IterableIterator<JProperty>;
 
-	is<K extends keyof json.JsonTokenTypeMap>(type: K): this is json.JsonTokenTypeMap[K];
-	is<K extends keyof json.JsonTokenSubTypeMap>(type: K): this is json.JsonTokenSubTypeMap[K];
+	is<K extends keyof json.JTokenTypeMap>(type: K): this is json.JTokenTypeMap[K];
+	is<K extends keyof json.JTokenSubTypeMap>(type: K): this is json.JTokenSubTypeMap[K];
 	is(type: string): boolean {
 		return type === this.type || type === this.subtype;
 	}
@@ -433,8 +433,8 @@ abstract class JsonToken<T = any> implements json.JsonToken<T> {
 	}
 }
 
-class JsonValue extends JsonToken implements json.JsonValue {
-	#value: JsonValueType;
+class JValue extends JToken implements json.JValue {
+	#value: JValueType;
 	#subtype: "string" | "number" | "boolean" | "null";
 
 	get type() {
@@ -464,21 +464,21 @@ class JsonValue extends JsonToken implements json.JsonValue {
 					this.#value = value;
 					this.#subtype = t;
 				} else {
-					throw new TypeError('JsonValue.value cannot be of type "' + t + '"');
+					throw new TypeError('JValue.value cannot be of type "' + t + '"');
 				}
 			}
 		}
 	}
 
-	constructor(owner: JsonProperty) {
+	constructor(owner: JProperty) {
 		super(owner);
 		this.#value = null;
 		this.#subtype = "null";
 	}
 
 	/** @internal */
-	__shown(filter: string, filterMode: json.JsonTokenFilterFlags): boolean {
-		if ((filterMode & json.JsonTokenFilterFlags.Values) === 0) 
+	__shown(filter: string, filterMode: json.JTokenFilterFlags): boolean {
+		if ((filterMode & json.JTokenFilterFlags.Values) === 0) 
 			return false;
 
 		const str = this.#value === null ? "null" :  String.prototype.toLowerCase.call(this.#value);
@@ -511,27 +511,27 @@ class JsonValue extends JsonToken implements json.JsonValue {
 	}
 }
 
-interface InternalJsonObject extends json.JsonObject {
-	add<K extends keyof InternalJsonContainerAddMap>(key: string, type: K): InternalJsonContainerAddMap[K];
+interface InternalJObject extends json.JObject {
+	add<K extends keyof InternalJContainerAddMap>(key: string, type: K): InternalJContainerAddMap[K];
 }
 
-interface InternalJsonArray extends json.JsonArray {
-	add<K extends keyof InternalJsonContainerAddMap>(type: K, index?: number): InternalJsonContainerAddMap[K];
+interface InternalJArray extends json.JArray {
+	add<K extends keyof InternalJContainerAddMap>(type: K, index?: number): InternalJContainerAddMap[K];
 }
 
-type JsonObject = JsonContainer<string> & InternalJsonObject;
-type JsonObjectConstructor = JsonClass<JsonObject>;
+type JObject = JContainer<string> & InternalJObject;
+type JObjectConstructor = JsonClass<JObject>;
 
-type JsonArray = JsonContainer<number> & InternalJsonArray;
-type JsonArrayConstructor = JsonClass<JsonArray>;
+type JArray = JContainer<number> & InternalJArray;
+type JArrayConstructor = JsonClass<JArray>;
 
-let JsonObject: JsonObjectConstructor;
-let JsonArray: JsonArrayConstructor;
+let JObject: JObjectConstructor;
+let JArray: JArrayConstructor;
 
-abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<T> implements json.JsonContainer<TKey, T> {
+abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> implements json.JContainer<TKey, T> {
 	readonly #changed: EventHandlers<any, ChildrenChangedArgs>;
-	#first: null | JsonPropertyController<TKey>;
-	#last: null | JsonPropertyController<TKey>;
+	#first: null | JPropertyController<TKey>;
+	#last: null | JPropertyController<TKey>;
 
 	get type() {
 		return "container" as const;
@@ -554,19 +554,19 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 	abstract get subtype(): "array" | "object";
 	abstract get count(): number;
 
-	constructor(owner: JsonProperty) {
+	constructor(owner: JProperty) {
 		super(owner);
 		this.#first = null;
 		this.#last = null;
 		this.#changed = new EventHandlers();
 	}
 
-	abstract getProperty(key: Key): undefined | JsonProperty<TKey>;
+	abstract getProperty(key: Key): undefined | JProperty<TKey>;
 	abstract clear(): boolean;
-	abstract remove(key: Key): undefined | JsonProperty<TKey>;
+	abstract remove(key: Key): undefined | JProperty<TKey>;
 
 	/** @internal */
-	__shown(filter: string, filterMode: json.JsonTokenFilterFlags, isAppend: boolean): boolean {
+	__shown(filter: string, filterMode: json.JTokenFilterFlags, isAppend: boolean): boolean {
 		let show = false;
 
 		for (const prop of this)
@@ -576,7 +576,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 		return show;
 	}
 
-	#insertAfter(value: JsonPropertyController<TKey>, prev?: null | JsonPropertyController<TKey>) {
+	#insertAfter(value: JPropertyController<TKey>, prev?: null | JPropertyController<TKey>) {
 		if (prev != null) {
 			prev.next = value;
 			value = prev;
@@ -599,7 +599,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 		this.#changed.fire(this, "added", value.prop);
 	}
 
-	#insertBefore(value: JsonPropertyController<TKey>, next?: null | JsonPropertyController<TKey>) {
+	#insertBefore(value: JPropertyController<TKey>, next?: null | JPropertyController<TKey>) {
 		if (next != null) {
 			next.previous = value;
 			value.next = next;
@@ -623,7 +623,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 	}
 
 	/** @internal */
-	#replaced(old: JsonPropertyController<TKey>, value: JsonPropertyController<TKey>) {
+	#replaced(old: JPropertyController<TKey>, value: JPropertyController<TKey>) {
 		if (old.previous) {
 			old.previous.next = value;
 		} else {
@@ -641,7 +641,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 		this.#changed.fire(this, "replaced", old.prop, value.prop);
 	}
 
-	#removed(value: JsonPropertyController<TKey>) {
+	#removed(value: JPropertyController<TKey>) {
 		const { previous, next } = value;
 		if (previous == null) {
 			if (next == null) {
@@ -664,19 +664,19 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 	}
 
 	keys() {
-		return JsonIterator.keys(this);
+		return JIterator.keys(this);
 	}
 
 	values() {
-		return JsonIterator.values(this);
+		return JIterator.values(this);
 	}
 
 	[Symbol.iterator]() {
-		return JsonIterator.properties(this);
+		return JIterator.properties(this);
 	}
 
-	static readonly #object = class JsonObject extends JsonContainer<string> implements json.JsonObject {
-		static readonly #proxyHandler: ProxyHandler<JsonObject> = {
+	static readonly #object = class JObject extends JContainer<string> implements json.JObject {
+		static readonly #proxyHandler: ProxyHandler<JObject> = {
 			has(target, p) {
 				return typeof p === "string" ? target.#props.has(p) : p === Symbol.toPrimitive;
 			},
@@ -704,7 +704,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			}
 		}
 	
-		readonly #props: Map<string, JsonPropertyController<string>>;
+		readonly #props: Map<string, JPropertyController<string>>;
 		readonly #proxy: any;
 	
 		get subtype() {
@@ -719,10 +719,10 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			return this.#proxy;
 		}
 	
-		constructor(owner: JsonProperty) {
+		constructor(owner: JProperty) {
 			super(owner);
 			this.#props = new Map();
-			this.#proxy = new Proxy(this, JsonObject.#proxyHandler);
+			this.#proxy = new Proxy(this, JObject.#proxyHandler);
 		}
 	
 		#reflectGet(key: string | symbol, wrap: true): undefined | [value: any, enumerable: boolean]
@@ -739,12 +739,12 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			}
 		}
 	
-		get(key: Key): JsonToken | undefined {
+		get(key: Key): JToken | undefined {
 			const c = typeof key === "string" && this.#props.get(key);
 			return c ? c.value : undefined;
 		}
 	
-		getProperty(key: Key): JsonProperty<string> | undefined {
+		getProperty(key: Key): JProperty<string> | undefined {
 			const c = typeof key === "string" && this.#props.get(key);
 			return c ? c.prop : undefined;
 		}
@@ -775,12 +775,12 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			this.#changed.fire(this, "reset");
 		}
 	
-		add<K extends keyof json.JsonContainerAddMap>(key: string, type: K): InternalJsonContainerAddMap[K]
-		add(key: string, type: keyof json.JsonContainerAddMap): JsonToken {
+		add<K extends keyof json.JContainerAddMap>(key: string, type: K): InternalJContainerAddMap[K]
+		add(key: string, type: keyof json.JContainerAddMap): JToken {
 			const props = this.#props;
 			const old = props.get(key);
 			const clazz = resolveClass(type);
-			const cont = new JsonPropertyController(key, clazz);
+			const cont = new JPropertyController(key, clazz);
 	
 			if (old) {
 				this.#replaced(old, cont);
@@ -792,7 +792,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			return cont.value;
 		}
 	
-		remove(key: Key): JsonProperty<string> | undefined {
+		remove(key: Key): JProperty<string> | undefined {
 			const cont = typeof key === "string" && this.#props.get(key);
 			if (cont) {
 				this.#props.delete(key);
@@ -806,7 +806,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			if (items.size === 0)
 				return false;
 	
-			const removed: JsonProperty<string>[] = [];
+			const removed: JProperty<string>[] = [];
 			for (const item of items.values()) {
 				item.removed();
 				removed.push(item.prop);
@@ -828,8 +828,8 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 		}
 	}
 	
-	static readonly #array = class JsonArray extends JsonContainer<number> implements json.JsonArray {
-		static readonly #proxyHandler: ReadOnlyArrayLikeProxyHandler<JsonArray, any> = {
+	static readonly #array = class JArray extends JContainer<number> implements json.JArray {
+		static readonly #proxyHandler: ReadOnlyArrayLikeProxyHandler<JArray, any> = {
 			getAt(self, index) {
 				return self.#items[index].value.proxy;
 			},
@@ -841,7 +841,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			}
 		}
 	
-		readonly #items: JsonPropertyController<number>[];
+		readonly #items: JPropertyController<number>[];
 		readonly #proxy: any;
 	
 		get subtype() {
@@ -856,35 +856,35 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			return this.#proxy;
 		}
 	
-		constructor(owner: JsonProperty) {
+		constructor(owner: JProperty) {
 			super(owner);
 			this.#items = [];
-			this.#proxy = new ArrayLikeProxy(this, JsonArray.#proxyHandler);
+			this.#proxy = new ArrayLikeProxy(this, JArray.#proxyHandler);
 		}
 	
-		get(key: Key): JsonToken | undefined {
+		get(key: Key): JToken | undefined {
 			const c = typeof key === "number" && this.#items.at(key);
 			return c ? c.value : undefined;
 		}
 	
-		getProperty(key: Key): JsonProperty<number> | undefined {
+		getProperty(key: Key): JProperty<number> | undefined {
 			const c = typeof key === "number" && this.#items.at(key);
 			return c ? c.prop : undefined;
 		}
 	
-		add<K extends keyof json.JsonContainerAddMap>(type: K, index?: number | undefined): InternalJsonContainerAddMap[K]
-		add(type: keyof json.JsonContainerAddMap, index?: number | undefined): JsonToken {
-			let cont: JsonPropertyController<number>;
+		add<K extends keyof json.JContainerAddMap>(type: K, index?: number | undefined): InternalJContainerAddMap[K]
+		add(type: keyof json.JContainerAddMap, index?: number | undefined): JToken {
+			let cont: JPropertyController<number>;
 			const clazz = resolveClass(type);
 			const items = this.#items;
 			if (index == null) {
-				cont = new JsonPropertyController(items.length, clazz);
+				cont = new JPropertyController(items.length, clazz);
 				items.push(cont);
 				this.#insertAfter(cont);
 			} else if (index < 0) {
 				throw new TypeError("Index must be greater than or equal to 0");
 			} else {
-				cont = new JsonPropertyController(index, clazz);
+				cont = new JPropertyController(index, clazz);
 	
 				if (index < items.length) {
 					const next = items[index];
@@ -900,11 +900,11 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 						this.#insertAfter(next);
 					}
 				} else {
-					const range: JsonProperty<number>[] = [];
+					const range: JProperty<number>[] = [];
 					let last = this.#last;
 	
 					for (let i = items.length; i < index; i++) {
-						const c = new JsonPropertyController(i, JsonValue);
+						const c = new JPropertyController(i, JValue);
 						if (last) {
 							last.next = c;
 							c.previous = last;
@@ -927,7 +927,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 			return cont.value;
 		}
 	
-		remove(key: Key): JsonProperty<number> | undefined {
+		remove(key: Key): JProperty<number> | undefined {
 			const c = typeof key === "number" && this.#items.at(key);
 			if (c) {
 				key = +key;
@@ -945,7 +945,7 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 				return false;
 	
 			const removed = items.splice(0, items.length);
-			const output: JsonProperty<number>[] = removed as any;
+			const output: JProperty<number>[] = removed as any;
 			for (let i = 0; i < removed.length; i++) {
 				removed[i].removed();
 				output[i] = removed[i].prop;
@@ -973,24 +973,24 @@ abstract class JsonContainer<TKey extends Key = Key, T = any> extends JsonToken<
 	}
 
 	static {
-		JsonObject = this.#object;
-		JsonArray = this.#array;
+		JObject = this.#object;
+		JArray = this.#array;
 	}
 }
 
 function createArray(key: string, value: any[]) {
-	const root = new JsonPropertyController(key, JsonArray);
+	const root = new JPropertyController(key, JArray);
 	addArray(root.value, value);
 	return root;
 }
 
 function createObject(key: string, value: Dict) {
-	const root = new JsonPropertyController(key, JsonObject);
+	const root = new JPropertyController(key, JObject);
 	addObject(root.value, value);
 	return root;
 }
 
-function addArray(token: JsonArray, value: any[]) {
+function addArray(token: JArray, value: any[]) {
 	for (const item of value) {
 		if (item === null) {
 			token.add("value");
@@ -1009,7 +1009,7 @@ function addArray(token: JsonArray, value: any[]) {
 	}
 }
 
-function addObject(token: JsonObject, value: Dict) {
+function addObject(token: JObject, value: Dict) {
 	for (const key in value) {
 		const item = value[key];
 		if (item === null) {
@@ -1031,17 +1031,17 @@ function addObject(token: JsonObject, value: Dict) {
 
 function create(key: string, value: any) {
 	if (value === null)
-		return new JsonPropertyController(key, JsonValue);
+		return new JPropertyController(key, JValue);
 
 	if (typeof value === "object")
 		return (Array.isArray(value) ? createArray : createObject)(key, value);
 
-	const prop = new JsonPropertyController(key, JsonValue);
+	const prop = new JPropertyController(key, JValue);
 	prop.value.value = value;
 	return prop;
 }
 
-export function json(value: any, key: string = "$"): json.JsonProperty<string> {
+export function json(value: any, key: string = "$"): json.JProperty<string> {
 	return create(key, value).prop;
 }
 
@@ -1049,11 +1049,11 @@ function defValue(object: object, p: PropertyKey, value: any, enumerable?: boole
 	Object.defineProperty(object, p, { value, enumerable, writable, configurable });
 }
 
-defValue(json, "JsonTokenFilterFlags", FilterFlags, true);
-defValue(json, "JsonToken", JsonToken, true);
-defValue(json, "JsonValue", JsonValue, true);
-defValue(json, "JsonContainer", JsonContainer, true);
-defValue(json, "JsonObject", JsonObject, true);
-defValue(json, "JsonArray", JsonArray, true);
+defValue(json, "JTokenFilterFlags", FilterFlags, true);
+defValue(json, "JToken", JToken, true);
+defValue(json, "JValue", JValue, true);
+defValue(json, "JContainer", JContainer, true);
+defValue(json, "JObject", JObject, true);
+defValue(json, "JArray", JArray, true);
 
 export default json;

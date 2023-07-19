@@ -36,11 +36,11 @@
 	let prop: HTMLElement;
 	let popups: HTMLElement;
 
-	function copyKey(property: json.JsonProperty) {
+	function copyKey(property: json.JProperty) {
 		return navigator.clipboard.writeText(String(property.key));
 	}
 
-	function copyValue(token: json.JsonToken, minify?: boolean) {
+	function copyValue(token: json.JToken, minify?: boolean) {
 		let text: string;
 		if (token.is("value")) {
 			text = String(token.value);
@@ -76,12 +76,12 @@
 		}
 	}
 
-	function clearProp(value: json.JsonContainer) {
+	function clearProp(value: json.JContainer) {
 		value.clear();
 		value.owner.isExpanded = false;
 	}
 
-	function deleteProp(prop: json.JsonProperty) {
+	function deleteProp(prop: json.JProperty) {
 		const { parent, next, previous } = prop;
 		prop.remove();
 		if (parent && parent.first == null)
@@ -91,7 +91,7 @@
 		model.setSelected(p, false, true);
 	}
 
-	function openContextMenu(selected: json.JsonProperty, x: number, y: number) {
+	function openContextMenu(selected: json.JProperty, x: number, y: number) {
 		const builder = menuBuilder();
 		if (selected.value.is("container")) {
 			if (selected.isExpanded) {
@@ -112,8 +112,8 @@
 
 					if (selected.value.is("object"))
 						builder.menu("Sort")
-							.item("A-Z", () => (selected.value as json.JsonObject).sort())
-							.item("Z-A", () => (selected.value as json.JsonObject).sort(true));
+							.item("A-Z", () => (selected.value as json.JObject).sort())
+							.item("Z-A", () => (selected.value as json.JObject).sort(true));
 				})
 				.item("Copy Key", () => copyKey(selected))
 				.menu("Copy Value")

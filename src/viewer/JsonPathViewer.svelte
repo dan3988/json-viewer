@@ -1,12 +1,12 @@
 <script lang="ts" context="module">
 	import type json from "../json";
 
-	function expandPath(model: ViewerModel, value: undefined | null | json.JsonProperty): readonly json.JsonProperty[] {
+	function expandPath(model: ViewerModel, value: undefined | null | json.JProperty): readonly json.JProperty[] {
 		if (value == null)
 			return [model.root];
 
-		const parts: json.JsonProperty[] = [];
-		let prop: undefined | json.JsonProperty = value;
+		const parts: json.JProperty[] = [];
+		let prop: undefined | json.JProperty = value;
 		do {
 			parts.push(prop);
 		} while ((prop = prop.parent?.owner) != null);
