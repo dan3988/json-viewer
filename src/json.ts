@@ -591,14 +591,14 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 
 	#insertAfter(value: JPropertyController<TKey>, prev?: null | JPropertyController<TKey>) {
 		if (prev != null) {
-			prev.next = value;
-			value = prev;
-
 			if (prev.next) {
 				value = prev.next;
 			} else {
 				this.#last = value;
 			}
+			
+			prev.next = value;
+			value = prev;
 		} else if (this.#last == null) {
 			this.#first = value;
 			this.#last = value;
@@ -614,14 +614,14 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 
 	#insertBefore(value: JPropertyController<TKey>, next?: null | JPropertyController<TKey>) {
 		if (next != null) {
-			next.previous = value;
-			value.next = next;
-
 			if (next.previous) {
 				value.previous = next.previous;
 			} else {
 				this.#first = value;
 			}
+
+			next.previous = value;
+			value.next = next;
 		} else if (this.#first == null) {
 			this.#first = value;
 			this.#last = value;
