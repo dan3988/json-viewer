@@ -17,6 +17,11 @@ interface JsonClass<T extends json.JToken = json.JToken> {
 	new(owner: JProperty): T;
 }
 
+interface AbstractJsonClass<T extends json.JToken = json.JToken> {
+	new(): never;
+	readonly prototype: T;
+}
+
 function defaultCompare(x: JPropertyController<string>, y: JPropertyController<string>) {
 	return x.key.localeCompare(y.key, undefined, { sensitivity: "base" });
 }
@@ -39,7 +44,7 @@ interface ChildrenChangedEvents<TKey extends Key = any> {
 
 type ChildrenChangedArgs<TKey extends Key = Key> = { [P in keyof ChildrenChangedEvents]: [type: P, ...args: ChildrenChangedEvents<TKey>[P]] }[keyof ChildrenChangedEvents]
 
-enum FilterFlags {
+enum JTokenFilterFlags {
 	None,
 	Keys = 1,
 	Values = 2,
@@ -88,11 +93,11 @@ export declare namespace json {
 		filter(filter: string, filterMode: JTokenFilterFlags, isAppend: boolean): boolean;
 	}
 
-	export const JToken: JsonClass<JToken>;
-	export const JValue: JsonClass<JValue>;
-	export const JContainer: JsonClass<JContainer>;
-	export const JArray: JsonClass<JArray>;
-	export const JObject: JsonClass<JObject>;
+	export const JToken: AbstractJsonClass<JToken>;
+	export const JValue: AbstractJsonClass<JValue>;
+	export const JContainer: AbstractJsonClass<JContainer>;
+	export const JArray: AbstractJsonClass<JArray>;
+	export const JObject: AbstractJsonClass<JObject>;
 
 	export interface JToken<T = any> extends Iterable<JProperty> {
 		readonly type: keyof JTokenTypeMap;
@@ -1045,15 +1050,10 @@ export function json(value: any, key: string = "$"): json.JProperty<string> {
 	return create(key, value).prop;
 }
 
-function defValue(object: object, p: PropertyKey, value: any, enumerable?: boolean, writable?: boolean, configurable?: boolean): void {
-	Object.defineProperty(object, p, { value, enumerable, writable, configurable });
+function def<T>(target: T, properties: Record<keyof T, any>, enumerable?: boolean, writable?: boolean, configurable?: boolean): void {
+	for (const [key, value] of Object.entries(properties))
+		Object.defineProperty(target, key, { value, enumerable, writable, configurable });
 }
 
-defValue(json, "JTokenFilterFlags", FilterFlags, true);
-defValue(json, "JToken", JToken, true);
-defValue(json, "JValue", JValue, true);
-defValue(json, "JContainer", JContainer, true);
-defValue(json, "JObject", JObject, true);
-defValue(json, "JArray", JArray, true);
-
+def(json, { JTokenFilterFlags, JToken, JValue, JContainer, JObject, JArray }, true);
 export default json;
