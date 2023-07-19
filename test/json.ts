@@ -26,12 +26,12 @@ function conversionTestContainer<T extends json.JsonContainer>(value: json.JsonT
 
 function testLinks(value: json.JsonContainer) {
 	if (value.count === 0) {
-		expect(value.first).null("\"first\" should be null on an empty container");
-		expect(value.last).null("\"last\" should be null on an empty container");
+		expect(value.first, "\"first\" should be null on an empty container").null;
+		expect(value.last, "\"last\" should be null on an empty container").null;
 	} else if (value.count === 1) {
 		expect(value.first).eq(value.last, "\"first\" should be equal to \"last\" on a container with one property");
-		expect(value.first.previous).null("property should have no siblings on a container with one property");
-		expect(value.first.next).null("property should have no siblings on a container with one property");
+		expect(value.first.previous, "property should have no siblings on a container with one property").null;
+		expect(value.first.next, "property should have no siblings on a container with one property").null;
 	} else {
 		let last: json.JsonProperty | null = null;
 		let current = value.first;
@@ -73,11 +73,14 @@ describe("JSON", () => {
 			conversionTestValue(prop.value, "null", null);
 		});
 
+
 		describe("JsonArray", () => {
 			const og = Linq.range(0, 10, 5).toArray();
 			const prop = json(og);
 			conversionTestContainer(prop.value, json.JsonArray, "array", og);
 		});
+
+		describe("JsonArray: empty", () => conversionTestContainer(json([]).value, json.JsonArray, "array", []));
 
 		describe("JsonObject", () => {
 			const og = {
@@ -90,5 +93,7 @@ describe("JSON", () => {
 			const prop = json(og);
 			conversionTestContainer(prop.value, json.JsonObject, "object", og);
 		});
+		
+		describe("JsonObject: empty", () => conversionTestContainer(json({}).value, json.JsonObject, "object", {}));
 	});
 })
