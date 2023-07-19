@@ -638,13 +638,15 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 	/** @internal */
 	#replaced(old: JPropertyController<TKey>, value: JPropertyController<TKey>) {
 		if (old.previous) {
-			old.previous.next = value;
+			value.previous = old.previous;
+			value.previous.next = value;
 		} else {
 			this.#first = value;
 		}
 
 		if (old.next) {
-			old.next.previous = value;
+			value.next = old.next;
+			value.next.previous = value;
 		} else {
 			this.#last = value;
 		}
