@@ -2,6 +2,10 @@ import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import { defineConfig } from "rollup";
+import fs from "node:fs";
+
+if (fs.existsSync("lib"))
+	fs.rmSync("lib", { recursive: true });
 
 export default defineConfig({
 	input: "./test/main.ts",
