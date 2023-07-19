@@ -79,9 +79,9 @@ export declare namespace json {
 		Both = Keys | Values
 	}
 	
-	export interface JProperty<TKey extends Key = Key> {
+	export interface JProperty<TKey extends Key = Key, TValue extends JToken = JToken> {
 		readonly key: TKey;
-		readonly value: JToken;
+		readonly value: TValue;
 		readonly parent: null | JContainer<TKey>;
 		readonly previous: null | JProperty<TKey>;
 		readonly next: null | JProperty<TKey>;
@@ -287,7 +287,7 @@ class JPropertyController<TKey extends Key = Key, TValue extends JToken = JToken
 	}
 }
 
-class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implements json.JProperty<TKey> {
+class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implements json.JProperty<TKey, TValue> {
 	readonly #controller: JPropertyController<TKey>;
 	readonly #value: TValue;
 	readonly #bag: PropertyBag<JPropertyBag>;
@@ -1056,6 +1056,10 @@ function create(key: string, value: any) {
 	return prop;
 }
 
+export function json(value: JValueType, key?: string): json.JProperty<string, JValue>
+export function json(value: any[], key?: string): json.JProperty<string, JArray>
+export function json(value: object, key?: string): json.JProperty<string, JObject>
+export function json(value: unknown, key: string): json.JProperty<string>
 export function json(value: any, key: string = "$"): json.JProperty<string> {
 	return create(key, value).prop;
 }
