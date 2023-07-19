@@ -26,7 +26,9 @@
 			"request": "launch",
 			"args": [
 				"./node_modules/mocha/bin/mocha.js",
-				"./lib/main.js"
+				"./lib/main.js",
+				"--reporter",
+				"mochawesome"
 			]
 		}
 	]
