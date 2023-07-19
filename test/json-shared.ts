@@ -28,22 +28,19 @@ export function conversionTestContainer<T extends json.JContainer>(value: json.J
 
 export function testProp<T extends string | number>(parent: json.JContainer<T>, key: T, callback?: (value: json.JToken) => void) {
 	path.push(key);
-	let oldIt = it;
 	try {
-		// @ts-ignore
-		it = (v, fn) => oldIt(prefix + v, fn);
-
-		const prefix = "Property \"$/" + path.join("/") + "\": ";
-		const prop = parent.getProperty(key);
-		it(`Exists`, () => expect(prop, `property ${JSON.stringify(key)} was not found`).to.exist);
-		const value = parent.get(key);
-	
-		it(`Has the correct key`, () => expect(prop.key).eq(key));
-		it(`Has the correct value`, () => expect(prop.value).eq(value));
+		const prefix = "Property \"/" + path.join("/") + "\"";
+		describe(prefix, () => {
+			const prop = parent.getProperty(key);
+			it(`Exists`, () => expect(prop, `property ${JSON.stringify(key)} was not found`).to.exist);
+			const value = parent.get(key);
 		
-		callback(value);
+			it(`Has the correct key`, () => expect(prop.key).eq(key));
+			it(`Has the correct value`, () => expect(prop.value).eq(value));
+			
+			callback(value);
+		});
 	} finally {
-		it = oldIt;
 		path.pop();
 	}
 }
