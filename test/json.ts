@@ -11,18 +11,31 @@ function conversionTestCommon<T extends json.JsonToken>(value: json.JsonToken, c
 
 function conversionTestValue(value: json.JsonToken, subtype: keyof json.JsonTokenSubTypeMap, expected: any): asserts value is json.JsonValue {
 	conversionTestCommon(value, json.JsonValue, "value", subtype);
-	it(`Has a value equal to the parameter passed into json() for the property "value"`, () => expect(value.value).eq(expected));
-	it(`Has a value equal to the parameter passed into json() for the property "proxy"`, () => expect(value.proxy).eq(expected));
-	it(`Returns a value equal to the parameter passed into json() when calling toJSON()`, () => expect(value.toJSON()).eq(expected));
-	it(`Returns a value equal to the stringified parameter passed into json() when calling toString()`, () => expect(value.toString()).eq(JSON.stringify(expected)));
+	it(`Has the correct value for the property "value"`, () => expect(value.value).eq(expected));
+	it(`Has the correct value for the property "proxy"`, () => expect(value.proxy).eq(expected));
+	it(`Returns the correct value when calling toJSON()`, () => expect(value.toJSON()).eq(expected));
+	it(`Returns the correct text when calling toString()`, () => expect(value.toString()).eq(JSON.stringify(expected)));
 }
 
 function conversionTestContainer<T extends json.JsonContainer>(value: json.JsonToken, clazz: Constructor<T>, subtype: keyof json.JsonTokenSubTypeMap, expected: any): asserts value is T {
 	conversionTestCommon(value, clazz, "container", subtype);
-	it("Returns a value that is deeply equal to the value passed into json() when calling toJSON()", () => expect(value.toJSON()).deep.eq(expected));
-	it("Returns the stringified value passed into json() when calling toString()", () => expect(value.toString()).eq(JSON.stringify(expected)));
+	it(`Has the correct value for the property "proxy"`, () => expect(value.proxy).deep.eq(expected));
+	it("Returns the correct value when calling toJSON()", () => expect(value.toJSON()).deep.eq(expected));
+	it("Returns the correct text when calling toString()", () => expect(value.toString()).eq(JSON.stringify(expected)));
 	it("Has a valid linked structure", () => testLinks(value));
 }
+
+
+function testProp<T extends string | number>(parent: json.JsonContainer<T>, key: T, callback: (value: json.JsonToken) => void) {
+	const prop = parent.getProperty(key);
+	it(`Has the property ${JSON.stringify(key)}`, () => expect(prop, `property ${JSON.stringify(key)} was not found`).to.exist);
+	const value = parent.get(key);
+
+	it("Has the correct key", () => expect(prop.key).eq(key));
+	it("Has the correct value", () => expect(prop.value).eq(value));
+	
+	callback(value);
+};
 
 function testLinks(value: json.JsonContainer) {
 	if (value.count === 0) {
@@ -78,6 +91,16 @@ describe("JSON", () => {
 			const og = Linq.range(0, 10, 5).toArray();
 			const prop = json(og);
 			conversionTestContainer(prop.value, json.JsonArray, "array", og);
+			testProp(prop.value, 0, v => conversionTestValue(v, "number", 0));
+			testProp(prop.value, 1, v => conversionTestValue(v, "number", 5));
+			testProp(prop.value, 2, v => conversionTestValue(v, "number", 10));
+			testProp(prop.value, 3, v => conversionTestValue(v, "number", 15));
+			testProp(prop.value, 4, v => conversionTestValue(v, "number", 20));
+			testProp(prop.value, 5, v => conversionTestValue(v, "number", 25));
+			testProp(prop.value, 6, v => conversionTestValue(v, "number", 30));
+			testProp(prop.value, 7, v => conversionTestValue(v, "number", 35));
+			testProp(prop.value, 8, v => conversionTestValue(v, "number", 40));
+			testProp(prop.value, 9, v => conversionTestValue(v, "number", 45));
 		});
 
 		describe("JsonArray: empty", () => conversionTestContainer(json([]).value, json.JsonArray, "array", []));
@@ -92,6 +115,10 @@ describe("JSON", () => {
 
 			const prop = json(og);
 			conversionTestContainer(prop.value, json.JsonObject, "object", og);
+			testProp(prop.value, "number", v => conversionTestValue(v, "number", 5));
+			testProp(prop.value, "string", v => conversionTestValue(v, "string", "text"));
+			testProp(prop.value, "boolean", v => conversionTestValue(v, "boolean", true));
+			testProp(prop.value, "null", v => conversionTestValue(v, "null", null));
 		});
 		
 		describe("JsonObject: empty", () => conversionTestContainer(json({}).value, json.JsonObject, "object", {}));
