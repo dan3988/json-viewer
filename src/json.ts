@@ -14,7 +14,12 @@ interface JPropertyBag {
 
 interface JsonClass<T extends json.JToken = json.JToken> {
 	readonly prototype: T;
-	new(owner: JProperty): T;
+	new(owner?: JProperty): T;
+}
+
+interface ExposedJsonClass<T extends json.JToken = json.JToken> {
+	readonly prototype: T;
+	new(): T;
 }
 
 interface AbstractJsonClass<T extends json.JToken = json.JToken> {
@@ -94,10 +99,10 @@ export declare namespace json {
 	}
 
 	export const JToken: AbstractJsonClass<JToken>;
-	export const JValue: AbstractJsonClass<JValue>;
+	export const JValue: ExposedJsonClass<JValue>;
 	export const JContainer: AbstractJsonClass<JContainer>;
-	export const JArray: AbstractJsonClass<JArray>;
-	export const JObject: AbstractJsonClass<JObject>;
+	export const JArray: ExposedJsonClass<JArray>;
+	export const JObject: ExposedJsonClass<JObject>;
 
 	export interface JToken<T = any> extends Iterable<JProperty> {
 		readonly type: keyof JTokenTypeMap;
@@ -264,8 +269,11 @@ class JPropertyController<TKey extends Key = Key, TValue extends JToken = JToken
 		return this.#prop.value;
 	}
 
-	constructor(key: TKey, clazz: JsonClass<TValue>) {
-		this.#prop = new JProperty(this, clazz);
+	constructor(key: TKey, clazz: JsonClass<TValue>, instance?: TValue)
+	constructor(key: TKey, instance: TValue)
+	constructor(key: TKey, value: JsonClass<TValue> | TValue)
+	constructor(key: TKey, value: JsonClass<TValue> | TValue) {
+		this.#prop = new JProperty(this, value);
 		this.parent = null;
 		this.key = key;
 		this.previous = null;
@@ -336,9 +344,9 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		this.#bag.setValue("isSelected", value);
 	}
 
-	constructor(controller: JPropertyController<TKey>, clazz: JsonClass<TValue>) {
+	constructor(controller: JPropertyController<TKey>, value: JsonClass<TValue> | TValue) {
 		this.#controller = controller;
-		this.#value = new clazz(this);
+		this.#value = typeof value === "function" ? new value(this) : value;
 		this.#bag = new PropertyBag<JPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
 	}
 
@@ -410,8 +418,8 @@ abstract class JToken<T = any> implements json.JToken<T> {
 	abstract get subtype(): keyof json.JTokenSubTypeMap;
 	abstract get proxy(): T;
 
-	constructor(owner: JProperty) {
-		this.#owner = owner;
+	constructor(owner?: JProperty) {
+		this.#owner = owner ?? new JPropertyController("$", this).prop;
 	}
 
 	/** @internal */
@@ -475,7 +483,7 @@ class JValue extends JToken implements json.JValue {
 		}
 	}
 
-	constructor(owner: JProperty) {
+	constructor(owner?: JProperty) {
 		super(owner);
 		this.#value = null;
 		this.#subtype = "null";
@@ -559,7 +567,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 	abstract get subtype(): "array" | "object";
 	abstract get count(): number;
 
-	constructor(owner: JProperty) {
+	constructor(owner?: JProperty) {
 		super(owner);
 		this.#first = null;
 		this.#last = null;
@@ -724,7 +732,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			return this.#proxy;
 		}
 	
-		constructor(owner: JProperty) {
+		constructor(owner?: JProperty) {
 			super(owner);
 			this.#props = new Map();
 			this.#proxy = new Proxy(this, JObject.#proxyHandler);
@@ -861,7 +869,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			return this.#proxy;
 		}
 	
-		constructor(owner: JProperty) {
+		constructor(owner?: JProperty) {
 			super(owner);
 			this.#items = [];
 			this.#proxy = new ArrayLikeProxy(this, JArray.#proxyHandler);
