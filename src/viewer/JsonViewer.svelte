@@ -16,6 +16,7 @@
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
+	import Editor from "../shared/Editor.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -69,6 +70,10 @@
 		});
 	}
 
+	function promptText(value: string = "", title: string = "") {
+		return showPopup(popups, Editor, { value, title });
+	}
+
 	function onModelCommand(evt: ViewerCommandEvent) {
 		if (evt.command === "context") {
 			const [prop, x, y] = evt.args;
@@ -91,6 +96,21 @@
 		model.setSelected(p, false, true);
 	}
 
+	async function addToObject(obj: json.JObject, mode: keyof json.JContainerAddMap) {
+		const key = await promptText("", "Property Name");
+		if (key) {
+			const prop = obj.add(key, mode);
+			obj.owner.isExpanded = true;
+			model.setSelected(prop, false, true);
+		}
+	}
+
+	async function addToArray(arr: json.JArray, mode: keyof json.JContainerAddMap) {
+		const prop = arr.add(mode);
+		arr.owner.isExpanded = true;
+		model.setSelected(prop, false, true);
+	}
+
 	function openContextMenu(selected: json.JProperty, x: number, y: number) {
 		const builder = menuBuilder();
 		if (selected.value.is("container")) {
@@ -110,10 +130,23 @@
 						.item("Clear", clearProp.bind(undefined, selected.value))
 						.item("Delete", deleteProp.bind(undefined, selected));
 
-					if (selected.value.is("object"))
+					if (selected.value.is("object")) {
+						const { value } = selected;
 						builder.menu("Sort")
-							.item("A-Z", () => (selected.value as json.JObject).sort())
-							.item("Z-A", () => (selected.value as json.JObject).sort(true));
+							.item("A-Z", () => value.sort())
+							.item("Z-A", () => value.sort(true));
+
+						builder.menu("Add")
+							.item("Object", () => addToObject(value, "object"))
+							.item("Array", () => addToObject(value, "array"))
+							.item("Value", () => addToObject(value, "value"))
+					} else if (selected.value.is("array")) {
+						const { value } = selected;
+						builder.menu("Add")
+							.item("Object", () => addToArray(value, "object"))
+							.item("Array", () => addToArray(value, "array"))
+							.item("Value", () => addToArray(value, "value"))
+					}
 				})
 				.item("Copy Key", () => copyKey(selected))
 				.menu("Copy Value")

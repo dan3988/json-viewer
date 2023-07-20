@@ -164,3 +164,12 @@ export function def(clazz: Constructor<any>, { accessors, functions }: ClassDefs
 	if (functions)
 		defFn(clazz, functions);
 }
+
+/**
+ * Shortcut for `instance[key].bind(instance[key], ...args)`
+ */
+export function delegate<T, K extends keyof { [P in keyof T as T[P] extends (...args: [...A, ...any[]]) => any ? P : never]: T[P] }, A extends any[]>(instance: T, key: K, ...args: A): T[K] extends (...args: [...A, ...infer B]) => infer R ? (...args: [...B]) => R : unknown
+export function delegate(instance: any, key: PropertyKey, ...args: any[]) {
+	const fn: Fn = instance[key];
+	return fn.bind(instance, ...args);
+}
