@@ -37,6 +37,8 @@
 	let prop: HTMLElement;
 	let popups: HTMLElement;
 
+	onMount(() => promptText("", "Title"));
+
 	function copyKey(property: json.JProperty) {
 		return navigator.clipboard.writeText(String(property.key));
 	}
@@ -451,7 +453,8 @@
 	}
 
 	.popups {
-		background-color: #fff4;
+		background-color: rgba(var(--blur-bg-rgb), 0.25);
+		backdrop-filter: blur(1px);
 		z-index: 10;
 		position: absolute;
 		inset: 0;

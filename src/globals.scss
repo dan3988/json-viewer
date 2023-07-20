@@ -28,6 +28,8 @@ $cst-dirty-border-color-dark: #5c603b;
 @include core.theme(light) {
 	color-scheme: light;
 
+	--blur-bg-rgb: 0,0,0;
+
 	--col-blue: #00F;
 	--col-red: #F00;
 	--col-grn: #0F0;
@@ -48,6 +50,8 @@ $cst-dirty-border-color-dark: #5c603b;
 
 @include core.theme(dark) {
 	color-scheme: dark;
+
+	--blur-bg-rgb: 255,255,255;
 
 	--col-blue: #68F;
 	--col-red: #F86;
