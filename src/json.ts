@@ -4,7 +4,6 @@ import { EventHandlers, type IEvent } from "./evt.js";
 import Linq from "@daniel.pickett/linq-js";
 
 type Key = string | number;
-type JValueType = string | number | boolean | null;
 
 interface JPropertyBag {
 	isHidden: boolean;
@@ -57,6 +56,8 @@ enum JTokenFilterFlags {
 }
 
 export declare namespace json {
+	export type JValueType = string | number | boolean | null;
+
 	export interface JTokenTypeMap {
 		"container": JContainer;
 		"property": JProperty;
@@ -96,6 +97,7 @@ export declare namespace json {
 		remove(): boolean;
 		toggleExpanded(): boolean;
 		filter(filter: string, filterMode: JTokenFilterFlags, isAppend: boolean): boolean;
+		clone(): this;
 	}
 
 	export const JToken: AbstractJsonClass<JToken>;
@@ -122,8 +124,12 @@ export declare namespace json {
 
 		[Symbol.iterator](): IterableIterator<JProperty>;
 
+		clone(): this;
+
 		toJSON(): T;
 		toString(indent?: string): string;
+
+		equals(other: JToken): boolean;
 	}
 
 	export interface JValue<T extends JValueType = JValueType> extends JToken<T> {
@@ -256,7 +262,7 @@ class JIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterato
 let getController: <TKey extends Key, TValue extends JToken>(prop: JProperty<TKey, TValue>) => JPropertyController<TKey, TValue>;
 
 /** properties that should not be exposed outside this file */
-interface JPropertyController<TKey extends Key, TValue extends JToken = JToken> {
+interface JPropertyController<TKey extends Key = Key, TValue extends JToken = JToken> {
 	readonly prop: JProperty<TKey, TValue>;
 	readonly value: TValue;
 	parent: null | JContainer<TKey>;
@@ -264,7 +270,8 @@ interface JPropertyController<TKey extends Key, TValue extends JToken = JToken> 
 	previous: null | JPropertyController<TKey>;
 	next: null | JPropertyController<TKey>;
 
-	removed(): void
+	removed(): void;
+	clone(): this;
 }
 
 class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implements json.JProperty<TKey, TValue> {
@@ -319,6 +326,10 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 
 		removed(): void {
 			this.#prop.#removed();
+		}
+
+		clone(): any {
+			return this.#prop.clone().#controller;
 		}
 	}
 
@@ -389,10 +400,13 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		this.#bag.setValue("isSelected", value);
 	}
 
-	constructor(key: TKey, value: JsonClass<TValue> | TValue) {
+	constructor(key: TKey, value: JsonClass<TValue>)
+	constructor(key: TKey, value: TValue, clone?: boolean)
+	constructor(key: TKey, value: JsonClass<TValue> | TValue, clone?: boolean)
+	constructor(key: TKey, value: JsonClass<TValue> | TValue, clone?: boolean) {
 		this.#controller = new JProperty.#Controller(this);
 		this.#key = key;
-		this.#value = typeof value === "function" ? new value(this) : value;
+		this.#value = typeof value === "function" ? new value(this) : (clone ? value.__cloneFor(this) : value);
 		this.#bag = new PropertyBag<JPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
 		this.#parent = null;
 		this.#previous = null;
@@ -456,6 +470,10 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		this.#bag.setValue("isHidden", !show);
 		return show;
 	}
+
+	clone(): any {
+		return new JProperty(this.#key, this.#value, true);
+	}
 }
 
 abstract class JToken<T = any> implements json.JToken<T> {
@@ -494,15 +512,23 @@ abstract class JToken<T = any> implements json.JToken<T> {
 		return type === this.type || type === this.subtype;
 	}
 
-	abstract toJSON(): T;
+	clone(): this {
+		return new JProperty("$", this, true).value;
+	}
 	
 	toString(indent?: string | undefined) {
 		return JSON.stringify(this.proxy, undefined, indent); 
 	}
+
+	abstract toJSON(): T;
+	abstract equals(other: json.JToken): boolean;
+
+	/** @internal */
+	abstract __cloneFor(prop: JProperty): this;
 }
 
 class JValue extends JToken implements json.JValue {
-	#value: JValueType;
+	#value: json.JValueType;
 	#subtype: "string" | "number" | "boolean" | "null";
 
 	get type() {
@@ -553,9 +579,19 @@ class JValue extends JToken implements json.JValue {
 		return str.includes(filter);
 	}
 
-
 	toJSON() {
 		return this.#value;
+	}
+
+	__cloneFor(prop: JProperty<Key, JToken<any>>): any {
+		const value = new JValue(prop);
+		value.#value = this.#value;
+		value.#subtype = this.#subtype;
+		return value;
+	}
+
+	equals(other: json.JToken<any>): boolean {
+		return other.is("value") && other.value === this.#value;
 	}
 
 	get(): undefined {
@@ -733,6 +769,61 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		this.#changed.fire(this, "removed", value.prop);
 	}
 
+	#copy<T extends this>(value: T, add: (this: this, prop: JPropertyController<TKey>) => void) {
+		let current = value.#first;
+		if (current != null) {
+			let copy = current.clone();
+			let last: null | JPropertyController<TKey> = null;
+			this.#first = copy;
+
+			while (true) {
+				copy.previous = last;
+				copy.parent = this;
+				add.call(this, copy);
+
+				last = copy;
+				current = current.next;
+
+				if (current == null)
+					break;
+
+				copy = current.clone();
+				last.next = copy;
+			}
+
+			this.#last = last;
+		}
+	}
+
+	equals(other: json.JToken): boolean {
+		if (this === other)
+			return true;
+
+		if (!other.is(this.subtype))
+			return false;
+
+		if (other.count !== this.count)
+			return false;
+
+		const x = this[Symbol.iterator]();
+		const y = other[Symbol.iterator]();
+		
+		while (true) {
+			const xr = x.next();
+			const yr = y.next();
+			if (xr.done || yr.done)
+				break;
+
+			if (xr.value.key !== yr.value.key)
+				return false;
+
+			if (!xr.value.value.equals(yr.value.value))
+				return false;
+		}
+
+		return true;
+	}
+
 	keys() {
 		return JIterator.keys(this);
 	}
@@ -896,6 +987,16 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 	
 			return obj;
 		}
+
+		__cloneFor(prop: JProperty<Key>): any {
+			const copy = new JObject(prop);
+			copy.#copy(this, this.#addProp);
+			return copy;
+		}
+
+		#addProp(prop: JPropertyController<string>) {
+			this.#props.set(prop.key, prop);
+		}
 	}
 	
 	static readonly #array = class JArray extends JContainer<number> implements json.JArray {
@@ -1035,6 +1136,16 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 	
 			return arr;
 		}
+
+		__cloneFor(prop: JProperty<Key>): any {
+			const copy = new JArray(prop);
+			copy.#copy(this, this.#addProp);
+			return copy;
+		}
+
+		#addProp(prop: JPropertyController<number>) {
+			this.#items[prop.key] = prop;
+		}
 	
 		*#proxyIterator() {
 			for (const prop of this.#items)
@@ -1099,10 +1210,10 @@ function addObject(token: JObject, value: Dict) {
 	}
 }
 
-export function json(value: JValueType, key?: string): json.JProperty<string, JValue>
+export function json(value: json.JValueType, key?: string): json.JProperty<string, JValue>
 export function json(value: any[], key?: string): json.JProperty<string, JArray>
 export function json(value: object, key?: string): json.JProperty<string, JObject>
-export function json(value: unknown, key: string): json.JProperty<string>
+export function json(value: any, key?: string): json.JProperty<string>
 export function json(value: any, key: string = "$"): json.JProperty<string> {
 	if (value === null)
 		return new JProperty(key, JValue);

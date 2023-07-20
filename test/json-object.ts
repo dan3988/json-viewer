@@ -1,5 +1,7 @@
 import json from "../src/json.js";
 import * as s from "./json-shared.js";
+import sample from "../test-data/syntax.json";
+import helpers from "./helpers.js";
 
 describe("JObject", () => {
 	describe("simple object", () => {
@@ -65,5 +67,60 @@ describe("JObject", () => {
 		testReplace("a", "replaced a");
 		testReplace("b", "replaced b");
 		testReplace("c", "replaced c");
+	});
+
+	describe("equal", () => {
+		const sample: any = { string: "text", number: 5, boolean: true, null: null };
+		sample.object = { ...sample };
+		sample.array = Linq.range(1, 10).toArray();
+
+		function add(obj: json.JObject) {
+			helpers.object.addValue(obj, "string", "text");
+			helpers.object.addValue(obj, "number", 5);
+			helpers.object.addValue(obj, "boolean", true);
+			helpers.object.addValue(obj, "null", null);
+		}
+
+		function create() {
+			const prop = json(sample);
+			const manual = new json.JObject();
+
+			add(manual);
+			const nested = manual.add("object", "object");
+			add(nested.value);
+			const arr = manual.add("array", "array");
+			for (let i = 0; i < 10; )
+				helpers.array.addValue(arr.value, ++i);
+		
+			return [prop.value, manual] as const;
+		}
+
+		it("returns true when calling equal() with the same instance", () => {
+			const { value } = json(sample);
+			expect(value.equals(value)).to.be.true;
+		});
+
+		it("returns true when calling equal() with an identical value", () => {
+			const [x, y] = create();
+			expect(x.equals(y)).to.be.true;
+		});
+
+		it("returns false when calling equal() with a non-identical value", () => {
+			const [x, y] = create();
+			helpers.object.addValue(y, "string", "different text");
+			expect(x.equals(y)).to.be.false;
+		});
+	});
+
+	describe("clone", () => {
+		const prop = json(sample);
+		const copy = prop.clone();
+
+		const x = prop.value.toJSON();
+		const y = copy.value.toJSON();
+
+		it("Copies the object exactly", () => expect(x).to.be.deep.equal(y));
+		it("Doesn't break the structure of the original object", () => s.validateLinks(prop.value));
+		s.testLinks(copy.value);
 	});
 });

@@ -3,6 +3,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import { defineConfig } from "rollup";
 import fs from "node:fs";
+import json from "@rollup/plugin-json";
 
 if (fs.existsSync("lib"))
 	fs.rmSync("lib", { recursive: true });
@@ -23,6 +24,7 @@ export default defineConfig({
 		typescript({
 			tsconfig: "./test/tsconfig.json"
 		}),
+		json(),
 		resolve({
 			browser: false
 		}),
