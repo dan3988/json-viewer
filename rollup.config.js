@@ -13,6 +13,7 @@ import fs from "fs";
 import Linq from '@daniel.pickett/linq-js';
 import customManifest from './rollup-plugin-custom-manifest.js';
 import copyLibs from './rollup-plugin-copy-libs.js';
+import onwarn from "./rollup-log.js";
 
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
 const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
@@ -106,6 +107,7 @@ function loader(args) {
 				intro: '{',
 				outro: '}'
 			},
+			onwarn,
 			plugins: [
 				svelte({
 					preprocess: [
@@ -181,6 +183,7 @@ function loader(args) {
 				format: 'cjs',
 				file: path.join(lib, "bg.js")
 			},
+			onwarn,
 			plugins: [
 				typescript({
 					tsconfig: "src/extension/tsconfig.json",
