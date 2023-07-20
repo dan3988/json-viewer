@@ -1,8 +1,9 @@
 <script lang="ts">
-    import type { PopupEvents } from "../types";
-    import { createEventDispatcher } from "svelte";
+	import type { PopupEvents } from "../types";
+	import { createEventDispatcher } from "svelte";
 
 	export let value: string = "";
+	export let title: string = "";
 
 	const dispatcher = createEventDispatcher<PopupEvents<string>>();
 
@@ -15,33 +16,41 @@
 	}
 </script>
 <style lang="scss">
+	#title {
+		text-align: center;
+		grid-area: title;
+	}
+
 	#value {
 		resize: none;
-		grid-area: 1 / 1 / span 1 / -1;
+		grid-area: text;
 	}
 
 	#cancel {
-		grid-column: 2 / span 1;
+		grid-area: cancel;
 	}
 
 	#confirm {
-		grid-column: 3 / span 1;
+		grid-area: confirm;
 	}
 
 	.root {
-		width: min(50vh, 15rem);
+		width: min(50vh, 20rem);
 		display: grid;
 		gap: 5px;
-		grid-template-columns: 1fr auto auto;
-		grid-template-rows: auto auto;
+		grid-template-columns: [title-start text-start] 1fr [cancel] 1fr [confirm] 1fr [title-end text-end];
+		grid-template-rows: [text] auto [cancel confirm] auto;
 
-		> .btn {
-			grid-row: -2 / -1;
+		&.title {
+		grid-template-rows: [title] auto [text] auto [cancel confirm] auto;
 		}
 	}
 </style>
-<div class="root bg-body border rounded p-1">
+<div class="root bg-body border rounded p-2" class:title>
+	{#if title}
+		<span id="title" class="h4 m-0">{title}</span>
+	{/if}
 	<input id="value" class="form-control" bind:value={value} />
 	<button id="cancel" class="btn btn-danger" on:click={onCancel}>Cancel</button>
-	<button id="confirm" class="btn btn-success" on:click={onConfirm}>OK</button>
+	<button id="confirm" class="btn btn-success" disabled={!value} on:click={onConfirm}>OK</button>
 </div>
