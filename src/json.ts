@@ -44,6 +44,7 @@ interface ChildrenChangedEvents<TKey extends Key = any> {
 	removedRange: [removed: JProperty<TKey>[]];
 	reset: [];
 	replaced: [old: JProperty<TKey>, new: JProperty<TKey>];
+	moved: [prop: JProperty<TKey>, replaced?: JProperty<TKey>];
 }
 
 type ChildrenChangedArgs<TKey extends Key = Key> = { [P in keyof ChildrenChangedEvents]: [type: P, ...args: ChildrenChangedEvents<TKey>[P]] }[keyof ChildrenChangedEvents]
@@ -178,6 +179,7 @@ export declare namespace json {
 
 		add<K extends keyof JContainerAddMap>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
 		sort(reverse?: boolean): void;
+		rename(key: string, newName: string): undefined | JProperty<string>;
 	}
 }
 
@@ -978,6 +980,27 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			this.#last = null;
 			this.#changed.fire(this, "removedRange", removed);
 			return true;
+		}
+
+		rename(key: string, newName: string): json.JProperty<string> | undefined {
+			let value = this.#props.get(key);
+			if (value == null)
+				return;
+
+			if (key !== newName) {
+				const replaced = this.#props.get(newName);
+				value.key = newName;
+				this.#props.delete(key);
+				this.#props.set(newName, value);
+				if (replaced) {
+					this.#removed(replaced)
+					this.#changed.fire(this, "moved", value.prop, replaced.prop);
+				} else {
+					this.#changed.fire(this, "moved", value.prop);
+				}
+			}
+
+			return value.prop;
 		}
 	
 		toJSON() {

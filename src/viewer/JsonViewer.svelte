@@ -96,6 +96,14 @@
 		model.setSelected(p, false, true);
 	}
 
+	async function renameProperty(obj: json.JObject, prop: json.JProperty<string>) {
+		const result = await promptText(prop.key, "Property Name");
+		if (result) {
+			obj.rename(prop.key, result);
+			model.execute("scrollTo", prop);
+		}
+	}
+
 	async function addToObject(obj: json.JObject, mode: keyof json.JContainerAddMap) {
 		const key = await promptText("", "Property Name");
 		if (key) {
@@ -130,6 +138,11 @@
 						.item("Clear", clearProp.bind(undefined, selected.value))
 						.item("Delete", deleteProp.bind(undefined, selected));
 
+					if (selected.parent?.is("object")) {
+						const { parent } = selected;
+						builder.item("Rename", () => renameProperty(parent, selected as any))
+					}
+
 					if (selected.value.is("object")) {
 						const { value } = selected;
 						builder.menu("Sort")
@@ -158,6 +171,11 @@
 				.item("Copy Key", () => copyKey(selected))
 				.item("Copy Value", () => copyValue(selected.value))
 				.item("Delete", () => deleteProp(selected));
+
+			if (selected.parent?.is("object")) {
+				const { parent } = selected;
+				builder.item("Rename", () => renameProperty(parent, selected as any))
+			}
 		}
 
 		contextMenu = [[x, y], builder.build()];
