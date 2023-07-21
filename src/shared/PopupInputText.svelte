@@ -4,6 +4,7 @@
 
 	export let value: string = "";
 	export let title: string = "";
+	export let multiLine = false;
 
 	const dispatcher = createEventDispatcher<PopupEvents<string>>();
 
@@ -42,7 +43,7 @@
 		grid-template-rows: [text] auto [cancel confirm] auto;
 
 		&.title {
-		grid-template-rows: [title] auto [text] auto [cancel confirm] auto;
+			grid-template-rows: [title] auto [text] auto [cancel confirm] auto;
 		}
 	}
 </style>
@@ -50,7 +51,11 @@
 	{#if title}
 		<span id="title" class="h4 m-0">{title}</span>
 	{/if}
-	<input id="value" class="form-control" bind:value={value} />
+	{#if multiLine}
+		<textarea id="value" class="form-control" bind:value={value}/>
+	{:else}
+		<input id="value" class="form-control" bind:value={value}/>
+	{/if}
 	<button id="cancel" class="btn btn-danger" on:click={onCancel}>Cancel</button>
 	<button id="confirm" class="btn btn-success" disabled={!value} on:click={onConfirm}>OK</button>
 </div>

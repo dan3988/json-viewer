@@ -8,7 +8,6 @@
 </script>
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
-	import type json from "../json.js";
 	import type { PopupCustomEvents } from "../types";
 	import type { ComponentConstructorOptions, SvelteComponent } from "svelte";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
@@ -16,6 +15,7 @@
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
+	import json from "../json.js";
 	import PopupInputText from "../shared/PopupInputText.svelte";
 
 	export let model: ViewerModel;
@@ -70,8 +70,8 @@
 		});
 	}
 
-	function promptText(value: string = "", title: string = "") {
-		return showPopup(popups, PopupInputText, { value, title });
+	function promptText(value: string = "", title: string = "", multiLine: boolean = false) {
+		return showPopup(popups, PopupInputText, { value, title, multiLine });
 	}
 
 	function onModelCommand(evt: ViewerCommandEvent) {
@@ -84,6 +84,23 @@
 	function clearProp(value: json.JContainer) {
 		value.clear();
 		value.owner.isExpanded = false;
+	}
+
+	async function editProp(prop: json.JProperty) {
+		const text = prop.value.toString(indent);
+		const edited = await promptText(text, "Edit JSON", true);
+		if (edited) {
+			let parsed: any;
+			try {
+				parsed = JSON.parse(edited);
+			} catch (err) {
+				alert(err);
+				return;
+			}
+
+			const newProp = json(parsed);
+			prop.replace(newProp.value);
+		}
 	}
 
 	function deleteProp(prop: json.JProperty) {
@@ -122,6 +139,7 @@
 	function openContextMenu(selected: json.JProperty, x: number, y: number) {
 		const builder = menuBuilder();
 		if (selected.value.is("container")) {
+			const { value } = selected;
 			if (selected.isExpanded) {
 				builder
 					.item("Collapse", () => selected.setExpanded(false, true))
@@ -135,16 +153,16 @@
 			builder
 				.menu("Modify", builder => {
 					builder
-						.item("Clear", clearProp.bind(undefined, selected.value))
-						.item("Delete", deleteProp.bind(undefined, selected));
+						.item("Clear", () => clearProp(value))
+						.item("Edit", () => editProp(selected))
+						.item("Delete", () => deleteProp(selected));
 
 					if (selected.parent?.is("object")) {
 						const { parent } = selected;
 						builder.item("Rename", () => renameProperty(parent, selected as any))
 					}
 
-					if (selected.value.is("object")) {
-						const { value } = selected;
+					if (value.is("object")) {
 						builder.menu("Sort")
 							.item("A-Z", () => value.sort())
 							.item("Z-A", () => value.sort(true));
@@ -153,8 +171,7 @@
 							.item("Object", () => addToObject(value, "object"))
 							.item("Array", () => addToObject(value, "array"))
 							.item("Value", () => addToObject(value, "value"))
-					} else if (selected.value.is("array")) {
-						const { value } = selected;
+					} else if (value.is("array")) {
 						builder.menu("Add")
 							.item("Object", () => addToArray(value, "object"))
 							.item("Array", () => addToArray(value, "array"))
@@ -170,6 +187,7 @@
 			builder
 				.item("Copy Key", () => copyKey(selected))
 				.item("Copy Value", () => copyValue(selected.value))
+				.item("Edit", () => editProp(selected))
 				.item("Delete", () => deleteProp(selected));
 
 			if (selected.parent?.is("object")) {

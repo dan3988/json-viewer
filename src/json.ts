@@ -96,6 +96,7 @@ export declare namespace json {
 
 		setExpanded(expanded: boolean, recursive?: boolean): void;
 		remove(): boolean;
+		replace<V extends JToken>(value: V): JProperty<TKey, V>;
 		toggleExpanded(): boolean;
 		filter(filter: string, filterMode: JTokenFilterFlags, isAppend: boolean): boolean;
 		clone(): this;
@@ -454,6 +455,21 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	remove() {
 		const p = this.parent;
 		return !!(p && p.remove(this.key));
+	}
+
+	replace<V extends json.JToken<any>>(value: V): json.JProperty<TKey, V>
+	replace(value: JToken): json.JProperty<TKey> {
+		const parent = this.#parent;
+		if (parent == null)
+			throw new TypeError("Property does not have a parent.");
+
+		if (value.parent != null)
+			value = value.clone();
+
+		const owner = value.owner as JProperty<TKey>;
+		owner.#key = this.#key;
+		parent.__replace(this.#controller, owner.#controller);
+		return owner;
 	}
 
 	toggleExpanded() {
@@ -838,6 +854,9 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		return JIterator.properties(this);
 	}
 
+	/** @internal */
+	abstract __replace(oldProp: JPropertyController<TKey>, newProp: JPropertyController<TKey>): void;
+
 	static readonly #object = class JObject extends JContainer<string> implements json.JObject {
 		static readonly #proxyHandler: ProxyHandler<JObject> = {
 			has(target, p) {
@@ -1011,6 +1030,11 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			return obj;
 		}
 
+		__replace(oldProp: JPropertyController<string>, newProp: JPropertyController<string>): void {
+			this.#props.set(newProp.key, newProp);
+			this.#replaced(oldProp, newProp);
+		}
+
 		__cloneFor(prop: JProperty<Key>): any {
 			const copy = new JObject(prop);
 			copy.#copy(this, this.#addProp);
@@ -1158,6 +1182,11 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 				arr[i] = items[i].value.toJSON();
 	
 			return arr;
+		}
+
+		__replace(oldProp: JPropertyController<number, JToken<any>>, newProp: JPropertyController<number, JToken<any>>): void {
+			this.#items[newProp.key] = newProp;
+			this.#replaced(oldProp, newProp);
 		}
 
 		__cloneFor(prop: JProperty<Key>): any {

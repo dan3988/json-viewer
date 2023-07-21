@@ -149,7 +149,6 @@
 			evt.preventDefault();
 			return;
 		}
-
 	}
 
 	function onSelectionChange() {

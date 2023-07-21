@@ -240,7 +240,7 @@
 			<span class="prop-count">{prop.value.count}</span>
 			{#if $isExpanded}
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
-					{#each props as prop}
+					{#each props as prop (prop)}
 						<li>
 							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
 						</li>
