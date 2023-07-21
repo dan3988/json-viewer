@@ -4,6 +4,8 @@
 	}
 </script>
 <script lang="ts">
+	import { fade, slide } from "svelte/transition";
+
 	export let title: string;
 	export let items: string[];
 	export let help: string = "";
@@ -122,15 +124,11 @@
 		display: flex;
 		flex-direction: column;
 
-		&:not(.expanded) {
-			> .head {
-				border-style: none !important;
-			}
-		}
-
 		> .head {
+			z-index: 1;
 			padding: $pad-med;
 			display: flex;
+			margin: -1px;
 			gap: 5px;
 
 			> span.button {
@@ -173,22 +171,24 @@
 	}
 </style>
 <div class="root flex-fill border rounded overflow-hidden expandable" class:expanded>
-	<div class="head nav-header border-bottom bg-body-tertiary">
+	<div class="head nav-header border bg-body-tertiary">
 		{#if help}
 			<span class="button btn-help" title={help}></span>
 		{/if}
 		<span class="title">{title}</span>
 		<span role="button" class="expander btn btn-cust-light border-0" on:click={() => expanded = !expanded}></span>
 	</div>
-	<ul class="list expandable-content list-group list-group-flush overflow-y-scroll">
-		{#each items as item, i}
-		<li class="list-group-item">
-			<input class="value" type="text" placeholder="Empty" on:focusout={evt => tryEdit(evt.currentTarget, i)} on:keydown={e => onKeyDown(e.currentTarget, e, i)} value={item}/>
-			<span class="button btn-rm" role="button" title="Delete" on:click={() => deleteAt(i)}></span>
-		</li>
-		{/each}
-		<li class="list-group-item pc">
-			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onPlaceholderKeyDown}/>
-		</li>
-	</ul>
+	{#if expanded}
+		<ul transition:slide|global class="list list-group list-group-flush overflow-y-scroll">
+			{#each items as item, i}
+				<li class="list-group-item">
+					<input class="value" type="text" placeholder="Empty" on:focusout={evt => tryEdit(evt.currentTarget, i)} on:keydown={e => onKeyDown(e.currentTarget, e, i)} value={item}/>
+					<span class="button btn-rm" role="button" title="Delete" on:click={() => deleteAt(i)}></span>
+				</li>
+			{/each}
+			<li class="list-group-item pc">
+				<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onPlaceholderKeyDown}/>
+			</li>
+		</ul>
+	{/if}
 </div>
