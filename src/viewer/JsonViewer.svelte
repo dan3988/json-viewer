@@ -16,7 +16,7 @@
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
-	import Editor from "../shared/Editor.svelte";
+	import PopupInputText from "../shared/PopupInputText.svelte";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -36,8 +36,6 @@
 	let menu: HTMLElement;
 	let prop: HTMLElement;
 	let popups: HTMLElement;
-
-	onMount(() => promptText("", "Title"));
 
 	function copyKey(property: json.JProperty) {
 		return navigator.clipboard.writeText(String(property.key));
@@ -73,7 +71,7 @@
 	}
 
 	function promptText(value: string = "", title: string = "") {
-		return showPopup(popups, Editor, { value, title });
+		return showPopup(popups, PopupInputText, { value, title });
 	}
 
 	function onModelCommand(evt: ViewerCommandEvent) {
