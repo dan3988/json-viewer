@@ -4,10 +4,8 @@
 name: Node.js CI
 
 on:
-  push:
-    branches: [ "main", "editing" ]
-  pull_request:
-    branches: [ "main" ]
+  - push
+  - pull_request
 
 jobs:
   build:
@@ -36,5 +34,5 @@ jobs:
       uses: actions/upload-artifact@v3.1.2
       with:
         name: ${{ matrix.browser }}
-        path: release-${{ matrix.browser }}.zip
+        path: ./out/${{ matrix.browser }}
       
