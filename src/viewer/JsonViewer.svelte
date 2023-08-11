@@ -468,20 +468,6 @@
 		pointer-events: none;
 	}
 
-	.popups {
-		background-color: rgba(var(--blur-bg-rgb), 0.25);
-		backdrop-filter: blur(1px);
-		z-index: 10;
-		position: absolute;
-		inset: 0;
-		display: flex;
-
-		> .popup-display {
-			z-index: 11;
-			margin: auto;
-		}
-	}
-
 	.menu-btn {
 		@include bs-icon-btn("list", 5px, "color");
 
@@ -521,11 +507,6 @@
 
 	{#if popup}
 		{@const [comp, props, evt] = popup}
-
-		<div class="popups showing" transition:fade>
-			<div class="popup-display">
-				<svelte:component this={comp} {...props} on:confirmed={evt} on:canceled={evt}  />
-			</div>
-		</div>
+		<svelte:component this={comp} {...props} on:confirmed={evt} on:canceled={evt} />
 	{/if}
 </div>

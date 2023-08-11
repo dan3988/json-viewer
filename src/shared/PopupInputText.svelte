@@ -2,6 +2,7 @@
 	import { scale } from "svelte/transition";
 	import type { PopupEvents } from "../types";
 	import { createEventDispatcher } from "svelte";
+	import PopupFrame from "./PopupFrame.svelte";
 
 	export let value: string = "";
 	export let title: string = "";
@@ -48,15 +49,17 @@
 		}
 	}
 </style>
-<div class="root bg-body border rounded p-2" class:title transition:scale>
-	{#if title}
-		<span id="title" class="h4 m-0">{title}</span>
-	{/if}
-	{#if multiLine}
-		<textarea id="value" class="form-control" bind:value={value}/>
-	{:else}
-		<input id="value" class="form-control" bind:value={value}/>
-	{/if}
-	<button id="cancel" class="btn btn-danger" on:click={onCancel}>Cancel</button>
-	<button id="confirm" class="btn btn-success" disabled={!value} on:click={onConfirm}>OK</button>
-</div>
+<PopupFrame>
+	<div class="root bg-body border rounded p-2" class:title transition:scale>
+		{#if title}
+			<span id="title" class="h4 m-0">{title}</span>
+		{/if}
+		{#if multiLine}
+			<textarea id="value" class="form-control" bind:value={value}/>
+		{:else}
+			<input id="value" class="form-control" bind:value={value}/>
+		{/if}
+		<button id="cancel" class="btn btn-danger" on:click={onCancel}>Cancel</button>
+		<button id="confirm" class="btn btn-success" disabled={!value} on:click={onConfirm}>OK</button>
+	</div>
+</PopupFrame>
