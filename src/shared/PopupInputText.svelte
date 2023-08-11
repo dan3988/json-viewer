@@ -2,7 +2,7 @@
 	import { scale } from "svelte/transition";
 	import { backOut } from "svelte/easing";
 	import type { PopupEvents } from "../types";
-	import { createEventDispatcher } from "svelte";
+	import { createEventDispatcher, onMount } from "svelte";
 	import PopupFrame from "./PopupFrame.svelte";
 
 	export let value: string = "";
@@ -11,7 +11,11 @@
 	export let width: undefined | number = undefined;
 	export let height: undefined | number = undefined;
 
+	let field: HTMLInputElement | HTMLTextAreaElement;
+
 	const dispatcher = createEventDispatcher<PopupEvents<string>>();
+
+	onMount(() => field.focus());
 
 	function onCancel() {
 		dispatcher("canceled");
@@ -57,9 +61,9 @@
 			<span id="title" class="h4 m-0">{title}</span>
 		{/if}
 		{#if multiLine}
-			<textarea id="value" class="form-control" bind:value={value}/>
+			<textarea id="value" class="form-control" bind:value={value} bind:this={field}/>
 		{:else}
-			<input id="value" class="form-control" bind:value={value}/>
+			<input id="value" class="form-control" bind:value={value} bind:this={field}/>
 		{/if}
 		<button id="cancel" class="btn btn-danger" on:click={onCancel}>Cancel</button>
 		<button id="confirm" class="btn btn-success" disabled={!value} on:click={onConfirm}>OK</button>
