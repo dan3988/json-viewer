@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { scale } from "svelte/transition";
+	import { backOut } from "svelte/easing";
 	import type { PopupEvents } from "../types";
 	import { createEventDispatcher } from "svelte";
 	import PopupFrame from "./PopupFrame.svelte";
@@ -50,7 +51,7 @@
 	}
 </style>
 <PopupFrame>
-	<div class="root bg-body border rounded p-2" class:title transition:scale>
+	<div class="root bg-body border rounded p-2" class:title transition:scale={{ easing: backOut }}>
 		{#if title}
 			<span id="title" class="h4 m-0">{title}</span>
 		{/if}
