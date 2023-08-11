@@ -9,7 +9,7 @@
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import type { PopupCustomEvents } from "../types";
-	import type { ComponentConstructorOptions, SvelteComponent } from "svelte";
+	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
@@ -70,8 +70,10 @@
 		});
 	}
 
-	function promptText(value: string = "", title: string = "", multiLine: boolean = false) {
-		return showPopup(PopupInputText, { value, title, multiLine });
+	type TextPopupOptions = ComponentProps<PopupInputText>;
+
+	function promptText(value: string = "", title: string = "", props?: Except<TextPopupOptions, "value" | "title">) {
+		return showPopup(PopupInputText, { value, title, ...props });
 	}
 
 	function onModelCommand(evt: ViewerCommandEvent) {
@@ -88,7 +90,7 @@
 
 	async function editProp(prop: json.JProperty) {
 		const text = prop.value.toString(indent);
-		const edited = await promptText(text, "Edit JSON", true);
+		const edited = await promptText(text, "Edit JSON", { multiLine: true, height: 80, width: 80 });
 		if (edited) {
 			let parsed: any;
 			try {

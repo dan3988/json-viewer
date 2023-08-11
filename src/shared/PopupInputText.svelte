@@ -8,6 +8,8 @@
 	export let value: string = "";
 	export let title: string = "";
 	export let multiLine = false;
+	export let width: undefined | number = undefined;
+	export let height: undefined | number = undefined;
 
 	const dispatcher = createEventDispatcher<PopupEvents<string>>();
 
@@ -39,19 +41,18 @@
 	}
 
 	.root {
-		width: min(50vh, 20rem);
 		display: grid;
 		gap: 5px;
-		grid-template-columns: [title-start text-start] 1fr [cancel] 1fr [confirm] 1fr [title-end text-end];
-		grid-template-rows: [text] auto [cancel confirm] auto;
+		grid-template-columns: [title-start text-start] minmax(5rem, 1fr) [cancel] 5rem [confirm] 5rem [title-end text-end];
+		grid-template-rows: [text] 1fr [cancel confirm] auto;
 
 		&.title {
-			grid-template-rows: [title] auto [text] auto [cancel confirm] auto;
+			grid-template-rows: [title] auto [text] 1fr [cancel confirm] auto;
 		}
 	}
 </style>
 <PopupFrame>
-	<div class="root bg-body border rounded p-2" class:title transition:scale={{ easing: backOut }}>
+	<div class="root bg-body border rounded p-2" style:width={width && width + "vw"} style:height={height && height + "vh"} class:title transition:scale={{ easing: backOut }}>
 		{#if title}
 			<span id="title" class="h4 m-0">{title}</span>
 		{/if}
