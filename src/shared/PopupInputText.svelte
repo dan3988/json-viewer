@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { scale } from "svelte/transition";
 	import type { PopupEvents } from "../types";
 	import { createEventDispatcher } from "svelte";
 
@@ -47,7 +48,7 @@
 		}
 	}
 </style>
-<div class="root bg-body border rounded p-2" class:title>
+<div class="root bg-body border rounded p-2" class:title transition:scale>
 	{#if title}
 		<span id="title" class="h4 m-0">{title}</span>
 	{/if}

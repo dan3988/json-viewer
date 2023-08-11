@@ -17,6 +17,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import json from "../json.js";
 	import PopupInputText from "../shared/PopupInputText.svelte";
+	import { fade } from "svelte/transition";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -29,13 +30,16 @@
 
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
-	let showningPopup = 0;
 	let contextMenu: [Coords, MenuItem[]] | undefined;
 	let menuShown = true;
 	let menuC: JsonMenu;
 	let menu: HTMLElement;
 	let prop: HTMLElement;
-	let popups: HTMLElement;
+
+	type PopupInfo<P extends Dict = any, R = any> = [clazz: PopupConstructor<P, R>, props: P, completion: (result: CustomEvent<R | void> ) => void];
+
+	const popupStack: PopupInfo[] = [];
+	let popup: undefined | PopupInfo;
 
 	function copyKey(property: json.JProperty) {
 		return navigator.clipboard.writeText(String(property.key));
@@ -54,24 +58,20 @@
 
 	type PopupConstructor<TProps extends Dict, TResult> = new(props: ComponentConstructorOptions<TProps>) => SvelteComponent<TProps, PopupCustomEvents<TResult>>;
 
-	function showPopup<TProps extends Dict, TResult>(target: HTMLElement, popup: PopupConstructor<TProps, TResult>, props: TProps) {
+	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps) {
 		return new Promise<TResult | void>(resolve => {
 			function complete(result: CustomEvent<TResult | void>) {
-				showningPopup--;
-				component.$destroy();
+				popup = popupStack.pop();
 				resolve(result.detail);
 			}
 
-			const component = new popup({ target, props });
-			component.$on("canceled", complete);
-			component.$on("confirmed", complete);
-
-			showningPopup++;
+			popup && popupStack.push(popup);
+			popup = [comp, props, complete];
 		});
 	}
 
 	function promptText(value: string = "", title: string = "", multiLine: boolean = false) {
-		return showPopup(popups, PopupInputText, { value, title, multiLine });
+		return showPopup(PopupInputText, { value, title, multiLine });
 	}
 
 	function onModelCommand(evt: ViewerCommandEvent) {
@@ -474,11 +474,7 @@
 		z-index: 10;
 		position: absolute;
 		inset: 0;
-		display: none;
-
-		&.showning {
-			display: flex;
-		}
+		display: flex;
 
 		> .popup-display {
 			z-index: 11;
@@ -522,7 +518,14 @@
 		<JsonMenu {model} bind:this={menuC}/>
 	</div>
 	<button class="menu-btn btn btn-primary rounded-circle" title="Open Menu" on:click={() => menuShown = true}></button>
-	<div class="popups" class:showning={showningPopup}>
-		<div class="popup-display" bind:this={popups}/>
-	</div>
+
+	{#if popup}
+		{@const [comp, props, evt] = popup}
+
+		<div class="popups showing" transition:fade>
+			<div class="popup-display">
+				<svelte:component this={comp} {...props} on:confirmed={evt} on:canceled={evt}  />
+			</div>
+		</div>
+	{/if}
 </div>
