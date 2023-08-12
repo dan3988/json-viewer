@@ -35,4 +35,3 @@ jobs:
       with:
         name: ${{ matrix.browser }}
         path: ./out/${{ matrix.browser }}
-      
