@@ -8,13 +8,8 @@ on:
   - pull_request
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        browser: [chrome, firefox]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js 18
@@ -28,6 +23,20 @@ jobs:
       run: npm run build-tests
     - name: Run Tests
       run: npm test
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chrome, firefox]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js 18
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    - name: Install
+      run: npm ci
     - name: Build Extension
       run: npx rollup -c --dist --browser ${{ matrix.browser }}
     - name: Upload
