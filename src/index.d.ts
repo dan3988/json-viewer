@@ -20,6 +20,10 @@ declare interface Array<T> {
 	at(index: number): undefined | T
 }
 
+declare interface NamedCustomEvent<N extends string, T = any> extends CustomEvent<T> {
+	readonly type: N;
+}
+
 declare namespace chrome {
 	declare namespace runtime {
 		declare interface BrowserInfo {

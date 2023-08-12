@@ -58,11 +58,18 @@
 
 	type PopupConstructor<TProps extends Dict, TResult> = new(props: ComponentConstructorOptions<TProps>) => SvelteComponent<TProps, PopupCustomEvents<TResult>>;
 
-	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps) {
+	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps): Promise<TResult>
+	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps, confirm: (result: TResult) => boolean): Promise<void>
+	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps, confirm?: (result: TResult) => boolean) {
 		return new Promise<TResult | void>(resolve => {
-			function complete(result: CustomEvent<TResult | void>) {
-				popup = popupStack.pop();
-				resolve(result.detail);
+			function complete(result: NamedCustomEvent<"confirmed", TResult> | NamedCustomEvent<"canceled", void>) {
+				if (result.type === "canceled" || confirm == null) {
+					popup = popupStack.pop();
+					resolve(result.detail);
+				} else if (confirm(result.detail)) {
+					popup = popupStack.pop();
+					resolve();
+				}
 			}
 
 			popup && popupStack.push(popup);
@@ -88,21 +95,29 @@
 		value.owner.isExpanded = false;
 	}
 
-	async function editProp(prop: json.JProperty) {
+	function editProp(prop: json.JProperty) {
 		const text = prop.value.toString(indent);
-		const edited = await promptText(text, "Edit JSON", { multiLine: true, height: 80, width: 80 });
-		if (edited) {
+		const opts: TextPopupOptions = {
+			title: "Edit JSON",
+			value: text,
+			multiLine: true,
+			height: 80,
+			width: 80
+		};
+
+		return showPopup(PopupInputText, opts, text => {
 			let parsed: any;
 			try {
-				parsed = JSON.parse(edited);
+				parsed = JSON.parse(text);
 			} catch (err) {
 				alert(err);
-				return;
+				return false;
 			}
 
 			const newProp = json(parsed);
 			prop.replace(newProp.value);
-		}
+			return true;
+		});
 	}
 
 	function deleteProp(prop: json.JProperty) {
