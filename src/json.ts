@@ -842,15 +842,15 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		return true;
 	}
 
-	keys() {
+	keys(): JIterator<TKey, TKey> {
 		return JIterator.keys(this);
 	}
 
-	values() {
+	values(): JIterator<TKey, JToken> {
 		return JIterator.values(this);
 	}
 
-	[Symbol.iterator]() {
+	[Symbol.iterator](): JIterator<TKey, JProperty<TKey>> {
 		return JIterator.properties(this);
 	}
 
