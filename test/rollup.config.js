@@ -4,7 +4,7 @@ import typescript from "@rollup/plugin-typescript";
 import { defineConfig } from "rollup";
 import fs from "node:fs";
 import json from "@rollup/plugin-json";
-import onwarn from "../rollup-log.js";
+import onwarn from "../rollup-typescript-log.js";
 
 if (fs.existsSync("lib"))
 	fs.rmSync("lib", { recursive: true });
