@@ -32,8 +32,9 @@
 				"owner": "typescript",
 				"source": "ts",
 				"applyTo": "allDocuments",
+				"fileLocation": "relative",
 				"pattern": {
-					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+)\\s(?<message>.+)$",
+					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+):\\s(?<message>.+)$",
 					"code": 1,
 					"file": 2,
 					"line": 3,
@@ -65,8 +66,9 @@
 				"owner": "typescript",
 				"source": "ts",
 				"applyTo": "allDocuments",
+				"fileLocation": "relative",
 				"pattern": {
-					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+)\\s(?<message>.+)$",
+					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+):\\s(?<message>.+)$",
 					"code": 1,
 					"file": 2,
 					"line": 3,
@@ -98,8 +100,9 @@
 				"owner": "typescript",
 				"source": "ts",
 				"applyTo": "allDocuments",
+				"fileLocation": "relative",
 				"pattern": {
-					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+)\\s(?<message>.+)$",
+					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+):\\s(?<message>.+)$",
 					"code": 1,
 					"file": 2,
 					"line": 3,
@@ -131,8 +134,9 @@
 				"owner": "typescript",
 				"source": "ts",
 				"applyTo": "allDocuments",
+				"fileLocation": "relative",
 				"pattern": {
-					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+)\\s(?<message>.+)$",
+					"regexp": "^TS(?<errorCode>\\d+)\\s(?<file>.*?):(?<line>\\d+):(?<column>\\d+):\\s(?<message>.+)$",
 					"code": 1,
 					"file": 2,
 					"line": 3,
