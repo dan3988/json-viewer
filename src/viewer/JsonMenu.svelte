@@ -1,6 +1,6 @@
 <script lang="ts">
 	import json from "../json";
-	import JSONPath from "./json-path";
+	import JSONPath from "../json-path";
 	import type { ViewerModel } from "../viewer-model";
 
 	export let model: ViewerModel;

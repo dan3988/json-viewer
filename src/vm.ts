@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/jsonpath-plus/src/jsonpath.d.ts"/>
+/// <reference path="../node_modules/jsonpath-plus/src/jsonpath.d.ts"/>
 import * as es from "esprima";
 import type * as estree from "estree";
 
@@ -118,11 +118,16 @@ interface ParameterPatternMap {
 	ArrayPattern: estree.ArrayPattern;
 	AssignmentPattern: estree.AssignmentPattern;
 	RestElement: estree.RestElement;
+	MemberExpression: estree.MemberExpression;
 }
 
-type ParameterLookup = Record<keyof ParameterPatternMap, (token: estree.Pattern) => FunctionParameter>;
+//type ParameterLookup = Record<string, (token: estree.BasePattern) => FunctionParameter>;
 type ParameterObj = { [P in keyof ParameterPatternMap]: (token: ParameterPatternMap[P]) => FunctionParameter };
 type LiteralValue = estree.Literal["value"];
+
+function notNull<T>(v: T): v is Exclude<T, null | undefined> {
+	return v != null;
+}
 
 //type FunctionParameterResolvers = { [P in estree.Pattern["type"] }
 
@@ -167,14 +172,14 @@ abstract class FunctionParameter {
 	}
 
 	static readonly #Array = class ArrayParameter extends FunctionParameter {
-		constructor(readonly elements: FunctionParameter[]) {
+		constructor(readonly elements: (FunctionParameter | null)[]) {
 			super();
 		}
 
 		debugInfo() {
 			return {
 				type: "Array",
-				elements: Array.from(this.elements, v => v.debugInfo())
+				elements: Array.from(this.elements, v => v && v.debugInfo())
 			};
 		}
 
@@ -195,8 +200,14 @@ abstract class FunctionParameter {
 				values[i] = value;
 			}
 
-			for (let i = 0; i < elements.length; i++)
-				elements[i].getValues(scope, values, i);
+			for (let i = 0; i < elements.length; i++) {
+				const element = elements[i];
+				if (element == null) {
+					values[i] = undefined;
+				} else {
+					element.getValues(scope, values, i);
+				}
+			}
 		}
 	}
 
@@ -261,7 +272,7 @@ abstract class FunctionParameter {
 		}
 	}
 
-	static readonly #lookup: ParameterLookup = {
+	static readonly #lookup: ParameterObj = {
 		Identifier(token) {
 			return new FunctionParameter.#Identifier(token.name);
 		},
@@ -270,7 +281,7 @@ abstract class FunctionParameter {
 			return new FunctionParameter.#Rest(argument);
 		},
 		ArrayPattern(token) {
-			const elements = token.elements.map(FunctionParameter.create);
+			const elements = token.elements.map(v => v && FunctionParameter.create(v));
 			return new FunctionParameter.#Array(elements);
 		},
 		ObjectPattern(token) {
@@ -306,18 +317,19 @@ abstract class FunctionParameter {
 			}
 
 			return new FunctionParameter.#Assignment(param, value);
-		}
-	} satisfies ParameterObj;
+		},
+		MemberExpression: undefined!
+	}
 
 	static create(token: estree.Pattern) {
 		const fn = FunctionParameter.#lookup[token.type];
 		if (fn === undefined)
 			throw new TypeError("Unsupported parameter pattern: " + token.type);
 		
-		return fn(token);
+		return fn(token as any);
 	}
 
-	abstract getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number);
+	abstract getValues(scope: Record<string, any>, args: ArrayLike<any>, index: number): void;
 	abstract debugInfo(): { type: string };
 }
 
