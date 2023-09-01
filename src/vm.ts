@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/jsonpath-plus/src/jsonpath.d.ts"/>
-import * as es from "esprima";
+import * as es from "espree";
 import type * as estree from "estree";
 
 export interface JPathExpression extends Script {
@@ -617,7 +617,7 @@ function test(expr: string) {
 }
 
 function compile(scriptText: string): InstructionList {
-	const script = es.parseScript(scriptText, { tolerant: true });
+	const script = es.parse(scriptText, { ecmaVersion: 13 });
 	const instructions = new InstructionList();
 	const body = script.body;
 	if (body.length !== 1)

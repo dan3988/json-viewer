@@ -9,7 +9,7 @@ declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 type UntilNever<T extends any[], Prev extends any[] = []> = T extends [never, ...any[]] ? Prev : (T extends [infer Start, ...infer Rest] ? UntilNever<Rest, [...Prev, Start]> : Prev);
 
 declare type Expand<T> = { [P in keyof T]: T[P] };
-declare type Except<T, P extends keyof T> = { [K in keyof T as K extends P ? never : K ]: T[K] };
+declare type Except<T, P extends keyof T> = { [K in keyof T as K extends P ? never : K]: T[K] };
 
 declare type Dict<T = any> = Record<string, T>;
 declare type OneOrMany<T> = T | T[];
@@ -39,4 +39,41 @@ declare namespace chrome {
 
 declare module "*.svelte" {
 	export default import("svelte").SvelteComponentTyped;
+}
+
+declare module "espree" {
+	export interface EcmaFeatures {
+		jsx?: boolean;
+		globalReturn?: boolean;
+		impliedScript?: boolean;
+	}
+
+	export interface EcmaVersions {
+		"ES5": 3;
+		"ES6": 5;
+		"2015": 6;
+		"2016": 7;
+		"2017": 8;
+		"2018": 9;
+		"2019": 10;
+		"2020": 11;
+		"2021": 12;
+		"2022": 13;
+		"2023": 14;
+		"2024": 15;
+	}
+
+	export type EcmaVersion = EcmaVersions[keyof EcmaVersions] | "latest";
+
+	export interface ParseOptions {
+		range?: boolean;
+		loc?: boolean;
+		comment?: boolean;
+		tokens?: boolean;
+		sourceType?: "script" | "module" | "commonjs";
+		ecmaVersion?: EcmaVersion;
+		ecmaFeatures?: EcmaFeatures;
+	}
+
+	export function parse(code: string, options: ParseOptions): import("estree").Program;
 }
