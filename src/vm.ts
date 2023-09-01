@@ -101,11 +101,11 @@ class FunctionDefinition {
 		const { args, body } = this;
 		return function() {
 			const context = Object.create(null);
+			Object.setPrototypeOf(context, baseScope);
 			context.arguments = arguments;
 			for (let i = 0; i < args.length; i++)
 				args[i].getValues(context, arguments, i);
 
-			Object.setPrototypeOf(context, baseScope);
 			const stack = new EvaluatorStack(context);
 			return body.execute(stack)
 		}

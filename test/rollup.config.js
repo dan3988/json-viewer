@@ -19,7 +19,8 @@ export default defineConfig({
 	},
 	external: [
 		"@daniel.pickett/linq-js",
-		"chai"
+		"chai",
+		"espree"
 	],
 	onwarn,
 	plugins: [
