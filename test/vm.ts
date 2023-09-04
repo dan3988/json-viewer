@@ -113,84 +113,63 @@ describe("vm", () => {
 			[0.1, 0.2, 0.6309573444801932, 0.8513399225207846],
 			[7n, 2n, 49n, 128n]
 		]);
-
-		// const values = [0, 1, 675, 0.1, 0.2, -1, -675, -0.1, -0.2, NaN, "", "5", "text", true, false, [], {}] as const;
-		// const bigints = [0n, 1n, -1n, 55n, 0xffffffffn, -0xffffffffn] as const;
-		// const both = [...values, ...bigints] as const;
-
-		// testBinaryOperator("==", both);
-		// testBinaryOperator("===", both);
-		// testBinaryOperator("!=", both);
-		// testBinaryOperator("!==", both);
-		// testBinaryOperator("<", both);
-		// testBinaryOperator("<=", both);
-		// testBinaryOperator(">", both);
-		// testBinaryOperator(">=", both);
-		// testBinaryOperator("+", values, bigints);
-		// testBinaryOperator("-", values, bigints);
-		// testBinaryOperator("*", values, bigints);
-		// testBinaryOperator("/", values, bigints);
-		// testBinaryOperator("%", values, bigints);
-		// testBinaryOperator("**", values, bigints);
-		// testBinaryOperator("|", values, bigints);
-		// testBinaryOperator("&", values, bigints);
-		// testBinaryOperator("^", values, bigints);
-		// testBinaryOperator("<<", values);
-		// testBinaryOperator(">>", values);
-		// testBinaryOperator(">>>", values);
 	});
 
 	describe("Lambdas", () => {
-		type FunctionTest = [...params: any[], expect: any];
+		type FunctionTest = { expected: any, params?: any[] };
 
 		function funcTests(def: string, tests: FunctionTest[]) {
 			describe(`Function: ${JSON.stringify(def)}`, () => {
 				let fn: Function;
-
+	
+				// Parse the function before running the tests
 				before(() => {
 					const script = new Script(def);
 					fn = script.runInNewContext(globalThis);
 				});
-
-				
-				for (const test of tests) {
-					const expected = test.pop();
-					it(`Should return ${JSON.stringify(expected)} for parameters ${test.map(v => JSON.stringify(v)).join(", ")}`, () => {
-						const result = fn.apply(undefined, test);
+	
+				for (const { expected, params = [] } of tests) {
+					it(`Should return ${JSON.stringify(expected)} for parameters (${params.map(v => JSON.stringify(v)).join(", ")})`, () => {
+						const result = fn.apply(undefined, params);
 						expect(result).is.deep.eq(expected);
 					});
 				}
-			})
+			});
 		}
 
+		// Test a lambda with 2 parameters
 		funcTests("(a, b) => a + b", [
-			[5, 6, 11],
-			["left", "right", "leftright"]
+			{ expected: 11, params: [5, 6] },
+			{ expected: "leftright", params: ["left", "right"] }
 		]);
-
+	
+		// Test a lambda with a default parameter
 		funcTests("(a = 5) => a", [
-			[5],
-			[null, null],
-			[true, true]
+			{ expected: 5, params: [5] },
+			{ expected: null, params: [null] },
+			{ expected: true, params: [true] }
 		]);
-
+	
+		// Test a lambda with destructuring and default values in an array
 		funcTests("([v1, v2, v3 = 5] = []) => v1 + v2 + v3", [
-			[NaN],
-			[[], NaN],
-			[[1, 2], 8],
-			[[5, 5, 10], 20]
+			{ expected: NaN },
+			{ expected: NaN, params: [[]] },
+			{ expected: 8, params: [[1, 2]] },
+			{ expected: 20, params: [[5, 5, 10]] }
 		]);
-
+	
+		// Test a lambda with destructuring and default values in an object
 		funcTests("({ v1, v2, v3 = 5 } = {}) => v1 + v2 + v3", [
-			[NaN],
-			[{ v1: 12, v2: 6 }, 23],
-			[{ v1: 56, v2: 93, v3: -49 }, 100]
+			{ expected: NaN },
+			{ expected: 23, params: [{ v1: 12, v2: 6 }] },
+			{ expected: 100, params: [{ v1: 56, v2: 93, v3: -49 }] }
 		]);
 
+		// Test a lambda with computed property names and symbols in an object
 		funcTests("({ ['long property name']: x, [Symbol.iterator]: y } = {}) => [x, y]", [
-			[{}, [undefined, undefined]],
-			[[], [undefined, Array.prototype[Symbol.iterator]]],
-			[{ ["long property name"]: 5 }, [5, undefined]]
+			{ expected: [undefined, undefined] },
+			{ expected: [undefined, Array.prototype[Symbol.iterator]], params: [[]] },
+			{ expected: [5, undefined], params: [{ ["long property name"]: 5 }] }
 		]);
 	});
 })
