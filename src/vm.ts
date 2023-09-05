@@ -582,7 +582,7 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		if (first) {
 			stack.push(first);
 		} else {
-			const result = arg.execute(stack.context);
+			const result = arg.execute(stack);
 			stack.push(result);
 		}
 	},
@@ -592,14 +592,14 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		if (first != null) {
 			stack.push(first);
 		} else {
-			const result = arg.execute(stack.context);
+			const result = arg.execute(stack);
 			stack.push(result);
 		}
 	},
 	// InstructionCode.Conditional,
 	(stack, [x, y]) => {
 		const condition = stack.pop();
-		const result = (condition ? x : y).execute(stack.context);
+		const result = (condition ? x : y).execute(stack);
 		stack.push(result);
 	},
 	// InstructionCode.Function
