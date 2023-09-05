@@ -1,13 +1,27 @@
 import Script from "../src/vm.js";
 
 describe("vm", () => {
+	function createContext() {
+		return Object.create(null, {
+			"undefined": {
+				writable: false,
+				configurable: false,
+				value: undefined
+			}
+		});
+	}
+
 	function evalTest(scriptText: string, expected: any) {
 		const script = new Script(scriptText);
-		const result = script.runInNewContext(undefined);
+		const ctx = createContext();
+		const result = script.runInNewContext(ctx);
 		expect(result).is.deep.eq(expected);
 	}
 
 	function serialize(v: any) {
+		if (v === null)
+			return "null";
+
 		switch (typeof v) {
 			case "object":
 				return Array.isArray(v) ? JSON.stringify(v) : `(${JSON.stringify(v)})`;
@@ -22,27 +36,27 @@ describe("vm", () => {
 		}
 	}
 
+	type BinaryOpTest = [x: any, y: any, result: any, reverseResult?: any];
+
+	function evalBinOp(operator: string, left: string, right: string, expected: any) {
+		const code = `${left} ${operator} ${right}`;
+		it(`Expression ${JSON.stringify(code)} should evaluate to ${serialize(expected)}`, () => evalTest(code, expected));
+	}
+
+	function binaryOpTests(operator: string, values: BinaryOpTest[]) {
+		describe(operator, () => {
+			for (const test of values) {
+				const [x, y, expected] = test;
+				const expectedFlipped = test.length === 3 ? expected : test[3];
+				const left = serialize(x);
+				const right = serialize(y);
+				evalBinOp(operator, left, right, expected);
+				evalBinOp(operator, right, left, expectedFlipped);
+			}
+		});
+	}
+
 	describe("Binary Operators", () => {
-		type BinaryOpTest = [x: any, y: any, result: any, reverseResult?: any];
-
-		function evalBinOp(operator: string, left: string, right: string, expected: any) {
-			const code = `${left} ${operator} ${right}`;
-			it(`Should evaluate ${JSON.stringify(code)} correctly`, () => evalTest(code, expected));
-		}
-
-		function binaryOpTests(operator: string, values: BinaryOpTest[]) {
-			describe(operator, () => {
-				for (const test of values) {
-					const [x, y, expected] = test;
-					const expectedFlipped = test.length === 3 ? expected : test[3];
-					const left = serialize(x);
-					const right = serialize(y);
-					evalBinOp(operator, left, right, expected);
-					evalBinOp(operator, right, left, expectedFlipped);
-				}
-			});
-		}
-
 		binaryOpTests("+", [
 			[1, 2, 3],
 			[1, -2, -1],
@@ -114,6 +128,80 @@ describe("vm", () => {
 			[7n, 2n, 49n, 128n]
 		]);
 	});
+
+	describe("Logical Operators", () => {
+		binaryOpTests("&&", [
+			[true, true, true],
+			[true, false, false],
+			[false, false, false],
+			[true, {}, {}, true],
+			[true, "", ""],
+			[true, 0, 0],
+			[true, 5, 5, true],
+			[true, 0n, 0n],
+			[true, 5n, 5n, true],
+			[true, undefined, undefined],
+			[true, null, null],
+			[true, "test", "test", true],
+			[false, {}, false],
+			[false, "", false, ""],
+			[false, 0, false, 0],
+			[false, 5, false],
+			[false, 0n, false, 0n],
+			[false, 5n, false],
+			[false, undefined, false, undefined],
+			[false, null, false, null],
+			[false, "test", false]
+		]);
+
+		binaryOpTests("||", [
+			[true, true, true],
+			[true, false, true],
+			[false, false, false],
+			[true, {}, true, {}],
+			[true, "", true],
+			[true, 0, true],
+			[true, 5, true, 5],
+			[true, 0n, true],
+			[true, 5n, true, 5n],
+			[true, undefined, true],
+			[true, null, true],
+			[true, "test", true, "test"],
+			[false, {}, {}],
+			[false, "", "", false],
+			[false, 0, 0, false],
+			[false, 5, 5],
+			[false, 0n, 0n, false],
+			[false, 5n, 5n],
+			[false, undefined, undefined, false],
+			[false, null, null, false],
+			[false, "test", "test"]
+		]);
+
+		binaryOpTests("??", [
+			[true, true, true],
+			[true, false, true, false],
+			[false, false, false],
+			[true, {}, true, {}],
+			[true, "", true, ""],
+			[true, 0, true, 0],
+			[true, 5, true, 5],
+			[true, 0n, true, 0n],
+			[true, 5n, true, 5n],
+			[true, undefined, true],
+			[true, null, true],
+			[true, "test", true, "test"],
+			[false, {}, false, {}],
+			[false, "", false, ""],
+			[false, 0, false, 0],
+			[false, 5, false, 5],
+			[false, 0n, false, 0n],
+			[false, 5n, false, 5n],
+			[false, undefined, false],
+			[false, null, false],
+			[false, "test", false, "test"]
+		]);
+	})
 
 	describe("Lambdas", () => {
 		type FunctionTest = { expected: any, params?: any[] };
