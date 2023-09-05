@@ -1,13 +1,15 @@
 import Script from "../src/vm.js";
 
 describe("vm", () => {
+	function constDef(value: any) {
+		return { value, writable: false, configurable: false }
+	}
+
 	function createContext() {
 		return Object.create(null, {
-			"undefined": {
-				writable: false,
-				configurable: false,
-				value: undefined
-			}
+			"undefined": constDef(undefined),
+			"NaN": constDef(NaN),
+			"Infinity": constDef(Infinity),
 		});
 	}
 
@@ -200,6 +202,127 @@ describe("vm", () => {
 			[false, undefined, false],
 			[false, null, false],
 			[false, "test", false, "test"]
+		]);
+	})
+
+	describe("Unary operators", () => {
+		type UnaryOpTest = [value: any, expected: any];
+		
+		function evalUnaryOp(operator: string, value: any, expected: any) {
+			const code = `${operator}${operator.length === 1 ? "" : " "}${value}`;
+			it(`Expression ${JSON.stringify(code)} should evaluate to ${serialize(expected)}`, () => evalTest(code, expected));
+		}
+	
+		function unaryOpTests(operator: string, values: UnaryOpTest[]) {
+			describe(operator, () => {
+				for (const [value, expected] of values)
+					evalUnaryOp(operator, serialize(value), expected);
+			});
+		}
+
+		unaryOpTests("!", [
+			[true, false],
+			[false, true],
+			[0, true],
+			[1, false],
+			[0n, true],
+			[1n, false],
+			["", true],
+			["test", false],
+			["5", false],
+			[{}, false],
+			[[], false],
+			[() => undefined, false]
+		]);
+
+		unaryOpTests("+", [
+			[true, 1],
+			[false, 0],
+			[0, 0],
+			[1, 1],
+			// [0n, 0n],
+			// [1n, 1n],
+			["", 0],
+			["test", NaN],
+			["5", 5],
+			[NaN, NaN],
+			[undefined, NaN],
+			[null, 0],
+			[{}, NaN],
+			[[], 0],
+			[() => undefined, NaN]
+		]);
+
+		unaryOpTests("-", [
+			[true, -1],
+			[false, -0],
+			[0, -0],
+			[1, -1],
+			[0n, 0n],
+			[1n, -1n],
+			["", -0],
+			["test", NaN],
+			["5", -5],
+			[NaN, NaN],
+			[undefined, NaN],
+			[null, -0],
+			[{}, NaN],
+			[[], -0],
+			[() => undefined, NaN]
+		]);
+
+		unaryOpTests("~", [
+			[true, -2],
+			[false, -1],
+			[0, -1],
+			[1, -2],
+			[0n, -1n],
+			[1n, -2n],
+			["", -1],
+			["test", -1],
+			["5", -6],
+			[NaN, -1],
+			[undefined, -1],
+			[null, -1],
+			[{}, -1],
+			[[], -1],
+			[() => undefined, -1]
+		]);
+
+		unaryOpTests("void", [
+			[true, undefined],
+			[false, undefined],
+			[0, undefined],
+			[1, undefined],
+			[0n, undefined],
+			[1n, undefined],
+			["", undefined],
+			["test", undefined],
+			["5", undefined],
+			[NaN, undefined],
+			[undefined, undefined],
+			[null, undefined],
+			[{}, undefined],
+			[[], undefined],
+			[() => undefined, undefined]
+		]);
+
+		unaryOpTests("typeof", [
+			[true, "boolean"],
+			[false, "boolean"],
+			[0, "number"],
+			[1, "number"],
+			[0n, "bigint"],
+			[1n, "bigint"],
+			["", "string"],
+			["test", "string"],
+			["5", "string"],
+			[NaN, "number"],
+			[undefined, "undefined"],
+			[null, "object"],
+			[{}, "object"],
+			[[], "object"],
+			[() => undefined, "function"]
 		]);
 	})
 
