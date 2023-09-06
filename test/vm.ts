@@ -42,7 +42,7 @@ describe("vm", () => {
 
 	function evalBinOp(operator: string, left: string, right: string, expected: any) {
 		const code = `${left} ${operator} ${right}`;
-		it(`Expression ${JSON.stringify(code)} should evaluate to ${serialize(expected)}`, () => evalTest(code, expected));
+		it(`Expression ${code} should evaluate to ${serialize(expected)}`, () => evalTest(code, expected));
 	}
 
 	function binaryOpTests(operator: string, values: BinaryOpTest[]) {
@@ -57,6 +57,63 @@ describe("vm", () => {
 			}
 		});
 	}
+
+	describe("Equality Operators", () => {
+		type EqualityTest = [x: any, y: any, equal: boolean, looselyEqual?: boolean];
+
+		function addValues(...tests: EqualityTest[]) {
+			const values = {
+				"==": [],
+				"===": [],
+				"!=": [],
+				"!==": []
+			};
+
+			for (const [x, y, equal, looselyEqual = equal] of tests) {
+				const left = serialize(x);
+				const right = serialize(y);
+				values["=="].push([left, right, looselyEqual]);
+				values["==="].push([left, right, equal]);
+				values["!="].push([left, right, !looselyEqual]);
+				values["!=="].push([left, right, !equal]);
+			}
+
+			for (const key in values) {
+				const array = values[key];
+				describe(key, () => {
+					for (const [left, right, expected] of array)
+						evalBinOp(key, left, right, expected);
+				});
+			}
+		}
+
+		addValues(
+			[true, true, true],
+			[false, false, true],
+			[true, false, false],
+			[true, "true", false],
+			[false, "false", false],
+			[true, "1", false, true],
+			[false, "0", false, true],
+			[false, "", false, true],
+			[false, 0, false, true],
+			[false, 1, false],
+			[true, 0, false],
+			[true, 1, false, true],
+			[5, 0, false],
+			[0, 0, true],
+			[5, 5, true],
+			[0, "5", false],
+			[0, "0", false, true],
+			[5, "5", false, true],
+			["a", "b", false],
+			["a", "a", true],
+			[5n, 0n, false],
+			[5n, 5n, true],
+			[5n, 5, false, true],
+			["[object Object]", {}, false, true]
+		)
+	});
 
 	describe("Binary Operators", () => {
 		binaryOpTests("+", [
