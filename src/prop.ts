@@ -266,7 +266,7 @@ const MappedBagBuilderImpl: MappedBagBuilderConstructor = class BindedBagBuilder
 			if (outKey == undefined) {
 				for (const k of key) {
 					this.#validateKey(k);
-					this.#transformers[k] = [key, mapValue.bind(undefined, k)];
+					this.#transformers[k] = [k, mapValue.bind(undefined, k)];
 				}
 
 				return this;
@@ -379,7 +379,7 @@ class MappedPropertyBag<TSource extends Dict, TRecord extends Dict> extends Prop
 			if (count)
 				this.__fireChange(changes);
 		} else {
-			for (const key in changes)
+			for (const key of toUpdate)
 				this.#readables[key].__update(src);
 		}
 	}
