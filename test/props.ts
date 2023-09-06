@@ -72,6 +72,8 @@ describe('PropertyBag', () => {
 		};
 
 		let onChangeCallCount = 0;
+		let subscribeCallCount = 0;
+		let readOnlySubscribeCallCount = 0;
 		
 		const bag = new PropertyBag(values);
 
@@ -81,6 +83,40 @@ describe('PropertyBag', () => {
 			expect(v.firstName).to.eq("Alice");
 		});
 
+		bag.readables.firstName.subscribe(v => {
+			expect(v).to.eq(subscribeCallCount == 0 ? "John" : "Alice");
+			subscribeCallCount++;
+		});
+
+		bag.readOnly.readables.firstName.subscribe(v => {
+			expect(v).to.eq(readOnlySubscribeCallCount == 0 ? "John" : "Alice");
+			readOnlySubscribeCallCount++;
+		});
+
 		bag.setValue("firstName", "Alice");
+
+		expect(onChangeCallCount).to.eq(1);
+		expect(subscribeCallCount).to.eq(2);
+		expect(readOnlySubscribeCallCount).to.eq(2);
+	});
+
+	it("Should not fire event handler when unsubscribed", () => {
+		const values = {
+			firstName: 'John',
+			lastName: 'Doe',
+		};
+
+		let callCount = 0;
+
+		const bag = new PropertyBag(values);
+		const unsub = bag.readables.firstName.subscribe(() => {
+			callCount++;
+		});
+
+		bag.setValue("firstName", "Alice");
+		unsub();
+		bag.setValue("firstName", "Joe");
+
+		expect(callCount).to.eq(2);
 	});
 });
