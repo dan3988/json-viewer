@@ -267,7 +267,7 @@ describe("vm", () => {
 		
 		function evalUnaryOp(operator: string, value: any, expected: any) {
 			const code = `${operator}${operator.length === 1 ? "" : " "}${value}`;
-			it(`Expression ${JSON.stringify(code)} should evaluate to ${serialize(expected)}`, () => evalTest(code, expected));
+			it(`Expression ${code} should evaluate to ${serialize(expected)}`, () => evalTest(code, expected));
 		}
 	
 		function unaryOpTests(operator: string, values: UnaryOpTest[]) {
