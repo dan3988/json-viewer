@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { JSONPathAllResult } from "jsonpath-plus";
 	import json from "../json";
 	import JSONPath from "../json-path";
 	import type { ViewerModel } from "../viewer-model";
@@ -20,7 +21,7 @@
 	$: model.filter(filter, filterMode);
 
 	let jpath: HTMLInputElement;
-	let jpathResults: string[] = [];
+	let jpathResults: json.JToken[] = [];
 
 	function setExpanded(expanded: boolean) {
 		model.root.setExpanded(expanded, true);
@@ -35,6 +36,14 @@
 		this.setCustomValidity("");
 	}
 
+	function unwrapValue({ parent, parentProperty }: JSONPathAllResult) {
+		if (parent == null)
+			return model.root.value;
+
+		const container = json.unwrapProxy(parent)!;
+		return container.get(parentProperty!)!;
+	}
+
 	function evaluateJpath() {
 		const path = jpath.value;
 		if (!path) {
@@ -43,8 +52,11 @@
 		}
 
 		try {
-			jpathResults = JSONPath({ json: model.root.value.proxy, path, resultType: "pointer" });
-			jpathResults.forEach((v, i, a) => a[i] = "$" + v);
+			const values: any[] = JSONPath({ json: model.root.value.proxy, path, resultType: "all" });
+			for (let i = 0; i < values.length; i++)
+				values[i] = unwrapValue(values[i]);
+
+			jpathResults = values;
 		} catch (e) {
 			jpath.setCustomValidity(e.message);
 			jpath.reportValidity();
@@ -64,10 +76,10 @@
 		jpath.focus();
 	}
 
-	function jpathItemEvent(path: string, evt: MouseEvent | KeyboardEvent) {
+	function jpathItemEvent(token: json.JToken, evt: MouseEvent | KeyboardEvent) {
 		if (evt.type === "click" || (evt.type === "keypress" && (evt as KeyboardEvent).code === "Space")) {
 			evt.preventDefault();
-			model.select(path, true);
+			model.setSelected(token.owner, true, true);
 		}
 	}
 </script>
@@ -128,9 +140,9 @@
 		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
 	<ul class="jpath-results list-group list-group-flush overflow-y-scroll overflow-x-hidden border rounded">
-		{#each jpathResults as path}
-			<li tabindex="0" role="button" class="list-group-item list-group-item-action " on:keypress={e => jpathItemEvent(path, e)} on:click={e => jpathItemEvent(path, e)}>
-				<div class="text-truncate">{path}</div>
+		{#each jpathResults as item}
+			<li tabindex="0" role="button" class="list-group-item list-group-item-action " on:keypress={e => jpathItemEvent(item, e)} on:click={e => jpathItemEvent(item, e)}>
+				<div class="text-truncate">{item.pathText}</div>
 			</li>
 		{/each}
 	</ul>

@@ -41,6 +41,17 @@ declare module "*.svelte" {
 	export default import("svelte").SvelteComponentTyped;
 }
 
+declare module "jsonpath-plus" {
+	export interface JSONPathAllResult {
+		path: string,
+		value: any,
+		parent: null | object,
+		parentProperty: null | string,
+		hasArrExpr: boolean,
+		pointer: string
+	}
+}
+
 declare module "espree" {
 	export interface EcmaFeatures {
 		jsx?: boolean;
