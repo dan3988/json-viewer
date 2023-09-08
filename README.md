@@ -122,3 +122,10 @@ The build script uses the following files:
  * `res`: The contents of this folder are copied to the output directory.
 
 The build will output the extension to `./out/<browser>`.
+
+## TODO
+- [ ] Undo / redo edits
+- [ ] Allow multiple properties to be selected
+- [ ] Support `?.` chain expressions in JPath evaluator
+- [ ] Support special characters in json paths
+- [ ] Use JSON pointers in the path editor & url hash
