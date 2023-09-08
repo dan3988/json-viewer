@@ -33,10 +33,9 @@ abstract class AbstractRenderer<T> implements Renderer<T> {
 	}
 }
 
-const jsIdentifier = /^[$A-Z_][0-9A-Z_$]*$/ig;
+const jsIdentifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
-function isIdentifier(text: string) {
-	jsIdentifier.lastIndex = 0;
+export function isIdentifier(text: string) {
 	return jsIdentifier.test(text);
 }
 
