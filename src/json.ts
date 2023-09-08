@@ -56,7 +56,11 @@ enum JTokenFilterFlags {
 	Both = Keys | Values
 }
 
+const unproxy = Symbol("unproxy");
+
 export declare namespace json {
+	export function unwrapProxy(value: object): undefined | JContainer;
+
 	export type JValueType = string | number | boolean | null;
 
 	export interface JTokenTypeMap {
@@ -262,8 +266,6 @@ class JIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterato
 	}
 }
 
-let getController: <TKey extends Key, TValue extends JToken>(prop: JProperty<TKey, TValue>) => JPropertyController<TKey, TValue>;
-
 /** properties that should not be exposed outside this file */
 interface JPropertyController<TKey extends Key = Key, TValue extends JToken = JToken> {
 	readonly prop: JProperty<TKey, TValue>;
@@ -334,10 +336,6 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		clone(): any {
 			return this.#prop.clone().#controller;
 		}
-	}
-
-	static {
-		getController = p => p.#controller;
 	}
 
 	static create<TKey extends Key = Key, TValue extends JToken = JToken>(key: TKey, value: JsonClass<TValue> | TValue) {
@@ -882,7 +880,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 				return Object.prototype;
 			},
 			get(target, p) {
-				return target.#reflectGet(p);
+				return p === unproxy ? target : target.#reflectGet(p);
 			}
 		}
 	
@@ -1056,6 +1054,9 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			},
 			getIterator(self) {
 				return self.#proxyIterator;
+			},
+			overrideGet(self, key) {
+				return key === unproxy ? [self] : undefined;
 			}
 		}
 	
@@ -1283,5 +1284,9 @@ function def<T>(target: T, properties: Record<keyof T, any>, enumerable?: boolea
 		Object.defineProperty(target, key, { value, enumerable, writable, configurable });
 }
 
-def(json, { JTokenFilterFlags, JToken, JValue, JContainer, JObject, JArray }, true);
+function unwrapProxy(value: object): undefined | JToken {
+	return Reflect.get(value, unproxy);
+}
+
+def(json, { JTokenFilterFlags, JToken, JValue, JContainer, JObject, JArray, unwrapProxy }, true);
 export default json;
