@@ -21,7 +21,7 @@
 	$: model.filter(filter, filterMode);
 
 	let jpath: HTMLInputElement;
-	let jpathResults: json.JToken[] = [];
+	let jpathResults: json.JProperty[] = [];
 
 	function setExpanded(expanded: boolean) {
 		model.root.setExpanded(expanded, true);
@@ -36,12 +36,12 @@
 		this.setCustomValidity("");
 	}
 
-	function unwrapValue({ parent, parentProperty }: JSONPathAllResult) {
+	function unwrapValue({ parent, parentProperty }: JSONPathAllResult): json.JProperty {
 		if (parent == null)
-			return model.root.value;
+			return model.root;
 
 		const container = json.unwrapProxy(parent)!;
-		return container.get(parentProperty!)!;
+		return container.getProperty(parentProperty!)!;
 	}
 
 	function evaluateJpath() {
@@ -76,10 +76,10 @@
 		jpath.focus();
 	}
 
-	function jpathItemEvent(token: json.JToken, evt: MouseEvent | KeyboardEvent) {
+	function jpathItemEvent(token: json.JProperty, evt: MouseEvent | KeyboardEvent) {
 		if (evt.type === "click" || (evt.type === "keypress" && (evt as KeyboardEvent).code === "Space")) {
 			evt.preventDefault();
-			model.setSelected(token.owner, true, true);
+			model.setSelected(token, true, true);
 		}
 	}
 
@@ -90,8 +90,7 @@
 		//this function assumes that matching parent containers appear before any matching children in the results array, which is the current behaviour of jsonpath-plus
 		const results = new Set<json.JProperty>();
 
-		function parentMapped(tkn: json.JToken) {
-			let prop = tkn.owner;
+		function parentMapped(prop: json.JProperty) {
 			while (true) {
 				if (results.has(prop))
 					return true;
@@ -105,7 +104,7 @@
 
 		for (const token of jpathResults)
 			if (!parentMapped(token))
-				results.add(token.owner);
+				results.add(token);
 
 		return results.values();
 	}
@@ -119,15 +118,11 @@
 
 	function jpathResultsExpand() {
 		for (const result of jpathResults) {
-			let prop = result;
-			while (true) {
-				prop.owner.setExpanded(true);
-				if (prop.parent == null)
-					break;
-
-				prop = prop.parent;
-			}
-
+			let prop: null | json.JProperty = result;
+			do {
+				prop.setExpanded(true);
+				prop = prop.parentProperty
+			} while (prop != null);
 		}
 	}
 </script>

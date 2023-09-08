@@ -90,6 +90,7 @@ export declare namespace json {
 		readonly key: TKey;
 		readonly value: TValue;
 		readonly parent: null | JContainer<TKey>;
+		readonly parentProperty: null | JProperty;
 		readonly previous: null | JProperty<TKey>;
 		readonly next: null | JProperty<TKey>;
 		readonly path: readonly Key[];
@@ -365,6 +366,10 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 
 	get parent() {
 		return this.#parent;
+	}
+
+	get parentProperty() {
+		return this.#parent && this.#parent.owner;
 	}
 
 	get previous() {
