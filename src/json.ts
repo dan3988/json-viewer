@@ -1,6 +1,7 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
 import { PropertyBag } from "./prop.js";
 import { EventHandlers, type IEvent } from "./evt.js";
+import { isIdentifier } from "./util.js"
 import Linq from "@daniel.pickett/linq-js";
 
 type Key = string | number;
@@ -92,6 +93,7 @@ export declare namespace json {
 		readonly previous: null | JProperty<TKey>;
 		readonly next: null | JProperty<TKey>;
 		readonly path: readonly Key[];
+		readonly pathText: string;
 		readonly bag: PropertyBag<JPropertyBag>;
 
 		readonly isHidden: boolean;
@@ -117,6 +119,8 @@ export declare namespace json {
 		readonly subtype: keyof JTokenSubTypeMap;
 		readonly proxy: T;
 		readonly parent: null | JContainer;
+		readonly path: readonly Key[];
+		readonly pathText: string;
 		readonly owner: JProperty;
 
 		is<K extends keyof JTokenTypeMap>(type: K): this is JTokenTypeMap[K];
@@ -377,6 +381,16 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		return p;
 	}
 
+	get pathText() {
+		const path = this.path;
+		for (let i = 0 ; i < path.length; i++) {
+			const value = String(path[i]);
+			path[i] = isIdentifier(value) ? value : JSON5.stringify(value, { quote: "'" });
+		}
+
+		return path.join("/");
+	}
+
 	get bag() {
 		return this.#bag;
 	}
@@ -501,6 +515,14 @@ abstract class JToken<T = any> implements json.JToken<T> {
 
 	get owner() {
 		return this.#owner;
+	}
+
+	get path() {
+		return this.#owner ? this.#owner.path : [];
+	}
+
+	get pathText() {
+		return this.#owner ? this.#owner.pathText : "$";
 	}
 
 	abstract get type(): keyof json.JTokenTypeMap;
