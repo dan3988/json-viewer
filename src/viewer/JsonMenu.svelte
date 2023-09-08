@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { JSONPathAllResult } from "jsonpath-plus";
+	import type { JSONPathAllResult } from "jsonpath-plus";
 	import json from "../json";
 	import JSONPath from "../json-path";
 	import type { ViewerModel } from "../viewer-model";
@@ -82,6 +82,54 @@
 			model.setSelected(token.owner, true, true);
 		}
 	}
+
+	/**
+	 * Returns a list of jpath results, excluding any children of mathing containers
+	 */
+	function collapseResults(): Iterable<json.JProperty> {
+		//this function assumes that matching parent containers appear before any matching children in the results array, which is the current behaviour of jsonpath-plus
+		const results = new Set<json.JProperty>();
+
+		function parentMapped(tkn: json.JToken) {
+			let prop = tkn.owner;
+			while (true) {
+				if (results.has(prop))
+					return true;
+
+				if (prop.parent == null)
+					return false;
+
+				prop = prop.parent.owner;
+			}
+		}
+
+		for (const token of jpathResults)
+			if (!parentMapped(token))
+				results.add(token.owner);
+
+		return results.values();
+	}
+
+	function jpathResultsDelete() {
+		for (const result of collapseResults())
+			result.remove();
+
+		jpathResults = [];
+	}
+
+	function jpathResultsExpand() {
+		for (const result of jpathResults) {
+			let prop = result;
+			while (true) {
+				prop.owner.setExpanded(true);
+				if (prop.parent == null)
+					break;
+
+				prop = prop.parent;
+			}
+
+		}
+	}
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
@@ -99,7 +147,7 @@
 	.root {
 		display: grid;
 		overflow: auto;
-		grid-template-rows: auto auto auto 1fr;
+		grid-template-rows: auto auto auto auto 1fr;
 		grid-template-columns: 6rem 1fr 2rem 6rem;
 		grid-row-gap: $pad-med;
 		align-items: stretch;
@@ -138,6 +186,11 @@
 		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
 		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
+	</div>
+	<div class="jpath-matches input-group">
+		<span class="flex-fill0 input-group-text">{jpathResults.length} {jpathResults.length == 1 ? "Match" : "Matches"}</span>
+		<button class="flex-fill0 btn btn-cust-light" disabled={!jpathResults.length} on:click={jpathResultsExpand}>Expand Matches</button>
+		<button class="flex-fill0 btn btn-cust-light" disabled={!jpathResults.length} on:click={jpathResultsDelete}>Delete Matches</button>
 	</div>
 	<ul class="jpath-results list-group list-group-flush overflow-y-scroll overflow-x-hidden border rounded">
 		{#each jpathResults as item}

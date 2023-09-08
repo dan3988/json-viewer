@@ -139,3 +139,7 @@ $cst-dirty-border-color-dark: #5c603b;
 	--bs-btn-active-color: var(--cst-dirty-active-color);
 	--bs-btn-active-border-color: var(--cst-dirty-active-border-color);
 }
+
+:global(.flex-fill0) {
+	flex: 1 1 0px;
+}
