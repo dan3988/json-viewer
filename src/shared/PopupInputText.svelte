@@ -1,9 +1,9 @@
 <script lang="ts">
+	import type { PopupEvents } from "../types";
 	import { scale } from "svelte/transition";
 	import { backOut } from "svelte/easing";
-	import type { PopupEvents } from "../types";
 	import { createEventDispatcher, onMount } from "svelte";
-	import PopupFrame from "./PopupFrame.svelte";
+	import Popup from "./Popup.svelte";
 
 	export let value: string = "";
 	export let title: string = "";
@@ -33,6 +33,7 @@
 
 	#value {
 		resize: none;
+		height: 100%;
 		grid-area: text;
 	}
 
@@ -55,17 +56,10 @@
 		}
 	}
 </style>
-<PopupFrame>
-	<div class="root bg-body border rounded p-2" style:width={width && width + "vw"} style:height={height && height + "vh"} class:title transition:scale={{ easing: backOut }}>
-		{#if title}
-			<span id="title" class="h4 m-0">{title}</span>
-		{/if}
-		{#if multiLine}
-			<textarea id="value" class="form-control" bind:value={value} bind:this={field}/>
-		{:else}
-			<input id="value" class="form-control" bind:value={value} bind:this={field}/>
-		{/if}
-		<button id="cancel" class="btn btn-danger" on:click={onCancel}>Cancel</button>
-		<button id="confirm" class="btn btn-success" disabled={!value} on:click={onConfirm}>OK</button>
-	</div>
-</PopupFrame>
+<Popup {title} {width} {height} on:canceled={onCancel} on:confirmed={onConfirm}>
+	{#if multiLine}
+		<textarea id="value" class="form-control" bind:value={value} bind:this={field}/>
+	{:else}
+		<input id="value" class="form-control" bind:value={value} bind:this={field}/>
+	{/if}
+</Popup>
