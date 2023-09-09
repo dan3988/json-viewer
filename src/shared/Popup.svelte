@@ -27,7 +27,7 @@
 	@use "src/core.scss" as *;
 
 	.modal {
-		--bs-modal-width: ;
+		--bs-modal-width: unset;
 
 		background-color: rgba(var(--blur-bg-rgb), 0.25);
 		backdrop-filter: blur(1px);
@@ -39,6 +39,7 @@
 
 	.modal-dialog {
 		margin: auto;
+		margin-top: var(--bs-modal-margin);
 	}
 
 	.modal-content {
