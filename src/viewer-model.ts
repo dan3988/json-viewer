@@ -84,7 +84,7 @@ export class ViewerModel {
 
 	resolve(path: string | readonly (number | string)[]): json.JProperty | undefined {
 		if (typeof path === "string")
-			path = path.split("/");
+			path = json.parsePath(path);
 
 		let i = 0;
 		let baseProp: json.JProperty;

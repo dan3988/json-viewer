@@ -16,6 +16,7 @@
 </script>
 <script lang="ts">
 	import type ViewerModel from "../viewer-model";
+	import { toPointer } from "../util";
 	import JsonPathEditor, { type EventMap } from "./JsonPathEditor.svelte";
 
 	export let model: ViewerModel;
@@ -101,7 +102,7 @@
 				{#if prop.parent != null}
 					<span>/</span>
 				{/if}
-				<span class="content rounded" on:click|stopPropagation={() => model.setSelected(prop, true, true)}>{prop.key}</span>
+				<span class="content rounded" on:click|stopPropagation={() => model.setSelected(prop, true, true)}>{toPointer(prop.key)}</span>
 			</li>
 		{/each}
 	</ul>

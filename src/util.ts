@@ -39,6 +39,10 @@ export function isIdentifier(text: string) {
 	return jsIdentifier.test(text);
 }
 
+export function toPointer(segment: string | number) {
+	return String(segment).replaceAll("~", "~0").replaceAll("/", "~1");
+}
+
 class JsonValueRenderer extends AbstractRenderer<any> {
 	protected onUpdate(target: HTMLElement, value: any): void {
 		if (value === null || typeof value !== "string") {

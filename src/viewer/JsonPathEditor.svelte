@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	import type json from "../json";
+	import json from "../json";
 
 	export interface EventMap {
 		finished: json.JProperty | null;
@@ -42,7 +42,7 @@
 	}
 
 	function update(prop: json.JProperty) {
-		target && (target.innerText = prop.path.join("/"));
+		target && (target.innerText = prop.pathText);
 	}
 
 	function getIndexes(range: Range): [number, number] {
@@ -58,10 +58,10 @@
 
 		i = text.indexOf("/", i + 1);
 		if (i < 0) {
-			const middle = text.slice(before.length + 1);
+			const middle = text.slice(before.length + 1, start);
 			return [before, middle]
 		} else {
-			const middle = text.slice(before.length + 1, i);
+			const middle = text.slice(before.length + 1, start);
 			const after = text.slice(i + 1);
 			return [before, middle, after];
 		}
@@ -92,7 +92,7 @@
 
 		const range = selection.getRangeAt(0);
 		const [start] = splitSelection(range);
-		target.innerText = start + "/" + value;
+		target.innerText = start + "/" + json.escapePathPart(value);
 		ignoreSelectionEvents = 2;
 		dom.setCaret(selection, target, 0, true);
 	}
@@ -104,6 +104,29 @@
 		}
 	}
 
+	function parsePathSection(value: string) {
+		if (!value.startsWith("'"))
+			return value;
+
+		const regex = /'(?!\\)/g;
+		regex.lastIndex = 1;
+		const results = regex.exec(value);
+		//the user has opened a json string but has not closed it, so try to parse the incomplete value to use to filter the suggesions
+		if (results == null) {
+			//ignore incomplete escape sequence
+			if (value.endsWith("\\"))
+				value = value.slice(0, -1);
+
+			value += "'";
+		}
+
+		try {
+			return JSON5.parse(value);
+		} catch (e) {
+			return "";
+		}
+	}
+
 	function updateAutoComplete(selection: Selection) {
 		const range = selection.getRangeAt(0);
 		const [start, mid] = splitSelection(range);
@@ -111,8 +134,10 @@
 		if (!previous)
 			return;
 
+		const filter = parsePathSection(mid);
+
 		acHelper ??= new AutocompleteHelper(acWrapper, onAutoCompleteFinish);
-		acHelper.update(previous.value, mid, true);
+		acHelper.update(previous.value, filter, true);
 		const { x: rangeX } = range.getBoundingClientRect();
 		const { x: targetX } = target.getBoundingClientRect();
 		x = rangeX - targetX;

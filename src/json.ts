@@ -1,7 +1,7 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
 import { PropertyBag } from "./prop.js";
 import { EventHandlers, type IEvent } from "./evt.js";
-import { isIdentifier } from "./util.js"
+import { isIdentifier, toPointer } from "./util.js"
 import Linq from "@daniel.pickett/linq-js";
 
 type Key = string | number;
@@ -60,6 +60,8 @@ enum JTokenFilterFlags {
 const unproxy = Symbol("unproxy");
 
 export declare namespace json {
+	export function escapePathPart(part: string): string;
+	export function parsePath(path: string): string[];
 	export function unwrapProxy(value: object): undefined | JContainer;
 
 	export type JValueType = string | number | boolean | null;
@@ -95,6 +97,7 @@ export declare namespace json {
 		readonly next: null | JProperty<TKey>;
 		readonly path: readonly Key[];
 		readonly pathText: string;
+		readonly pointer: string;
 		readonly bag: PropertyBag<JPropertyBag>;
 
 		readonly isHidden: boolean;
@@ -122,6 +125,7 @@ export declare namespace json {
 		readonly parent: null | JContainer;
 		readonly path: readonly Key[];
 		readonly pathText: string;
+		readonly pointer: string;
 		readonly owner: JProperty;
 
 		is<K extends keyof JTokenTypeMap>(type: K): this is JTokenTypeMap[K];
@@ -390,9 +394,18 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		const path = this.path;
 		for (let i = 0 ; i < path.length; i++) {
 			const value = String(path[i]);
-			path[i] = isIdentifier(value) ? value : JSON5.stringify(value, { quote: "'" });
+			path[i] = escapePathPart(value);
 		}
 
+		return path.join("/");
+	}
+
+	get pointer() {
+		const path = this.path;
+		for (let i = 0 ; i < path.length; i++)
+			path[i] = toPointer(path[i]);
+
+		path.unshift("");
 		return path.join("/");
 	}
 
@@ -528,6 +541,10 @@ abstract class JToken<T = any> implements json.JToken<T> {
 
 	get pathText() {
 		return this.#owner ? this.#owner.pathText : "$";
+	}
+
+	get pointer() {
+		return this.#owner ? this.#owner.pointer : "/";
 	}
 
 	abstract get type(): keyof json.JTokenTypeMap;
@@ -1315,5 +1332,49 @@ function unwrapProxy(value: object): undefined | JToken {
 	return Reflect.get(value, unproxy);
 }
 
-def(json, { JTokenFilterFlags, JToken, JValue, JContainer, JObject, JArray, unwrapProxy }, true);
+function escapePathPart(value: string | number): string {
+	value = String(value);
+	return isIdentifier(value) ? value : JSON5.stringify(value, { quote: "'" });
+}
+
+function parsePath(path: string): string[] {
+	let i = path.indexOf("/");
+	if (i === 0) {
+		if (path.startsWith("'"))
+			path = JSON5.parse(path);
+
+		return [path];
+	}
+
+	const results: string[] = [];
+
+	let start = 0;
+	while (true) {
+		let part: string;
+		let end: boolean;
+		//let part = path.substring(start, i);
+		if (path.charAt(start) === "'") {
+			const regex = /'(?!\\)/g;
+			regex.lastIndex = start + 1;
+			const results = regex.exec(path);
+			if (results == null)
+				throw "test";
+
+			part = path.substring(start, i = results.index + 1);
+			part = JSON5.parse(part);
+			end = i === path.length;
+		} else {
+			end = (i = path.indexOf("/", start)) < 0;
+			part = path.substring(start, end ? undefined : i);
+		}
+
+		results.push(part);
+		if (end)
+			return results;
+
+		start = i + 1;
+	}
+}
+
+def(json, { JTokenFilterFlags, JToken, JValue, JContainer, JObject, JArray, unwrapProxy, parsePath, escapePathPart }, true);
 export default json;
