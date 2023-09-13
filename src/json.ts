@@ -1358,7 +1358,7 @@ function parsePath(path: string): string[] {
 			regex.lastIndex = start + 1;
 			const results = regex.exec(path);
 			if (results == null)
-				throw "test";
+				throw new TypeError("Unclosed quoted path segment: " + path.substring(start));
 
 			part = path.substring(start, i = results.index + 1);
 			part = JSON5.parse(part);
