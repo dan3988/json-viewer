@@ -13,9 +13,12 @@ describe("vm", () => {
 		});
 	}
 
-	function evalTest(scriptText: string, expected: any) {
+	function evalTest(scriptText: string, expected: any, context?: any) {
 		const script = new Script(scriptText);
 		const ctx = createContext();
+		if (context)
+			Object.setPrototypeOf(ctx, context);
+
 		const result = script.runInNewContext(ctx);
 		expect(result).is.deep.eq(expected);
 	}
@@ -381,6 +384,20 @@ describe("vm", () => {
 			[[], "object"],
 			[() => undefined, "function"]
 		]);
+	});
+
+	describe("Chaining", () => {
+		it("Should return the correct value when using optional chaining", () => {
+			evalTest("value?.nested?.text", undefined, { value: undefined });
+			evalTest("value?.nested?.text", undefined, { value: {} })
+			evalTest("value?.nested?.text", undefined, { value: { nested: null } })
+			evalTest("value?.['nested']?.text", undefined, { value: { nested: null } })
+			evalTest("value?.nested?.text", "text", { value: { nested: { text: "text" } } });
+			evalTest("value?.['nested']?.text", "text", { value: { nested: { text: "text" } } });
+
+			evalTest("value?.()", undefined, { value: undefined });
+			evalTest("value?.()", true, { value: () => true });
+		});
 	})
 
 	describe("Lambdas", () => {

@@ -410,12 +410,14 @@ enum InstructionCode {
 	Literal,
 	Identifier,
 	Member,
+	OptionalMember,
 	Container,
 	ArraySpread,
 	Array,
 	ObjectSpread,
 	Object,
 	Call,
+	OptionalCall,
 	Unary,
 	Binary,
 	LogicalAnd,
@@ -431,12 +433,14 @@ interface InstructionArg {
 	[InstructionCode.Literal]: number | string | boolean | bigint | RegExp | null | undefined;
 	[InstructionCode.Identifier]: string;
 	[InstructionCode.Member]: string | undefined;
+	[InstructionCode.OptionalMember]: string | undefined;
 	[InstructionCode.Container]: undefined;
 	[InstructionCode.ArraySpread]: undefined;
 	[InstructionCode.Array]: undefined;
 	[InstructionCode.ObjectSpread]: undefined;
 	[InstructionCode.Object]: undefined;
 	[InstructionCode.Call]: boolean;
+	[InstructionCode.OptionalCall]: boolean;
 	[InstructionCode.Unary]: estree.UnaryOperator;
 	[InstructionCode.Binary]: estree.BinaryOperator;
 	[InstructionCode.LogicalAnd]: InstructionList;
@@ -487,6 +491,35 @@ class EvaluatorStack {
 	}
 }
 
+function execMember(stack: EvaluatorStack, arg: undefined | string, optional: boolean) {
+	const key = arg ?? stack.pop();
+	const obj = stack.pop();
+	if (obj != null) {
+		stack.push(obj[key]);
+	} else if (optional) {
+		stack.push(undefined);
+	} else {
+		throw new TypeError("Attempted to access property " + JSON.stringify(key) + " on " + obj);
+	}
+}
+
+function execCall(stack: EvaluatorStack, arg: any, optional: boolean) {
+	let args = stack.endContainer();
+	let fn = stack.pop();
+	let member: any = undefined;
+	if (arg)
+		member = stack.pop();
+
+	if (fn != null) {
+		const result = Function.prototype.apply.call(fn, member, args);
+		stack.push(result);
+	} else if (optional) {
+		stack.push(undefined);
+	} else {
+		throw new TypeError("Attempted to invoke " + typeof fn);
+	}
+}
+
 type InstructionHandlers = ArrayLike<undefined | InstructionHandler> & { [K in keyof InstructionArg]: InstructionArg[K] extends never ? undefined : InstructionHandler<InstructionArg[K]> }
 
 const instructionHandlers: (undefined | InstructionHandler)[] = [
@@ -504,11 +537,9 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		stack.push(stack.context[arg])
 	},
 	// InstructionCode.Member
-	(stack, arg) => {
-		const obj = stack.pop();
-		const key = arg ?? stack.pop();
-		stack.push(obj[key]);
-	},
+	(stack, arg) => execCall(stack, arg, false),
+	// InstructionCode.OptionalMember
+	(stack, arg) => execCall(stack, arg, true),
 	// InstructionCode.Container
 	(stack) => stack.startContainer(),
 	// InstructionCode.ArraySpread
@@ -541,16 +572,9 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		stack.push(res);
 	},
 	// InstructionCode.Call
-	(stack, arg) => {
-		let args = stack.endContainer();
-		let fn = stack.pop();
-		let member: any = undefined;
-		if (arg)
-			member = stack.pop();
-
-		const result = Function.prototype.apply.call(fn, member, args);
-		stack.push(result);
-	},
+	(stack, arg) => execCall(stack, arg, false),
+	// InstructionCode.OptionalCall
+	(stack, arg) => execCall(stack, arg, true),
 	// InstructionCode.Unary
 	(stack, arg) => {
 		const handler = unary[arg]!;
@@ -691,7 +715,7 @@ const build: Handler = (b, token) => {
 	return handler(b, token);
 }
 
-const handlers: HandlerLookup = {
+const handlers = {
 	CallExpression(b, token) {
 		let member = false;
 		if (token.callee.type === "MemberExpression") {
@@ -718,15 +742,17 @@ const handlers: HandlerLookup = {
 			}
 		}
 
-		b.push(InstructionCode.Call, member);
+		const code = (token as any).optional ? InstructionCode.OptionalCall : InstructionCode.Call;
+		b.push(code, member);
 	},
 	MemberExpression(b, token) {
 		build(b, token.object);
+		const code = token.optional ? InstructionCode.OptionalMember : InstructionCode.Member;
 		if (token.computed) {
 			build(b, token.property);
-			b.push(InstructionCode.Member);
+			b.push(code);
 		} else if (token.property.type === "Identifier") {
-			b.push(InstructionCode.Member, token.property.name);
+			b.push(code, token.property.name);
 		} else {
 			build(b, token.property);
 		}
@@ -806,6 +832,9 @@ const handlers: HandlerLookup = {
 		build(b, token.test);
 		b.push(InstructionCode.Conditional, [x, y]);
 	},
+	ChainExpression(b, token) {
+		build(b, token.expression);
+	},
 	ArrowFunctionExpression(b, { expression, async, generator, params, body }) {
 		if (!expression || async || generator)
 			throw new TypeError("Cannot use complex arrow functions.");
@@ -816,7 +845,7 @@ const handlers: HandlerLookup = {
 		build(instructions, body);
 		b.push(InstructionCode.Function, new FunctionDefinition(args, instructions))
 	}
-}
+} satisfies HandlerLookup;
 
 for (let i = 0; i < instructionHandlers.length; i++) {
 	const handler = instructionHandlers[i];
