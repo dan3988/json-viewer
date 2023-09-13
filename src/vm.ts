@@ -537,9 +537,9 @@ const instructionHandlers: (undefined | InstructionHandler)[] = [
 		stack.push(stack.context[arg])
 	},
 	// InstructionCode.Member
-	(stack, arg) => execCall(stack, arg, false),
+	(stack, arg) => execMember(stack, arg, false),
 	// InstructionCode.OptionalMember
-	(stack, arg) => execCall(stack, arg, true),
+	(stack, arg) => execMember(stack, arg, true),
 	// InstructionCode.Container
 	(stack) => stack.startContainer(),
 	// InstructionCode.ArraySpread
