@@ -127,5 +127,4 @@ The build will output the extension to `./out/<browser>`.
 - [ ] Undo / redo edits
 - [ ] Allow multiple properties to be selected
 - [ ] Support `?.` chain expressions in JPath evaluator
-- [ ] Support special characters in json paths
-- [ ] Use JSON pointers in the path editor & url hash
+- [x] Support special characters in the json path editor
