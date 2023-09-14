@@ -2,8 +2,20 @@ import { EventHandlers } from "./evt.js";
 import json from "./json.js"
 import { PropertyBag } from "./prop.js";
 
+export interface SelectedPropertyList extends Iterable<json.JProperty> {
+	readonly size: number;
+	readonly last: null | json.JProperty;
+	has(value: json.JProperty): boolean;
+	reset(...values: json.JProperty[]): void;
+	add(...value: json.JProperty[]): number;
+	remove(...value: json.JProperty[]): number;
+	toggle(value: json.JProperty, selected?: boolean): boolean;
+	clear(): void;
+	forEach(callback: (v: json.JProperty) => void): void;
+}
+
 interface ChangeProps {
-	selected: null | json.JProperty;
+	selected: readonly json.JProperty[];
 	filterText: string;
 	filterFlags: json.JTokenFilterFlags;
 }
@@ -18,20 +30,67 @@ export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent]
 export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
 
 export class ViewerModel {
+	static readonly #SelectedList = class implements SelectedPropertyList {
+		#owner: ViewerModel;
+
+		get size() {
+			return this.#owner.#selected.size;
+		}
+
+		get last() {
+			return this.#owner.#lastSelected;
+		}
+
+		constructor(owner: ViewerModel) {
+			this.#owner = owner;
+		}
+
+		reset(...values: json.JProperty[]): void {
+			this.#owner.#selectedReset(values);
+		}
+
+		has(value: json.JProperty): boolean {
+			return this.#owner.#selected.has(value);
+		}
+	
+		add(...values: json.JProperty[]): number {
+			return this.#owner.#selectedAdd(values);
+		}
+	
+		remove(...values: json.JProperty[]): number {
+			return this.#owner.#selectedRemove(values);
+		}
+	
+		toggle(value: json.JProperty, selected?: boolean): boolean {
+			return this.#owner.#selectedToggle(value, selected);
+		}
+	
+		clear(): void {
+			this.#owner.#selectedClear();
+		}
+
+		forEach(callback: (v: json.JProperty) => void) {
+			this.#owner.#selected.forEach(v => callback.call(this, v));
+		}
+
+		[Symbol.iterator]() {
+			return this.#owner.#selected[Symbol.iterator]();
+		}
+	}
+
 	readonly #root: json.JProperty;
 	readonly #bag: PropertyBag<ChangeProps>;
 	readonly #command: EventHandlers<this, [evt: ViewerCommandEvent]>;
+	#selected: Set<json.JProperty>;
+	#lastSelected: null | json.JProperty;
+	readonly #selectedList: SelectedPropertyList;
 
 	get root() {
 		return this.#root;
 	}
 
 	get selected() {
-		return this.#bag.getValue("selected");
-	}
-
-	set selected(value) {
-		this.setSelected(value, false, false);
+		return this.#selectedList;
 	}
 
 	get bag() {
@@ -52,8 +111,11 @@ export class ViewerModel {
 
 	constructor(root: json.JProperty) {
 		this.#root = root;
-		this.#bag = new PropertyBag<ChangeProps>({ selected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "" });
+		this.#bag = new PropertyBag<ChangeProps>({ selected: [], filterFlags: json.JTokenFilterFlags.Both, filterText: "" });
 		this.#command = new EventHandlers();
+		this.#selected = new Set();
+		this.#lastSelected = null;
+		this.#selectedList = new ViewerModel.#SelectedList(this);
 	}
 
 	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {
@@ -89,7 +151,7 @@ export class ViewerModel {
 		let i = 0;
 		let baseProp: json.JProperty;
 		if (path[0] !== "$") {
-			const selected = this.#bag.getValue("selected");
+			const selected = this.#bag.getValue("selected").at(-1);
 			if (selected == null)
 				return;
 
@@ -114,14 +176,12 @@ export class ViewerModel {
 		}
 	}
 
-	select(path: string | readonly (number | string)[], scrollTo?: boolean) {
+	select(path: string | readonly (number | string)[]) {
 		const prop = this.resolve(path);
 		if (prop == null)
 			return false;
 
-		scrollTo ??= false;
-		this.setSelected(prop, scrollTo, scrollTo);
-		return true;
+		return this.#selectedAdd([prop]);
 	}
 
 	#onSelected(selected: json.JProperty, expand: boolean, scrollTo: boolean) {
@@ -133,23 +193,99 @@ export class ViewerModel {
 			this.execute("scrollTo", selected);
 	}
 
-	setSelected(selected: null): void;
-	setSelected(selected: null | json.JProperty, expand: boolean, scrollTo: boolean): void
-	setSelected(selected: null | json.JProperty, expand?: boolean, scrollTo?: boolean) {
-		const old = this.#bag.getValue("selected");
-		if (old !== selected) {
-			if (old)
-				old.isSelected = false;
+	setSelected(selected: json.JProperty, expand: boolean, scrollTo: boolean) {
+		this.#selectedReset([selected]);
+		this.#onSelected(selected, expand ?? false, scrollTo ?? false);
+	}
 
-			this.#bag.setValue("selected", selected);
+	#selectedReset(values: json.JProperty[]) {
+		const set = new Set(values);
+		if (this.#selected.size !== 0)
+			for (const prop of this.#selected)
+				if (!set.has(prop))
+					prop.isSelected = false;
+
+		let last: null | json.JProperty = null;
+
+		for (const p of set)
+			(last = p).isSelected = true;
+
+		this.#selected = set;
+		this.#lastSelected = last;
+		this.#bag.setValue("selected", [...set]);
+	}
+
+	#selectedClear() {
+		if (this.#selected.size === 0)
+			return false;
+
+		for (const selected of this.#selected)
+			selected.isSelected = false;
+
+		this.#selected.clear();
+		this.#lastSelected = null;
+		this.#bag.setValue("selected", []);
+		return true;
+	}
+
+	#selectedAdd(props: json.JProperty[]) {
+		let changed = 0;
+
+		const arr = [...this.#bag.getValue("selected")];
+		for (const prop of props) {
+			if (prop.isSelected)
+				continue;
+
+			this.#selected.add(prop);
+			this.#lastSelected = prop;
+			arr.push(prop);
+			prop.isSelected = true;
+			changed++;
+		}
+
+		if (changed)
+			this.#bag.setValue("selected", arr);
+
+		return changed;
+	}
+
+	#selectedRemove(props: json.JProperty[]) {
+		let changed = 0;
+
+		for (const prop of props) {
+			if (!prop.isSelected)
+				continue;
+
+			this.#selected.delete(prop);
+			prop.isSelected = false;
+			changed++;
+		}
+
+		if (changed) {
+			const arr = [...this.#selected];
+			this.#lastSelected = arr.at(-1) ?? null;
+			this.#bag.setValue("selected", arr);
+		}
+
+		return changed;
+	}
+
+	#selectedToggle(prop: json.JProperty, selected?: boolean) {
+		selected ??= !prop.isSelected;
+
+		if (selected == null || selected != prop.isSelected) {
+			selected ??= !prop.isSelected;
 
 			if (selected) {
-				selected.isSelected = true;
-				this.#onSelected(selected, expand ?? false, scrollTo ?? false);
+				this.#selectedAdd([prop]);
+			} else {
+				this.#selectedRemove([prop]);
 			}
-		} else if (old) {
-			this.#onSelected(old, expand ?? false, scrollTo ?? false);
+
+			prop.isSelected = selected;
 		}
+
+		return selected;
 	}
 }
 

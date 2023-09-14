@@ -151,18 +151,22 @@
 	function onExpanderClicked() {
 		if (prop.isExpanded) {
 			prop.isExpanded = false;
-			model.setSelected(prop, false, true);
+			model.selected.reset(prop);
 		} else {
 			prop.isExpanded = true;
 		}
 	}
 
-	function onClick() {
-		model.selected = prop;
+	function onClick(evt: MouseEvent) {
+		if (evt.ctrlKey) {
+			model.selected.toggle(prop);
+		} else {
+			model.selected.reset(prop);
+		}
 	}
 
 	function onContextMenu(evt: MouseEvent) {
-		model.selected = prop;
+		model.selected.reset(prop);
 		model.execute("context", prop, evt.clientX, evt.clientY);
 	}
 

@@ -45,15 +45,26 @@
 		return navigator.clipboard.writeText(String(property.key));
 	}
 
-	function copyValue(token: json.JToken, minify?: boolean) {
-		let text: string;
+	function serializeForCopy(token: json.JToken, minify?: boolean) {
 		if (token.is("value")) {
-			text = String(token.value);
+			return String(token.value);
 		} else {
-			text = JSON.stringify(token, undefined, minify ? undefined : indent);
+			return JSON.stringify(token, undefined, minify ? undefined : indent);
 		}
-		
+	}
+
+	function copyValue(token: json.JToken, minify?: boolean) {
+		const text = serializeForCopy(token, minify);
 		return navigator.clipboard.writeText(text);
+	}
+
+	function copyValues(values: Iterable<json.JProperty>, minify?: boolean) {
+		const text: string[] = [];
+		for (const p of values)
+			text.push(serializeForCopy(p.value, minify));
+
+		const value = text.join(minify ? "," : ",\r\n");
+		return navigator.clipboard.writeText(value);
 	}
 
 	type PopupConstructor<TProps extends Dict, TResult> = new(props: ComponentConstructorOptions<TProps>) => SvelteComponent<TProps, PopupCustomEvents<TResult>>;
@@ -120,14 +131,14 @@
 		});
 	}
 
-	function deleteProp(prop: json.JProperty) {
+	function deleteProp(prop: json.JProperty, selectNext?: boolean) {
 		const { parent, next, previous } = prop;
 		prop.remove();
 		if (parent && parent.first == null)
 			parent.owner.isExpanded = false;
 
 		const p  = (next ?? previous);
-		model.setSelected(p, false, true);
+		selectNext && p && model.setSelected(p, false, true);
 	}
 
 	async function renameProperty(obj: json.JObject, prop: json.JProperty<string>) {
@@ -172,7 +183,7 @@
 					builder
 						.item("Clear", () => clearProp(value))
 						.item("Edit", () => editProp(selected))
-						.item("Delete", () => deleteProp(selected));
+						.item("Delete", () => deleteProp(selected, true));
 
 					if (selected.parent?.is("object")) {
 						const { parent } = selected;
@@ -205,7 +216,7 @@
 				.item("Copy Key", () => copyKey(selected))
 				.item("Copy Value", () => copyValue(selected.value))
 				.item("Edit", () => editProp(selected))
-				.item("Delete", () => deleteProp(selected));
+				.item("Delete", () => deleteProp(selected, true));
 
 			if (selected.parent?.is("object")) {
 				const { parent } = selected;
@@ -219,15 +230,21 @@
 	function onKeyDown(e: KeyboardEvent) {
 		switch (e.code) {
 			case "Escape":
-				model.selected = null;
+				model.selected.clear();
 				e.preventDefault();
 				break;
 			case "Space":
-				model.selected?.toggleExpanded();
+				model.selected.forEach(v => v.toggleExpanded());
 				e.preventDefault();
 				break;
 			case "Delete":
-				model.selected && deleteProp(model.selected);
+				if (model.selected.size === 1) {
+					deleteProp(model.selected.last!, true)
+				} else {
+					model.selected.forEach(deleteProp);
+					model.selected.clear();
+				}
+
 				break;
 			case "KeyF":
 				if (e.ctrlKey) {
@@ -241,17 +258,17 @@
 					if (selection != null && selection.type !== "Caret")
 						break;
 
-					const value = model.selected?.value;
-					if (value != null) {
+					const values = model.selected;
+					if (values.size) {
 						e.preventDefault();
-						copyValue(value);
+						copyValues(values);
 					}
 				}
 				break;
 			case "ArrowDown":
 				if (!e.shiftKey) {
-					const selected = model.selected;
-					if (selected != null) {
+					const selected = model.selected.last;
+					if (selected) {
 						let v = selected.next;
 						if (v != null || (v = selected.parent?.first ?? null) != null)
 							model.setSelected(v, false, true);
@@ -264,7 +281,7 @@
 				break;
 			case "ArrowUp":
 				if (!e.shiftKey) {
-					const selected = model.selected;
+					const selected = model.selected.last;
 					if (selected != null) {
 						let v = selected.previous;
 						if (v != null || (v = selected.parent?.last ?? null) != null)
@@ -278,7 +295,7 @@
 				break;
 			case "ArrowRight": {
 				if (!e.shiftKey) {
-					const selected = model.selected;
+					const selected = model.selected.last;
 					if (selected && selected.value.is("container") && selected.value.first != null) {
 						selected.isExpanded = true;
 						model.setSelected(selected.value.first, false, true);
@@ -289,7 +306,7 @@
 			}
 			case "ArrowLeft": {
 				if (!e.shiftKey) {
-					const selected = model.selected;
+					const selected = model.selected.last;
 					if (selected && selected.parent)
 						model.setSelected(selected.parent.owner, true, true);
 

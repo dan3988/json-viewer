@@ -63,9 +63,12 @@ function run() {
 			return parts;
 		}
 
-		function pushHistory(v: json.JProperty) {
-			if (v != null && !popping)
-				history.pushState(v.path, "", "#" + encodePath(v.path));
+		function pushHistory(v: readonly json.JProperty[]) {
+			if (v.length && !popping) {
+				const paths = v.map(v => v.path);
+				const hash = paths.map(encodePath).join("|")
+				history.pushState(paths, "", "#" + hash);
+			}
 		}
 
 		async function loadAsync() {
@@ -95,20 +98,33 @@ function run() {
 			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}
 
+		function goTo(state: (number | string)[][]) {
+			const values: json.JProperty[] = [];
+			for (const path of state) {
+				const prop = model.resolve(path);
+				if (prop) {
+					prop.parentProperty && (prop.parentProperty.isExpanded = true);
+					values.push(prop);
+				}
+			}
+
+			model.selected.reset(...values);
+		}
+
 		let popping = false;
 		if (location.hash)
 			suppressPush(() => {
 				const path = location.hash.substring(1);
-				const decoded = decodePath(path);
-				model.select(decoded, true)
+				const decoded = path.split("|").map(decodePath);
+				goTo(decoded);
 			});
 		
 		window.addEventListener("popstate", function(ev) {
 			suppressPush(() => {
 				if (ev.state == null) {
-					model.selected = null;
+					model.selected.clear();
 				} else {
-					model.select(ev.state, true);
+					goTo(ev.state);
 				}
 			});
 		})
