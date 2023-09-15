@@ -98,15 +98,25 @@ function run() {
 			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}
 
+		function expandParents(p: json.JProperty) {
+			while (p.parentProperty) {
+				p.parentProperty.isExpanded = true;
+				p = p.parentProperty;
+			}
+		}
+
 		function goTo(state: (number | string)[][]) {
 			const values: json.JProperty[] = [];
+			let prop: undefined | json.JProperty;
 			for (const path of state) {
-				const prop = model.resolve(path);
+				prop = model.resolve(path);
 				if (prop) {
-					prop.parentProperty && (prop.parentProperty.isExpanded = true);
+					expandParents(prop);
 					values.push(prop);
 				}
 			}
+
+			prop && model.execute("scrollTo", prop);
 
 			model.selected.reset(...values);
 		}
