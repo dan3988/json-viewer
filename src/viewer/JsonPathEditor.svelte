@@ -16,7 +16,7 @@
 
 	export let model: ViewerModel;
 
-	$: ({ selected } = model.bag.readables);
+	$: ({ lastSelected: selected } = model.bag.readables);
 
 	let acWrapper: HTMLElement;
 	let acHelper: undefined | AutocompleteHelper;

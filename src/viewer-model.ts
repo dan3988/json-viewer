@@ -16,6 +16,7 @@ export interface SelectedPropertyList extends Iterable<json.JProperty> {
 
 interface ChangeProps {
 	selected: readonly json.JProperty[];
+	lastSelected: null | json.JProperty;
 	filterText: string;
 	filterFlags: json.JTokenFilterFlags;
 }
@@ -111,7 +112,7 @@ export class ViewerModel {
 
 	constructor(root: json.JProperty) {
 		this.#root = root;
-		this.#bag = new PropertyBag<ChangeProps>({ selected: [], filterFlags: json.JTokenFilterFlags.Both, filterText: "" });
+		this.#bag = new PropertyBag<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "" });
 		this.#command = new EventHandlers();
 		this.#selected = new Set();
 		this.#lastSelected = null;
@@ -205,14 +206,14 @@ export class ViewerModel {
 				if (!set.has(prop))
 					prop.isSelected = false;
 
-		let last: null | json.JProperty = null;
+		let lastSelected: null | json.JProperty = null;
 
 		for (const p of set)
-			(last = p).isSelected = true;
+			(lastSelected = p).isSelected = true;
 
 		this.#selected = set;
-		this.#lastSelected = last;
-		this.#bag.setValue("selected", [...set]);
+		this.#lastSelected = lastSelected;
+		this.#bag.setValues({ selected: [...set], lastSelected });
 	}
 
 	#selectedClear() {
@@ -224,27 +225,30 @@ export class ViewerModel {
 
 		this.#selected.clear();
 		this.#lastSelected = null;
-		this.#bag.setValue("selected", []);
+		this.#bag.setValues({ selected: [], lastSelected: null });
 		return true;
 	}
 
 	#selectedAdd(props: json.JProperty[]) {
 		let changed = 0;
 
-		const arr = [...this.#bag.getValue("selected")];
+		const selected = [...this.#bag.getValue("selected")];
+		let lastSelected = this.#lastSelected;
 		for (const prop of props) {
 			if (prop.isSelected)
 				continue;
 
 			this.#selected.add(prop);
-			this.#lastSelected = prop;
-			arr.push(prop);
+			selected.push(prop);
 			prop.isSelected = true;
 			changed++;
+			lastSelected = prop;
 		}
 
-		if (changed)
-			this.#bag.setValue("selected", arr);
+		if (changed) {
+			this.#lastSelected = lastSelected;
+			this.#bag.setValues({ selected, lastSelected });
+		}
 
 		return changed;
 	}
@@ -262,9 +266,10 @@ export class ViewerModel {
 		}
 
 		if (changed) {
-			const arr = [...this.#selected];
-			this.#lastSelected = arr.at(-1) ?? null;
-			this.#bag.setValue("selected", arr);
+			const selected = [...this.#selected];
+			const lastSelected = selected.at(-1) ?? null
+			this.#lastSelected = lastSelected;
+			this.#bag.setValues({ selected, lastSelected });
 		}
 
 		return changed;
