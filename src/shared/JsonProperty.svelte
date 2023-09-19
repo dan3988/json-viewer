@@ -117,6 +117,7 @@
 	import type json from "../json.js";
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import { onDestroy } from "svelte";
+    import { writable } from "svelte/store";
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
@@ -124,7 +125,13 @@
 	export let maxIndentClass: number;
 
 	$: ({ isExpanded, isHidden, isSelected } = prop.bag.readables);
+
+	const isPreviousSelected = writable(false);
+	const isNextSelected = writable(false);
 	
+	prop.previous?.bag.readables.isSelected.subscribe(v => $isPreviousSelected = v);
+	prop.next?.bag.readables.isSelected.subscribe(v => $isNextSelected = v);
+
 	let props: json.JProperty[] = [];
 
 	function update() {
@@ -327,17 +334,29 @@
 		display: grid;
 		grid-template-columns: 1em auto auto auto 1fr;
 		grid-template-rows: auto auto auto;
+		border-width: var(--bs-border-width);
+		border-color: transparent;
+		border-style: solid;
 
 		&[hidden] {
 			display: none !important;
 		}
 
-		&:not(.selected) {
-			border-color: transparent !important;
-		}
-
 		&.selected {
 			background-color: rgba(var(--bs-secondary-bg-rgb), 0.5);
+			border-color: transparent var(--bs-border-color);
+		}
+
+		&.selected-first {
+			border-top-left-radius: var(--bs-border-radius);
+			border-top-right-radius: var(--bs-border-radius);
+			border-top-color: var(--bs-border-color);
+		}
+
+		&.selected-last {
+			border-bottom-left-radius: var(--bs-border-radius);
+			border-bottom-right-radius: var(--bs-border-radius);
+			border-bottom-color: var(--bs-border-color);
 		}
 
 		&.for-container {
@@ -474,9 +493,11 @@
 <div
 	hidden={$isHidden}
 	data-indent={indent % maxIndentClass}
-	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype} json-indent"
+	class="json-prop for-{prop.value.type} for-{prop.value.subtype} json-indent"
 	class:expanded={$isExpanded}
-	class:selected={$isSelected}>
+	class:selected={$isSelected}
+	class:selected-first={$isSelected && !$isPreviousSelected}
+	class:selected-last={$isSelected && !$isNextSelected}>
 	<span bind:this={keyElement} class="json-key" on:mousedown|preventDefault on:click={onClick} on:contextmenu={onContextMenu} use:renderKey={prop.key}/>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
