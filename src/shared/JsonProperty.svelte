@@ -473,7 +473,7 @@
 	class="json-prop border rounded for-{prop.value.type} for-{prop.value.subtype} json-indent"
 	class:expanded={$isExpanded}
 	class:selected={$isSelected}>
-	<span bind:this={keyElement} class="json-key" on:click={onClick} on:contextmenu|preventDefault={onContextMenu} use:renderKey={prop.key}/>
+	<span bind:this={keyElement} class="json-key" on:mousedown|preventDefault on:click={onClick} on:contextmenu|preventDefault={onContextMenu} use:renderKey={prop.key}/>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
