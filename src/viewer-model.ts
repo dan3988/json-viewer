@@ -1,3 +1,4 @@
+import { EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
 import json from "./json.js"
 import { PropertyBag } from "./prop.js";
@@ -85,6 +86,7 @@ export class ViewerModel {
 	#selected: Set<json.JProperty>;
 	#lastSelected: null | json.JProperty;
 	readonly #selectedList: SelectedPropertyList;
+	readonly #edits: EditStack;
 
 	get root() {
 		return this.#root;
@@ -110,6 +112,10 @@ export class ViewerModel {
 		return this.#bag.getValue("filterFlags");
 	}
 
+	get edits() {
+		return this.#edits;
+	}
+
 	constructor(root: json.JProperty) {
 		this.#root = root;
 		this.#bag = new PropertyBag<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "" });
@@ -117,6 +123,7 @@ export class ViewerModel {
 		this.#selected = new Set();
 		this.#lastSelected = null;
 		this.#selectedList = new ViewerModel.#SelectedList(this);
+		this.#edits = new EditStack();
 	}
 
 	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {

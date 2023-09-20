@@ -14,6 +14,8 @@
 		jpath.focus();
 	}
 
+	const { canUndo, canRedo } = model.edits.bag.readables;
+
 	let filterInput: HTMLInputElement;
 	let filter = "";
 	let filterMode = json.JTokenFilterFlags.Both;
@@ -142,7 +144,7 @@
 	.root {
 		display: grid;
 		overflow: auto;
-		grid-template-rows: auto auto auto auto 1fr;
+		grid-template-rows: repeat(4, auto) 1fr;
 		grid-template-columns: 6rem 1fr 2rem 6rem;
 		grid-row-gap: $pad-med;
 		align-items: stretch;
@@ -163,8 +165,10 @@
 {#if model}
 <div class="root">
 	<div class="btn-group">
-		<button type="button" class="flex-fill btn btn-cust-light" on:click={() => setExpanded(true)}>Expand All</button>
-		<button type="button" class="flex-fill btn btn-cust-light" on:click={() => setExpanded(false)}>Collapse All</button>
+		<button type="button" class="flex-fill0 btn btn-cust-light" on:click={() => setExpanded(true)}>Expand All</button>
+		<button type="button" class="flex-fill0 btn btn-cust-light" on:click={() => setExpanded(false)}>Collapse All</button>
+		<button type="button" class="flex-fill0 btn btn-cust-light" disabled={!$canUndo} on:click={() => model.edits.undo()}>Undo</button>
+		<button type="button" class="flex-fill0 btn btn-cust-light" disabled={!$canRedo} on:click={() => model.edits.redo()}>Redo</button>
 	</div>
 	<div class="input-group field">
 		<span class="input-group-text">Filter</span>
