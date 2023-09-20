@@ -7,8 +7,8 @@ export interface EditStackProps {
 }
 
 export interface EditAction {
-	push(): void;
-	pop(): void;
+	commit(): void;
+	undo(): void;
 }
 
 export class EditStack implements EditStackProps {
@@ -44,7 +44,7 @@ export class EditStack implements EditStackProps {
 			return false;
 
 		this.#count = --count;
-		this.#actions[count].pop();
+		this.#actions[count].undo();
 		this.#bag.setValues({ count, canUndo: !!count, canRedo: true });
 		return true;
 	}
@@ -54,7 +54,7 @@ export class EditStack implements EditStackProps {
 		if (count >= this.#actions.length)
 			return false;
 
-		this.#actions[count++].push();
+		this.#actions[count++].commit();
 		this.#count = count;
 		this.#bag.setValues({ count, canUndo: true, canRedo: count < this.#actions.length });
 		return true;
@@ -65,7 +65,7 @@ export class EditStack implements EditStackProps {
 		this.#actions.splice(count, Infinity, action);
 		this.#count = ++count;
 		this.#bag.setValues({ count, canUndo: true, canRedo: false });
-		action.push();
+		action.commit();
 		return count;
 	}
 }

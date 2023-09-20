@@ -146,10 +146,10 @@
 		if (result) {
 			const oldName = prop.key;
 			model.edits.push({
-				push() {
+				commit() {
 					obj.rename(oldName, result);
 				},
-				pop() {
+				undo() {
 					obj.rename(result, oldName);
 				}
 			})
