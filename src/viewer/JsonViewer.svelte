@@ -144,7 +144,16 @@
 	async function renameProperty(obj: json.JObject, prop: json.JProperty<string>) {
 		const result = await promptText(prop.key, "Property Name", { width: 33.33 });
 		if (result) {
-			obj.rename(prop.key, result);
+			const oldName = prop.key;
+			model.edits.push({
+				push() {
+					obj.rename(oldName, result);
+				},
+				pop() {
+					obj.rename(result, oldName);
+				}
+			})
+
 			model.execute("scrollTo", prop);
 		}
 	}
