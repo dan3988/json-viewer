@@ -23,7 +23,7 @@ function run() {
 
 		const doc =  lib.parse(pre.innerText);
 		setGlobal("json", doc);
-		pre.remove();
+		document.body.innerHTML = "";
 
 		const root = json(doc);
 		const model = new ViewerModel(root);

@@ -1,5 +1,5 @@
 (() => {
-	const pre = document.querySelector("body > pre:first-child:last-child")
+	const pre = document.querySelector("body > pre")
 	if (!pre) 
 		return;
 
