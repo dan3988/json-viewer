@@ -10,6 +10,7 @@
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import type { PopupCustomEvents } from "../types";
 	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
+	import type { EditAction } from "../edit-stack";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
@@ -17,7 +18,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import json from "../json.js";
 	import PopupInputText from "../shared/PopupInputText.svelte";
-	import { fade } from "svelte/transition";
+	import Linq from "@daniel.pickett/linq-js";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -131,14 +132,49 @@
 		});
 	}
 
+	function createDeleteAction(prop: json.JProperty): EditAction {
+		const { parent } = prop;
+		let undo: Action;
+		if (parent!.is("object")) {
+			const p = prop as json.JProperty<string>;
+			const obj = parent;
+			if (p.previous !== null) {
+				const prev = p.previous;
+				undo = () => obj.insertAfter(p, prev);
+			} else if (p.next !== null) {
+				const next = p.next;
+				undo = () => obj.insertBefore(p, next);
+			} else {
+				undo = () => obj.addProperty(p);
+			}
+		} else {
+			undo = () => (parent as json.JContainer).addProperty(prop);
+		}
+
+		return {
+			undo,
+			commit() {
+				prop.remove();
+			}
+		};
+	}
+
 	function deleteProp(prop: json.JProperty, selectNext?: boolean) {
 		const { parent, next, previous } = prop;
-		prop.remove();
+		if (parent == null)
+			return;
+		
+		const action = createDeleteAction(prop);
+		model.edits.push(action);
 		if (parent && parent.first == null)
 			parent.owner.isExpanded = false;
 
 		const p  = (next ?? previous);
 		selectNext && p && model.setSelected(p, false, true);
+	}
+
+	function deleteProps(props: Iterable<json.JProperty>) {
+		model.edits.push(...Linq(props).select(createDeleteAction));
 	}
 
 	async function renameProperty(obj: json.JObject, prop: json.JProperty<string>) {
@@ -250,7 +286,7 @@
 				if (model.selected.size === 1) {
 					deleteProp(model.selected.last!, true)
 				} else {
-					model.selected.forEach(deleteProp);
+					deleteProps(model.selected);
 					model.selected.clear();
 				}
 
@@ -273,6 +309,16 @@
 						copyValues(values);
 					}
 				}
+				break;
+			case "KeyZ":
+				if (e.ctrlKey && model.edits[e.shiftKey ? "redo" : "undo"]())
+					e.preventDefault();
+
+				break;
+			case "KeyY":
+				if (e.ctrlKey && model.edits.redo())
+					e.preventDefault();
+
 				break;
 			case "ArrowDown":
 				if (!e.shiftKey) {

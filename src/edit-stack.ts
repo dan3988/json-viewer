@@ -13,7 +13,7 @@ export interface EditAction {
 
 export class EditStack implements EditStackProps {
 	readonly #bag: PropertyBag<EditStackProps>;
-	readonly #actions: EditAction[];
+	readonly #actions: EditAction[][];
 	#count: number;
 
 	get count() {
@@ -44,7 +44,7 @@ export class EditStack implements EditStackProps {
 			return false;
 
 		this.#count = --count;
-		this.#actions[count].undo();
+		this.#actions[count].forEach(v => v.undo());
 		this.#bag.setValues({ count, canUndo: !!count, canRedo: true });
 		return true;
 	}
@@ -54,18 +54,18 @@ export class EditStack implements EditStackProps {
 		if (count >= this.#actions.length)
 			return false;
 
-		this.#actions[count++].commit();
+		this.#actions[count++].forEach(v => v.commit());
 		this.#count = count;
 		this.#bag.setValues({ count, canUndo: true, canRedo: count < this.#actions.length });
 		return true;
 	}
 
-	push(action: EditAction): number {
+	push(...actions: EditAction[]): number {
 		let count = this.#count;
-		this.#actions.splice(count, Infinity, action);
+		this.#actions.splice(count, Infinity, actions);
 		this.#count = ++count;
 		this.#bag.setValues({ count, canUndo: true, canRedo: false });
-		action.commit();
+		actions.forEach(v => v.commit());
 		return count;
 	}
 }
