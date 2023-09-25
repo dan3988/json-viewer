@@ -57,6 +57,8 @@ enum JTokenFilterFlags {
 	Both = Keys | Values
 }
 
+let getController: <K extends Key>(prop: json.JProperty<K>) => JPropertyController<K>;
+
 const unproxy = Symbol("unproxy");
 
 export declare namespace json {
@@ -175,6 +177,8 @@ export declare namespace json {
 		readonly count: number;
 		readonly changed: IEvent<this, ChildrenChangedArgs>;
 
+		addProperty(property: JProperty<TKey>): undefined | JProperty<TKey>;
+
 		getProperty(key: Key): undefined | JProperty<TKey>;
 		remove(key: Key): undefined | JProperty<TKey>;
 		clear(): boolean;
@@ -191,6 +195,9 @@ export declare namespace json {
 	export interface JObject<T = any> extends JContainer<string, Readonly<Dict<T>>> {
 		readonly subtype: "object";
 
+		insertAfter(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
+		insertBefore(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
+		addProperty(property: JProperty<string>, previous?: null | JProperty<string>): undefined | JProperty<string>;
 		add<K extends keyof JContainerAddMap>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
 		sort(reverse?: boolean): void;
 		rename(key: string, newName: string): undefined | JProperty<string>;
@@ -275,7 +282,7 @@ class JIterator<TKey extends Key, TResult> implements Iterable<TResult>, Iterato
 	}
 }
 
-/** properties that should not be exposed outside this file */
+/** properties and methods for JPropeties that should not be exposed outside this file */
 interface JPropertyController<TKey extends Key = Key, TValue extends JToken = JToken> {
 	readonly prop: JProperty<TKey, TValue>;
 	readonly value: TValue;
@@ -345,6 +352,14 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		clone(): any {
 			return this.#prop.clone().#controller;
 		}
+	}
+
+	static {
+		getController = this.#getController;
+	}
+
+	static #getController<K extends Key>(p: json.JProperty<K>) {
+		return (p as JProperty<K>).#controller;
 	}
 
 	static create<TKey extends Key = Key, TValue extends JToken = JToken>(key: TKey, value: JsonClass<TValue> | TValue) {
@@ -725,6 +740,8 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		this.#changed = new EventHandlers();
 	}
 
+	abstract addProperty(property: json.JProperty<TKey>): undefined | JProperty<TKey>;
+
 	abstract getProperty(key: Key): undefined | JProperty<TKey>;
 	abstract clear(): boolean;
 	abstract remove(key: Key): undefined | JProperty<TKey>;
@@ -999,20 +1016,133 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			this.#changed.fire(this, "reset");
 		}
 
-		add<K extends keyof json.JContainerAddMap>(key: string, type: K): JProperty<string, InternalJContainerAddMap[K]>
-		add(key: string, type: keyof json.JContainerAddMap): JProperty<string> {
+		#addImpl(cont: JPropertyController<string>) {
 			const props = this.#props;
-			const old = props.get(key);
-			const clazz = resolveClass(type);
-			const cont = JProperty.create(key, clazz);
-	
+			const old = props.get(cont.key);
 			if (old) {
 				this.#replaced(old, cont);
 			} else {
 				this.#insertAfter(cont);
 			}
-	
-			props.set(key, cont);
+
+			props.set(cont.key, cont);
+			return old;
+		}
+
+		insertBefore(property: json.JProperty<string>, sibling: json.JProperty<string>) {
+			if (sibling === property)
+				throw new TypeError("Property cannot be a sibling of itself.");
+
+			if (sibling.parent !== this)
+				throw new TypeError("Sibling poperty must be a child of this object.");
+
+			if (property.parent != null)
+				property = property.clone();
+
+			const cont = getController(property);
+			const siblingController = getController(sibling);
+
+			const old = this.#props.get(cont.key);
+			if (old) {
+				const { previous, next } = old;
+				old.removed();
+				if (previous) {
+					previous.next = next;
+				} else {
+					this.#first = next;
+				}
+
+				if (next) {
+					next.previous = previous;
+				} else {
+					this.#last = previous;
+				}
+			}
+
+			if (siblingController.previous === null) {
+				this.#first = cont;
+			} else {
+				cont.previous = siblingController.previous;
+				siblingController.previous.next = cont;
+				siblingController.previous = cont;
+			}
+
+			cont.next = siblingController;
+			cont.next.previous = cont;
+			cont.parent = this;
+			this.#props.set(cont.key, cont);
+
+			if (old) {
+				this.#changed.fire(this, "replaced", old.prop, cont.prop);
+			} else {
+				this.#changed.fire(this, "added", cont.prop);
+			}
+		}
+
+		insertAfter(property: json.JProperty<string>, sibling: json.JProperty<string>) {
+			if (sibling === property)
+				throw new TypeError("Property cannot be a sibling of itself.");
+
+			if (sibling.parent !== this)
+				throw new TypeError("Sibling poperty must be a child of this object.");
+
+			if (property.parent != null)
+				property = property.clone();
+
+			const cont = getController(property);
+			const siblingController = getController(sibling);
+
+			const old = this.#props.get(cont.key);
+			if (old) {
+				const { previous, next } = old;
+				old.removed();
+				if (previous) {
+					previous.next = next;
+				} else {
+					this.#first = next;
+				}
+
+				if (next) {
+					next.previous = previous;
+				} else {
+					this.#last = previous;
+				}
+			}
+
+			if (siblingController.next === null) {
+				this.#last = cont;
+			} else {
+				cont.next = siblingController.next;
+				siblingController.next.previous = cont;
+				siblingController.next = cont;
+			}
+
+			cont.previous = siblingController;
+			cont.previous.next = cont;
+			cont.parent = this;
+			this.#props.set(cont.key, cont);
+
+			if (old) {
+				this.#changed.fire(this, "replaced", old.prop, cont.prop);
+			} else {
+				this.#changed.fire(this, "added", cont.prop);
+			}
+		}
+
+		addProperty(property: json.JProperty<string>): undefined | JProperty<string> {
+			if (property.parent != null)
+				property = property.clone();
+
+			const cont = getController(property);
+			const old = this.#addImpl(cont);
+			return old?.prop;
+		}
+
+		add<K extends keyof json.JContainerAddMap>(key: string, type: K): JProperty<string, InternalJContainerAddMap[K]>
+		add(key: string, type: keyof json.JContainerAddMap): JProperty<string> {
+			const clazz = resolveClass(type);
+			const cont = JProperty.create(key, clazz);
+			this.#addImpl(cont);
 			return cont.prop;
 		}
 
@@ -1134,6 +1264,65 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			const c = typeof key === "number" && this.#items.at(key);
 			return c ? c.prop : undefined;
 		}
+
+		addProperty(property: json.JProperty<number>): undefined | JProperty<number> {
+			const index = property.key;
+			if (!Number.isInteger(index) || index < 0)
+				throw new TypeError("Property key must be a non-negative integer");
+
+			const cont = getController(property);
+			const items = this.#items;
+			if (index == items.length) {
+				items.push(cont);
+				this.#insertAfter(cont);
+			} else if (index < items.length) {
+				const old = items[index];
+				items[index] = cont;
+				this.#replaced(old, cont);
+				return old.prop;
+			} else {
+				this.#addWithGap(cont);
+			}
+		}
+
+		/**
+		 * Append a property and add null properties between the last property in this array and the index of the given property
+		 */
+		#addWithGap(end: JPropertyController<number>) {
+			const items = this.#items;
+			const range: JProperty<number>[] = [];
+			let last = this.#last;
+
+			for (let i = items.length; i < end.key; i++) {
+				const c = JProperty.create(i, JValue);
+				if (last) {
+					last.next = c;
+					c.previous = last;
+				} else {
+					this.#first = c;
+				}
+
+				items.push(c);
+				range.push(c.prop);
+				last = c;
+				last.parent = this;
+			}
+
+			end.previous = last;
+			if (last) {
+				last.next = end;
+				end.previous = last;
+			} else {
+				end.previous = null;
+			}
+
+			end.next = null;
+			end.parent = this;
+			items.push(end); 
+			range.push(end.prop);
+			this.#last = end;
+			this.#changed.fire(this, "addedRange", range);
+		}
 	
 		add<K extends keyof json.JContainerAddMap>(type: K, index?: number | undefined): JProperty<number, InternalJContainerAddMap[K]>
 		add(type: keyof json.JContainerAddMap, index?: number | undefined): JProperty<number> {
@@ -1163,27 +1352,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 						this.#insertAfter(next);
 					}
 				} else {
-					const range: JProperty<number>[] = [];
-					let last = this.#last;
-	
-					for (let i = items.length; i < index; i++) {
-						const c = JProperty.create(i, JValue);
-						if (last) {
-							last.next = c;
-							c.previous = last;
-						} else {
-							this.#first = c;
-						}
-	
-						items.push(c);
-						range.push(c.prop);
-						last = c;
-						last.parent = this;
-					}
-					
-					range.push(cont.prop);
-					this.#last = cont;
-					this.#changed.fire(this, "addedRange", range);
+					this.#addWithGap(cont);
 				}
 			}
 	

@@ -45,6 +45,108 @@ describe("JObject", () => {
 		});
 	});
 
+	describe("insertBefore", () => {
+		let obj: json.JObject;
+
+		beforeEach(() => {
+			const object = { a: 1, b: 2, c: 3 };
+			const root = json(object);
+	
+			obj = root.value;
+		});
+
+		it("Should insert before the first property", () => {
+			const sibling = obj.getProperty("a");
+			const prop = json("value", "new");
+
+			obj.insertBefore(prop, sibling);
+
+			s.validateLinks(obj);
+			expect(sibling.previous).to.be.eq(prop);
+			expect(prop.next).to.be.eq(sibling);
+			expect(obj.first).to.eq(prop);
+			expect(obj.getProperty("new")).to.be.eq(prop);
+			expect([...obj.keys()]).to.be.deep.eq(["new", "a", "b", "c"]);
+		});
+
+		it("Should insert before the second property", () => {
+			const sibling = obj.getProperty("b");
+			const prop = json("value", "new");
+
+			obj.insertBefore(prop, sibling);
+
+			s.validateLinks(obj);
+			expect(sibling.previous).to.be.eq(prop);
+			expect(prop.next).to.be.eq(sibling);
+			expect(obj.getProperty("new")).to.be.eq(prop);
+			expect([...obj.keys()]).to.be.deep.eq(["a", "new", "b", "c"]);
+		});
+
+		it("Should insert before the last property", () => {
+			const sibling = obj.getProperty("c");
+			const prop = json("value", "new");
+
+			obj.insertBefore(prop, sibling);
+
+			s.validateLinks(obj);
+			expect(sibling.previous).to.be.eq(prop);
+			expect(prop.next).to.be.eq(sibling);
+			expect(obj.getProperty("new")).to.be.eq(prop);
+			expect([...obj.keys()]).to.be.deep.eq(["a", "b", "new", "c"]);
+		});
+	})
+
+	describe("insertAfter", () => {
+		let obj: json.JObject;
+
+		beforeEach(() => {
+			const object = { a: 1, b: 2, c: 3 };
+			const root = json(object);
+	
+			obj = root.value;
+		});
+
+		it("Should insert after the first property", () => {
+			const sibling = obj.getProperty("a");
+			const prop = json("value", "new");
+
+			obj.insertAfter(prop, sibling);
+
+			s.validateLinks(obj);
+			expect(sibling.next).to.be.eq(prop);
+			expect(prop.previous).to.be.eq(sibling);
+			expect(obj.getProperty("new")).to.be.eq(prop);
+			expect([...obj.keys()]).to.be.deep.eq(["a", "new", "b", "c"]);
+		});
+
+		it("Should insert after the second property", () => {
+			const sibling = obj.getProperty("b");
+			const prop = json("value", "new");
+
+			obj.insertAfter(prop, sibling);
+
+			s.validateLinks(obj);
+			expect(sibling.next).to.be.eq(prop);
+			expect(prop.previous).to.be.eq(sibling);
+			expect(obj.getProperty("new")).to.be.eq(prop);
+			expect([...obj.keys()]).to.be.deep.eq(["a", "b", "new", "c"]);
+		});
+
+		it("Should insert after the last property", () => {
+			const sibling = obj.getProperty("c");
+			const prop = json("value", "new");
+
+			obj.insertAfter(prop, sibling);
+
+			s.validateLinks(obj);
+			expect(sibling.next).to.be.eq(prop);
+			expect(prop.previous).to.be.eq(sibling);
+			expect(obj.last).to.eq(prop);
+			expect(obj.getProperty("new")).to.be.eq(prop);
+			expect([...obj.keys()]).to.be.deep.eq(["a", "b", "c", "new"]);
+		});
+	})
+
 	describe("replace", () => {
 		const object = { a: 1, b: 2, c: 3 };
 

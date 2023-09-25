@@ -41,5 +41,18 @@ describe("JArray", () => {
 			it("Is the same as the value returned by add()", () => expect(v.owner).eq(jObject));
 			s.conversionTestCommon(v, json.JObject, "container", "object");
 		});
+
+		const gap = root.add("value", 10);
+
+		s.testLinks(root);
+		s.testProp(root, 10, v => {
+			it("Is the same as the value returned by add()", () => expect(v.owner).eq(gap));
+		});
+
+		it("Has added null values bewteen the last property and the added property", () => {
+			expect(root.count).to.be.eq(11);
+			for (let i = 3; i < 10; i++)
+				expect(root.get(i).toJSON()).to.be.eq(null);
+		});
 	});
 });
