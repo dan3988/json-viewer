@@ -275,13 +275,13 @@
 
 	function keyMappings(target: HTMLElement) {
 		const destroy = dom.keymap(target, {
-			escape(e) {
+			escape() {
 				model.selected.clear();
-				e.preventDefault();
+				return true;
 			},
-			space(e) {
+			space() {
 				model.selected.forEach(v => v.toggleExpanded());
-				e.preventDefault();
+				return true;
 			},
 			delete() {
 				if (model.selected.size === 1) {
@@ -293,8 +293,8 @@
 			},
 			keyF(e) {
 				if (e.ctrlKey) {
-					e.preventDefault();
 					menuC.focusSearch();
+					return true;
 				}
 			},
 			keyC(e) {
@@ -305,18 +305,16 @@
 
 					const values = model.selected;
 					if (values.size) {
-						e.preventDefault();
 						copyValues(values);
+						return true;
 					}
 				}
 			},
 			keyZ(e) {
-				if (e.ctrlKey && model.edits[e.shiftKey ? "redo" : "undo"]())
-					e.preventDefault();
+				return e.ctrlKey && model.edits[e.shiftKey ? "redo" : "undo"]();
 			},
 			keyY(e) {
-				if (e.ctrlKey && model.edits.redo())
-					e.preventDefault();
+				return e.ctrlKey && model.edits.redo();
 			},
 			arrowDown(e) {
 				if (!e.shiftKey) {
@@ -329,7 +327,7 @@
 						model.setSelected(model.root, false, true);
 					}
 
-					e.preventDefault();
+					return true;
 				}
 			},
 			arrowUp(e) {
@@ -343,7 +341,7 @@
 						model.setSelected(model.root, false, true);
 					}
 
-					e.preventDefault();
+					return true;
 				}
 			},
 			arrowRight(e) {
@@ -352,7 +350,7 @@
 					if (selected && selected.value.is("container") && selected.value.first != null) {
 						selected.isExpanded = true;
 						model.setSelected(selected.value.first, false, true);
-						e.preventDefault();
+						return true;
 					}
 				}
 			},
@@ -362,7 +360,7 @@
 					if (selected && selected.parent)
 						model.setSelected(selected.parent.owner, true, true);
 
-					e.preventDefault();
+					return true;
 				}
 			}
 		});
