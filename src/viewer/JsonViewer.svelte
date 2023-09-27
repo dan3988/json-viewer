@@ -19,6 +19,7 @@
 	import json from "../json.js";
 	import PopupInputText from "../shared/PopupInputText.svelte";
 	import Linq from "@daniel.pickett/linq-js";
+	import dom from "./dom-helper";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -272,36 +273,35 @@
 		contextMenu = [[x, y], builder.build()];
 	}
 
-	function onKeyDown(e: KeyboardEvent) {
-		switch (e.code) {
-			case "Escape":
+	function keyMappings(target: HTMLElement) {
+		const destroy = dom.keymap(target, {
+			escape(e) {
 				model.selected.clear();
 				e.preventDefault();
-				break;
-			case "Space":
+			},
+			space(e) {
 				model.selected.forEach(v => v.toggleExpanded());
 				e.preventDefault();
-				break;
-			case "Delete":
+			},
+			delete() {
 				if (model.selected.size === 1) {
 					deleteProp(model.selected.last!, true)
 				} else {
 					deleteProps(model.selected);
 					model.selected.clear();
 				}
-
-				break;
-			case "KeyF":
+			},
+			keyF(e) {
 				if (e.ctrlKey) {
 					e.preventDefault();
 					menuC.focusSearch();
 				}
-				break;
-			case "KeyC":
+			},
+			keyC(e) {
 				if (e.ctrlKey) {
 					const selection = window.getSelection();
 					if (selection != null && selection.type !== "Caret")
-						break;
+						return;
 
 					const values = model.selected;
 					if (values.size) {
@@ -309,18 +309,16 @@
 						copyValues(values);
 					}
 				}
-				break;
-			case "KeyZ":
+			},
+			keyZ(e) {
 				if (e.ctrlKey && model.edits[e.shiftKey ? "redo" : "undo"]())
 					e.preventDefault();
-
-				break;
-			case "KeyY":
+			},
+			keyY(e) {
 				if (e.ctrlKey && model.edits.redo())
 					e.preventDefault();
-
-				break;
-			case "ArrowDown":
+			},
+			arrowDown(e) {
 				if (!e.shiftKey) {
 					const selected = model.selected.last;
 					if (selected) {
@@ -333,8 +331,8 @@
 
 					e.preventDefault();
 				}
-				break;
-			case "ArrowUp":
+			},
+			arrowUp(e) {
 				if (!e.shiftKey) {
 					const selected = model.selected.last;
 					if (selected != null) {
@@ -347,8 +345,8 @@
 
 					e.preventDefault();
 				}
-				break;
-			case "ArrowRight": {
+			},
+			arrowRight(e) {
 				if (!e.shiftKey) {
 					const selected = model.selected.last;
 					if (selected && selected.value.is("container") && selected.value.first != null) {
@@ -357,9 +355,8 @@
 						e.preventDefault();
 					}
 				}
-				break;
-			}
-			case "ArrowLeft": {
+			},
+			arrowLeft(e) {
 				if (!e.shiftKey) {
 					const selected = model.selected.last;
 					if (selected && selected.parent)
@@ -367,9 +364,10 @@
 
 					e.preventDefault();
 				}
-				break;
 			}
-		}
+		});
+
+		return { destroy };
 	}
 
 	onMount(() => prop.focus());
@@ -578,7 +576,7 @@
 	{#if contextMenu}
 		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
 	{/if}
-	<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} on:keydown={onKeyDown}>
+	<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 		<div class="editor-bg h-100 w-100"></div>
 		<div class="prop-scroll overflow-scroll h-100 w-100">
 			<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>

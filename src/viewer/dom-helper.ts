@@ -1,3 +1,6 @@
+import type { KeyCode } from "../keyboard.d.ts";
+import { delegate } from "../util";
+
 interface CaretFinder {
 	start(node: Node): Node | null;
 	next(node: Node): Node | null;
@@ -99,6 +102,32 @@ export namespace dom {
 
 	export function isDescendant(self: Element, parent: Element) {
 		return isDescendantImpl(self, parent, "parentElement");
+	}
+
+	export type KeyMappingHandler<T> =(this: T, evt: KeyboardEvent) => void | boolean;
+
+	export type KeyMappingInit<T> = { [P in Uncapitalize<KeyCode>]?: KeyMappingHandler<T> };
+
+	export function keymap<T extends HTMLElement>(target: T, mapping: KeyMappingInit<T>): Action {
+		const ac = new AbortController();
+		const { signal } = ac;
+		const opts = { signal };
+		const map = new Map<string, KeyMappingHandler<T>>();
+
+		for (const [key, handler] of Object.entries(mapping)) {
+			const lw = key.toLowerCase();
+			map.set(lw, handler);
+		}
+
+		function handler(this: T, evt: KeyboardEvent) {
+			const key = evt.code;
+			const handler = map.get(key.toLowerCase());
+			if (handler && handler.call(this, evt))
+				evt.preventDefault();
+		}
+
+		target.addEventListener("keydown", handler, opts);
+		return delegate(ac, "abort");
 	}
 }
 
