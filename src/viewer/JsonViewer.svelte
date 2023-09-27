@@ -291,14 +291,14 @@
 					model.selected.clear();
 				}
 			},
-			keyF(e) {
-				if (e.ctrlKey) {
+			keyF: {
+				"ctrl"() {
 					menuC.focusSearch();
 					return true;
 				}
 			},
-			keyC(e) {
-				if (e.ctrlKey) {
+			keyC: {
+				"ctrl"() {
 					const selection = window.getSelection();
 					if (selection != null && selection.type !== "Caret")
 						return;
@@ -310,58 +310,51 @@
 					}
 				}
 			},
-			keyZ(e) {
-				return e.ctrlKey && model.edits[e.shiftKey ? "redo" : "undo"]();
+			keyZ: {
+				"ctrl": () => model.edits.undo(),
+				"ctrl|shift": () => model.edits.redo()
 			},
-			keyY(e) {
-				return e.ctrlKey && model.edits.redo();
+			keyY: {
+				"ctrl": () => model.edits.redo()
 			},
-			arrowDown(e) {
-				if (!e.shiftKey) {
-					const selected = model.selected.last;
-					if (selected) {
-						let v = selected.next;
-						if (v != null || (v = selected.parent?.first ?? null) != null)
-							model.setSelected(v, false, true);
-					} else {
-						model.setSelected(model.root, false, true);
-					}
+			arrowDown() {
+				const selected = model.selected.last;
+				if (selected) {
+					let v = selected.next;
+					if (v != null || (v = selected.parent?.first ?? null) != null)
+						model.setSelected(v, false, true);
+				} else {
+					model.setSelected(model.root, false, true);
+				}
 
+				return true;
+			},
+			arrowUp() {
+				const selected = model.selected.last;
+				if (selected != null) {
+					let v = selected.previous;
+					if (v != null || (v = selected.parent?.last ?? null) != null)
+						model.setSelected(v, false, true);
+				} else {
+					model.setSelected(model.root, false, true);
+				}
+
+				return true;
+			},
+			arrowRight() {
+				const selected = model.selected.last;
+				if (selected && selected.value.is("container") && selected.value.first != null) {
+					selected.isExpanded = true;
+					model.setSelected(selected.value.first, false, true);
 					return true;
 				}
 			},
-			arrowUp(e) {
-				if (!e.shiftKey) {
-					const selected = model.selected.last;
-					if (selected != null) {
-						let v = selected.previous;
-						if (v != null || (v = selected.parent?.last ?? null) != null)
-							model.setSelected(v, false, true);
-					} else {
-						model.setSelected(model.root, false, true);
-					}
+			arrowLeft() {
+				const selected = model.selected.last;
+				if (selected && selected.parent)
+					model.setSelected(selected.parent.owner, true, true);
 
-					return true;
-				}
-			},
-			arrowRight(e) {
-				if (!e.shiftKey) {
-					const selected = model.selected.last;
-					if (selected && selected.value.is("container") && selected.value.first != null) {
-						selected.isExpanded = true;
-						model.setSelected(selected.value.first, false, true);
-						return true;
-					}
-				}
-			},
-			arrowLeft(e) {
-				if (!e.shiftKey) {
-					const selected = model.selected.last;
-					if (selected && selected.parent)
-						model.setSelected(selected.parent.owner, true, true);
-
-					return true;
-				}
+				return true;
 			}
 		});
 
