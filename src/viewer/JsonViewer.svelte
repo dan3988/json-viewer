@@ -104,8 +104,19 @@
 	}
 
 	function clearProp(value: json.JContainer) {
-		value.clear();
-		value.owner.isExpanded = false;
+		const props = [...value];
+		model.edits.push({
+			commit() {
+				value.clear();
+				value.owner.isExpanded = false;
+			},
+			undo() {
+				for (const prop of props)
+					value.addProperty(prop);
+
+				value.owner.isExpanded = true;
+			}
+		})
 	}
 
 	function editProp(prop: json.JProperty) {
