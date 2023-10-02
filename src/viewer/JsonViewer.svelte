@@ -198,16 +198,35 @@
 	async function addToObject(obj: json.JObject, mode: keyof json.JContainerAddMap) {
 		const key = await promptText("", "Property Name");
 		if (key) {
-			const prop = obj.add(key, mode);
-			obj.owner.isExpanded = true;
-			model.setSelected(prop, false, true);
+			model.edits.push({
+				commit() {
+					const prop = obj.add(key, mode);
+					obj.owner.isExpanded = true;
+					model.setSelected(prop, false, true);
+				},
+				undo() {
+					const prop = obj.remove(key);
+					if (prop?.isSelected)
+						model.selected.remove(prop);
+				},
+			});
 		}
 	}
 
 	async function addToArray(arr: json.JArray, mode: keyof json.JContainerAddMap) {
-		const prop = arr.add(mode);
-		arr.owner.isExpanded = true;
-		model.setSelected(prop, false, true);
+		const index = arr.count;
+		model.edits.push({
+			commit() {
+				const prop = arr.add(mode);
+				arr.owner.isExpanded = true;
+				model.setSelected(prop, false, true);
+			},
+			undo() {
+				const prop = arr.remove(index);
+				if (prop?.isSelected)
+					model.selected.remove(prop);
+			},
+		});
 	}
 
 	function openContextMenu(selected: json.JProperty, x: number, y: number) {
