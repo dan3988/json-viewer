@@ -128,7 +128,11 @@
 			}
 
 			const newProp = json(parsed);
-			prop.replace(newProp.value);
+			model.edits.push({
+				commit: () => prop.replace(newProp.value),
+				undo: () => newProp.replace(prop.value)
+			});
+
 			return true;
 		});
 	}
