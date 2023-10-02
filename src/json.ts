@@ -490,7 +490,7 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 
 				cur = last;
 			} else {
-				r.value.isExpanded = expanded;
+				r.value.isExpanded = expanded && r.value.value.count > 0;
 				const it = r.value.value[Symbol.iterator]();
 				stack.push(it);
 			}
@@ -562,6 +562,7 @@ abstract class JToken<T = any> implements json.JToken<T> {
 		return this.#owner ? this.#owner.pointer : "/";
 	}
 
+	abstract get count(): number;
 	abstract get type(): keyof json.JTokenTypeMap;
 	abstract get subtype(): keyof json.JTokenSubTypeMap;
 	abstract get proxy(): T;
@@ -605,6 +606,10 @@ abstract class JToken<T = any> implements json.JToken<T> {
 class JValue extends JToken implements json.JValue {
 	#value: json.JValueType;
 	#subtype: "string" | "number" | "boolean" | "null";
+
+	get count() {
+		return 0;
+	}
 
 	get type() {
 		return "value" as const;
@@ -731,7 +736,6 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 	}
 
 	abstract get subtype(): "array" | "object";
-	abstract get count(): number;
 
 	constructor(owner?: JProperty) {
 		super(owner);
