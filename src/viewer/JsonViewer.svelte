@@ -102,6 +102,34 @@
 		}
 	}
 
+	function getFileName(pathName: string) {
+		const i = pathName.lastIndexOf("/");
+		return pathName.slice(i + 1);
+	}
+
+	async function saveAs() {
+		const suggestedName = getFileName(window.location.pathname);
+		const types = [
+			{
+				description: "JSON file",
+				accept: {
+					"application/json": ".json"
+				}
+			}
+		];
+		
+		const result = await showSaveFilePicker({ suggestedName, types });
+		if (result) {
+			const data = model.root.value.toString(indent);
+			const w = await result.createWritable();
+			try {
+				await w.write(data);
+			} finally {
+				await w.close();
+			}
+		}
+	}
+
 	function clearProp(value: json.JContainer) {
 		edits.clearProp(model, value);
 	}
@@ -309,6 +337,12 @@
 		},
 		keyY: {
 			"ctrl": () => model.edits.redo()
+		},
+		keyS: {
+			"ctrl": () => {
+				saveAs();
+				return true;
+			}
 		}
 	});
 
