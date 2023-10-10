@@ -124,7 +124,7 @@ The build script uses the following files:
 The build will output the extension to `./out/<browser>`.
 
 ## TODO
-- [ ] Undo / redo edits
+- [x] Undo / redo edits
 - [x] Allow multiple properties to be selected
 - [x] Support `?.` chain expressions in JPath evaluator
 - [x] Support special characters in the json path editor
