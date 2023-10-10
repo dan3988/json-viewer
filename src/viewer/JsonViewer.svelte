@@ -258,13 +258,6 @@
 					}
 				}
 			},
-			keyZ: {
-				"ctrl": () => model.edits.undo(),
-				"ctrl|shift": () => model.edits.redo()
-			},
-			keyY: {
-				"ctrl": () => model.edits.redo()
-			},
 			arrowDown() {
 				const selected = model.selected.last;
 				if (selected) {
@@ -309,6 +302,17 @@
 		return { destroy };
 	}
 
+	const windowMappingUnsub = dom.keymap(window, {
+		keyZ: {
+			"ctrl": () => model.edits.undo(),
+			"ctrl|shift": () => model.edits.redo()
+		},
+		keyY: {
+			"ctrl": () => model.edits.redo()
+		}
+	});
+
+	onDestroy(windowMappingUnsub);
 	onMount(() => prop.focus());
 
 	function resizeBegin(startPos: number, startSize: number, evtProp: "x" | "y", styleProp: string, direction: number = 1) {

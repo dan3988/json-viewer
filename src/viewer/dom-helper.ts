@@ -176,7 +176,7 @@ export namespace dom {
 
 	export type KeyMofifierText = "none" | FlagsAsString<["ctrl", "shift", "alt", "meta"]>;
 
-	export function keymap<T extends HTMLElement>(target: T, mapping: KeyMappingInit<T>): Action {
+	export function keymap<T extends ExtendedEventTarget<GlobalEventHandlersEventMap>>(target: T, mapping: KeyMappingInit<T>): Action {
 		const ac = new AbortController();
 		const { signal } = ac;
 		const opts = { signal };
