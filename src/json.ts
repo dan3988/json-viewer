@@ -201,6 +201,7 @@ export declare namespace json {
 		add<K extends keyof JContainerAddMap>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
 		sort(reverse?: boolean): void;
 		rename(key: string, newName: string): undefined | JProperty<string>;
+		reset(values: JProperty<string>[]): void;
 	}
 }
 
@@ -1175,6 +1176,39 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			this.#last = null;
 			this.#changed.fire(this, "removedRange", removed);
 			return true;
+		}
+
+		reset(properties: json.JProperty<string>[]): void {
+			if (properties.length == 0)
+				return void this.clear();
+
+			const items = this.#props;
+			for (const item of items.values())
+				item.removed();
+
+			items.clear();
+
+			let last: null | JPropertyController<string> = null;
+
+			for (const prop of properties) {
+				let cont = getController(prop);
+				if (cont.parent != null)
+					cont = cont.clone();
+
+				if (last) {
+					cont.previous = last;
+					cont.previous.next = cont;
+				} else {
+					this.#first = cont;
+				}
+
+				last = cont;
+				last.parent = this;
+				items.set(last.key, last);
+			}
+
+			this.#last = last;
+			this.#changed.fire(this, "reset");
 		}
 
 		rename(key: string, newName: string): json.JProperty<string> | undefined {

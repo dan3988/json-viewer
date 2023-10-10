@@ -204,10 +204,22 @@
 				undo() {
 					obj.rename(result, oldName);
 				}
-			})
+			});
 
 			model.execute("scrollTo", prop);
 		}
+	}
+
+	function sortObject(obj: json.JObject, desc?: boolean) {
+		const old = [...obj];
+		model.edits.push({
+			commit() {
+				obj.sort(desc);
+			},
+			undo() {
+				obj.reset(old);
+			}
+		});
 	}
 
 	async function addToObject(obj: json.JObject, mode: keyof json.JContainerAddMap) {
@@ -272,8 +284,8 @@
 
 					if (value.is("object")) {
 						builder.menu("Sort")
-							.item("A-Z", () => value.sort())
-							.item("Z-A", () => value.sort(true));
+							.item("A-Z", () => sortObject(value))
+							.item("Z-A", () => sortObject(value, true));
 
 						builder.menu("Add")
 							.item("Object", () => addToObject(value, "object"))
