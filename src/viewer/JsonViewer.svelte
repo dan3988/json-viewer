@@ -18,7 +18,7 @@
 	import json from "../json.js";
 	import PopupInputText from "../shared/PopupInputText.svelte";
 	import dom from "./dom-helper";
-    import edits from "./editor-helper";
+	import edits from "./editor-helper";
 
 	export let model: ViewerModel;
 	export let indent: string;

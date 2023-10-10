@@ -3,7 +3,6 @@ import type json from "../json";
 import type ViewerModel from "../viewer-model";
 import Linq from "@daniel.pickett/linq-js";
 
-export default edits;
 export namespace edits {
 	export function clearProp(model: ViewerModel, value: json.JContainer) {
 		const props = [...value];
@@ -129,3 +128,5 @@ export namespace edits {
 		});
 	}
 }
+
+export default edits;
