@@ -10,7 +10,6 @@
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import type { PopupCustomEvents } from "../types";
 	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
-	import type { EditAction } from "../edit-stack";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
@@ -18,8 +17,8 @@
 	import { onDestroy, onMount } from "svelte";
 	import json from "../json.js";
 	import PopupInputText from "../shared/PopupInputText.svelte";
-	import Linq from "@daniel.pickett/linq-js";
 	import dom from "./dom-helper";
+    import edits from "./editor-helper";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -104,19 +103,7 @@
 	}
 
 	function clearProp(value: json.JContainer) {
-		const props = [...value];
-		model.edits.push({
-			commit() {
-				value.clear();
-				value.owner.isExpanded = false;
-			},
-			undo() {
-				for (const prop of props)
-					value.addProperty(prop);
-
-				value.owner.isExpanded = true;
-			}
-		})
+		edits.clearProp(model, value);
 	}
 
 	function editProp(prop: json.JProperty) {
@@ -139,121 +126,36 @@
 			}
 
 			const newProp = json(parsed);
-			model.edits.push({
-				commit: () => prop.replace(newProp.value),
-				undo: () => newProp.replace(prop.value)
-			});
-
+			edits.replace(model, prop, newProp);
 			return true;
 		});
 	}
 
-	function createDeleteAction(prop: json.JProperty): EditAction {
-		const { parent } = prop;
-		let undo: Action;
-		if (parent!.is("object")) {
-			const p = prop as json.JProperty<string>;
-			const obj = parent;
-			if (p.previous !== null) {
-				const prev = p.previous;
-				undo = () => obj.insertAfter(p, prev);
-			} else if (p.next !== null) {
-				const next = p.next;
-				undo = () => obj.insertBefore(p, next);
-			} else {
-				undo = () => obj.addProperty(p);
-			}
-		} else {
-			undo = () => (parent as json.JContainer).addProperty(prop);
-		}
-
-		return {
-			undo,
-			commit() {
-				prop.remove();
-			}
-		};
-	}
-
 	function deleteProp(prop: json.JProperty, selectNext?: boolean) {
-		const { parent, next, previous } = prop;
-		if (parent == null)
-			return;
-		
-		const action = createDeleteAction(prop);
-		model.edits.push(action);
-		if (parent && parent.first == null)
-			parent.owner.isExpanded = false;
-
-		const p  = (next ?? previous);
-		selectNext && p && model.setSelected(p, false, true);
+		edits.deleteProp(model, prop, selectNext);
 	}
 
 	function deleteProps(props: Iterable<json.JProperty>) {
-		model.edits.push(...Linq(props).select(createDeleteAction));
+		edits.deleteProps(model, props);
 	}
 
 	async function renameProperty(obj: json.JObject, prop: json.JProperty<string>) {
 		const result = await promptText(prop.key, "Property Name", { width: 33.33 });
-		if (result) {
-			const oldName = prop.key;
-			model.edits.push({
-				commit() {
-					obj.rename(oldName, result);
-				},
-				undo() {
-					obj.rename(result, oldName);
-				}
-			});
-
-			model.execute("scrollTo", prop);
-		}
+		if (result && result !== prop.key)
+			edits.renameProperty(model, obj, prop, result);
 	}
 
 	function sortObject(obj: json.JObject, desc?: boolean) {
-		const old = [...obj];
-		model.edits.push({
-			commit() {
-				obj.sort(desc);
-			},
-			undo() {
-				obj.reset(old);
-			}
-		});
+		edits.sortObject(model, obj, desc);
 	}
 
 	async function addToObject(obj: json.JObject, mode: keyof json.JContainerAddMap) {
 		const key = await promptText("", "Property Name");
-		if (key) {
-			model.edits.push({
-				commit() {
-					const prop = obj.add(key, mode);
-					obj.owner.isExpanded = true;
-					model.setSelected(prop, false, true);
-				},
-				undo() {
-					const prop = obj.remove(key);
-					if (prop?.isSelected)
-						model.selected.remove(prop);
-				},
-			});
-		}
+		key && edits.addToObject(model, obj, mode, key);
 	}
 
 	async function addToArray(arr: json.JArray, mode: keyof json.JContainerAddMap) {
-		const index = arr.count;
-		model.edits.push({
-			commit() {
-				const prop = arr.add(mode);
-				arr.owner.isExpanded = true;
-				model.setSelected(prop, false, true);
-			},
-			undo() {
-				const prop = arr.remove(index);
-				if (prop?.isSelected)
-					model.selected.remove(prop);
-			},
-		});
+		edits.addToArray(model, arr, mode);
 	}
 
 	function openContextMenu(selected: json.JProperty, x: number, y: number) {
