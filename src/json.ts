@@ -408,10 +408,8 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 
 	get pathText() {
 		const path = this.path;
-		for (let i = 0 ; i < path.length; i++) {
-			const value = String(path[i]);
-			path[i] = escapePathPart(value);
-		}
+		for (let i = 0 ; i < path.length; i++)
+			path[i] = escapePathPart(path[i]);
 
 		return path.join("/");
 	}
@@ -745,6 +743,11 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		this.#changed = new EventHandlers();
 	}
 
+	get(key: Key): JToken | undefined {
+		const prop = this.getProperty(key);
+		return prop && prop.value;
+	}
+
 	abstract addProperty(property: json.JProperty<TKey>): undefined | JProperty<TKey>;
 
 	abstract getProperty(key: Key): undefined | JProperty<TKey>;
@@ -985,14 +988,9 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			}
 		}
 	
-		get(key: Key): JToken | undefined {
-			const c = typeof key === "string" && this.#props.get(key);
-			return c ? c.value : undefined;
-		}
-	
 		getProperty(key: Key): JProperty<string> | undefined {
-			const c = typeof key === "string" && this.#props.get(key);
-			return c ? c.prop : undefined;
+			const c = this.#props.get(String(key));
+			return c && c.prop;
 		}
 	
 		sort(reverse?: boolean) {
@@ -1293,14 +1291,12 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			this.#proxy = new ArrayLikeProxy(this, JArray.#proxyHandler);
 		}
 	
-		get(key: Key): JToken | undefined {
-			const c = typeof key === "number" && this.#items.at(key);
-			return c ? c.value : undefined;
-		}
-	
 		getProperty(key: Key): JProperty<number> | undefined {
-			const c = typeof key === "number" && this.#items.at(key);
-			return c ? c.prop : undefined;
+			const index = Number(key);
+			if (!Number.isInteger(index))
+				return undefined;
+			
+			return this.#items.at(index)?.prop;
 		}
 
 		addProperty(property: json.JProperty<number>): undefined | JProperty<number> {
@@ -1539,9 +1535,17 @@ function unwrapProxy(value: object): undefined | JToken {
 	return Reflect.get(value, unproxy);
 }
 
+function isArrayKey(value: string | number) {
+	value = Number(value);
+	return Number.isInteger(value);
+}
+
 function escapePathPart(value: string | number): string {
-	value = String(value);
-	return isIdentifier(value) ? value : JSON5.stringify(value, { quote: "'" });
+	const str = String(value);
+	if (isArrayKey(value) || isIdentifier(str))
+		return str;
+
+	return JSON5.stringify(str, { quote: "'" });
 }
 
 function parsePath(path: string): string[] {
