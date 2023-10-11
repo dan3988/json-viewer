@@ -475,7 +475,7 @@
 	}
 
 	.json-value {
-		white-space: break-spaces;
+		white-space: nowrap;
 
 		&.json-string {
 			color: var(--col-json-str-fg);
@@ -490,7 +490,6 @@
 			color: var(--col-json-keywd-fg);
 		}
 	}
-
 </style>
 {#if prop}
 <div
