@@ -288,11 +288,14 @@
 		let { last } = model.selected;
 		if (evt.shiftKey && last) {
 			evt.preventDefault();
-			model.selected.add(...getPropertiesBetween(last, prop));
-		} else if (evt.ctrlKey) {
-			model.selected.toggle(prop);
+			const props = getPropertiesBetween(last, prop);
+			if (evt.ctrlKey) {
+				model.selected.add(...props)
+			} else {
+				model.selected.reset(last, ...props);
+			}
 		} else {
-			model.selected.reset(prop);
+			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
 		}
 	}
 
