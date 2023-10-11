@@ -53,6 +53,10 @@
 		grid-template-rows: 1fr;
 		grid-template-columns: 1fr;
 
+		&:not(.editing) {
+			--bs-border-color: transparent;
+		}
+
 		&.editing > .list,
 		&:not(.editing) > .editor {
 			visibility: hidden;
@@ -61,9 +65,6 @@
 		> * {
 			grid-area: 1 / 1 / -1 / -1;
 		}
-	}
-
-	.editor {
 	}
 
 	.list {
@@ -86,7 +87,7 @@
 				outline: none;
 				min-width: 1em;
 				cursor: pointer;
-				
+
 				&:hover {
 					color: var(--col-match-fg);
 					background-color: var(--col-match-bg);
@@ -95,7 +96,7 @@
 		}
 	}
 </style>
-<div class="root" class:editing>
+<div class="root border rounded p-1" class:editing>
 	<ul class="list" role="textbox" on:click={beginEditing}>
 		{#each path as prop}
 			<li>

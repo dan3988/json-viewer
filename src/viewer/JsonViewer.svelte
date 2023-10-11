@@ -514,8 +514,7 @@
 
 	.w-path {
 		grid-area: path;
-		margin-top: $pad-small;
-		padding: $pad-med;
+		margin-top: 0.25rem;
 	}
 
 	.w-menu {

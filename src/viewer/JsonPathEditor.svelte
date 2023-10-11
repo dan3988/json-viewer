@@ -200,6 +200,7 @@
 
 	.root {
 		position: relative;
+		padding: 0 $pad-med;
 	}
 
 	.ac-wrapper {
