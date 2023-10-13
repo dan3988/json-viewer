@@ -187,8 +187,10 @@
 	</div>
 	<div class="jpath-matches input-group">
 		<span class="flex-fill0 input-group-text">{jpathResults.length} {jpathResults.length == 1 ? "Match" : "Matches"}</span>
-		<button class="flex-fill0 btn btn-cust-light" disabled={!jpathResults.length} on:click={jpathResultsExpand}>Expand Matches</button>
-		<button class="flex-fill0 btn btn-cust-light" disabled={!jpathResults.length} on:click={jpathResultsDelete}>Delete Matches</button>
+		{#if jpathResults.length}
+			<button class="flex-fill0 btn btn-cust-light" on:click={jpathResultsExpand}>Expand Matches</button>
+			<button class="flex-fill0 btn btn-cust-light" on:click={jpathResultsDelete}>Delete Matches</button>
+		{/if}
 	</div>
 	<ul class="jpath-results list-group list-group-flush overflow-y-scroll overflow-x-hidden border rounded">
 		{#each jpathResults as item}
