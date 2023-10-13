@@ -33,14 +33,11 @@ export namespace edits {
 		if (parent!.is("object")) {
 			const p = prop as json.JProperty<string>;
 			const obj = parent;
-			if (p.previous !== null) {
+			if (p.previous === null) {
+				undo = () => obj.first === null ? obj.addProperty(p) : obj.insertBefore(p, obj.first);
+			} else {
 				const prev = p.previous;
 				undo = () => obj.insertAfter(p, prev);
-			} else if (p.next !== null) {
-				const next = p.next;
-				undo = () => obj.insertBefore(p, next);
-			} else {
-				undo = () => obj.addProperty(p);
 			}
 		} else {
 			undo = () => (parent as json.JContainer).addProperty(prop);
