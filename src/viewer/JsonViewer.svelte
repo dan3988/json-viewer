@@ -408,7 +408,11 @@
 		pointer-events: none;
 	}
 
-	.slot,
+	.slot {
+		position: absolute;
+		inset: 0;
+	}
+
 	.slot > :global(*) {
 		height: 100%;
 	}

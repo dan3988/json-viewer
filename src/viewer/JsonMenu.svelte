@@ -143,7 +143,6 @@
 
 	.root {
 		display: grid;
-		overflow: auto;
 		grid-template-rows: repeat(4, auto) 1fr;
 		grid-template-columns: 6rem 1fr 2rem 6rem;
 		grid-row-gap: $pad-med;
