@@ -12,6 +12,7 @@
 	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
 	import JsonPropertyComp from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
+	import MenuView, { MenuAlign } from "./MenuView.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
@@ -32,9 +33,7 @@
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
-	let menuShown = true;
 	let menuC: JsonMenu;
-	let menu: HTMLElement;
 	let prop: HTMLElement;
 
 	type PopupInfo<P extends Dict = any, R = any> = [clazz: PopupConstructor<P, R>, props: P, completion: (result: CustomEvent<R | void> ) => void];
@@ -348,39 +347,6 @@
 
 	onDestroy(windowMappingUnsub);
 	onMount(() => prop.focus());
-
-	function resizeBegin(startPos: number, startSize: number, evtProp: "x" | "y", styleProp: string, direction: number = 1) {
-		function onMove(evt: MouseEvent) {
-			const pos = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
-			menuShown = pos >= 150;
-			menu.style[styleProp] = pos + "px";
-		}
-
-		function onEnd(evt: MouseEvent) {
-			document.off("mousemove", onMove);
-
-			let size: string | number = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
-			if (size < 150) {
-				const v = menu.getAttribute("data-remember-" + evtProp);
-				if (v != null)
-					menu.style[styleProp] = v + "px";
-			} else {
-				menu.setAttribute("data-remember-" + evtProp, String(size));
-				menu.style[styleProp] = size + "px";
-			}
-		}
-
-		document.on("mousemove", onMove);
-		document.once("mouseup", onEnd);
-	}
-
-	function onGrabberHMouseDown(evt: MouseEvent) {
-		resizeBegin(evt.x, menu.clientWidth, "x", "width", menuAlign === "l" ? 1 : -1);
-	}
-
-	function onGrabberVMouseDown(evt: MouseEvent) {
-		resizeBegin(evt.y, menu.clientHeight, "y", "height");
-	}
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
@@ -390,97 +356,9 @@
 		position: absolute;
 		inset: 0;
 		display: grid;
+		grid-template-columns: [menu path] 1fr;
+		grid-template-rows: [menu] 1fr [path] auto;
 		overflow: hidden;
-
-		$break: 900px;
-		$gap-h: 5rem;
-		
-		@media only screen and (max-width: $break) {
-			grid-template-columns: 1fr;
-			grid-template-rows: auto auto 1fr auto;
-			grid-template-areas: "menu" "resize" "prop" "path";
-
-			> .w-menu {
-				width: unset !important;
-				height: 30rem;
-				min-height: 350px;
-				max-height: 80vh;
-			}
-
-			> .gripper-h {
-				display: none;
-			}
-		}
-		
-		@media only screen and (min-width: $break) {
-			grid-template-rows: 1fr auto;
-			max-height: 100vh;
-
-			&[data-menu-align="l"] {
-				grid-template-columns: auto auto 1fr;
-				grid-template-areas:
-					"menu resize prop"
-					"path path path";
-
-				> .gripper-v {
-					display: none;
-				}
-			}
-
-			&[data-menu-align="r"] {
-				grid-template-columns: 1fr auto auto;
-				grid-template-areas:
-					"prop resize menu"
-					"path path path";
-			}
-
-			> .w-menu {
-				width: 30rem;
-				height: unset !important;
-				min-width: 350px;
-				max-width: 80vw;
-			}
-
-			> .gripper-v {
-				display: none;
-			}
-		}
-
-		&[data-menu-shown="false"] {
-			> .gripper,
-			> .w-menu {
-				display: none;
-			}
-		}
-
-		&[data-menu-shown="true"] {
-			> .menu-btn {
-				display: none;
-			}
-		}
-	}
-	
-	.menu-toggle {
-		@include bs-icon-btn("chevron-bar-left", 2px, "color");
-
-		cursor: pointer;
-		border: none;
-		width: .5rem;
-	}
-
-	.gripper {
-		grid-area: resize;
-		user-select: none;
-	}
-
-	.gripper-v {
-		cursor: ns-resize;
-		height: 5px;
-	}
-
-	.gripper-h {
-		cursor: ew-resize;
-		width: 5px;
 	}
 
 	.w-prop,
@@ -491,11 +369,11 @@
 
 	.w-prop {
 		display: grid;
-		grid-area: prop;
 		grid-template-areas: "main";
 		grid-template-rows: 1fr;
 		grid-template-columns: 1fr;
-		position: relative;
+		position: absolute;
+		inset: 0;
 
 		> * {
 			grid-area: main;
@@ -504,7 +382,6 @@
 		> .prop-scroll {
 			padding: $pad-small;
 		}
-
 
 		&:focus-visible {
 			outline: none;
@@ -531,16 +408,9 @@
 		pointer-events: none;
 	}
 
-	.menu-btn {
-		@include bs-icon-btn("list", 5px, "color");
-
-		position: absolute;
-		padding: 5px;
-		right: 2rem;
-		top: 1rem;
-		width: 2.5rem;
-		height: 2.5rem;
-		z-index: 1;
+	.slot,
+	.slot > :global(*) {
+		height: 100%;
 	}
 </style>
 <svelte:head>
@@ -548,26 +418,29 @@
 		<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
-<div class="root bg-body p-1" data-scheme={scheme} data-menu-shown={menuShown} data-menu-align={menuAlign} data-editor-bg={background}>
+<div class="root bg-body p-1" data-scheme={scheme} data-editor-bg={background}>
 	{#if contextMenu}
-		<ContextMenu pos={contextMenu[0]} items={contextMenu[1]} on:closed={() => contextMenu = undefined}/>
+		{@const [pos, items] = contextMenu}
+		<ContextMenu {pos} {items} on:closed={() => contextMenu = undefined}/>
 	{/if}
-	<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
-		<div class="editor-bg h-100 w-100"></div>
-		<div class="prop-scroll overflow-scroll h-100 w-100">
-			<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
-		</div>
+	<div class="w-menu">
+		<MenuView minMenuSize={["450px", "300px"]} maxMenuSize={["80vw", "80vh"]} initialMenuSize="30rem" alignment={menuAlign === "l" ? MenuAlign.Left : MenuAlign.Right}>
+			<div slot="menu" class="slot">
+				<JsonMenu {model} bind:this={menuC}/>
+			</div>
+			<div class="slot">
+				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
+					<div class="editor-bg h-100 w-100"></div>
+					<div class="prop-scroll overflow-scroll h-100 w-100">
+						<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
+					</div>
+				</div>
+			</div>
+		</MenuView>
 	</div>
 	<div class="w-path">
 		<JsonPathViewer {model}/>
 	</div>
-	<div class="gripper gripper-h" on:mousedown={onGrabberHMouseDown}/>
-	<div class="gripper gripper-v" on:mousedown={onGrabberVMouseDown}/>
-	<div class="w-menu" bind:this={menu}>
-		<JsonMenu {model} bind:this={menuC}/>
-	</div>
-	<button class="menu-btn btn btn-primary rounded-circle" title="Open Menu" on:click={() => menuShown = true}></button>
-
 	{#if popup}
 		{@const [comp, props, evt] = popup}
 		<svelte:component this={comp} {...props} on:confirmed={evt} on:canceled={evt} />
