@@ -18,7 +18,7 @@ jp.JSONPath.prototype._eval = function (code: string, value: any, valueName: str
 
 	sandbox["@parentProperty"] = parentPropName;
 	sandbox["@parent"] = parent;
-	sandbox["@property"] = parent;
+	sandbox["@property"] = valueName;
 	sandbox["@root"] = this.json;
 	sandbox["@"] = value;
 
