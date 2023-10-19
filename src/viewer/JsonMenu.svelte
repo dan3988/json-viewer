@@ -7,21 +7,9 @@
 
 	export let model: ViewerModel;
 
-	export function focusSearch() {
-		filterInput.focus();
-	}
-
 	export function focusJPath() {
 		jpath.focus();
 	}
-
-	const { canUndo, canRedo } = model.edits.bag.readables;
-
-	let filterInput: HTMLInputElement;
-	let filter = "";
-	let filterMode = json.JTokenFilterFlags.Both;
-
-	$: model.filter(filter, filterMode);
 
 	let jpath: HTMLInputElement;
 	let jpathResults: json.JProperty[] = [];
@@ -67,11 +55,6 @@
 			jpathResults = [];
 			console.error(e);
 		}
-	}
-
-	function clearFilter(this: HTMLElement) {
-		filter = "";
-		(this.previousElementSibling as HTMLElement).focus();
 	}
 
 	function clearJpath(this: HTMLElement) {
@@ -142,7 +125,7 @@
 
 	.root {
 		display: grid;
-		grid-template-rows: repeat(4, auto) 1fr;
+		grid-template-rows: repeat(2, auto) 1fr;
 		grid-template-columns: 6rem 1fr 2rem 6rem;
 		grid-row-gap: $pad-med;
 		align-items: stretch;
@@ -162,22 +145,6 @@
 </style>
 {#if model}
 <div class="root">
-	<div class="btn-group">
-		<button type="button" class="flex-fill0 btn btn-cust-light" on:click={() => setExpanded(true)}>Expand All</button>
-		<button type="button" class="flex-fill0 btn btn-cust-light" on:click={() => setExpanded(false)}>Collapse All</button>
-		<button type="button" class="flex-fill0 btn btn-cust-light" disabled={!$canUndo} on:click={() => model.edits.undo()}>Undo</button>
-		<button type="button" class="flex-fill0 btn btn-cust-light" disabled={!$canRedo} on:click={() => model.edits.redo()}>Redo</button>
-	</div>
-	<div class="input-group field">
-		<span class="input-group-text">Filter</span>
-		<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
-		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearFilter}></button>
-		<select class="filter-type form-select" bind:value={filterMode}>
-			<option value={json.JTokenFilterFlags.Both}>All</option>
-			<option value={json.JTokenFilterFlags.Keys}>Keys</option>
-			<option value={json.JTokenFilterFlags.Values}>Values</option>
-		</select>
-	</div>
 	<div class="input-group field">
 		<span class="input-group-text">Path</span>
 		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>

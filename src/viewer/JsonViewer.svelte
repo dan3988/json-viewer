@@ -30,11 +30,17 @@
 
 	model.command.addListener(onModelCommand);
 
+	$: ({ canUndo, canRedo } = model.edits.bag.readables);
+	$: model.filter(filter, filterMode);
+
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
-	let menuC: JsonMenu;
 	let prop: HTMLElement;
+
+	let filterInput: HTMLInputElement;
+	let filter = "";
+	let filterMode = json.JTokenFilterFlags.Both;
 
 	type PopupInfo<P extends Dict = any, R = any> = [clazz: PopupConstructor<P, R>, props: P, completion: (result: CustomEvent<R | void> ) => void];
 
@@ -268,7 +274,7 @@
 			},
 			keyF: {
 				"ctrl"() {
-					menuC.focusSearch();
+					filterInput.focus();
 					return true;
 				}
 			},
@@ -345,6 +351,15 @@
 		}
 	});
 
+	function clearFilter(this: HTMLElement) {
+		filter = "";
+		filterInput.focus();
+	}
+
+	function setExpanded(expanded: boolean) {
+		model.root.setExpanded(expanded, true);
+	}
+
 	onDestroy(windowMappingUnsub);
 	onMount(() => prop.focus());
 </script>
@@ -356,8 +371,8 @@
 		position: absolute;
 		inset: 0;
 		display: grid;
-		grid-template-columns: [menu path] 1fr;
-		grid-template-rows: [menu] 1fr [path] auto;
+		grid-template-columns: [bar menu path] 1fr;
+		grid-template-rows: [bar] auto [menu] 1fr [path] auto;
 		overflow: hidden;
 	}
 
@@ -389,9 +404,22 @@
 		}
 	}
 
+	.w-bar {
+		display: flex;
+		grid-area: bar;
+
+		&::after {
+			content: "";
+			flex: 1 1 0px;
+		}
+
+		.btn {
+			width: 2.5rem;
+		}
+	}
+
 	.w-path {
 		grid-area: path;
-		margin-top: 0.25rem;
 	}
 
 	.w-menu {
@@ -416,6 +444,34 @@
 	.slot > :global(*) {
 		height: 100%;
 	}
+
+	.search {
+		width: max-content;
+
+		> select {
+			flex: 0 0 7rem !important;
+		}
+	}
+
+	.btn-clr {
+		@include bs-icon-btn("x-lg", 25%);
+	}
+
+	.btn-expand-all {
+		@include bs-icon-btn("plus-square-fill", 25%);
+	}
+
+	.btn-collapse-all {
+		@include bs-icon-btn("dash-square-fill", 25%);
+	}
+
+	.btn-undo {
+		@include bs-icon-btn("arrow-counterclockwise", 25%);
+	}
+
+	.btn-redo {
+		@include bs-icon-btn("arrow-clockwise", 25%);
+	}
 </style>
 <svelte:head>
 	{#each css as href}
@@ -427,10 +483,28 @@
 		{@const [pos, items] = contextMenu}
 		<ContextMenu {pos} {items} on:closed={() => contextMenu = undefined}/>
 	{/if}
+	<div class="w-bar pb-1 gap-1">
+		<div class="btn-group">
+			<button type="button" class="btn btn-cust-light btn-expand-all" title="Expand All" on:click={() => setExpanded(true)} />
+			<button type="button" class="btn btn-cust-light btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
+			<button type="button" class="btn btn-cust-light btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
+			<button type="button" class="btn btn-cust-light btn-redo" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
+		</div>
+		<div class="input-group search flex-fit">
+			<span class="input-group-text flex-fit">Filter</span>
+			<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
+			<button type="button" class="btn btn-cust-light btn-clr" on:click={clearFilter} />
+			<select class="filter-type form-select flex-fit" bind:value={filterMode}>
+				<option value={json.JTokenFilterFlags.Both}>All</option>
+				<option value={json.JTokenFilterFlags.Keys}>Keys</option>
+				<option value={json.JTokenFilterFlags.Values}>Values</option>
+			</select>
+		</div>
+	</div>
 	<div class="w-menu">
 		<MenuView minMenuSize={["450px", "300px"]} maxMenuSize={["80vw", "80vh"]} initialMenuSize="30rem" alignment={menuAlign === "l" ? MenuAlign.Left : MenuAlign.Right}>
 			<div slot="menu" class="slot">
-				<JsonMenu {model} bind:this={menuC}/>
+				<JsonMenu {model} />
 			</div>
 			<div class="slot">
 				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
@@ -442,7 +516,7 @@
 			</div>
 		</MenuView>
 	</div>
-	<div class="w-path">
+	<div class="w-path pt-1">
 		<JsonPathViewer {model}/>
 	</div>
 	{#if popup}

@@ -143,3 +143,7 @@ $cst-dirty-border-color-dark: #5c603b;
 :global(.flex-fill0) {
 	flex: 1 1 0px !important;
 }
+
+:global(.flex-fit) {
+	flex: 0 0 auto !important;
+}
