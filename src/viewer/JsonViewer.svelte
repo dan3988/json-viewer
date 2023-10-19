@@ -38,6 +38,8 @@
 	let contextMenu: [Coords, MenuItem[]] | undefined;
 	let prop: HTMLElement;
 
+	let jpathOpen = false;
+
 	let filterInput: HTMLInputElement;
 	let filter = "";
 	let filterMode = json.JTokenFilterFlags.Both;
@@ -413,7 +415,7 @@
 			flex: 1 1 0px;
 		}
 
-		.btn {
+		> .btn-group > .btn {
 			width: 2.5rem;
 		}
 	}
@@ -500,9 +502,16 @@
 				<option value={json.JTokenFilterFlags.Values}>Values</option>
 			</select>
 		</div>
+		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
+		<label class="btn btn-cust-light" for="chk-jpath">JPath</label>
 	</div>
 	<div class="w-menu">
-		<MenuView minMenuSize={["450px", "300px"]} maxMenuSize={["80vw", "80vh"]} initialMenuSize="30rem" alignment={menuAlign === "l" ? MenuAlign.Left : MenuAlign.Right}>
+		<MenuView
+			bind:menuShown={jpathOpen}
+			minMenuSize={["450px", "300px"]}
+			maxMenuSize={["80vw", "80vh"]}
+			initialMenuSize="30rem"
+			alignment={menuAlign === "l" ? MenuAlign.Left : MenuAlign.Right}>
 			<div slot="menu" class="slot">
 				<JsonMenu {model} />
 			</div>

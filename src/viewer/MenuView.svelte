@@ -20,6 +20,7 @@
 <script lang="ts">
 	export let alignment: MenuAlign = MenuAlign.Left;
 	export let initialMenuSize: undefined | Size = undefined;
+	export let menuShown = false;
 	export let minMenuSize: undefined | Size = undefined;
 	export let maxMenuSize: undefined | Size = undefined;
 	export let menuCollapseWidth = 150;
@@ -29,7 +30,6 @@
 	$: [maxMenuWidth, maxMenuHeight] = unwrapSize(maxMenuSize);
 	$: align = MenuAlign[alignment].toLowerCase() as "left" | "right";
 
-	let menuShown = true;
 	let menu: HTMLElement;
 
 	function resizeBegin(startPos: number, startSize: number, evtProp: "x" | "y", styleProp: "width" | "height", direction: number = 1) {
@@ -163,18 +163,6 @@
 	.slot-wrapper {
 		position: relative;
 	}
-
-	.menu-btn {
-		@include bs-icon-btn("list", 5px, "color");
-
-		position: absolute;
-		padding: 5px;
-		right: 2rem;
-		top: 1rem;
-		width: 2.5rem;
-		height: 2.5rem;
-		z-index: 1;
-	}
 </style>
 <div
 	class="root"
@@ -192,7 +180,6 @@
 	<div class="slot-wrapper p-menu" bind:this={menu}>
 		<slot name="menu"/>
 	</div>
-	<button class="menu-btn btn btn-primary rounded-circle" title="Open Menu" on:click={() => menuShown = true}></button>
 	<div class="gripper gripper-h" on:mousedown={onGrabberHMouseDown}/>
 	<div class="gripper gripper-v" on:mousedown={onGrabberVMouseDown}/>
 </div>
