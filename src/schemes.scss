@@ -91,7 +91,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $indents) {
 		@include bs-colors("cst-btn", "bg", $tertiary, $tertiaryModif);
 		@include bs-colors("cst-btn", "color", $text);
-		@include bs-colors("cst-btn", "border-color", $border, $borderModif);
+		@include bs-colors("cst-btn", "border-color", $border, $borderModif, $disabled: 0);
 
 		@content;
 	}
