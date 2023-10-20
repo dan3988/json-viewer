@@ -297,6 +297,8 @@
 		} else {
 			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
 		}
+
+		window.getSelection()?.removeAllRanges();
 	}
 
 	function onContextMenu(evt: MouseEvent) {

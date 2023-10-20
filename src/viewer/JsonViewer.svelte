@@ -20,6 +20,7 @@
 	import PopupInputText from "../shared/PopupInputText.svelte";
 	import dom from "./dom-helper";
 	import edits from "./editor-helper";
+	import Linq from "@daniel.pickett/linq-js";
 
 	export let model: ViewerModel;
 	export let indent: string;
@@ -53,25 +54,24 @@
 		return navigator.clipboard.writeText(String(property.key));
 	}
 
-	function serializeForCopy(token: json.JToken, minify?: boolean) {
-		if (token.is("value")) {
+	function serializeForCopy(token: json.JToken, minify?: boolean, escapeValues?: boolean) {
+		if (!escapeValues && token.is("value")) {
 			return String(token.value);
 		} else {
 			return JSON.stringify(token, undefined, minify ? undefined : indent);
 		}
 	}
 
-	function copyValue(token: json.JToken, minify?: boolean) {
-		const text = serializeForCopy(token, minify);
+	function copyValue(token: json.JToken, minify?: boolean, escapeValues?: boolean) {
+		const text = serializeForCopy(token, minify, escapeValues);
 		return navigator.clipboard.writeText(text);
 	}
 
 	function copyValues(values: Iterable<json.JProperty>, minify?: boolean) {
-		const text: string[] = [];
-		for (const p of values)
-			text.push(serializeForCopy(p.value, minify));
+		const value = Linq(values)
+			.select(p => serializeForCopy(p.value, minify, true))
+			.joinText(minify ? "," : ",\r\n");
 
-		const value = text.join(minify ? "," : ",\r\n");
 		return navigator.clipboard.writeText(value);
 	}
 
@@ -283,12 +283,17 @@
 			keyC: {
 				"ctrl"() {
 					const selection = window.getSelection();
-					if (selection != null && selection.type !== "Caret")
+					if (selection != null && selection.type === "Range")
 						return;
 
 					const values = model.selected;
-					if (values.size) {
+					if (values.size === 0) {
+						return;
+					} else if (values.size > 1) {
 						copyValues(values);
+						return true;
+					} else {
+						copyValue(values.last!.value);
 						return true;
 					}
 				}
