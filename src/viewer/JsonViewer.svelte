@@ -10,7 +10,7 @@
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import type { PopupCustomEvents } from "../types";
 	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
-	import JsonPropertyComp from "../shared/JsonProperty.svelte";
+	import JsonProperty from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import MenuView, { MenuAlign } from "./MenuView.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
@@ -519,7 +519,7 @@
 				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
-						<JsonPropertyComp model={model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
+						<JsonProperty {model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
 					</div>
 				</div>
 			</div>
