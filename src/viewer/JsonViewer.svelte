@@ -415,7 +415,8 @@
 			flex: 1 1 0px;
 		}
 
-		> .btn-group > .btn {
+		> .btn-group > .btn,
+		> .input-group > .btn {
 			width: 2.5rem;
 		}
 	}
