@@ -103,6 +103,7 @@
 </script>
 <script lang="ts">
 	import { createEventDispatcher, getContext, onDestroy, setContext } from "svelte";
+	import { slide } from "svelte/transition";
 	import dom from "./dom-helper";
 
 	export let pos: Coords | undefined;
@@ -216,7 +217,7 @@
 		}
 	}
 </style>
-<ul class="root context-menu bg-body-tertiary border" style:left style:top bind:this={elem}>
+<ul class="root context-menu bg-body-tertiary border" style:left style:top bind:this={elem} transition:slide={{ duration: 150 }}>
 	{#each items as item, i}
 		{#if item.type === "action"}
 			<li class="context-menu-item type-{item.type}" role="button" on:click={invoke.bind(undefined, item.action)}>
