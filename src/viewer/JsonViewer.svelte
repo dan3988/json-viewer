@@ -461,6 +461,10 @@
 		}
 	}
 
+	.btn-save {
+		@include bs-icon-btn("floppy", 25%);
+	}
+
 	.btn-clr {
 		@include bs-icon-btn("x-lg", 25%);
 	}
@@ -493,6 +497,7 @@
 	{/if}
 	<div class="w-bar pb-1 gap-1">
 		<div class="btn-group">
+			<button type="button" class="btn btn-cust-light btn-save" title="Save" on:click={() => saveAs()} />
 			<button type="button" class="btn btn-cust-light btn-expand-all" title="Expand All" on:click={() => setExpanded(true)} />
 			<button type="button" class="btn btn-cust-light btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
 			<button type="button" class="btn btn-cust-light btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
