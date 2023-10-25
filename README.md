@@ -128,3 +128,5 @@ The build will output the extension to `./out/<browser>`.
 - [x] Allow multiple properties to be selected
 - [x] Support `?.` chain expressions in JPath evaluator
 - [x] Support special characters in the json path editor
+- [ ] Show HTTP headers
+- [ ] Allow modified JSON to be used in POST/PUT requests
