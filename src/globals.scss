@@ -89,7 +89,7 @@ $cst-dirty-border-color-dark: #5c603b;
 	margin: 0;
 }
 
-:global(.btn.btn-cust-light) {
+:global(.btn-cust-light) {
 	--bs-btn-color: var(--cst-btn-color);
 	--bs-btn-bg: var(--cst-btn-bg);
 	--bs-btn-border-color: var(--cst-btn-border-color);
@@ -128,7 +128,7 @@ $cst-dirty-border-color-dark: #5c603b;
 	--bs-border-color: var(--cst-dirty-border-color);
 }
 
-:global(.dirty .btn.btn-cust-light) {
+:global(.dirty .btn-cust-light) {
 	--bs-btn-bg: var(--cst-dirty-bg);
 	--bs-btn-color: var(--cst-dirty-color);
 	--bs-btn-border-color: var(--cst-dirty-border-color);

@@ -90,7 +90,7 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 }
 
 @mixin bs-icon-btn($name: null, $padding: 0, $color: "border-color") {
-	@if (type-of($color) != "map") {
+	@if ($color and type-of($color) != "map") {
 		$color: ("default": var(--bs-btn-#{$color}), "hover": var(--bs-btn-hover-#{$color}), "active": var(--bs-btn-active-#{$color}), "disabled": var(--bs-btn-disabled-#{$color}));
 	}
 
