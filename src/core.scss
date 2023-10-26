@@ -89,12 +89,16 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 	@return url("chrome-extension://__MSG_@@extension_id__/" + $path);
 }
 
-@mixin bs-icon-btn($name, $padding: 0, $color: "border-color") {
+@mixin bs-icon-btn($name: null, $padding: 0, $color: "border-color") {
 	@if (type-of($color) != "map") {
 		$color: ("default": var(--bs-btn-#{$color}), "hover": var(--bs-btn-hover-#{$color}), "active": var(--bs-btn-active-#{$color}), "disabled": var(--bs-btn-disabled-#{$color}));
 	}
 
-	@include img-btn(bs-icon($name), $padding, $color) {
+	@if ($name) {
+		$name: bs-icon($name);
+	}
+
+	@include img-btn($name, $padding, $color) {
 		@content;
 	}
 }

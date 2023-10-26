@@ -474,29 +474,40 @@
 		}
 	}
 
+	.icon {
+		@include bs-icon-btn(null, 25%);
+	}
+
 	.btn-save {
-		@include bs-icon-btn("floppy", 25%);
+		--img-btn-src: #{bs-icon("floppy")};
 	}
 
 	.btn-clr {
-		@include bs-icon-btn("x-lg", 25%);
+		--img-btn-src: #{bs-icon("x-lg")};
 	}
 
 	.btn-expand-all {
-		@include bs-icon-btn("plus-square-fill", 25%);
+		--img-btn-src: #{bs-icon("plus-square-fill")};
 	}
 
 	.btn-collapse-all {
-		@include bs-icon-btn("dash-square-fill", 25%);
+		--img-btn-src: #{bs-icon("dash-square-fill")};
 	}
 
 	.btn-undo {
-		@include bs-icon-btn("arrow-counterclockwise", 25%);
+		--img-btn-src: #{bs-icon("arrow-counterclockwise")};
 	}
 
 	.btn-redo {
-		@include bs-icon-btn("arrow-clockwise", 25%);
+		--img-btn-src: #{bs-icon("arrow-clockwise")};
 	}
+
+	.btn-redo {
+		--img-btn-src: #{bs-icon("arrow-clockwise")};
+	}
+
+	.btn-http {
+		--img-btn-src: #{bs-icon("activity")};}
 </style>
 <svelte:head>
 	{#each css as href}
@@ -510,17 +521,17 @@
 	{/if}
 	<div class="w-bar pb-1 gap-1">
 		<div class="btn-group">
-			<button type="button" class="btn btn-cust-light btn-save" title="Save" on:click={saveAs} />
-			<button type="button" class="btn btn-cust-light btn-expand-all" title="Expand All" on:click={() => setExpanded(true)} />
-			<button type="button" class="btn btn-cust-light btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
-			<button type="button" class="btn btn-cust-light btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
-			<button type="button" class="btn btn-cust-light btn-redo" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
-			<button type="button" class="btn btn-cust-light btn-http" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
+			<button type="button" class="btn btn-cust-light icon btn-save" title="Save" on:click={saveAs} />
+			<button type="button" class="btn btn-cust-light icon btn-expand-all" title="Expand All" on:click={() => setExpanded(true)} />
+			<button type="button" class="btn btn-cust-light icon btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
+			<button type="button" class="btn btn-cust-light icon btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
+			<button type="button" class="btn btn-cust-light icon btn-redo" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
+			<button type="button" class="btn btn-cust-light icon btn-http" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
 		</div>
 		<div class="input-group search flex-fit">
 			<span class="input-group-text flex-fit">Filter</span>
 			<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
-			<button type="button" class="btn btn-cust-light btn-clr" on:click={clearFilter} />
+			<button type="button" class="btn btn-cust-light icon btn-clr" on:click={clearFilter} />
 			<select class="filter-type form-select flex-fit" bind:value={filterMode}>
 				<option value={json.JTokenFilterFlags.Both}>All</option>
 				<option value={json.JTokenFilterFlags.Keys}>Keys</option>
