@@ -14,10 +14,12 @@
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import MenuView, { MenuAlign } from "./MenuView.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
+	import PopupInputText from "../shared/PopupInputText.svelte";
+	import PopupPanel from "../shared/PopupPanel.svelte";
+	import RequestInfo from "./RequestInfo.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
 	import json from "../json.js";
-	import PopupInputText from "../shared/PopupInputText.svelte";
 	import dom from "./dom-helper";
 	import edits from "./editor-helper";
 	import Linq from "@daniel.pickett/linq-js";
@@ -31,6 +33,7 @@
 
 	model.command.addListener(onModelCommand);
 
+	$: ({ requestInfo } = model.bag.readables);
 	$: ({ canUndo, canRedo } = model.edits.bag.readables);
 	$: model.filter(filter, filterMode);
 
@@ -45,10 +48,20 @@
 	let filter = "";
 	let filterMode = json.JTokenFilterFlags.Both;
 
-	type PopupInfo<P extends Dict = any, R = any> = [clazz: PopupConstructor<P, R>, props: P, completion: (result: CustomEvent<R | void> ) => void];
+	type PopupInfo<C extends SvelteComponent<any, PopupCustomEvents<R>> = any, R = any> = [clazz: PopupConstructor<C, R>, props: ComponentProps<C>, completion: (result: CustomEvent<R | void> ) => void];
 
 	const popupStack: PopupInfo[] = [];
 	let popup: undefined | PopupInfo;
+
+	function showRequestInfo() {
+		showPopup(PopupPanel, {
+			component: RequestInfo,
+			title: "HTTP Request Details",
+			height: 80,
+			width: 80,
+			props: { model }
+		});
+	}
 
 	function copyKey(property: json.JProperty) {
 		return navigator.clipboard.writeText(String(property.key));
@@ -75,11 +88,11 @@
 		return navigator.clipboard.writeText(value);
 	}
 
-	type PopupConstructor<TProps extends Dict, TResult> = new(props: ComponentConstructorOptions<TProps>) => SvelteComponent<TProps, PopupCustomEvents<TResult>>;
+	type PopupConstructor<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult> = new(props: ComponentConstructorOptions<ComponentProps<TComp>>) => SvelteComponent<ComponentProps<TComp>, PopupCustomEvents<TResult>>;
 
-	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps): Promise<TResult>
-	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps, confirm: (result: TResult) => boolean): Promise<void>
-	function showPopup<TProps extends Dict, TResult>(comp: PopupConstructor<TProps, TResult>, props: TProps, confirm?: (result: TResult) => boolean) {
+	function showPopup<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult>(comp: PopupConstructor<TComp, TResult>, props: ComponentProps<TComp>): Promise<TResult>
+	function showPopup<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult>(comp: PopupConstructor<TComp, TResult>, props: ComponentProps<TComp>, confirm: (result: TResult) => boolean): Promise<void>
+	function showPopup<TResult>(comp: PopupConstructor<any, any>, props: Dict, confirm?: (result: TResult) => boolean) {
 		return new Promise<TResult | void>(resolve => {
 			function complete(result: NamedCustomEvent<"confirmed", TResult> | NamedCustomEvent<"canceled", void>) {
 				if (result.type === "canceled" || confirm == null) {
@@ -351,7 +364,7 @@
 			"ctrl": () => model.edits.redo()
 		},
 		keyS: {
-			"ctrl": () => {
+			"ctrl"() {
 				saveAs();
 				return true;
 			}
@@ -497,11 +510,12 @@
 	{/if}
 	<div class="w-bar pb-1 gap-1">
 		<div class="btn-group">
-			<button type="button" class="btn btn-cust-light btn-save" title="Save" on:click={() => saveAs()} />
+			<button type="button" class="btn btn-cust-light btn-save" title="Save" on:click={saveAs} />
 			<button type="button" class="btn btn-cust-light btn-expand-all" title="Expand All" on:click={() => setExpanded(true)} />
 			<button type="button" class="btn btn-cust-light btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
 			<button type="button" class="btn btn-cust-light btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
 			<button type="button" class="btn btn-cust-light btn-redo" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
+			<button type="button" class="btn btn-cust-light btn-http" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
 		</div>
 		<div class="input-group search flex-fit">
 			<span class="input-group-text flex-fit">Filter</span>

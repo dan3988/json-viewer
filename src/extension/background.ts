@@ -1,6 +1,8 @@
-import type { WorkerMessage } from "../types.js";
+import type { DocumentHeader, DocumentRequestInfo, WorkerMessage } from "../types.js";
 import settings from "../settings.js";
 import lib from "../lib.json";
+
+var headersMap = new Map<bigint, DocumentRequestInfo>();
 
 function updateIcon(path: Record<string, string>, title: string) {
 	const setIcon = chrome.action.setIcon({ path });
@@ -32,19 +34,66 @@ async function loadExtension(isFirefox: boolean) {
 	for (const key in gsIcons)
 		gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
-	function injectPopup(target: chrome.scripting.InjectionTarget) {
+	function injectPopup(tabId: number, frameId?: number) {
+		const target = getTarget(tabId, frameId);
 		return inject(target, true, "lib/content.js");
 	}
 
-	function injectViewer(target: chrome.scripting.InjectionTarget) {
+	async function injectViewer(tabId: number, frameId?: number) {
+		const target = getTarget(tabId, frameId);
+		let result: any;
 		if (isFirefox) {
-			return inject(target, true, "lib/messaging.firefox.js", "res/ffstub.js", lib.json5, "lib/viewer.js");
+			result = await inject(target, true, "lib/messaging.firefox.js", "res/ffstub.js", lib.json5, "lib/viewer.js");
 		} else {
-			return inject(target, false, "lib/messaging.chrome.js")
-				.then(() => inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js"));
+			await inject(target, false, "lib/messaging.chrome.js");
+			result = await inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js");
 		}
+
+		const headersId = createFrameId(tabId, frameId);
+		const headers = headersMap.get(headersId);
+		return { result, headers };
 	}
 
+	function addHeaders(array: DocumentHeader[], input: undefined | chrome.webRequest.HttpHeader[]): DocumentHeader[] {
+		if (input)
+			for (const { name, value } of input)
+				array.push([name, value ?? ""]);
+
+		return array;
+	}
+	
+	function onBeforeSendHeaders(det: chrome.webRequest.WebRequestHeadersDetails) {
+		const id = createFrameId(det.tabId, det.frameId);
+		const url = new URL(det.url);
+		if (bag.blacklist.includes(url.hostname)) {
+			headersMap.delete(id);
+			return;
+		}
+
+		headersMap.set(id, {
+			status: 0,
+			statusText: "unknown",
+			startTime: det.timeStamp,
+			endTime: -1,
+			responseHeaders: [],
+			requestHeaders: addHeaders([], det.requestHeaders)
+		});
+	}
+
+	function onHeadersReceived(det: chrome.webRequest.WebResponseHeadersDetails) {
+		const id = createFrameId(det.tabId, det.frameId);
+		const info = headersMap.get(id);
+		if (info == null)
+			return;
+
+		info.status = det.statusCode;
+		info.statusText = det.statusLine;
+		info.endTime = det.timeStamp;
+		addHeaders(info.responseHeaders, det.responseHeaders);
+	}
+	
+	chrome.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, webRequestFilter, ["requestHeaders"]);
+	chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived, webRequestFilter, ["responseHeaders"]);	
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
 		const tabId = sender.tab?.id;
 		if (tabId == null)
@@ -77,16 +126,19 @@ async function loadExtension(isFirefox: boolean) {
 						autoload = bag.whitelist.includes(url.host);
 					}
 
-					const target = getTarget(tabId, sender.frameId);
 					const fn = autoload ? injectViewer : injectPopup;
-					fn(target).then(respond);
+					fn(tabId, sender.frameId).then(respond);
 					return true;
 				}
 				break;
 			case "loadme": {
-				const target = getTarget(tabId, sender.frameId);
-				injectViewer(target).then(respond);
+				injectViewer(tabId, sender.frameId).then(respond);
 				return true;
+			}
+			case "headers": {
+				const id = createFrameId(tabId, sender.frameId);
+				const headers = headersMap.get(id);
+				respond(headers);
 			}
 		}
 	});
@@ -123,9 +175,9 @@ function checkIsFirefox(): Promise<boolean> {
 
 const isFirefox = checkIsFirefox();
 
-isFirefox.then(loadExtension);
+checkIsFirefox().then(loadExtension);
 
-chrome.runtime.onInstalled.addListener((det) => {
+function onInstalled(det: chrome.runtime.InstalledDetails) {
 	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
 		isFirefox.then(v => {
 			v && chrome.tabs.create({
@@ -134,4 +186,26 @@ chrome.runtime.onInstalled.addListener((det) => {
 			});
 		})
 	}
-})
+}
+
+/**
+ * Create a unique ID for a frame by combining its tab & frame IDs
+ */
+function createFrameId(tabId: number, frameId?: number) {
+	if (!frameId)
+		return BigInt(tabId);
+
+	debugger;
+	const buffer = new ArrayBuffer(8);
+	const view = new DataView(buffer);
+	view.setUint32(0, tabId);
+	view.setUint32(1, frameId);
+	return view.getBigInt64(0);
+}
+
+const webRequestFilter: chrome.webRequest.RequestFilter = {
+	urls: [ "<all_urls>" ],
+	types: [ "main_frame", "sub_frame" ]
+}
+
+chrome.runtime.onInstalled.addListener(onInstalled);

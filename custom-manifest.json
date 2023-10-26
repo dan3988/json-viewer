@@ -48,7 +48,8 @@
 		"host_permissions": [ "<all_urls>" ],
 		"permissions": [
 			"scripting",
-			"storage"
+			"storage",
+			"webRequest"
 		]
 	},
 	"browsers": {

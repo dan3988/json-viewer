@@ -1,7 +1,8 @@
+import type { DocumentRequestInfo } from "./types.js";
 import { EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
-import json from "./json.js"
 import { PropertyBag } from "./prop.js";
+import json from "./json.js";
 
 export interface SelectedPropertyList extends Iterable<json.JProperty> {
 	readonly size: number;
@@ -20,6 +21,7 @@ interface ChangeProps {
 	lastSelected: null | json.JProperty;
 	filterText: string;
 	filterFlags: json.JTokenFilterFlags;
+	requestInfo: undefined | DocumentRequestInfo
 }
 
 export interface ViewerCommands {
@@ -100,6 +102,14 @@ export class ViewerModel {
 		return this.#bag.readOnly;
 	}
 
+	get requestInfo() {
+		return this.#bag.getValue("requestInfo");
+	}
+
+	set requestInfo(v) {
+		this.#bag.setValue("requestInfo", v);
+	}
+
 	get command() {
 		return this.#command.event;
 	}
@@ -118,7 +128,7 @@ export class ViewerModel {
 
 	constructor(root: json.JProperty) {
 		this.#root = root;
-		this.#bag = new PropertyBag<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "" });
+		this.#bag = new PropertyBag<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "", requestInfo: undefined });
 		this.#command = new EventHandlers();
 		this.#selected = new Set();
 		this.#lastSelected = null;

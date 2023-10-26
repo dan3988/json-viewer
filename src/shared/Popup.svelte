@@ -64,7 +64,7 @@
 				<span id="title" class="h4 modal-title">{title}</span>
 				<span role="button" class="close btn-danger" data-dismiss="modal" aria-label="Close" on:click={cancel}></span>
 			</div>
-			<div class="modal-body">
+			<div class="modal-body overflow-y-auto">
 				<slot/>
 			</div>
 			<div class="modal-footer">
