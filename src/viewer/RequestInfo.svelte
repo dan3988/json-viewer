@@ -1,3 +1,10 @@
+<script lang="ts" context="module">
+	import type { DocumentRequestInfo, DocumentHeader } from "../types.d.ts"
+
+	function wrapHeaders(info: undefined | DocumentRequestInfo): [title: string, headers: DocumentHeader[]][] {
+		return info ? [["Request Headers", info.requestHeaders], ["Response Headers", info.responseHeaders]] : [];
+	}
+</script>
 <script lang="ts">
 	import type ViewerModel from "../viewer-model";
 
@@ -49,23 +56,17 @@
 			<span class="header-key">Duration</span>
 			<span class="header-val">{info.endTime - info.startTime}</span>
 		</div>
-		<span class="h5 title border-bottom py-2">Request Headers</span>
-		<ul class="list pairs mono">
-			{#each info.requestHeaders as [key, value]}
-				<li class="pairs">
-					<span class="header-key name">{key}</span>
-					<span class="header-val">{value}</span>
-				</li>
-			{/each}
-		</ul>
-		<span class="h5 title border-bottom py-2">Response Headers</span>
-		<ul class="list pairs mono">
-			{#each info.responseHeaders as [key, value]}
-				<li class="pairs">
-					<span class="header-key name" title={key}>{key}</span>
-					<span class="header-val" title={value}>{value}</span>
-				</li>
-			{/each}
-		</ul>
+		{#each wrapHeaders(info) as [title, values]}
+			<span class="h5 title border-bottom py-2">{title}</span>
+			<ul class="list pairs mono">
+				{#each values as [key, value]}
+					<li class="header pairs">
+						<span class="copy-btn btn btn-cust-light" role="button" title="Copy"></span>
+						<span class="row-key" title={key}>{key}</span>
+						<span class="row-val" title={value}>{value}</span>
+					</li>
+				{/each}
+			</ul>
+		{/each}
 	</div>
 {/if}
