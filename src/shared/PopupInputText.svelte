@@ -1,7 +1,5 @@
 <script lang="ts">
 	import type { PopupEvents } from "../types";
-	import { scale } from "svelte/transition";
-	import { backOut } from "svelte/easing";
 	import { createEventDispatcher, onMount } from "svelte";
 	import Popup from "./Popup.svelte";
 
@@ -26,34 +24,10 @@
 	}
 </script>
 <style lang="scss">
-	#title {
-		text-align: center;
-		grid-area: title;
-	}
-
 	#value {
 		resize: none;
 		height: 100%;
 		grid-area: text;
-	}
-
-	#cancel {
-		grid-area: cancel;
-	}
-
-	#confirm {
-		grid-area: confirm;
-	}
-
-	.root {
-		display: grid;
-		gap: 5px;
-		grid-template-columns: [title-start text-start] minmax(5rem, 1fr) [cancel] 5rem [confirm] 5rem [title-end text-end];
-		grid-template-rows: [text] 1fr [cancel confirm] auto;
-
-		&.title {
-			grid-template-rows: [title] auto [text] 1fr [cancel confirm] auto;
-		}
 	}
 </style>
 <Popup {title} {width} {height} on:canceled={onCancel} on:confirmed={onConfirm}>
