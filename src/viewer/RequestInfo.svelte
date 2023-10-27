@@ -11,6 +11,7 @@
 </script>
 <script lang="ts">
 	import type ViewerModel from "../viewer-model";
+	import time from "../time";
 
 	export let model: ViewerModel;
 
@@ -87,7 +88,7 @@
 			<span class="row-key">Initiated</span>
 			<span class="row-val">{new Date(info.startTime)}</span>
 			<span class="row-key">Duration</span>
-			<span class="row-val">{info.endTime - info.startTime}</span>
+			<span class="row-val">{time.durationToString(info.endTime - info.startTime)}</span>
 		</div>
 		{#each wrapHeaders(info) as [title, values]}
 			<span class="h5 title border-bottom py-2">{title}</span>
