@@ -191,7 +191,7 @@ function checkIsFirefox(): Promise<boolean> {
 
 const isFirefox = checkIsFirefox();
 
-checkIsFirefox().then(loadExtension);
+isFirefox.then(loadExtension);
 
 function onInstalled(det: chrome.runtime.InstalledDetails) {
 	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
