@@ -61,8 +61,8 @@ async function loadExtension(isFirefox: boolean) {
 
 		return array;
 	}
-	
-	function onBeforeSendHeaders(det: chrome.webRequest.WebRequestHeadersDetails) {
+
+	function onBeforeRequest(det: chrome.webRequest.WebRequestBodyDetails) {
 		const id = createFrameId(det.tabId, det.frameId);
 		const url = new URL(det.url);
 		if (bag.blacklist.includes(url.hostname)) {
@@ -76,24 +76,40 @@ async function loadExtension(isFirefox: boolean) {
 			startTime: det.timeStamp,
 			endTime: -1,
 			responseHeaders: [],
-			requestHeaders: addHeaders([], det.requestHeaders)
+			requestHeaders: []
 		});
+	}
+	
+	function onBeforeSendHeaders(det: chrome.webRequest.WebRequestHeadersDetails) {
+		const id = createFrameId(det.tabId, det.frameId);
+		const info = headersMap.get(id);
+		if (info != null) {
+			info.startTime = det.timeStamp;
+			addHeaders(info.requestHeaders, det.requestHeaders);
+		}
 	}
 
 	function onHeadersReceived(det: chrome.webRequest.WebResponseHeadersDetails) {
 		const id = createFrameId(det.tabId, det.frameId);
 		const info = headersMap.get(id);
-		if (info == null)
-			return;
+		if (info != null) {
+			info.status = det.statusCode;
+			info.statusText = det.statusLine;
+			addHeaders(info.responseHeaders, det.responseHeaders);
+		}
+	}
 
-		info.status = det.statusCode;
-		info.statusText = det.statusLine;
-		info.endTime = det.timeStamp;
-		addHeaders(info.responseHeaders, det.responseHeaders);
+	function onRequestCompleted(det: chrome.webRequest.WebResponseCacheDetails) {
+		const id = createFrameId(det.tabId, det.frameId);
+		const info = headersMap.get(id);
+		if (info != null)
+			info.endTime = det.timeStamp;
 	}
 	
+	chrome.webRequest.onBeforeRequest.addListener(onBeforeRequest, webRequestFilter);
 	chrome.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, webRequestFilter, ["requestHeaders"]);
-	chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived, webRequestFilter, ["responseHeaders"]);	
+	chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived, webRequestFilter, ["responseHeaders"]);
+	chrome.webRequest.onCompleted.addListener(onRequestCompleted, webRequestFilter);
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
 		const tabId = sender.tab?.id;
 		if (tabId == null)
