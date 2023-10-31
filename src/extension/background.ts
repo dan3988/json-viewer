@@ -211,7 +211,6 @@ function createFrameId(tabId: number, frameId?: number) {
 	if (!frameId)
 		return BigInt(tabId);
 
-	debugger;
 	const buffer = new ArrayBuffer(8);
 	const view = new DataView(buffer);
 	view.setUint32(0, tabId);
