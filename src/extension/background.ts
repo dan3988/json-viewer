@@ -62,6 +62,9 @@ async function loadExtension(isFirefox: boolean) {
 	WebRequestInterceptor.builder()
 		.addFilterTypes("main_frame", "sub_frame")
 		.onBeforeRequest(det => {
+			if (det.type === "main_frame")
+				headersMap.delete(det.tabId);
+
 			const url = new URL(det.url);
 			if (bag.blacklist.includes(url.hostname))
 				return;
