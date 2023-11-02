@@ -84,7 +84,7 @@ function run() {
 				return getValue(scheme.value, darkMode.value);
 			}
 
-			chrome.runtime.sendMessage({ type: "headers" }, v => model.requestInfo = v);
+			chrome.runtime.sendMessage({ type: "requestInfo" }, v => model.requestInfo = v);
 
 			if (bag.getValue("useHistory"))
 				model.bag.readables.selected.subscribe(pushHistory);

@@ -6,8 +6,8 @@ export interface LoadMessage extends MessageBase {
 	type: "loadme";
 }
 
-export interface HeadersMessage extends MessageBase {
-	type: "headers";
+export interface RequestInfoMessage extends MessageBase {
+	type: "requestInfo";
 }
 
 export interface CheckMessage extends MessageBase {
@@ -31,7 +31,7 @@ export interface DocumentRequestInfo {
 	responseHeaders: DocumentHeader[];
 }
 
-export type WorkerMessage = LoadMessage | CheckMessage | RememberMessage | HeadersMessage;
+export type WorkerMessage = LoadMessage | CheckMessage | RememberMessage | RequestInfoMessage;
 
 type ToCustom<T> = { [P in keyof T]: CustomEvent<T[P]> };
 

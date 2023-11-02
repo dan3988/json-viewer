@@ -3,8 +3,8 @@ import settings from "../settings.js";
 import lib from "../lib.json";
 import WebRequestInterceptor from "./web-request.js";
 
-var headersMap = new Map<number, Map<number, DocumentRequestInfo>>();
-var requestInfoMap = new Map<string, DocumentRequestInfo>();
+var requestInfoMap = new Map<number, Map<number, DocumentRequestInfo>>();
+var currentRequestsMap = new Map<string, DocumentRequestInfo>();
 
 function updateIcon(path: Record<string, string>, title: string) {
 	const setIcon = chrome.action.setIcon({ path });
@@ -63,13 +63,13 @@ async function loadExtension(isFirefox: boolean) {
 		.addFilterTypes("main_frame", "sub_frame")
 		.onBeforeRequest(det => {
 			if (det.type === "main_frame")
-				headersMap.delete(det.tabId);
+				requestInfoMap.delete(det.tabId);
 
 			const url = new URL(det.url);
 			if (bag.blacklist.includes(url.hostname))
 				return;
 
-			requestInfoMap.set(det.requestId, {
+			currentRequestsMap.set(det.requestId, {
 				status: 0,
 				statusText: "unknown",
 				startTime: det.timeStamp,
@@ -79,12 +79,12 @@ async function loadExtension(isFirefox: boolean) {
 			});
 		})
 		.onBeforeSendHeaders(true, det => {
-			const info = requestInfoMap.get(det.requestId);
+			const info = currentRequestsMap.get(det.requestId);
 			if (info != null)
 				addHeaders(info.requestHeaders, det.requestHeaders);
 		})
 		.onHeadersReceived(true, det => {
-			const info = requestInfoMap.get(det.requestId);
+			const info = currentRequestsMap.get(det.requestId);
 			if (info != null) {
 				info.status = det.statusCode;
 				info.statusText = det.statusLine;
@@ -92,18 +92,18 @@ async function loadExtension(isFirefox: boolean) {
 			}
 		})
 		.onCompleted(det => {
-			const info = requestInfoMap.get(det.requestId);
+			const info = currentRequestsMap.get(det.requestId);
 			if (info != null) {
 				info.endTime = det.timeStamp;
 				const { tabId, frameId } = det;
-				let map = headersMap.get(tabId);
+				let map = requestInfoMap.get(tabId);
 				if (map == null)
-					headersMap.set(tabId, map = new Map());
+					requestInfoMap.set(tabId, map = new Map());
 
 				map.set(frameId, info);
 			}
 		})
-		.onEnd(det => requestInfoMap.delete(det.requestId))
+		.onEnd(det => currentRequestsMap.delete(det.requestId))
 		.build();
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
@@ -147,8 +147,8 @@ async function loadExtension(isFirefox: boolean) {
 				injectViewer(tabId, sender.frameId).then(respond);
 				return true;
 			}
-			case "headers": {
-				const map = headersMap.get(tabId);
+			case "requestInfo": {
+				const map = requestInfoMap.get(tabId);
 				const info = map && map.get(sender.frameId ?? 0);
 				respond(info);
 			}
@@ -189,7 +189,7 @@ const isFirefox = checkIsFirefox();
 
 isFirefox.then(loadExtension);
 
-chrome.tabs.onRemoved.addListener((id) => headersMap.delete(id));
+chrome.tabs.onRemoved.addListener((id) => requestInfoMap.delete(id));
 chrome.runtime.onInstalled.addListener(det => {
 	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
 		isFirefox.then(v => {
