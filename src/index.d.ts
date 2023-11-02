@@ -24,6 +24,9 @@ declare interface NamedCustomEvent<N extends string, T = any> extends CustomEven
 	readonly type: N;
 }
 
+declare type Chrome = typeof chrome;
+declare type ChromeEventMap<T> = { [P in keyof T as T[P] extends chrome.events.BaseEvent<any> ? P : never]: T[P] extends chrome.events.BaseEvent<infer E> ? E : never };
+
 declare namespace chrome {
 	declare namespace runtime {
 		declare interface BrowserInfo {
