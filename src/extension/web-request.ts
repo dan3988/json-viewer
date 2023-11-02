@@ -26,6 +26,10 @@ export interface WebRequestInterceptorBuilder {
 	onCompleted(handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 	onCompleted(includeHeaders: boolean, handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 
+	onErrorOccurred(handler: (det: chrome.webRequest.WebResponseErrorDetails) => void): this;
+
+	onEnd(handler: (det: chrome.webRequest.WebResponseErrorDetails | chrome.webRequest.WebResponseCacheDetails) => void): this;
+
 	build(): WebRequestInterceptor;
 }
 
@@ -80,11 +84,7 @@ export class WebRequestInterceptor {
 			return this;
 		}
 
-		#addEvent<T extends EventType>(type: T, extraInfoSpec: string, arg0: boolean | EventMap[T], arg1: undefined | EventMap[T]): this {
-			const event = chrome.webRequest[type];
-			if (event == null)
-				throw new TypeError(`Unknown event: ${type}`);
-
+		#addEvent<T extends EventType>(event: WebRequestEvent<EventMap[T]>, extraInfoSpec: string, arg0: boolean | EventMap[T], arg1: undefined | EventMap[T]): this {
 			const [handler, useExtra]: [EventMap[T], boolean] = <any>(arg1 == null ? [arg0, false] : [arg1, arg0]);
 			const info: EventInfo = [event, handler];
 			if (useExtra)
@@ -97,49 +97,60 @@ export class WebRequestInterceptor {
 		onBeforeRequest(handler: (det: chrome.webRequest.WebRequestBodyDetails) => void): this;
 		onBeforeRequest(includeBody: boolean, handler: (det: chrome.webRequest.WebRequestBodyDetails) => void): this;
 		onBeforeRequest(arg0: any, arg1?: any): this {
-			return this.#addEvent("onBeforeRequest", "requestBody", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onBeforeRequest, "requestBody", arg0, arg1);
 		}
 
 		onBeforeSendHeaders(handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onBeforeSendHeaders(includeHeaders: boolean, handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onBeforeSendHeaders(arg0: any, arg1?: any): this {
-			return this.#addEvent("onBeforeSendHeaders", "requestHeaders", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onBeforeSendHeaders, "requestHeaders", arg0, arg1);
 		}
 		
 		onSendHeaders(handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onSendHeaders(includeHeaders: boolean, handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onSendHeaders(arg0: any, arg1?: any): this {
-			return this.#addEvent("onSendHeaders", "requestHeaders", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onSendHeaders, "requestHeaders", arg0, arg1);
 		}
 		
 		onAuthRequired(handler: (det: chrome.webRequest.WebAuthenticationChallengeDetails) => void): this;
 		onAuthRequired(includeHeaders: boolean, handler: (det: chrome.webRequest.WebAuthenticationChallengeDetails) => void): this;
 		onAuthRequired(arg0: any, arg1?: any): this {
-			return this.#addEvent("onAuthRequired", "responseHeaders", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onAuthRequired, "responseHeaders", arg0, arg1);
 		}
 
 		onBeforeRedirect(handler: (det: chrome.webRequest.WebRedirectionResponseDetails) => void): this;
 		onBeforeRedirect(includeHeaders: boolean, handler: (det: chrome.webRequest.WebRedirectionResponseDetails) => void): this;
 		onBeforeRedirect(arg0: any, arg1?: any): this {
-			return this.#addEvent("onBeforeRedirect", "responseHeaders", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onBeforeRedirect, "responseHeaders", arg0, arg1);
 		}
 
 		onHeadersReceived(handler: (det: chrome.webRequest.WebResponseHeadersDetails) => void): this;
 		onHeadersReceived(includeHeaders: boolean, handler: (det: chrome.webRequest.WebResponseHeadersDetails) => void): this;
 		onHeadersReceived(arg0: any, arg1?: any): this {
-			return this.#addEvent("onHeadersReceived", "responseHeaders", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onHeadersReceived, "responseHeaders", arg0, arg1);
 		}
 
 		onResponseStarted(handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onResponseStarted(includeHeaders: boolean, handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onResponseStarted(arg0: any, arg1?: any): this {
-			return this.#addEvent("onResponseStarted", "responseHeaders", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onResponseStarted, "responseHeaders", arg0, arg1);
 		}
 
 		onCompleted(handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onCompleted(includeHeaders: boolean, handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onCompleted(arg0: any, arg1?: any): this {
-			return this.#addEvent("onCompleted", "responseHeaders", arg0, arg1);
+			return this.#addEvent(chrome.webRequest.onCompleted, "responseHeaders", arg0, arg1);
+		}
+
+		onEnd(handler: (det: chrome.webRequest.WebResponseErrorDetails | chrome.webRequest.WebResponseCacheDetails) => void): this {
+			this.#events.push([chrome.webRequest.onErrorOccurred, handler]);
+			this.#events.push([chrome.webRequest.onCompleted, handler]);
+			return this;
+		}
+	
+		onErrorOccurred(handler: (det: chrome.webRequest.WebResponseErrorDetails) => void): this {
+			this.#events.push([chrome.webRequest.onErrorOccurred, handler]);
+			return this;
 		}
 	}
 
