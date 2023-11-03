@@ -1,6 +1,6 @@
 import type { Invalidator, Readable, Subscriber, Unsubscriber, Updater, Writable } from "svelte/store";
 import Linq from "@daniel.pickett/linq-js";
-import objectProxy from "./object-proxy.js";
+import { defValue } from "./util.js";
 
 export interface Property<Props extends Dict, Key extends keyof Props> extends Readable<Props[Key]> {
 	readonly key: Key;
@@ -11,8 +11,8 @@ export interface WritableProperty<Props extends Dict, Key extends keyof Props> e
 	readonly prop: Property<Props, Key>;
 }
 
-export type StateDict<T extends Dict> = { [P in keyof T]: Property<T, P> };
-export type WritableStateDict<T extends Dict> = { [P in keyof T]: WritableProperty<T, P> };
+export type StateDict<T extends Dict> = { readonly [P in keyof T]: Property<T, P> };
+export type WritableStateDict<T extends Dict> = { readonly [P in keyof T]: WritableProperty<T, P> };
 
 export type StateChangeHandler<T> = (changes: Partial<T>) => void;
 
@@ -165,8 +165,15 @@ class MappedEntry<Source extends Dict, Props extends Dict = any, Key extends key
 type IStateController<Props extends Dict> = StateController<Props>;
 type IMappedStateBuilder<TRecord extends Dict, TCurrent extends Dict> = MappedStateBuilder<TRecord, TCurrent>;
 
-const entryBagPrototype = Object.create(null);
-Object.seal(entryBagPrototype);
+function createDict<T extends Dict, M>(input: T, mapper: <K extends keyof T>(value: T[K], key: K) => M): { readonly [P in keyof T]: M } {
+	const dict = Object.create(null);
+	for (const [key, value] of Object.entries(input)) {
+		const newValue = mapper(value, key);
+		defValue(dict, key, newValue, true, false, false);
+	}
+
+	return Object.preventExtensions(dict);
+}
 
 class State<Props extends Dict = Dict> {
 	readonly #keys: ReadonlySet<string>;
@@ -185,7 +192,7 @@ class State<Props extends Dict = Dict> {
 	constructor(entries: Entries<Props>) {
 		this.#keys = Linq.fromKeys(entries).toSet();
 		this.#entries = entries;
-		this.#props = objectProxy(entries, "prop", "prop");
+		this.#props = <any>createDict(entries, v => v.prop.prop);
 		this.#handlers = [];
 	}
 
@@ -228,16 +235,10 @@ class State<Props extends Dict = Dict> {
 		}
 
 		constructor(values: T) {
-			const entries = Object.create(null);
-	
-			for (const key in values) {
-				const v = values[key];
-				entries[key] = new Entry(key, v);
-			}
-	
+			const entries: Entries<T> = createDict(values, (v, k) => <any>new Entry(k, v));
 			super(entries);
 			this.#state = new State(entries);
-			this.#props = objectProxy(this.#entries, "prop");
+			this.#props = <any>createDict(entries, v => v.prop);
 		}
 
 		setValue<K extends keyof T>(key: K, value: T[K]): boolean {
