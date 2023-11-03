@@ -89,7 +89,8 @@ $cst-dirty-border-color-dark: #5c603b;
 	margin: 0;
 }
 
-:global(.btn-cust-light) {
+:global(.btn-cust-light),
+:global(.btn.btn-cust-light) {
 	--bs-btn-color: var(--cst-btn-color);
 	--bs-btn-bg: var(--cst-btn-bg);
 	--bs-btn-border-color: var(--cst-btn-border-color);
