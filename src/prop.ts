@@ -1,5 +1,6 @@
 import Linq from "@daniel.pickett/linq-js";
 import type { Readable, Subscriber, Unsubscriber } from "svelte/store";
+import objectProxy from "./object-proxy.js";
 
 type Invalidator<T> = (value?: T) => void;
 
@@ -7,17 +8,7 @@ interface IReadable<T = undefined> extends Readable<T> {
 	readonly value: T;
 }
 
-interface IReadableImpl<T = undefined> extends IReadable<T> {
-	__setValue(value: T): boolean;
-}
-
-interface IExtendedReadableImpl<TSource extends Dict, T = undefined> extends IReadableImpl<T> {
-	__update(src: ReadOnlyPropertyBag<TSource>): boolean;
-}
-
 type Readables<T> = { readonly [P in keyof T]: IReadable<T[P]> };
-type ReadableImpls<T> = { readonly [P in keyof T]: IReadableImpl<T[P]> };
-type ExtendedReadableImpls<TSource extends Dict, T> = { readonly [P in keyof T]: IExtendedReadableImpl<TSource, T[P]> };
 
 export interface ReadOnlyPropertyBag<TRecord extends Dict = Dict> {
 	readonly keys: ReadonlySet<string>;
@@ -33,24 +24,56 @@ type PropertyBagChangeHandler<TRecord> = (changes: Partial<TRecord>) => void;
 
 type IReadOnlyPropertyBag<T extends Dict> = ReadOnlyPropertyBag<T>;
 
-class ReadableImpl<TRecord extends Dict, TKey extends keyof TRecord> implements IReadableImpl<TRecord[TKey]> {
-	readonly #key: TKey;
-	readonly #subs: Map<number, Invalidator<TRecord[TKey]>>;
-	#value: TRecord[TKey];
+type Entries<T extends Dict> = { readonly [P in keyof T]: Entry<T, P> };
+
+class Entry<Props extends Dict = any, Key extends keyof Props = any> {
+	static readonly Readable = class Property<Props extends Dict, Key extends keyof Props> implements IReadable<Props[Key]> {
+		readonly #entry: Entry<Props, Key>;
+
+		get key() {
+			return this.#entry.#key;
+		}
+
+		get value() {
+			return this.#entry.#value;
+		}
+
+		constructor(entry: Entry<Props, Key>) {
+			this.#entry = entry;
+		}
+
+		subscribe(run: Subscriber<Props[Key]>, invalidate?: Invalidator<Props[Key]> | undefined): Unsubscriber {
+			return this.#entry.subscribe(run, invalidate);
+		}
+	}
+
+	readonly #key: Key;
+	readonly #subs: Map<number, Invalidator<Props[Key]>>;
+	readonly #readable: IReadable<Props[Key]>;
 	#subNo: number;
+	#value: Props[Key];
+
+	get readable() {
+		return this.#readable;
+	}
 
 	get value() {
 		return this.#value;
 	}
 
-	constructor(key: TKey, value: TRecord[TKey]) {
+	constructor(key: Key, value: Props[Key]) {
 		this.#key = key;
 		this.#value = value;
-		this.#subs = new Map();
+		this.#readable = new Entry.Readable(this);
+		this.#subs = new Map;
 		this.#subNo = 0;
 	}
 
-	__setValue(v: TRecord[TKey]): boolean {
+	#unsubscribe(subNo: number): void {
+		this.#subs.delete(subNo);
+	}
+
+	setValue(v: Props[Key]): boolean {
 		if (this.#value !== v) {
 			this.#value = v;
 			this.#subs.forEach(fn => fn(v));
@@ -60,11 +83,7 @@ class ReadableImpl<TRecord extends Dict, TKey extends keyof TRecord> implements 
 		}
 	}
 
-	#unsubscribe(subNo: number): void {
-		this.#subs.delete(subNo);
-	}
-
-	subscribe(run: Subscriber<TRecord[TKey]>, invalidate?: Invalidator<TRecord[TKey]>): Unsubscriber {
+	subscribe(run: Subscriber<Props[Key]>, invalidate?: Invalidator<Props[Key]>): Unsubscriber {
 		const value = this.#value;
 		run(value);
 		const subNo = this.#subNo++;
@@ -73,8 +92,25 @@ class ReadableImpl<TRecord extends Dict, TKey extends keyof TRecord> implements 
 	}
 }
 
+type MappedEntries<TSource extends Dict, TRecord extends Dict> = { readonly [P in keyof TRecord]: MappedEntry<TSource, TRecord, P> };
+
+class MappedEntry<Source extends Dict, Props extends Dict = any, Key extends keyof Props = any> extends Entry<Props, Key> {
+	readonly #transformer: TransformerHandler<Source>;
+
+	constructor(key: Key, value: Props[Key], transformer: TransformerHandler<Source>) {
+		super(key, value);
+		this.#transformer = transformer;
+	}
+
+	update(src: ReadOnlyPropertyBag<Source>) {
+		const value = this.#transformer.call(undefined, src);
+		return this.setValue(value);
+	}
+}
+
 class PropertyBagBase<TRecord extends Dict = Dict> implements ReadOnlyPropertyBag<TRecord> {
 	readonly #keys: ReadonlySet<string>;
+	readonly #entries: Entries<TRecord>;
 	readonly #readables: Readables<TRecord>;
 	readonly #handlers: PropertyBagChangeHandler<TRecord>[];
 
@@ -90,14 +126,15 @@ class PropertyBagBase<TRecord extends Dict = Dict> implements ReadOnlyPropertyBa
 		return this.#handlers.length > 0;
 	}
 
-	constructor(readables: Readables<TRecord>) {
-		this.#readables = readables;
-		this.#keys = Linq.fromKeys(readables).toSet();
+	constructor(entries: Entries<TRecord>) {
+		this.#keys = Linq.fromKeys(entries).toSet();
+		this.#entries = entries;
+		this.#readables = objectProxy(entries, "readable");
 		this.#handlers = [];
 	}
 
 	getValue<K extends keyof TRecord>(key: K): TRecord[K] {
-		return this.#readables[key].value;
+		return this.#entries[key].value;
 	}
 
 	getValues(): TRecord;
@@ -105,7 +142,7 @@ class PropertyBagBase<TRecord extends Dict = Dict> implements ReadOnlyPropertyBa
 	getValues(keys?: string[]): any {
 		const result: any = {};
 		for (const key of keys ?? this.#keys)
-			result[key] = this.#readables[key].value;
+			result[key] = this.#entries[key].value;
 
 		return result;
 	}
@@ -124,7 +161,7 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 		readonly #owner: PropertyBag<TRecord>;
 
 		get readables() {
-			return this.#owner.#readables;
+			return this.#owner.readables;
 		}
 
 		get keys() {
@@ -148,7 +185,7 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 		}
 	}
 
-	readonly #readables: ReadableImpls<TRecord>;
+	readonly #entries: Entries<TRecord>;
 	readonly #readOnly: ReadOnlyPropertyBag<TRecord>;
 
 	get readOnly() {
@@ -156,20 +193,20 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 	}
 
 	constructor(values: TRecord) {
-		const readables: any = {};
+		const entries: any = {};
 
 		for (const key in values) {
 			const v = values[key];
-			readables[key] = new ReadableImpl(key, v);
+			entries[key] = new Entry(key, v);
 		}
 
-		super(readables);
-		this.#readables = readables;
+		super(entries);
+		this.#entries = entries;
 		this.#readOnly = new PropertyBag.#ReadOnly(this);
 	}
 
 	setValue<K extends keyof TRecord>(key: K, value: TRecord[K]) {
-		const changed = this.#readables[key].__setValue(value);
+		const changed = this.#entries[key].setValue(value);
 		if (changed && this.__hasHandlers)
 			this.__fireChange({ [key]: value } as any);
 	}
@@ -181,7 +218,7 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 	
 			for (const key in values) {
 				const value = values[key];
-				if (this.#readables[key].__setValue(value as any)) {
+				if (this.#entries[key].setValue(value as any)) {
 					changedCount++;
 					changed[key] = value;
 				}
@@ -190,7 +227,7 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 			changedCount && this.__fireChange(changed);
 		} else {
 			for (const key in values)
-				this.#readables[key].__setValue(values[key] as any);
+				this.#entries[key].setValue(values[key] as any);
 		}
 	}
 }
@@ -300,26 +337,12 @@ const MappedBagBuilderImpl: MappedBagBuilderConstructor = class BindedBagBuilder
 export var MappedBagBuilder = MappedBagBuilderImpl;
 
 class MappedPropertyBag<TSource extends Dict, TRecord extends Dict> extends PropertyBagBase<TRecord> {
-	static readonly #Readable = class ExtendedReadable<TSource extends Dict, TRecord extends Dict, TKey extends keyof TRecord> extends ReadableImpl<TRecord, TKey> implements IExtendedReadableImpl<TSource, TRecord[TKey]> {
-		readonly #transformer: TransformerHandler<TSource>;
-
-		constructor(key: TKey, value: TRecord[TKey], transformer: TransformerHandler<TSource>) {
-			super(key, value);
-			this.#transformer = transformer;
-		}
-
-		__update(src: ReadOnlyPropertyBag<TSource>) {
-			const value = this.#transformer.call(undefined, src);
-			return this.__setValue(value);
-		}
-	}
-
 	readonly #source: ReadOnlyPropertyBag<TSource>;
-	readonly #readables: ExtendedReadableImpls<TSource, TRecord>;
+	readonly #entries: MappedEntries<TSource, TRecord>;
 	readonly #mappings: Map<string, string[]>;
 
 	constructor(source: ReadOnlyPropertyBag<TSource>, transformers: Dict<Transformer<TSource>>) {
-		const readables = Object.create(null);
+		const entries = Object.create(null);
 		const mappings = new Map<string, string[]>();
 
 		function addKey(source: string, key: string) {
@@ -339,15 +362,15 @@ class MappedPropertyBag<TSource extends Dict, TRecord extends Dict> extends Prop
 			}
 
 			const value = handler(source);
-			const readable = new MappedPropertyBag.#Readable(key, value, handler);
-			readables[key] = readable;
+			const readable = new MappedEntry(key, value, handler);
+			entries[key] = readable;
 		}
 
-		super(readables);
+		super(entries);
 		this.#source = source;
 		this.#source.onChange(this.#onSourceChange.bind(this));
 		this.#mappings = mappings;
-		this.#readables = readables;
+		this.#entries = entries;
 	}
 
 	#onSourceChange(changes: Partial<TSource>) {
@@ -369,10 +392,10 @@ class MappedPropertyBag<TSource extends Dict, TRecord extends Dict> extends Prop
 			let count = 0;
 
 			for (const key of toUpdate) {
-				const readable = this.#readables[key];
-				if (readable.__update(src)) {
+				const entry = this.#entries[key];
+				if (entry.update(src)) {
 					count++;
-					changes[key] = readable.value;
+					changes[key] = entry.value;
 				}
 			}
 	
@@ -380,7 +403,7 @@ class MappedPropertyBag<TSource extends Dict, TRecord extends Dict> extends Prop
 				this.__fireChange(changes);
 		} else {
 			for (const key of toUpdate)
-				this.#readables[key].__update(src);
+				this.#entries[key].update(src);
 		}
 	}
 }
