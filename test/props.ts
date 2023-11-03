@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { StateController, State } from '../src/prop.js'; // Update with your module path
+import { StateController, State } from '../src/state.js'; // Update with your module path
 
 function checkEqual<T, K extends string & keyof T>(state: State<T>, key: K, value: T[K]) {
 	expect(state.getValue(key)).to.eq(value);

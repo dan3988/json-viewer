@@ -1,7 +1,7 @@
 import type { DocumentRequestInfo } from "./types.js";
 import { EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
-import { StateController } from "./prop.js";
+import { StateController } from "./state.js";
 import json from "./json.js";
 
 export interface SelectedPropertyList extends Iterable<json.JProperty> {
