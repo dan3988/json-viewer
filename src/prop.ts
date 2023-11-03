@@ -1,4 +1,4 @@
-import type { Invalidator, Readable, Subscriber, Unsubscriber } from "svelte/store";
+import type { Invalidator, Readable, Subscriber, Unsubscriber, Updater, Writable } from "svelte/store";
 import Linq from "@daniel.pickett/linq-js";
 import objectProxy from "./object-proxy.js";
 
@@ -7,7 +7,12 @@ export interface Property<Props extends Dict, Key extends keyof Props> extends R
 	readonly value: Props[Key];
 }
 
+export interface WritableProperty<Props extends Dict, Key extends keyof Props> extends Property<Props, Key>, Writable<Props[Key]> {
+	readonly prop: Property<Props, Key>;
+}
+
 export type StateDict<T extends Dict> = { [P in keyof T]: Property<T, P> };
+export type WritableStateDict<T extends Dict> = { [P in keyof T]: WritableProperty<T, P> };
 
 export type StateChangeHandler<T> = (changes: Partial<T>) => void;
 
@@ -51,8 +56,10 @@ type PropertyBagChangeHandler<TRecord> = (changes: Partial<TRecord>) => void;
 
 type Entries<T extends Dict> = { readonly [P in keyof T]: Entry<T, P> };
 
+type IProperty<Props extends Dict, Key extends keyof Props> = Property<Props, Key>;
+
 class Entry<Props extends Dict = any, Key extends keyof Props = any> {
-	static readonly Property = class Property<Props extends Dict, Key extends keyof Props> implements Property<Props, Key> {
+	static readonly Property = class Property<Props extends Dict, Key extends keyof Props> implements IProperty<Props, Key> {
 		readonly #entry: Entry<Props, Key>;
 
 		get key() {
@@ -70,11 +77,33 @@ class Entry<Props extends Dict = any, Key extends keyof Props = any> {
 		subscribe(run: Subscriber<Props[Key]>, invalidate?: Invalidator<Props[Key]> | undefined): Unsubscriber {
 			return this.#entry.subscribe(run, invalidate);
 		}
+		
+		static readonly WritableProperty = class<Props extends Dict, Key extends keyof Props> extends this<Props, Key> implements WritableProperty<Props, Key> {
+			readonly #prop: Property<Props, Key>;
+	
+			get prop() {
+				return this.#prop;
+			}
+
+			constructor(entry: Entry<Props, Key>) {
+				super(entry);
+				this.#prop = new Entry.Property(entry);
+			}
+	
+			set(value: Props[Key]): void {
+				this.#entry.setValue(value);
+			}
+
+			update(updater: Updater<Props[Key]>): void {
+				const v = updater(this.#entry.#value);
+				this.#entry.setValue(v);
+			}
+		}
 	}
 
 	readonly #key: Key;
 	readonly #subs: Map<number, Invalidator<Props[Key]>>;
-	readonly #prop: Property<Props, Key>;
+	readonly #prop: WritableProperty<Props, Key>;
 	#subNo: number;
 	#value: Props[Key];
 
@@ -89,7 +118,7 @@ class Entry<Props extends Dict = any, Key extends keyof Props = any> {
 	constructor(key: Key, value: Props[Key]) {
 		this.#key = key;
 		this.#value = value;
-		this.#prop = new Entry.Property(this);
+		this.#prop = new Entry.Property.WritableProperty(this);
 		this.#subs = new Map;
 		this.#subNo = 0;
 	}
@@ -156,7 +185,7 @@ class State<Props extends Dict = Dict> {
 	constructor(entries: Entries<Props>) {
 		this.#keys = Linq.fromKeys(entries).toSet();
 		this.#entries = entries;
-		this.#props = objectProxy(entries, "prop");
+		this.#props = objectProxy(entries, "prop", "prop");
 		this.#handlers = [];
 	}
 
@@ -187,7 +216,12 @@ class State<Props extends Dict = Dict> {
 	}
 
 	static readonly #StateController = class StateController<T extends Dict> extends this<T> implements IStateController<T> {
+		readonly #props: WritableStateDict<T>;
 		readonly #state: State<T>;
+
+		get props() {
+			return this.#props;
+		}
 
 		get state() {
 			return this.#state;
@@ -203,6 +237,7 @@ class State<Props extends Dict = Dict> {
 	
 			super(entries);
 			this.#state = new State(entries);
+			this.#props = objectProxy(this.#entries, "prop");
 		}
 
 		setValue<K extends keyof T>(key: K, value: T[K]): boolean {
