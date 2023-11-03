@@ -1,5 +1,5 @@
 import type { ComponentConstructorOptions, SvelteComponent } from "svelte";
-import type { State } from "./prop.js";
+import type { State } from "./state.js";
 
 type ComponentClass<T, P extends Dict> = new (options: ComponentConstructorOptions<P>) => T;
 

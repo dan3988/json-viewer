@@ -1,4 +1,4 @@
-import { StateController } from "./prop.js";
+import { StateController } from "./state.js";
 
 export interface EditStackProps {
 	readonly canUndo: boolean;

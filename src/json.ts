@@ -1,5 +1,5 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
-import { StateController } from "./prop.js";
+import { StateController } from "./state.js";
 import { EventHandlers, type IEvent } from "./evt.js";
 import { isIdentifier, toPointer } from "./util.js"
 import Linq from "@daniel.pickett/linq-js";

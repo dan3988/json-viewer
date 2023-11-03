@@ -1,4 +1,4 @@
-import { StateController, type State } from "./prop.js";
+import { StateController, type State } from "./state.js";
 import settings from "./settings.js";
 
 const enum WatchTypes {
