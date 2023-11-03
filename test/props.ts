@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { StateController, State, MappedStateBuilder } from '../src/prop.js'; // Update with your module path
+import { StateController, State } from '../src/prop.js'; // Update with your module path
 
-function checkEqual<T, K extends keyof T>(state: State<T>, key: K, value: T[K]) {
+function checkEqual<T, K extends string & keyof T>(state: State<T>, key: K, value: T[K]) {
 	expect(state.getValue(key)).to.eq(value);
 	expect(state.props[key].value).to.eq(value);
 
@@ -35,7 +35,7 @@ describe('PropertyBag', () => {
 		};
 
 		const sourceState = new StateController(values);
-		const mappedState = new MappedStateBuilder(sourceState)
+		const mappedState = sourceState.bind()
 			.map(["lastName", "firstName"])
 			.map(['firstName', 'lastName'], 'full_name', (firstName, lastName) => firstName + " " + lastName)
 			.build();
@@ -59,7 +59,7 @@ describe('PropertyBag', () => {
 		};
 
 		const sourceBag = new StateController(values);
-		const builder = new MappedStateBuilder(sourceBag)
+		const builder = sourceBag.bind()
 			.map("firstName", "first_name");
 
 		expect(() => builder.map("lastName", "first_name")).throws();
