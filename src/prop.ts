@@ -189,11 +189,11 @@ class State<Props extends Dict = Dict> {
 		return this.#props;
 	}
 
-	constructor(entries: Entries<Props>) {
+	protected constructor(entries: Entries<Props>, owner?: State<Props>) {
 		this.#keys = Linq.fromKeys(entries).toSet();
 		this.#entries = entries;
 		this.#props = <any>createDict(entries, v => v.prop.prop);
-		this.#handlers = [];
+		this.#handlers = owner == null ? [] : owner.#handlers;
 	}
 
 	getValue<K extends keyof Props>(key: K): Props[K] {
@@ -237,7 +237,7 @@ class State<Props extends Dict = Dict> {
 		constructor(values: T) {
 			const entries: Entries<T> = createDict(values, (v, k) => <any>new Entry(k, v));
 			super(entries);
-			this.#state = new State(entries);
+			this.#state = new State(entries, this);
 			this.#props = <any>createDict(entries, v => v.prop);
 		}
 
