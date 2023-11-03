@@ -8,7 +8,6 @@ import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
 import json from "../json"
 import { ViewerModel } from "../viewer-model";
-import { MappedStateBuilder } from "../prop";
 
 function setGlobal(key: string, value: any) {
 	window.postMessage({ type: "globalSet", key, value });
@@ -75,7 +74,7 @@ function run() {
 
 		async function loadAsync() {
 			const bag = await settingsBag("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background");
-			const bound = new MappedStateBuilder(bag)
+			const bound = bag.bind()
 				.map(["background", "menuAlign", "scheme"])
 				.map(["indentChar", "indentCount"], "indent", (char, count) => char.repeat(count))
 				.map("scheme", "indentCount", v => schemes[v].indents)
