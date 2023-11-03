@@ -21,7 +21,7 @@
 
 	export let model: ViewerModel;
 
-	$: ({ lastSelected: selected } = model.bag.readables);
+	$: ({ lastSelected: selected } = model.state.props);
 	$: path = expandPath(model, $selected);
 
 	let editing = false;

@@ -1,5 +1,5 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
-import { PropertyBag } from "./prop.js";
+import { StateController } from "./prop.js";
 import { EventHandlers, type IEvent } from "./evt.js";
 import { isIdentifier, toPointer } from "./util.js"
 import Linq from "@daniel.pickett/linq-js";
@@ -100,7 +100,7 @@ export declare namespace json {
 		readonly path: readonly Key[];
 		readonly pathText: string;
 		readonly pointer: string;
-		readonly bag: PropertyBag<JPropertyBag>;
+		readonly state: StateController<JPropertyBag>;
 
 		readonly isHidden: boolean;
 		isExpanded: boolean;
@@ -370,7 +370,7 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	readonly #controller: JPropertyController<TKey, TValue>;
 	#key: TKey;
 	readonly #value: TValue;
-	readonly #bag: PropertyBag<JPropertyBag>;
+	readonly #state: StateController<JPropertyBag>;
 
 	#parent: null | JContainer<TKey>;
 	#previous: null | JProperty<TKey>;
@@ -423,28 +423,28 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		return path.join("/");
 	}
 
-	get bag() {
-		return this.#bag;
+	get state() {
+		return this.#state;
 	}
 
 	get isHidden() {
-		return this.#bag.getValue("isHidden");
+		return this.#state.getValue("isHidden");
 	}
 
 	get isExpanded() {
-		return this.#bag.getValue("isExpanded");
+		return this.#state.getValue("isExpanded");
 	}
 
 	set isExpanded(value) {
-		this.#bag.setValue("isExpanded", value);
+		this.#state.setValue("isExpanded", value);
 	}
 
 	get isSelected() {
-		return this.#bag.getValue("isSelected");
+		return this.#state.getValue("isSelected");
 	}
 
 	set isSelected(value) {
-		this.#bag.setValue("isSelected", value);
+		this.#state.setValue("isSelected", value);
 	}
 
 	constructor(key: TKey, value: JsonClass<TValue>)
@@ -454,7 +454,7 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		this.#controller = new JProperty.#Controller(this);
 		this.#key = key;
 		this.#value = typeof value === "function" ? new value(this) : (clone ? value.__cloneFor(this) : value);
-		this.#bag = new PropertyBag<JPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
+		this.#state = new StateController<JPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
 		this.#parent = null;
 		this.#previous = null;
 		this.#next = null;
@@ -474,7 +474,7 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	}
 
 	setExpanded(expanded: boolean, recursive?: boolean) {
-		this.#bag.setValue("isExpanded", expanded);
+		this.#state.setValue("isExpanded", expanded);
 		if (!recursive)
 			return;
 
@@ -517,8 +517,8 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	}
 
 	toggleExpanded() {
-		const v = !this.#bag.getValue("isExpanded");
-		this.#bag.setValue("isExpanded", v);
+		const v = !this.#state.getValue("isExpanded");
+		this.#state.setValue("isExpanded", v);
 		return v;
 	}
 
@@ -529,7 +529,7 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 		const showKey = Boolean(filterMode & json.JTokenFilterFlags.Keys) && String.prototype.toLowerCase.call(this.key).includes(filter);
 		const showValue = this.#value.__shown(filter, filterMode, isAppend);
 		const show = showKey || showValue;
-		this.#bag.setValue("isHidden", !show);
+		this.#state.setValue("isHidden", !show);
 		return show;
 	}
 

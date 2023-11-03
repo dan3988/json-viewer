@@ -1,7 +1,7 @@
 import type { DocumentRequestInfo } from "./types.js";
 import { EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
-import { PropertyBag } from "./prop.js";
+import { StateController } from "./prop.js";
 import json from "./json.js";
 
 export interface SelectedPropertyList extends Iterable<json.JProperty> {
@@ -83,7 +83,7 @@ export class ViewerModel {
 	}
 
 	readonly #root: json.JProperty;
-	readonly #bag: PropertyBag<ChangeProps>;
+	readonly #state: StateController<ChangeProps>;
 	readonly #command: EventHandlers<this, [evt: ViewerCommandEvent]>;
 	#selected: Set<json.JProperty>;
 	#lastSelected: null | json.JProperty;
@@ -98,16 +98,16 @@ export class ViewerModel {
 		return this.#selectedList;
 	}
 
-	get bag() {
-		return this.#bag.readOnly;
+	get state() {
+		return this.#state.state;
 	}
 
 	get requestInfo() {
-		return this.#bag.getValue("requestInfo");
+		return this.#state.getValue("requestInfo");
 	}
 
 	set requestInfo(v) {
-		this.#bag.setValue("requestInfo", v);
+		this.#state.setValue("requestInfo", v);
 	}
 
 	get command() {
@@ -115,11 +115,11 @@ export class ViewerModel {
 	}
 
 	get filterText() {
-		return this.#bag.getValue("filterText");
+		return this.#state.getValue("filterText");
 	}
 
 	get filterFlags() {
-		return this.#bag.getValue("filterFlags");
+		return this.#state.getValue("filterFlags");
 	}
 
 	get edits() {
@@ -128,7 +128,7 @@ export class ViewerModel {
 
 	constructor(root: json.JProperty) {
 		this.#root = root;
-		this.#bag = new PropertyBag<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "", requestInfo: undefined });
+		this.#state = new StateController<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "", requestInfo: undefined });
 		this.#command = new EventHandlers();
 		this.#selected = new Set();
 		this.#lastSelected = null;
@@ -144,8 +144,8 @@ export class ViewerModel {
 
 	filter(text: string, flags?: json.JTokenFilterFlags) {
 		text = text.toLowerCase();
-		const oldText = this.#bag.getValue("filterText");
-		const oldFlags = this.#bag.getValue("filterFlags");
+		const oldText = this.#state.getValue("filterText");
+		const oldFlags = this.#state.getValue("filterFlags");
 		const flagsChanged = flags != null && flags !== oldFlags;
 		flags ??= oldFlags;
 
@@ -157,8 +157,8 @@ export class ViewerModel {
 		if (append && flagsChanged)
 			append = (oldFlags & flags) === flags;
 
-		this.#bag.setValue("filterText", text);
-		this.#bag.setValue("filterFlags", flags);
+		this.#state.setValue("filterText", text);
+		this.#state.setValue("filterFlags", flags);
 		this.#root.filter(text, flags, append);
 	}
 
@@ -169,7 +169,7 @@ export class ViewerModel {
 		let i = 0;
 		let baseProp: json.JProperty;
 		if (path[0] !== "$") {
-			const selected = this.#bag.getValue("selected").at(-1);
+			const selected = this.#state.getValue("selected").at(-1);
 			if (selected == null)
 				return;
 
@@ -230,7 +230,7 @@ export class ViewerModel {
 
 		this.#selected = set;
 		this.#lastSelected = lastSelected;
-		this.#bag.setValues({ selected: [...set], lastSelected });
+		this.#state.setValues({ selected: [...set], lastSelected });
 	}
 
 	#selectedClear() {
@@ -242,14 +242,14 @@ export class ViewerModel {
 
 		this.#selected.clear();
 		this.#lastSelected = null;
-		this.#bag.setValues({ selected: [], lastSelected: null });
+		this.#state.setValues({ selected: [], lastSelected: null });
 		return true;
 	}
 
 	#selectedAdd(props: json.JProperty[]) {
 		let changed = 0;
 
-		const selected = [...this.#bag.getValue("selected")];
+		const selected = [...this.#state.getValue("selected")];
 		let lastSelected = this.#lastSelected;
 		for (const prop of props) {
 			if (prop.isSelected)
@@ -264,7 +264,7 @@ export class ViewerModel {
 
 		if (changed) {
 			this.#lastSelected = lastSelected;
-			this.#bag.setValues({ selected, lastSelected });
+			this.#state.setValues({ selected, lastSelected });
 		}
 
 		return changed;
@@ -286,7 +286,7 @@ export class ViewerModel {
 			const selected = [...this.#selected];
 			const lastSelected = selected.at(-1) ?? null
 			this.#lastSelected = lastSelected;
-			this.#bag.setValues({ selected, lastSelected });
+			this.#state.setValues({ selected, lastSelected });
 		}
 
 		return changed;

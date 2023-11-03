@@ -1,18 +1,24 @@
+import type { Invalidator, Readable, Subscriber, Unsubscriber, Writable } from "svelte/store";
 import Linq from "@daniel.pickett/linq-js";
-import type { Readable, Subscriber, Unsubscriber } from "svelte/store";
 import objectProxy from "./object-proxy.js";
 
-type Invalidator<T> = (value?: T) => void;
-
-interface IReadable<T = undefined> extends Readable<T> {
-	readonly value: T;
+export interface Property<Props extends Dict, Key extends keyof Props> extends Readable<Props[Key]> {
+	readonly key: Key;
+	readonly value: Props[Key];
 }
 
-type Readables<T> = { readonly [P in keyof T]: IReadable<T[P]> };
+export interface WritableProperty<Props extends Dict, Key extends keyof Props> extends Property<Props, Key>, Writable<Props[Key]> {
+	readonly prop: Property<Props, Key>;
+}
 
-export interface ReadOnlyPropertyBag<TRecord extends Dict = Dict> {
+export type StateDict<T extends Dict> = { [P in keyof T]: Property<T, P> };
+export type WritableStateDict<T extends Dict> = { [P in keyof T]: WritableProperty<T, P> };
+
+export type StateChangeHandler<T> = (changes: Partial<T>) => void;
+
+export interface State<TRecord extends Dict = Dict> {
 	readonly keys: ReadonlySet<string>;
-	readonly readables: Readables<TRecord>;
+	readonly props: StateDict<TRecord>;
 
 	getValue<K extends keyof TRecord>(key: K): TRecord[K];
 	getValues(): TRecord;
@@ -22,12 +28,10 @@ export interface ReadOnlyPropertyBag<TRecord extends Dict = Dict> {
 
 type PropertyBagChangeHandler<TRecord> = (changes: Partial<TRecord>) => void;
 
-type IReadOnlyPropertyBag<T extends Dict> = ReadOnlyPropertyBag<T>;
-
 type Entries<T extends Dict> = { readonly [P in keyof T]: Entry<T, P> };
 
 class Entry<Props extends Dict = any, Key extends keyof Props = any> {
-	static readonly Readable = class Property<Props extends Dict, Key extends keyof Props> implements IReadable<Props[Key]> {
+	static readonly Property = class Property<Props extends Dict, Key extends keyof Props> implements Property<Props, Key> {
 		readonly #entry: Entry<Props, Key>;
 
 		get key() {
@@ -49,12 +53,12 @@ class Entry<Props extends Dict = any, Key extends keyof Props = any> {
 
 	readonly #key: Key;
 	readonly #subs: Map<number, Invalidator<Props[Key]>>;
-	readonly #readable: IReadable<Props[Key]>;
+	readonly #prop: Property<Props, Key>;
 	#subNo: number;
 	#value: Props[Key];
 
-	get readable() {
-		return this.#readable;
+	get prop() {
+		return this.#prop;
 	}
 
 	get value() {
@@ -64,7 +68,7 @@ class Entry<Props extends Dict = any, Key extends keyof Props = any> {
 	constructor(key: Key, value: Props[Key]) {
 		this.#key = key;
 		this.#value = value;
-		this.#readable = new Entry.Readable(this);
+		this.#prop = new Entry.Property(this);
 		this.#subs = new Map;
 		this.#subNo = 0;
 	}
@@ -102,24 +106,24 @@ class MappedEntry<Source extends Dict, Props extends Dict = any, Key extends key
 		this.#transformer = transformer;
 	}
 
-	update(src: ReadOnlyPropertyBag<Source>) {
+	update(src: State<Source>) {
 		const value = this.#transformer.call(undefined, src);
 		return this.setValue(value);
 	}
 }
 
-class PropertyBagBase<TRecord extends Dict = Dict> implements ReadOnlyPropertyBag<TRecord> {
+class StateBase<TRecord extends Dict = Dict> implements State<TRecord> {
 	readonly #keys: ReadonlySet<string>;
 	readonly #entries: Entries<TRecord>;
-	readonly #readables: Readables<TRecord>;
+	readonly #props: StateDict<TRecord>;
 	readonly #handlers: PropertyBagChangeHandler<TRecord>[];
 
 	get keys() {
 		return this.#keys;
 	}
 
-	get readables() {
-		return this.#readables;
+	get props() {
+		return this.#props;
 	}
 
 	protected get __hasHandlers() {
@@ -129,7 +133,7 @@ class PropertyBagBase<TRecord extends Dict = Dict> implements ReadOnlyPropertyBa
 	constructor(entries: Entries<TRecord>) {
 		this.#keys = Linq.fromKeys(entries).toSet();
 		this.#entries = entries;
-		this.#readables = objectProxy(entries, "readable");
+		this.#props = objectProxy(entries, "prop");
 		this.#handlers = [];
 	}
 
@@ -156,19 +160,21 @@ class PropertyBagBase<TRecord extends Dict = Dict> implements ReadOnlyPropertyBa
 	}
 }
 
-export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TRecord> implements ReadOnlyPropertyBag<TRecord> {
-	static readonly #ReadOnly = class ReadOnlyPropertyBag<TRecord extends Dict> implements IReadOnlyPropertyBag<TRecord> {
-		readonly #owner: PropertyBag<TRecord>;
+type IState<T extends Dict> = State<T>;
 
-		get readables() {
-			return this.#owner.readables;
+export class StateController<TRecord extends Dict = Dict> extends StateBase<TRecord> implements State<TRecord> {
+	static readonly #State = class State<TRecord extends Dict> implements IState<TRecord> {
+		readonly #owner: StateController<TRecord>;
+
+		get props() {
+			return this.#owner.props;
 		}
 
 		get keys() {
 			return this.#owner.keys;
 		}
 
-		constructor(owner: PropertyBag<TRecord>) {
+		constructor(owner: StateController<TRecord>) {
 			this.#owner = owner;
 		}
 
@@ -186,10 +192,10 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 	}
 
 	readonly #entries: Entries<TRecord>;
-	readonly #readOnly: ReadOnlyPropertyBag<TRecord>;
+	readonly #state: State<TRecord>;
 
-	get readOnly() {
-		return this.#readOnly;
+	get state() {
+		return this.#state;
 	}
 
 	constructor(values: TRecord) {
@@ -202,7 +208,7 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 
 		super(entries);
 		this.#entries = entries;
-		this.#readOnly = new PropertyBag.#ReadOnly(this);
+		this.#state = new StateController.#State(this);
 	}
 
 	setValue<K extends keyof TRecord>(key: K, value: TRecord[K]) {
@@ -232,60 +238,60 @@ export class PropertyBag<TRecord extends Dict = Dict> extends PropertyBagBase<TR
 	}
 }
 
-type TransformerHandler<TSource extends Dict> = (src: ReadOnlyPropertyBag<TSource>) => any;
+type TransformerHandler<TSource extends Dict> = (src: State<TSource>) => any;
 type Transformer<TSource extends Dict> = [OneOrMany<string & keyof TSource>, TransformerHandler<TSource>];
 
 type KeysToArgs<TRecord, K extends readonly (keyof TRecord)[]> = { [I in keyof K]: TRecord[K[I]] };
 
 /**
- * Create a {@linkcode ReadOnlyPropertyBag} using another property bag's properties
+ * Create a {@linkcode State} using another states properties
  */
-export interface MappedBagBuilder<TRecord extends Dict, TCurrent extends Dict> {
+export interface MappedStateBuilder<TRecord extends Dict, TCurrent extends Dict> {
 	/**
-	 * Map properties from the source bag with the same property name
+	 * Map properties from the source state with the same property name
 	 * @param keys The properties to map
 	 */
-	map<const K extends readonly (string & ({} extends TCurrent ? keyof TRecord : Exclude<keyof TRecord, keyof TCurrent>))[]>(keys: K): MappedBagBuilder<TRecord, TCurrent & { [P in K[number]]: TRecord[P] }>;
+	map<const K extends readonly (string & ({} extends TCurrent ? keyof TRecord : Exclude<keyof TRecord, keyof TCurrent>))[]>(keys: K): MappedStateBuilder<TRecord, TCurrent & { [P in K[number]]: TRecord[P] }>;
 	/**
 	 * Map one or more properties to a single property using a conversion function
-	 * @param key The properties on the source bag to use
+	 * @param key The properties on the source state to use
 	 * @param output The name of the property
 	 * @param transform A function to map the properties to the output value
 	 */
-	map<const K extends readonly (string & keyof TRecord)[], const O extends string, T>(key: K, output: O, transform: (...values: KeysToArgs<TRecord, K>) => T): O extends keyof TCurrent ? never : MappedBagBuilder<TRecord, TCurrent & { [P in O]: T }>;
+	map<const K extends readonly (string & keyof TRecord)[], const O extends string, T>(key: K, output: O, transform: (...values: KeysToArgs<TRecord, K>) => T): O extends keyof TCurrent ? never : MappedStateBuilder<TRecord, TCurrent & { [P in O]: T }>;
 	/**
 	 * Map a property with no conversion
-	 * @param key The property on the source bag to use
+	 * @param key The property on the source state to use
 	 * @param output The name of the property
 	 */
-	map<K extends keyof TRecord, const O extends string>(key: K, output: O): O extends keyof TCurrent ? never : MappedBagBuilder<TRecord, TCurrent & { [P in O]: TRecord[K] }>;
+	map<K extends keyof TRecord, const O extends string>(key: K, output: O): O extends keyof TCurrent ? never : MappedStateBuilder<TRecord, TCurrent & { [P in O]: TRecord[K] }>;
 	/**
 	 * Map a property with a conversion function
-	 * @param key The property on the source bag to use
+	 * @param key The property on the source state to use
 	 * @param output The name of the property
 	 * @param transform A function to convert the property value to the output value
 	 */
-	map<K extends keyof TRecord, const O extends string, T>(key: K, output: O, transform: (value: TRecord[K]) => T): O extends keyof TCurrent ? never : MappedBagBuilder<TRecord, TCurrent & { [P in O]: T }>;
+	map<K extends keyof TRecord, const O extends string, T>(key: K, output: O, transform: (value: TRecord[K]) => T): O extends keyof TCurrent ? never : MappedStateBuilder<TRecord, TCurrent & { [P in O]: T }>;
 
 	/**
-	 * Create the output property bag
+	 * Create the output state
 	 */
-	build(): ReadOnlyPropertyBag<{ [P in keyof TCurrent]: TCurrent[P] }>;
+	build(): State<{ [P in keyof TCurrent]: TCurrent[P] }>;
 }
 
-interface MappedBagBuilderConstructor {
-	readonly prototype: MappedBagBuilder<any, any>;
-	new<TRecord extends Dict>(bag: ReadOnlyPropertyBag<TRecord>): MappedBagBuilder<TRecord, {}>;
+interface MappedStateBuilderConstructor {
+	readonly prototype: MappedStateBuilder<any, any>;
+	new<TRecord extends Dict>(src: State<TRecord>): MappedStateBuilder<TRecord, {}>;
 }
 
-type IBindedBagBuilder = MappedBagBuilder<any, any>;
+type IMappedStateBuilder = MappedStateBuilder<any, any>;
 
-const MappedBagBuilderImpl: MappedBagBuilderConstructor = class BindedBagBuilder implements IBindedBagBuilder {
-	readonly #bag: ReadOnlyPropertyBag<any>;
+const MappedStateBuilderImpl: MappedStateBuilderConstructor = class BindedBagBuilder implements IMappedStateBuilder {
+	readonly #src: State<any>;
 	readonly #transformers: Record<string, Transformer<any>>;
 
-	constructor(bag: ReadOnlyPropertyBag<any>) {
-		this.#bag = bag;
+	constructor(src: State<any>) {
+		this.#src = src;
 		this.#transformers = Object.create(null);
 	}
 
@@ -328,20 +334,20 @@ const MappedBagBuilderImpl: MappedBagBuilderConstructor = class BindedBagBuilder
 		return this;
 	}
 
-	build(): ReadOnlyPropertyBag<any> {
-		const [bag, transformers] = [this.#bag, this.#transformers];
-		return new MappedPropertyBag(bag, transformers);
+	build(): State<any> {
+		const [src, transformers] = [this.#src, this.#transformers];
+		return new MappedState(src, transformers);
 	}
 }
 
-export var MappedBagBuilder = MappedBagBuilderImpl;
+export var MappedStateBuilder = MappedStateBuilderImpl;
 
-class MappedPropertyBag<TSource extends Dict, TRecord extends Dict> extends PropertyBagBase<TRecord> {
-	readonly #source: ReadOnlyPropertyBag<TSource>;
+class MappedState<TSource extends Dict, TRecord extends Dict> extends StateBase<TRecord> {
+	readonly #source: State<TSource>;
 	readonly #entries: MappedEntries<TSource, TRecord>;
 	readonly #mappings: Map<string, string[]>;
 
-	constructor(source: ReadOnlyPropertyBag<TSource>, transformers: Dict<Transformer<TSource>>) {
+	constructor(source: State<TSource>, transformers: Dict<Transformer<TSource>>) {
 		const entries = Object.create(null);
 		const mappings = new Map<string, string[]>();
 
@@ -408,7 +414,7 @@ class MappedPropertyBag<TSource extends Dict, TRecord extends Dict> extends Prop
 	}
 }
 
-function transformMany<T extends Dict>(this: string[], transform: Fn, src: ReadOnlyPropertyBag<T>) {
+function transformMany<T extends Dict>(this: string[], transform: Fn, src: State<T>) {
 	const args = Array(this.length);
 	for (let i = 0; i < args.length; i++)
 		args[i] = src.getValue(this[i]);
@@ -416,11 +422,11 @@ function transformMany<T extends Dict>(this: string[], transform: Fn, src: ReadO
 	return transform.apply(undefined, args);
 };
 
-function transformSingle<T extends Dict>(key: string, transform: Func<any, any>, bag: ReadOnlyPropertyBag<T>) {
-	const v = bag.getValue(key);
+function transformSingle<T extends Dict>(key: string, transform: Func<any, any>, state: State<T>) {
+	const v = state.getValue(key);
 	return transform(v);
 }
 
-function mapValue<T extends Dict>(key: string, bag: ReadOnlyPropertyBag<T>) {
-	return bag.getValue(key);
+function mapValue<T extends Dict>(key: string, state: State<T>) {
+	return state.getValue(key);
 }

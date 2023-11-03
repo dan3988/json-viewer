@@ -33,8 +33,8 @@
 
 	model.command.addListener(onModelCommand);
 
-	$: ({ requestInfo } = model.bag.readables);
-	$: ({ canUndo, canRedo } = model.edits.bag.readables);
+	$: ({ requestInfo } = model.state.props);
+	$: ({ canUndo, canRedo } = model.edits.state.props);
 	$: model.filter(filter, filterMode);
 
 	onDestroy(() => model.command.removeListener(onModelCommand));

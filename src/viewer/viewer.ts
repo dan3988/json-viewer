@@ -8,9 +8,9 @@ import ThemeTracker from "../theme-tracker";
 import JsonViewer from "./JsonViewer.svelte";
 import json from "../json"
 import { ViewerModel } from "../viewer-model";
-import { MappedBagBuilder } from "../prop";
+import { MappedStateBuilder } from "../prop";
 
-async function setGlobal(key: string, value: any) {
+function setGlobal(key: string, value: any) {
 	window.postMessage({ type: "globalSet", key, value });
 }
 
@@ -28,6 +28,8 @@ function run() {
 		const root = json(doc);
 		const model = new ViewerModel(root);
 		root.isExpanded = true;
+
+		(window as any).model = model;
 
 		function suppressPush(fn: Fn): any
 		function suppressPush<T, R>(fn: Fn<[], R, T>, thisArg: T): R
@@ -73,21 +75,21 @@ function run() {
 
 		async function loadAsync() {
 			const bag = await settingsBag("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background");
-			const bound = new MappedBagBuilder(bag)
+			const bound = new MappedStateBuilder(bag)
 				.map(["background", "menuAlign", "scheme"])
 				.map(["indentChar", "indentCount"], "indent", (char, count) => char.repeat(count))
 				.map("scheme", "indentCount", v => schemes[v].indents)
 				.build();
 
 			function preferDark() {
-				const { scheme, darkMode } = bag.readables;
+				const { scheme, darkMode } = bag.props;
 				return getValue(scheme.value, darkMode.value);
 			}
 
 			chrome.runtime.sendMessage({ type: "requestInfo" }, v => model.requestInfo = v);
 
 			if (bag.getValue("useHistory"))
-				model.bag.readables.selected.subscribe(pushHistory);
+				model.state.props.selected.subscribe(pushHistory);
 
 			bag.onChange(v => {
 				if ("darkMode" in v || "scheme" in v)

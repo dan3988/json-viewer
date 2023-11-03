@@ -1,4 +1,4 @@
-import { PropertyBag, type ReadOnlyPropertyBag } from "./prop.js";
+import { StateController, type State } from "./prop.js";
 import settings from "./settings.js";
 
 const enum WatchTypes {
@@ -8,7 +8,7 @@ const enum WatchTypes {
 	Both = 3
 }
 
-export async function settingsBag<const K extends (keyof settings.Settings)[]>(...settingNames: K): Promise<ReadOnlyPropertyBag<{ [P in K[number]]: settings.Settings[P] }>> {
+export async function settingsBag<const K extends (keyof settings.Settings)[]>(...settingNames: K): Promise<State<{ [P in K[number]]: settings.Settings[P] }>> {
 	let watch = WatchTypes.None;
 	
 	for (const key of settingNames) {
@@ -20,7 +20,7 @@ export async function settingsBag<const K extends (keyof settings.Settings)[]>(.
 	}
 
 	const values = await settings.get(...settingNames);
-	const bag = new PropertyBag(values);
+	const bag = new StateController(values);
 
 	function handler(changes: Dict<chrome.storage.StorageChange>) {
 		let count = 0;
@@ -43,7 +43,7 @@ export async function settingsBag<const K extends (keyof settings.Settings)[]>(.
 	if ((watch & WatchTypes.Sync) != 0)
 		chrome.storage.sync.onChanged.addListener(handler);
 
-	return bag.readOnly;
+	return bag.state;
 }
 
 export default settingsBag;

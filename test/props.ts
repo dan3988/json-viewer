@@ -1,12 +1,12 @@
 import { expect } from 'chai';
-import { MappedBagBuilder, PropertyBag, ReadOnlyPropertyBag } from '../src/prop.js'; // Update with your module path
+import { StateController, State, MappedStateBuilder } from '../src/prop.js'; // Update with your module path
 
-function checkEqual<T, K extends keyof T>(bag: ReadOnlyPropertyBag<T>, key: K, value: T[K]) {
-	expect(bag.getValue(key)).to.eq(value);
-	expect(bag.readables[key].value).to.eq(value);
+function checkEqual<T, K extends keyof T>(state: State<T>, key: K, value: T[K]) {
+	expect(state.getValue(key)).to.eq(value);
+	expect(state.props[key].value).to.eq(value);
 
-	if (bag instanceof PropertyBag)
-		checkEqual(bag.readOnly, key, value);
+	if (state instanceof StateController)
+		checkEqual(state.state, key, value);
 }
 
 describe('PropertyBag', () => {
@@ -16,16 +16,16 @@ describe('PropertyBag', () => {
 			age: 30,
 		};
 
-		const bag = new PropertyBag(values);
+		const state = new StateController(values);
 
-		checkEqual(bag, "name", "John");
-		checkEqual(bag, "age", 30);
+		checkEqual(state, "name", "John");
+		checkEqual(state, "age", 30);
 
-		bag.setValue('name', 'Alice');
-		bag.setValue('age', 25);
+		state.setValue('name', 'Alice');
+		state.setValue('age', 25);
 
-		checkEqual(bag, "name", "Alice");
-		checkEqual(bag, "age", 25);
+		checkEqual(state, "name", "Alice");
+		checkEqual(state, "age", 25);
 	});
 
 	it('should initialise and update properties using MappedPropertyBag', () => {
@@ -34,22 +34,22 @@ describe('PropertyBag', () => {
 			lastName: 'Doe',
 		};
 
-		const sourceBag = new PropertyBag(values);
-		const mappedBag = new MappedBagBuilder(sourceBag)
+		const sourceState = new StateController(values);
+		const mappedState = new MappedStateBuilder(sourceState)
 			.map(["lastName", "firstName"])
 			.map(['firstName', 'lastName'], 'full_name', (firstName, lastName) => firstName + " " + lastName)
 			.build();
 			
-		checkEqual(mappedBag, "firstName", "John");
-		checkEqual(mappedBag, "lastName", "Doe");
-		checkEqual(mappedBag, "full_name", "John Doe");
+		checkEqual(mappedState, "firstName", "John");
+		checkEqual(mappedState, "lastName", "Doe");
+		checkEqual(mappedState, "full_name", "John Doe");
 
-		sourceBag.setValue("firstName", "Alice");
-		sourceBag.setValue("lastName", "Jones");
+		sourceState.setValue("firstName", "Alice");
+		sourceState.setValue("lastName", "Jones");
 
-		checkEqual(mappedBag, "firstName", "Alice");
-		checkEqual(mappedBag, "lastName", "Jones");
-		checkEqual(mappedBag, "full_name", "Alice Jones");
+		checkEqual(mappedState, "firstName", "Alice");
+		checkEqual(mappedState, "lastName", "Jones");
+		checkEqual(mappedState, "full_name", "Alice Jones");
 	});
 
 	it("Should throw an error when trying to add duplicate properties on MappedBagBuilder", () => {
@@ -58,8 +58,8 @@ describe('PropertyBag', () => {
 			lastName: 'Doe',
 		};
 
-		const sourceBag = new PropertyBag(values);
-		const builder = new MappedBagBuilder(sourceBag)
+		const sourceBag = new StateController(values);
+		const builder = new MappedStateBuilder(sourceBag)
 			.map("firstName", "first_name");
 
 		expect(() => builder.map("lastName", "first_name")).throws();
@@ -75,25 +75,25 @@ describe('PropertyBag', () => {
 		let subscribeCallCount = 0;
 		let readOnlySubscribeCallCount = 0;
 		
-		const bag = new PropertyBag(values);
+		const state = new StateController(values);
 
-		bag.onChange(v => {
+		state.onChange(v => {
 			onChangeCallCount++;
 			expect(v).to.have.keys(["firstName"]);
 			expect(v.firstName).to.eq("Alice");
 		});
 
-		bag.readables.firstName.subscribe(v => {
+		state.props.firstName.subscribe(v => {
 			expect(v).to.eq(subscribeCallCount == 0 ? "John" : "Alice");
 			subscribeCallCount++;
 		});
 
-		bag.readOnly.readables.firstName.subscribe(v => {
+		state.state.props.firstName.subscribe(v => {
 			expect(v).to.eq(readOnlySubscribeCallCount == 0 ? "John" : "Alice");
 			readOnlySubscribeCallCount++;
 		});
 
-		bag.setValue("firstName", "Alice");
+		state.setValue("firstName", "Alice");
 
 		expect(onChangeCallCount).to.eq(1);
 		expect(subscribeCallCount).to.eq(2);
@@ -108,14 +108,14 @@ describe('PropertyBag', () => {
 
 		let callCount = 0;
 
-		const bag = new PropertyBag(values);
-		const unsub = bag.readables.firstName.subscribe(() => {
+		const state = new StateController(values);
+		const unsub = state.props.firstName.subscribe(() => {
 			callCount++;
 		});
 
-		bag.setValue("firstName", "Alice");
+		state.setValue("firstName", "Alice");
 		unsub();
-		bag.setValue("firstName", "Joe");
+		state.setValue("firstName", "Joe");
 
 		expect(callCount).to.eq(2);
 	});

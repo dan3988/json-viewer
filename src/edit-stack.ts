@@ -1,4 +1,4 @@
-import { PropertyBag } from "./prop.js";
+import { StateController } from "./prop.js";
 
 export interface EditStackProps {
 	readonly canUndo: boolean;
@@ -12,7 +12,7 @@ export interface EditAction {
 }
 
 export class EditStack implements EditStackProps {
-	readonly #bag: PropertyBag<EditStackProps>;
+	readonly #state: StateController<EditStackProps>;
 	readonly #actions: EditAction[][];
 	#count: number;
 
@@ -20,22 +20,22 @@ export class EditStack implements EditStackProps {
 		return this.#count;
 	}
 
-	get bag() {
-		return this.#bag.readOnly;
+	get state() {
+		return this.#state.state;
 	}
 
 	get canUndo() {
-		return this.#bag.getValue("canUndo");
+		return this.#state.getValue("canUndo");
 	}
 
 	get canRedo() {
-		return this.#bag.getValue("canRedo");
+		return this.#state.getValue("canRedo");
 	}
 
 	constructor() {
 		this.#actions = [];
 		this.#count = 0;
-		this.#bag = new PropertyBag<EditStackProps>({ canRedo: false, canUndo: false, count: 0 });
+		this.#state = new StateController<EditStackProps>({ canRedo: false, canUndo: false, count: 0 });
 	}
 
 	undo(): boolean {
@@ -45,7 +45,7 @@ export class EditStack implements EditStackProps {
 
 		this.#count = --count;
 		this.#actions[count].forEach(v => v.undo());
-		this.#bag.setValues({ count, canUndo: !!count, canRedo: true });
+		this.#state.setValues({ count, canUndo: !!count, canRedo: true });
 		return true;
 	}
 
@@ -56,7 +56,7 @@ export class EditStack implements EditStackProps {
 
 		this.#actions[count++].forEach(v => v.commit());
 		this.#count = count;
-		this.#bag.setValues({ count, canUndo: true, canRedo: count < this.#actions.length });
+		this.#state.setValues({ count, canUndo: true, canRedo: count < this.#actions.length });
 		return true;
 	}
 
@@ -64,7 +64,7 @@ export class EditStack implements EditStackProps {
 		let count = this.#count;
 		this.#actions.splice(count, Infinity, actions);
 		this.#count = ++count;
-		this.#bag.setValues({ count, canUndo: true, canRedo: false });
+		this.#state.setValues({ count, canUndo: true, canRedo: false });
 		actions.forEach(v => v.commit());
 		return count;
 	}

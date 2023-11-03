@@ -124,13 +124,13 @@
 	export let indent = -1;
 	export let maxIndentClass: number;
 
-	$: ({ isExpanded, isHidden, isSelected } = prop.bag.readables);
+	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
 
 	const isPreviousSelected = writable(false);
 	const isNextSelected = writable(false);
 	
-	prop.previous?.bag.readables.isSelected.subscribe(v => $isPreviousSelected = v);
-	prop.next?.bag.readables.isSelected.subscribe(v => $isNextSelected = v);
+	prop.previous?.state.props.isSelected.subscribe(v => $isPreviousSelected = v);
+	prop.next?.state.props.isSelected.subscribe(v => $isNextSelected = v);
 
 	let props: json.JProperty[] = [];
 
