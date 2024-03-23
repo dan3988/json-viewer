@@ -38,6 +38,7 @@
 
 			.root {
 				width: 600px;
+				--btn-width: 250px;
 			}
 
 			#div-permissions {
@@ -56,8 +57,13 @@
 				line-height: 28px;
 			}
 
+			main > div > button {
+				width: var(--btn-width);
+			}
+
 			@media (max-width: 600px) {
 				.root {
+					--btn-width: 100%;
 					width: 100%;
 				}
 			}
@@ -78,10 +84,16 @@
 
 				<br/>
 				<div id="div-permissions">
-					For the extension to load you will need to click on the extensions icon. You can give the extension permission to access data from all sites to load the extension automatically.
+					For the extension to load, you will need to click on the extensions icon in the firefox toolbar.
+					To avoid this, you need to grant the extension the ability to access data from all web sites.
 
 					<br/>
-					<button id="btn-permissions" class="btn btn-success">Request Permissions</button>
+					<button id="btn-permissions" class="btn btn-warning">Request Permissions</button>
+				</div>
+
+				<br/>
+				<div>
+					<button id="btn-settings" class="btn btn-success">Configure</button>
 				</div>
 			</main>
 		</div>

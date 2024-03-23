@@ -14,8 +14,9 @@ for (const element of document.getElementsByClassName("copy-text")) {
 	element.addEventListener("click", copyText);
 }
 
-const permissionsDiv = document.getElementById("div-permissions")
-const permissionsBtn = document.getElementById("btn-permissions")
+const settingsBtn = document.getElementById("btn-settings");
+const permissionsDiv = document.getElementById("div-permissions");
+const permissionsBtn = document.getElementById("btn-permissions");
 const perm = { origins: ["<all_urls>"], permissions: null };
 chrome.permissions.contains(perm, result => {
 	if (result)
@@ -29,3 +30,5 @@ chrome.permissions.contains(perm, result => {
 		});
 	});
 });
+
+settingsBtn.addEventListener("click", () => window.location = "options.html");
