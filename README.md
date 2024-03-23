@@ -1,4 +1,4 @@
-# Json Explorer
+# Json Viewer
 A modern browser extension to visualise, traverse and search JSON. Made with [Svelte](https://svelte.dev/) and [bootstrap](https://getbootstrap.com/).
 
 ![preview](readme/preview.png)
@@ -106,7 +106,7 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 * Search for text in keys, values or both
 * Evaluate JPath expressions
 * Dark and light mode
-* Customizable colour schemes
+* Multiple colour schemes
 
 ## Building
 The project is built using rollup. The following options can be passed into rollup to be used by the build script:
