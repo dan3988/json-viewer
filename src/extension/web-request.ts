@@ -68,8 +68,13 @@ export class WebRequestInterceptor {
 			if (types.size)
 				filter.types = [...types];
 			
-			for (const [event, handler, extraInfoSpec] of events)
-				event.addListener(handler, filter, <any>(extraInfoSpec && [extraInfoSpec]));
+			for (const [event, handler, extraInfoSpec] of events) {
+				const args = [handler, filter] as [handler: Function, filter: chrome.webRequest.RequestFilter, extraInfoSpec?: string[]];
+				if (extraInfoSpec)
+					args.push([extraInfoSpec]);
+
+				event.addListener.apply(event, args);
+			}
 
 			return new WebRequestInterceptor(events);
 		}
