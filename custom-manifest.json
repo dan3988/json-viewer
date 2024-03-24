@@ -45,10 +45,14 @@
 				]
 			}
 		],
-		"host_permissions": [ "<all_urls>" ],
+		"host_permissions": [
+			"<all_urls>"
+		],
 		"permissions": [
 			"scripting",
-			"storage",
+			"storage"
+		],
+		"optional_permissions": [
 			"webRequest"
 		]
 	},

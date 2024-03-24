@@ -51,11 +51,27 @@
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
 	import Radio from "./Radio.svelte";
+	import { writable } from "svelte/store";
 
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
 
 	let showPreview = false;
+
+	const webRequestPerm: chrome.permissions.Permissions = { permissions: ["webRequest"] };
+	const webRequestGranted = writable<undefined | boolean>();
+
+	chrome.permissions.contains(webRequestPerm, v => {
+		webRequestGranted.set(v);
+	});
+
+	function onToggleRequestHeaders() {
+		if ($webRequestGranted) {
+			chrome.permissions.remove(webRequestPerm, v => webRequestGranted.set(!v));
+		} else {
+			chrome.permissions.request(webRequestPerm, webRequestGranted.set);
+		}
+	}
 
 	function updateTheme(scheme: Scheme, userPref: null | boolean) {
 		tracker.preferDark = getValueByMode(scheme.mode, userPref);
@@ -196,6 +212,12 @@
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$useHistory.value}/>
 			Use History
+		</label>
+	</div>
+	<div class="input-group">
+		<label class="input-group-text flex-fill align-items-start gap-1">
+			<input class="form-check-input" type="checkbox" checked={$webRequestGranted} on:input={onToggleRequestHeaders}/>
+			Show Request Headers
 		</label>
 	</div>
 	<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$menuAlign.changed}>

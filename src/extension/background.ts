@@ -3,8 +3,7 @@ import settings from "../settings.js";
 import lib from "../lib.json";
 import WebRequestInterceptor from "./web-request.js";
 
-var requestInfoMap = new Map<number, Map<number, DocumentRequestInfo>>();
-var currentRequestsMap = new Map<string, DocumentRequestInfo>();
+var currentRequestListener: null | RequestListener = null;
 
 function updateIcon(path: Record<string, string>, title: string) {
 	const setIcon = chrome.action.setIcon({ path });
@@ -16,6 +15,11 @@ function onEnabledChanged(enabled: boolean) {
 	return enabled
 		? updateIcon(mf.action.default_icon, mf.action.default_title)
 		: updateIcon(gsIcons, mf.action.default_title + " (Disabled)");
+}
+
+function enableRequestListening(bag: settings.SettingsBag<"blacklist">) {
+	currentRequestListener?.dispose();
+	currentRequestListener = new RequestListener(bag);
 }
 
 async function loadExtension(isFirefox: boolean) {
@@ -51,60 +55,11 @@ async function loadExtension(isFirefox: boolean) {
 		}
 	}
 
-	function addHeaders(array: DocumentHeader[], input: undefined | chrome.webRequest.HttpHeader[]): DocumentHeader[] {
-		if (input)
-			for (const { name, value } of input)
-				array.push([name, value ?? ""]);
-
-		return array;
-	}
-
-	WebRequestInterceptor.builder()
-		.addFilterTypes("main_frame", "sub_frame")
-		.onBeforeRequest(det => {
-			if (det.type === "main_frame")
-				requestInfoMap.delete(det.tabId);
-
-			const url = new URL(det.url);
-			if (bag.blacklist.includes(url.hostname))
-				return;
-
-			currentRequestsMap.set(det.requestId, {
-				status: 0,
-				statusText: "unknown",
-				startTime: det.timeStamp,
-				endTime: -1,
-				responseHeaders: [],
-				requestHeaders: []
-			});
-		})
-		.onBeforeSendHeaders(true, det => {
-			const info = currentRequestsMap.get(det.requestId);
-			if (info != null)
-				addHeaders(info.requestHeaders, det.requestHeaders);
-		})
-		.onHeadersReceived(true, det => {
-			const info = currentRequestsMap.get(det.requestId);
-			if (info != null) {
-				info.status = det.statusCode;
-				info.statusText = det.statusLine;
-				addHeaders(info.responseHeaders, det.responseHeaders);
-			}
-		})
-		.onCompleted(det => {
-			const info = currentRequestsMap.get(det.requestId);
-			if (info != null) {
-				info.endTime = det.timeStamp;
-				const { tabId, frameId } = det;
-				let map = requestInfoMap.get(tabId);
-				if (map == null)
-					requestInfoMap.set(tabId, map = new Map());
-
-				map.set(frameId, info);
-			}
-		})
-		.onEnd(det => currentRequestsMap.delete(det.requestId))
-		.build();
+	chrome.permissions.contains({ permissions: ["webRequest"] }, result => result && enableRequestListening(bag));
+	chrome.permissions.onAdded.addListener(perm => {
+		if (perm.permissions?.includes("webRequest"))
+			enableRequestListening(bag);
+	});
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
 		const tabId = sender.tab?.id;
@@ -148,8 +103,7 @@ async function loadExtension(isFirefox: boolean) {
 				return true;
 			}
 			case "requestInfo": {
-				const map = requestInfoMap.get(tabId);
-				const info = map && map.get(sender.frameId ?? 0);
+				const info = currentRequestListener?.get(tabId);
 				respond(info);
 			}
 		}
@@ -189,7 +143,6 @@ const isFirefox = checkIsFirefox();
 
 isFirefox.then(loadExtension);
 
-chrome.tabs.onRemoved.addListener((id) => requestInfoMap.delete(id));
 chrome.runtime.onInstalled.addListener(det => {
 	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
 		isFirefox.then(v => {
@@ -200,3 +153,93 @@ chrome.runtime.onInstalled.addListener(det => {
 		})
 	}
 });
+
+class RequestListener {
+	static #addHeaders(array: DocumentHeader[], input: undefined | chrome.webRequest.HttpHeader[]): DocumentHeader[] {
+		if (input)
+			for (const { name, value } of input)
+				array.push([name, value ?? ""]);
+	
+		return array;
+	}
+	
+	readonly #requestInfoMap = new Map<number, Map<number, DocumentRequestInfo>>();
+	readonly #currentRequestsMap = new Map<string, DocumentRequestInfo>();
+	readonly #interceptor: WebRequestInterceptor;
+
+	constructor(bag: settings.SettingsBag<"blacklist">) {
+		this._onTabRemoved = this._onTabRemoved.bind(this);
+		this._onPermissionRemoved = this._onPermissionRemoved.bind(this);
+		this.#interceptor = WebRequestInterceptor.builder()
+			.addFilterTypes("main_frame", "sub_frame")
+			.onBeforeRequest(det => {
+				if (det.type === "main_frame")
+					this.#requestInfoMap.delete(det.tabId);
+	
+				const url = new URL(det.url);
+				if (bag.blacklist.includes(url.hostname))
+					return;
+	
+				this.#currentRequestsMap.set(det.requestId, {
+					status: 0,
+					statusText: "unknown",
+					startTime: det.timeStamp,
+					endTime: -1,
+					responseHeaders: [],
+					requestHeaders: []
+				});
+			})
+			.onBeforeSendHeaders(true, det => {
+				const info = this.#currentRequestsMap.get(det.requestId);
+				if (info != null)
+					RequestListener.#addHeaders(info.requestHeaders, det.requestHeaders);
+			})
+			.onHeadersReceived(true, det => {
+				const info = this.#currentRequestsMap.get(det.requestId);
+				if (info != null) {
+					info.status = det.statusCode;
+					info.statusText = det.statusLine;
+					RequestListener.#addHeaders(info.responseHeaders, det.responseHeaders);
+				}
+			})
+			.onCompleted(det => {
+				const info = this.#currentRequestsMap.get(det.requestId);
+				if (info != null) {
+					info.endTime = det.timeStamp;
+					const { tabId, frameId } = det;
+					let map = this.#requestInfoMap.get(tabId);
+					if (map == null)
+					this.#requestInfoMap.set(tabId, map = new Map());
+	
+					map.set(frameId, info);
+				}
+			})
+			.onEnd(det => this.#currentRequestsMap.delete(det.requestId))
+			.build();
+
+		chrome.permissions.onRemoved.addListener(this._onPermissionRemoved);
+		chrome.tabs.onRemoved.addListener(this._onTabRemoved);
+	}
+
+	private _onTabRemoved(tabId: number) {
+		this.#requestInfoMap.delete(tabId);
+	}
+
+	private _onPermissionRemoved(perm: chrome.permissions.Permissions) {
+		if (currentRequestListener == this && perm.permissions?.includes("webRequest")) {
+			currentRequestListener = null;
+			this.dispose();
+		}
+	}
+
+	get(tabId: number, frameId?: number) {
+		const map = this.#requestInfoMap.get(tabId);
+		return map?.get(frameId ?? 0);
+	}
+
+	dispose(): void {
+		chrome.permissions.onRemoved.removeListener(this._onPermissionRemoved);
+		chrome.tabs.onRemoved.removeListener(this._onTabRemoved);
+		this.#interceptor.dispose();
+	}
+}

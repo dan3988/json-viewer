@@ -38,6 +38,16 @@ declare namespace chrome {
 
 		declare var getBrowserInfo: undefined | (() => Promise<BrowserInfo>);
 	}
+
+	declare namespace permissions {
+		export interface PermissionsRemovedEvent {
+			removeListener(callback: (permissions: Permissions) => void): void;
+		}
+	
+		export interface PermissionsAddedEvent {
+			removeListener(callback: (permissions: Permissions) => void): void;
+		}
+	}
 }
 
 declare module "*.svelte" {

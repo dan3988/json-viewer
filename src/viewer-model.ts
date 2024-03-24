@@ -21,7 +21,7 @@ interface ChangeProps {
 	lastSelected: null | json.JProperty;
 	filterText: string;
 	filterFlags: json.JTokenFilterFlags;
-	requestInfo: undefined | DocumentRequestInfo
+	requestInfo: undefined | null | DocumentRequestInfo
 }
 
 export interface ViewerCommands {
