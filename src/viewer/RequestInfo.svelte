@@ -95,7 +95,7 @@
 			<ul class="list pairs mono">
 				{#each values as [key, value]}
 					<li class="header pairs">
-						<span class="copy-btn btn btn-cust-light" role="button" title="Cop Header" on:click={() => copyHeader(key, value)}></span>
+						<span class="copy-btn btn btn-cust-light" role="button" title="Copy Header" on:click={() => copyHeader(key, value)}></span>
 						<span class="row-key" title={key}>{key}</span>
 						<span class="row-val" title={value}>{value}</span>
 					</li>
