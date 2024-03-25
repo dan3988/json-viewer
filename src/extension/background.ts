@@ -22,7 +22,7 @@ function enableRequestListening(bag: settings.SettingsBag<"blacklist">) {
 	currentRequestListener = new RequestListener(bag);
 }
 
-async function loadExtension(isFirefox: boolean) {
+async function loadExtension() {
 	const bag = await settings.get();
 	if (!bag.enabled)
 		await onEnabledChanged(false);
@@ -127,30 +127,19 @@ async function inject(target: chrome.scripting.InjectionTarget, isolated: boolea
 
 
 const mf = chrome.runtime.getManifest();
+const isFirefox = !!mf.browser_specific_settings?.gecko;
 const gsIcons: Record<number, string> = { ...mf.action.default_icon };
 for (const key in gsIcons)
 	gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
-function checkIsFirefox(): Promise<boolean> {
-	if (chrome.runtime.getBrowserInfo) {
-		return chrome.runtime.getBrowserInfo().then(v => v.name === "Firefox");
-	} else {
-		return Promise.resolve(false);
-	}
-}
+loadExtension();
 
-const isFirefox = checkIsFirefox();
-
-isFirefox.then(loadExtension);
-
-chrome.runtime.onInstalled.addListener(det => {
+isFirefox && chrome.runtime.onInstalled.addListener(det => {
 	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-		isFirefox.then(v => {
-			v && chrome.tabs.create({
-				active: true,
-				url: chrome.runtime.getURL("res/firefox.html")
-			});
-		})
+		chrome.tabs.create({
+			active: true,
+			url: chrome.runtime.getURL("res/firefox.html")
+		});
 	}
 });
 
