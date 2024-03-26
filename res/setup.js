@@ -1,23 +1,29 @@
+const mf = chrome.runtime.getManifest();
+const isFirefox = !!mf.browser_specific_settings?.gecko;
+const browserName = isFirefox ? "firefox" : "chrome";
+
 function copyText() {
 	navigator.clipboard.writeText(this.textContent);
 }
 
-async function requestPermissions() {
-	const result = await chrome.permissions.request({
-		origins: ["<all_urls>"]
-	});
-
-	console.log(result);
+/**
+ * @param {string} selector 
+ * @param {(e: HTMLElement) => void} fn 
+ */
+function forEach(selector, fn) {
+	for (const element of document.querySelectorAll(selector)) {
+		fn(element);
+	}
 }
 
-for (const element of document.getElementsByClassName("copy-text")) {
-	element.addEventListener("click", copyText);
-}
+forEach(".copy-btn", e => e.addEventListener("click", copyText));
+forEach(".browser-name", e => e.textContent = browserName);
+forEach(`[data-browser]:not([data-browser*="${browserName}"])`, e => e.hidden = true);
 
-const settingsBtn = document.getElementById("btn-settings");
 const permissionsDiv = document.getElementById("div-permissions");
 const permissionsBtn = document.getElementById("btn-permissions");
 const perm = { origins: ["<all_urls>"], permissions: null };
+
 chrome.permissions.contains(perm, result => {
 	if (result)
 		return;
@@ -30,5 +36,3 @@ chrome.permissions.contains(perm, result => {
 		});
 	});
 });
-
-settingsBtn.addEventListener("click", () => window.location = "options.html");

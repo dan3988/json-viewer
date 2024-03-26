@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+	<head>
+		<meta charset="utf-8">
+		<title>JSON Viewer Setup</title>
+		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+		<style type="text/css">
+			ol {
+				margin: 0;
+			}
+
+			.code {
+				font-family: monospace;
+				font-weight: bold;
+			}
+
+			.copy-btn {
+				vertical-align: baseline;
+				display: inline-flex;
+				--mask-image-src: url("../node_modules/bootstrap-icons/icons/clipboard.svg");
+			}
+
+			#btn-source {
+				--mask-image-src: url("../node_modules/bootstrap-icons/icons/github.svg");
+			}
+
+			.mask-btn {
+				display: inline-flex;
+				justify-content: center;
+				align-items: stretch;
+			}
+
+			.mask-btn::after {
+				transition: inherit;
+				transition-property: background-color;
+				content: "";
+				margin-left: 5px;
+				mask-image: var(--mask-image-src);
+				mask-repeat: no-repeat;
+				mask-size: contain;
+				mask-position: center;
+				-webkit-mask-image: var(--mask-image-src);
+				-webkit-mask-repeat: no-repeat;
+				-webkit-mask-size: contain;
+				-webkit-mask-position: center;
+				background-color: var(--bs-btn-color);
+				width: 1rem;
+			}
+
+			.mask-btn:hover::after {
+				background-color: var(--bs-btn-hover-color);
+			}
+
+			.mask-btn:active::after {
+				background-color: var(--bs-btn-active-color);
+			}
+
+			.root {
+				width: 600px;
+				--btn-width: 250px;
+			}
+
+			#div-permissions:not(.permission-denied) {
+				display: none;
+			}
+
+			.body-btn {
+				width: var(--btn-width);
+			}
+
+			@media (max-width: 600px) {
+				.root {
+					--btn-width: 100%;
+					width: 100%;
+				}
+			}
+		</style>
+		<script type="module" src="theme-lite.js"></script>
+	</head>
+	<body class="d-flex h-100 text-center bg-body text-body">
+		<div class="root d-flex h-100 p-3 mx-auto flex-column">
+			<header class="mb-3">
+				<h3>JSON Viewer</h3>
+			</header>
+			<main class="px-3">
+				Thank you for installing json-viewer for <span class="browser-name"></span>.
+				<br/>
+				<a id="btn-settings" class="mt-2 body-btn btn btn-primary" href="options.html">Configure</a>
+				<a id="btn-source" class="body-btn mt-2 mask-btn btn btn-secondary" href="https://github.com/dan3988/json-viewer" target="_blank">Source code</a>
+				<div class="mt-2" data-browser="firefox">
+					For the viewer to load on pages with an <span class="code">application/json</span> content-type,
+					you will need to disable the built in JSON viewer.
+					To do this:
+					<ol class="text-start d-flex flex-column gap-2 p-2">
+						<li>
+							Go to <span class="code copy-btn mask-btn btn btn-outline-secondary py-0">about:config</span>
+						</li>
+						<li>
+							Set the value of <span class="code copy-btn mask-btn btn btn-outline-secondary py-0">devtools.jsonview.enabled</span> to <span class="code">false</span>
+						</li>
+					</ol>
+				</div>
+				<div id="div-permissions">
+					By default, this extension does not have access to the contents of a page until the icon for the extension in the toolbar has been clicked.
+					To load the viewer automatically, you need to grant the extension permission to access data from all web sites.
+
+					<br/>
+					<button id="btn-permissions" class="body-btn mt-2 btn btn-success">Request Permission</button>
+				</div>
+			</main>
+		</div>
+		<script type="text/javascript" src="setup.js"></script>
+	</body>
+</html>

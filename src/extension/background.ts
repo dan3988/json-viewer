@@ -125,7 +125,6 @@ async function inject(target: chrome.scripting.InjectionTarget, isolated: boolea
 	return result[0].result;
 }
 
-
 const mf = chrome.runtime.getManifest();
 const isFirefox = !!mf.browser_specific_settings?.gecko;
 const gsIcons: Record<number, string> = { ...mf.action.default_icon };
@@ -134,11 +133,11 @@ for (const key in gsIcons)
 
 loadExtension();
 
-isFirefox && chrome.runtime.onInstalled.addListener(det => {
+chrome.runtime.onInstalled.addListener(det => {
 	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
 		chrome.tabs.create({
 			active: true,
-			url: chrome.runtime.getURL("res/firefox.html")
+			url: chrome.runtime.getURL("res/setup.html")
 		});
 	}
 });

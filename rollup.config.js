@@ -89,6 +89,8 @@ function loader(args) {
 	
 		return file;
 	}
+
+	loadBsIcon("github");
 	
 	/**
 	 * @param {string} baseDir
