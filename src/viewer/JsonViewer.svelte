@@ -30,6 +30,7 @@
 	export let menuAlign: string;
 	export let scheme: string;
 	export let background: string;
+	export let useWebRequest: boolean;
 
 	model.command.addListener(onModelCommand);
 
@@ -137,7 +138,7 @@
 				}
 			}
 		];
-		
+
 		const result = await showSaveFilePicker({ suggestedName, types });
 		if (result) {
 			const data = model.root.value.toString(indent);
@@ -526,7 +527,9 @@
 			<button type="button" class="btn btn-cust-light icon btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
 			<button type="button" class="btn btn-cust-light icon btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
 			<button type="button" class="btn btn-cust-light icon btn-redo" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
-			<button type="button" class="btn btn-cust-light icon btn-http" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
+			{#if useWebRequest}
+				<button type="button" class="btn btn-cust-light icon btn-http" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
+			{/if}
 		</div>
 		<div class="input-group search flex-fit">
 			<span class="input-group-text flex-fit">Filter</span>

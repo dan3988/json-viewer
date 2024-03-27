@@ -17,6 +17,8 @@ export type PropsType<T extends Dict> = { [P in string & keyof T]: EntryRef<P, T
 export interface EntryRef<K extends string, V> extends Writable<Entry<V>>, NamedEntry<K, V> {
 	readonly key: K;
 	readonly entry: Entry<V>;
+
+	reset(): boolean;
 }
 
 type PropsTypeInternal<T extends Dict> = { [P in string & keyof T]: EntryImpl<P, T[P]> };
@@ -59,6 +61,16 @@ class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 		this.#original = this.#current;
 		this.#changed = false;
 		this.#listeners.forEach(fn => fn(this.entry));
+	}
+
+	reset(): boolean {
+		if (!this.#changed)
+			return false;
+
+		this.#current = this.#original;
+		this.#changed = false;
+		this.#listeners.forEach(fn => fn(this.entry));
+		return true;
 	}
 
 	set(entry: Entry<V>): void {

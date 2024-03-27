@@ -22,6 +22,7 @@ interface ChangeProps {
 	filterText: string;
 	filterFlags: json.JTokenFilterFlags;
 	requestInfo: undefined | null | DocumentRequestInfo
+	useWebRequest: boolean;
 }
 
 export interface ViewerCommands {
@@ -110,6 +111,14 @@ export class ViewerModel {
 		this.#state.setValue("requestInfo", v);
 	}
 
+	get useWebRequest() {
+		return this.#state.getValue("useWebRequest");
+	}
+
+	set useWebRequest(v) {
+		this.#state.setValue("useWebRequest", v);
+	}
+
 	get command() {
 		return this.#command.event;
 	}
@@ -128,7 +137,7 @@ export class ViewerModel {
 
 	constructor(root: json.JProperty) {
 		this.#root = root;
-		this.#state = new StateController<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "", requestInfo: undefined });
+		this.#state = new StateController<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "", requestInfo: undefined, useWebRequest: false });
 		this.#command = new EventHandlers();
 		this.#selected = new Set();
 		this.#lastSelected = null;

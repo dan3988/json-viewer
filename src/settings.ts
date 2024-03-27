@@ -75,7 +75,8 @@ export namespace settings {
 		makeSetting("indentChar", String, "\t"),
 		makeSetting("useHistory", Boolean, true),
 		makeSetting("menuAlign", Enum("r", "l"), "r"),
-		makeSetting("background", String, "")
+		makeSetting("background", String, ""),
+		makeSetting("useWebRequest", Boolean, false)
 	] as const;
 
 	type _SettingsList = typeof settingsList[number];

@@ -51,7 +51,6 @@
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
 	import Radio from "./Radio.svelte";
-	import { writable } from "svelte/store";
 
 	export let model: EditorModel<settings.SettingsBag>;
 	export let tracker: ThemeTracker;
@@ -59,18 +58,13 @@
 	let showPreview = false;
 
 	const webRequestPerm: chrome.permissions.Permissions = { permissions: ["webRequest"] };
-	const webRequestGranted = writable<undefined | boolean>();
 
-	chrome.permissions.contains(webRequestPerm, v => {
-		webRequestGranted.set(v);
-	});
+	function requestPermission(permissions: chrome.permissions.Permissions) {
+		return new Promise<boolean>((resolve) => chrome.permissions.request(permissions, resolve));
+	}
 
-	function onToggleRequestHeaders() {
-		if ($webRequestGranted) {
-			chrome.permissions.remove(webRequestPerm, v => webRequestGranted.set(!v));
-		} else {
-			chrome.permissions.request(webRequestPerm, webRequestGranted.set);
-		}
+	function removePermission(permissions: chrome.permissions.Permissions) {
+		return new Promise<boolean>((resolve) => chrome.permissions.remove(permissions, resolve));
 	}
 
 	function updateTheme(scheme: Scheme, userPref: null | boolean) {
@@ -85,7 +79,7 @@
 		model.removeListener(onModelChange);
 	});
 
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign, background } = model.props);
+	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign, background, useWebRequest } = model.props);
 	$: currentScheme = schemes[$scheme.value];
 	$: {
 		updateTheme(currentScheme, $darkMode.value);
@@ -103,6 +97,12 @@
 
 	async function save() {
 		const bag: settings.SaveType = {};
+		const { useWebRequest } = model.props;
+		if (useWebRequest.changed) {
+			const result = await (useWebRequest.value ? requestPermission(webRequestPerm) : removePermission(webRequestPerm));
+			if (!result)
+				useWebRequest.reset();
+		}
 
 		for (const key of model.changed)
 			bag[key] = <any>model.props[key].value;
@@ -214,9 +214,9 @@
 			Use History
 		</label>
 	</div>
-	<div class="input-group">
+	<div class="input-group" class:dirty={$useWebRequest.changed}>
 		<label class="input-group-text flex-fill align-items-start gap-1">
-			<input class="form-check-input" type="checkbox" checked={$webRequestGranted} on:input={onToggleRequestHeaders}/>
+			<input class="form-check-input" type="checkbox" bind:checked={$useWebRequest.value}/>
 			Show Request Headers
 		</label>
 	</div>

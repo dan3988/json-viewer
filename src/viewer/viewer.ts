@@ -73,9 +73,9 @@ function run() {
 		}
 
 		async function loadAsync() {
-			const bag = await settingsBag("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background");
+			const bag = await settingsBag("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background", "useWebRequest");
 			const bound = bag.bind()
-				.map(["background", "menuAlign", "scheme"])
+				.map(["background", "menuAlign", "scheme", "useWebRequest"])
 				.map(["indentChar", "indentCount"], "indent", (char, count) => char.repeat(count))
 				.map("scheme", "indentCount", v => schemes[v].indents)
 				.build();
@@ -84,6 +84,8 @@ function run() {
 				const { scheme, darkMode } = bag.props;
 				return getValue(scheme.value, darkMode.value);
 			}
+
+			model.useWebRequest = bag.getValue("useWebRequest");
 
 			chrome.runtime.sendMessage({ type: "requestInfo" }, v => model.requestInfo = v);
 
