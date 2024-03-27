@@ -70,10 +70,7 @@
 			"minimum_chrome_version": "88",
 			"background": {
 				"service_worker": "lib/bg.js"
-			},
-			"optional_host_permissions": [
-				"<all_urls>"
-			]
+			}
 		}
 	}
 }
