@@ -17,28 +17,47 @@ function onEnabledChanged(enabled: boolean) {
 		: updateIcon(gsIcons, mf.action.default_title + " (Disabled)");
 }
 
-function enableRequestListening(bag: settings.SettingsBag<"blacklist">) {
-	currentRequestListener?.dispose();
-	currentRequestListener = new RequestListener(bag);
-}
-
 async function loadExtension() {
 	const bag = await settings.get();
 	if (!bag.enabled)
 		await onEnabledChanged(false);
 
-	settings.addListener(async det => {
+	if (bag.useWebRequest)
+		setRequestListening(true);
+
+	settings.addListener(det => {
 		for (let [key, change] of Object.entries(det.changes))
 			(bag as any)[key] = change.newValue;
 
-		const enabled = det.changes.enabled;
+		const { enabled, useWebRequest } = det.changes;
 		if (enabled !== undefined)
-			await onEnabledChanged(enabled.newValue);
+			onEnabledChanged(enabled.newValue);
+
+		if (useWebRequest) 
+			setRequestListening(useWebRequest.newValue);
 	});
 
 	const gsIcons: Record<number, string> = { ...mf.action.default_icon };
 	for (const key in gsIcons)
 		gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
+
+	function setRequestListening(enabled: boolean) {
+		if (enabled) {
+			try {
+				currentRequestListener = new RequestListener(bag);
+			} catch (e) {
+				console.error("Failed to start listening to webRequest events", e);
+			}
+		} else {
+			try {
+				currentRequestListener!.dispose();
+			} catch (e) {
+				console.error("Failed to dispose webRequest listener", e);
+			} finally {
+				currentRequestListener = null;
+			}
+		}
+	}
 
 	function injectPopup(tabId: number, frameId?: number) {
 		const target = getTarget(tabId, frameId);
@@ -54,12 +73,6 @@ async function loadExtension() {
 			return await inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js");
 		}
 	}
-
-	chrome.permissions.contains({ permissions: ["webRequest"] }, result => result && enableRequestListening(bag));
-	chrome.permissions.onAdded.addListener(perm => {
-		if (perm.permissions?.includes("webRequest"))
-			enableRequestListening(bag);
-	});
 
 	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
 		const tabId = sender.tab?.id;
@@ -157,7 +170,6 @@ class RequestListener {
 
 	constructor(bag: settings.SettingsBag<"blacklist">) {
 		this._onTabRemoved = this._onTabRemoved.bind(this);
-		this._onPermissionRemoved = this._onPermissionRemoved.bind(this);
 		this.#interceptor = WebRequestInterceptor.builder()
 			.addFilterTypes("main_frame", "sub_frame")
 			.onBeforeRequest(det => {
@@ -167,7 +179,7 @@ class RequestListener {
 				const url = new URL(det.url);
 				if (bag.blacklist.includes(url.hostname))
 					return;
-	
+
 				this.#currentRequestsMap.set(det.requestId, {
 					status: 0,
 					statusText: "unknown",
@@ -205,19 +217,11 @@ class RequestListener {
 			.onEnd(det => this.#currentRequestsMap.delete(det.requestId))
 			.build();
 
-		chrome.permissions.onRemoved.addListener(this._onPermissionRemoved);
 		chrome.tabs.onRemoved.addListener(this._onTabRemoved);
 	}
 
 	private _onTabRemoved(tabId: number) {
 		this.#requestInfoMap.delete(tabId);
-	}
-
-	private _onPermissionRemoved(perm: chrome.permissions.Permissions) {
-		if (currentRequestListener == this && perm.permissions?.includes("webRequest")) {
-			currentRequestListener = null;
-			this.dispose();
-		}
 	}
 
 	get(tabId: number, frameId?: number) {
@@ -226,7 +230,6 @@ class RequestListener {
 	}
 
 	dispose(): void {
-		chrome.permissions.onRemoved.removeListener(this._onPermissionRemoved);
 		chrome.tabs.onRemoved.removeListener(this._onTabRemoved);
 		this.#interceptor.dispose();
 	}

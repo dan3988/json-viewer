@@ -41,7 +41,7 @@ interface WebRequestEvent<T extends Function> extends chrome.events.EventWithReq
 } 
 
 type IWebRequestInterceptorBuilder = WebRequestInterceptorBuilder;
-type EventInfo<T extends EventType = any> = [event: WebRequestEvent<EventMap[T]>, handler: EventMap[T], extraInfoSpec?: string];
+type EventInfo<T extends EventType = EventType> = [event: T, handler: EventMap[T], extraInfoSpec?: string];
 
 export class WebRequestInterceptor {
 	static readonly #Builder = class WebRequestInterceptorBuilder implements IWebRequestInterceptorBuilder {
@@ -68,7 +68,8 @@ export class WebRequestInterceptor {
 			if (types.size)
 				filter.types = [...types];
 			
-			for (const [event, handler, extraInfoSpec] of events) {
+			for (const [eventType, handler, extraInfoSpec] of events) {
+				const event: WebRequestEvent<any> = chrome.webRequest[eventType];
 				const args = [handler, filter] as [handler: Function, filter: chrome.webRequest.RequestFilter, extraInfoSpec?: string[]];
 				if (extraInfoSpec)
 					args.push([extraInfoSpec]);
@@ -89,7 +90,7 @@ export class WebRequestInterceptor {
 			return this;
 		}
 
-		#addEvent<T extends EventType>(event: WebRequestEvent<EventMap[T]>, extraInfoSpec: string, arg0: boolean | EventMap[T], arg1: undefined | EventMap[T]): this {
+		#addEvent<T extends EventType>(event: T, extraInfoSpec: string, arg0: boolean | EventMap[T], arg1: undefined | EventMap[T]): this {
 			const [handler, useExtra]: [EventMap[T], boolean] = <any>(arg1 == null ? [arg0, false] : [arg1, arg0]);
 			const info: EventInfo = [event, handler];
 			if (useExtra)
@@ -102,59 +103,59 @@ export class WebRequestInterceptor {
 		onBeforeRequest(handler: (det: chrome.webRequest.WebRequestBodyDetails) => void): this;
 		onBeforeRequest(includeBody: boolean, handler: (det: chrome.webRequest.WebRequestBodyDetails) => void): this;
 		onBeforeRequest(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onBeforeRequest, "requestBody", arg0, arg1);
+			return this.#addEvent("onBeforeRequest", "requestBody", arg0, arg1);
 		}
 
 		onBeforeSendHeaders(handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onBeforeSendHeaders(includeHeaders: boolean, handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onBeforeSendHeaders(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onBeforeSendHeaders, "requestHeaders", arg0, arg1);
+			return this.#addEvent("onBeforeSendHeaders", "requestHeaders", arg0, arg1);
 		}
 		
 		onSendHeaders(handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onSendHeaders(includeHeaders: boolean, handler: (det: chrome.webRequest.WebRequestHeadersDetails) => void): this;
 		onSendHeaders(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onSendHeaders, "requestHeaders", arg0, arg1);
+			return this.#addEvent("onSendHeaders", "requestHeaders", arg0, arg1);
 		}
 		
 		onAuthRequired(handler: (det: chrome.webRequest.WebAuthenticationChallengeDetails) => void): this;
 		onAuthRequired(includeHeaders: boolean, handler: (det: chrome.webRequest.WebAuthenticationChallengeDetails) => void): this;
 		onAuthRequired(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onAuthRequired, "responseHeaders", arg0, arg1);
+			return this.#addEvent("onAuthRequired", "responseHeaders", arg0, arg1);
 		}
 
 		onBeforeRedirect(handler: (det: chrome.webRequest.WebRedirectionResponseDetails) => void): this;
 		onBeforeRedirect(includeHeaders: boolean, handler: (det: chrome.webRequest.WebRedirectionResponseDetails) => void): this;
 		onBeforeRedirect(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onBeforeRedirect, "responseHeaders", arg0, arg1);
+			return this.#addEvent("onBeforeRedirect", "responseHeaders", arg0, arg1);
 		}
 
 		onHeadersReceived(handler: (det: chrome.webRequest.WebResponseHeadersDetails) => void): this;
 		onHeadersReceived(includeHeaders: boolean, handler: (det: chrome.webRequest.WebResponseHeadersDetails) => void): this;
 		onHeadersReceived(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onHeadersReceived, "responseHeaders", arg0, arg1);
+			return this.#addEvent("onHeadersReceived", "responseHeaders", arg0, arg1);
 		}
 
 		onResponseStarted(handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onResponseStarted(includeHeaders: boolean, handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onResponseStarted(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onResponseStarted, "responseHeaders", arg0, arg1);
+			return this.#addEvent("onResponseStarted", "responseHeaders", arg0, arg1);
 		}
 
 		onCompleted(handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onCompleted(includeHeaders: boolean, handler: (det: chrome.webRequest.WebResponseCacheDetails) => void): this;
 		onCompleted(arg0: any, arg1?: any): this {
-			return this.#addEvent(chrome.webRequest.onCompleted, "responseHeaders", arg0, arg1);
+			return this.#addEvent("onCompleted", "responseHeaders", arg0, arg1);
 		}
 
 		onEnd(handler: (det: chrome.webRequest.WebResponseErrorDetails | chrome.webRequest.WebResponseCacheDetails) => void): this {
-			this.#events.push([chrome.webRequest.onErrorOccurred, handler]);
-			this.#events.push([chrome.webRequest.onCompleted, handler]);
+			this.#events.push(["onErrorOccurred", handler]);
+			this.#events.push(["onCompleted", handler]);
 			return this;
 		}
 	
 		onErrorOccurred(handler: (det: chrome.webRequest.WebResponseErrorDetails) => void): this {
-			this.#events.push([chrome.webRequest.onErrorOccurred, handler]);
+			this.#events.push(["onErrorOccurred", handler]);
 			return this;
 		}
 	}
@@ -170,8 +171,10 @@ export class WebRequestInterceptor {
 	}
 
 	dispose() {
-		for (const [event, handler] of this.#events)
-			event.removeListener(handler);
+		//when the webRequest permission is revoked on firefox, the listeners are invalidated and chrome.webRequest is undefined.
+		if (chrome.webRequest != null)
+			for (const [eventType, handler] of this.#events)
+				chrome.webRequest[eventType].removeListener(handler as any);
 
 		this.#events.length = 0;
 	}
