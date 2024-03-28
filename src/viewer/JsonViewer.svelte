@@ -30,7 +30,6 @@
 	export let menuAlign: string;
 	export let scheme: string;
 	export let background: string;
-	export let useWebRequest: boolean;
 
 	model.command.addListener(onModelCommand);
 
@@ -527,7 +526,7 @@
 			<button type="button" class="btn btn-cust-light icon btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
 			<button type="button" class="btn btn-cust-light icon btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
 			<button type="button" class="btn btn-cust-light icon btn-redo" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
-			{#if useWebRequest}
+			{#if model.useWebRequest}
 				<button type="button" class="btn btn-cust-light icon btn-http" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
 			{/if}
 		</div>

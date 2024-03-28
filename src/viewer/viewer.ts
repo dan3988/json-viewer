@@ -75,7 +75,7 @@ function run() {
 		async function loadAsync() {
 			const bag = await settingsBag("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background", "useWebRequest");
 			const bound = bag.bind()
-				.map(["background", "menuAlign", "scheme", "useWebRequest"])
+				.map(["background", "menuAlign", "scheme"])
 				.map(["indentChar", "indentCount"], "indent", (char, count) => char.repeat(count))
 				.map("scheme", "indentCount", v => schemes[v].indents)
 				.build();
