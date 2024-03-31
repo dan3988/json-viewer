@@ -47,6 +47,9 @@ declare namespace chrome {
 		export interface PermissionsAddedEvent {
 			removeListener(callback: (permissions: Permissions) => void): void;
 		}
+
+		export function request(permissions: Permissions): Promise<boolean>;
+		export function remove(permissions: Permissions): Promise<boolean>;
 	}
 }
 

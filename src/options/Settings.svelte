@@ -59,14 +59,6 @@
 
 	const webRequestPerm: chrome.permissions.Permissions = { permissions: ["webRequest"] };
 
-	function requestPermission(permissions: chrome.permissions.Permissions) {
-		return new Promise<boolean>((resolve) => chrome.permissions.request(permissions, resolve));
-	}
-
-	function removePermission(permissions: chrome.permissions.Permissions) {
-		return new Promise<boolean>((resolve) => chrome.permissions.remove(permissions, resolve));
-	}
-
 	function updateTheme(scheme: Scheme, userPref: null | boolean) {
 		tracker.preferDark = getValueByMode(scheme.mode, userPref);
 	}
@@ -99,7 +91,7 @@
 		const bag: settings.SaveType = {};
 		const { useWebRequest } = model.props;
 		if (useWebRequest.changed) {
-			const result = await (useWebRequest.value ? requestPermission(webRequestPerm) : removePermission(webRequestPerm));
+			const result = await chrome.permissions[useWebRequest.value ? "request" : "remove"](webRequestPerm);
 			if (!result)
 				useWebRequest.reset();
 		}
@@ -193,12 +185,6 @@
 		pointer-events: none;
 		inset: 0;
 		z-index: -1;
-	}
-
-	@media only screen and (max-width: 500px) {
-		.base {
-			width: 100%;
-		}
 	}
 </style>
 <div class="base cr d-flex flex-column p-1 gap-1" data-editor-bg={$background.value}>
