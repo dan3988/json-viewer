@@ -19,13 +19,13 @@
 	import RequestInfo from "./RequestInfo.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
+	import { KeyBindingListener } from "../keyboard";
+	import { commands } from "../commands";
 	import json from "../json.js";
-	import dom from "./dom-helper";
 	import edits from "./editor-helper";
 	import Linq from "@daniel.pickett/linq-js";
 
 	export let model: ViewerModel;
-	export let indent: string;
 	export let indentCount: number;
 	export let menuAlign: string;
 	export let scheme: string;
@@ -37,7 +37,7 @@
 	$: ({ canUndo, canRedo } = model.edits.state.props);
 	$: model.filter(filter, filterMode);
 
-	onDestroy(() => model.command.removeListener(onModelCommand));
+	let bindings: KeyBindingListener;
 
 	let contextMenu: [Coords, MenuItem[]] | undefined;
 	let prop: HTMLElement;
@@ -67,25 +67,9 @@
 		return navigator.clipboard.writeText(String(property.key));
 	}
 
-	function serializeForCopy(token: json.JToken, minify?: boolean, escapeValues?: boolean) {
-		if (!escapeValues && token.is("value")) {
-			return String(token.value);
-		} else {
-			return JSON.stringify(token, undefined, minify ? undefined : indent);
-		}
-	}
-
-	function copyValue(token: json.JToken, minify?: boolean, escapeValues?: boolean) {
-		const text = serializeForCopy(token, minify, escapeValues);
+	function copyValue(value: json.JToken<any>, minify?: boolean) {
+		const text = model.formatValue(value, minify);
 		return navigator.clipboard.writeText(text);
-	}
-
-	function copyValues(values: Iterable<json.JProperty>, minify?: boolean) {
-		const value = Linq(values)
-			.select(p => serializeForCopy(p.value, minify, true))
-			.joinText(minify ? "," : ",\r\n");
-
-		return navigator.clipboard.writeText(value);
 	}
 
 	type PopupConstructor<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult> = new(props: ComponentConstructorOptions<ComponentProps<TComp>>) => SvelteComponent<ComponentProps<TComp>, PopupCustomEvents<TResult>>;
@@ -116,9 +100,18 @@
 	}
 
 	function onModelCommand(evt: ViewerCommandEvent) {
-		if (evt.command === "context") {
-			const [prop, x, y] = evt.args;
-			openContextMenu(prop, x, y);
+		switch (evt.command) {
+			case "context": {
+				const [prop, x, y] = evt.args;
+				openContextMenu(prop, x, y);
+				break;
+			}
+			case "focusSearch":
+				filterInput.focus();
+				break;
+			case "saveAs":
+				saveAs();
+				break;
 		}
 	}
 
@@ -140,7 +133,7 @@
 
 		const result = await showSaveFilePicker({ suggestedName, types });
 		if (result) {
-			const data = model.root.value.toString(indent);
+			const data = model.formatValue(model.root.value);
 			const w = await result.createWritable();
 			try {
 				await w.write(data);
@@ -155,7 +148,7 @@
 	}
 
 	function editProp(prop: json.JProperty) {
-		const text = prop.value.toString(indent);
+		const text = model.formatValue(prop.value);
 		const opts: TextPopupOptions = {
 			title: "Edit JSON",
 			value: text,
@@ -181,10 +174,6 @@
 
 	function deleteProp(prop: json.JProperty, selectNext?: boolean) {
 		edits.deleteProp(model, prop, selectNext);
-	}
-
-	function deleteProps(props: Iterable<json.JProperty>) {
-		edits.deleteProps(model, props);
 	}
 
 	async function renameProperty(obj: json.JObject, prop: json.JProperty<string>) {
@@ -270,106 +259,9 @@
 	}
 
 	function keyMappings(target: HTMLElement) {
-		const destroy = dom.keymap(target, {
-			escape() {
-				model.selected.clear();
-				return true;
-			},
-			space() {
-				model.selected.forEach(v => v.toggleExpanded());
-				return true;
-			},
-			delete() {
-				if (model.selected.size === 1) {
-					deleteProp(model.selected.last!, true)
-				} else {
-					deleteProps(model.selected);
-					model.selected.clear();
-				}
-			},
-			keyF: {
-				"ctrl"() {
-					filterInput.focus();
-					return true;
-				}
-			},
-			keyC: {
-				"ctrl"() {
-					const selection = window.getSelection();
-					if (selection != null && selection.type === "Range")
-						return;
-
-					const values = model.selected;
-					if (values.size === 0) {
-						return;
-					} else if (values.size > 1) {
-						copyValues(values);
-						return true;
-					} else {
-						copyValue(values.last!.value);
-						return true;
-					}
-				}
-			},
-			arrowDown() {
-				const selected = model.selected.last;
-				if (selected) {
-					let v = selected.next;
-					if (v != null || (v = selected.parent?.first ?? null) != null)
-						model.setSelected(v, false, true);
-				} else {
-					model.setSelected(model.root, false, true);
-				}
-
-				return true;
-			},
-			arrowUp() {
-				const selected = model.selected.last;
-				if (selected != null) {
-					let v = selected.previous;
-					if (v != null || (v = selected.parent?.last ?? null) != null)
-						model.setSelected(v, false, true);
-				} else {
-					model.setSelected(model.root, false, true);
-				}
-
-				return true;
-			},
-			arrowRight() {
-				const selected = model.selected.last;
-				if (selected && selected.value.is("container") && selected.value.first != null) {
-					selected.isExpanded = true;
-					model.setSelected(selected.value.first, false, true);
-					return true;
-				}
-			},
-			arrowLeft() {
-				const selected = model.selected.last;
-				if (selected && selected.parent)
-					model.setSelected(selected.parent.owner, true, true);
-
-				return true;
-			}
-		});
-
-		return { destroy };
+		bindings?.dispose();
+		bindings = new KeyBindingListener(model, target, Linq(commands).selectMany(v => v.defaultBindings));
 	}
-
-	const windowMappingUnsub = dom.keymap(window, {
-		keyZ: {
-			"ctrl": () => model.edits.undo(),
-			"ctrl|shift": () => model.edits.redo()
-		},
-		keyY: {
-			"ctrl": () => model.edits.redo()
-		},
-		keyS: {
-			"ctrl"() {
-				saveAs();
-				return true;
-			}
-		}
-	});
 
 	function clearFilter(this: HTMLElement) {
 		filter = "";
@@ -380,8 +272,11 @@
 		model.root.setExpanded(expanded, true);
 	}
 
-	onDestroy(windowMappingUnsub);
 	onMount(() => prop.focus());
+	onDestroy(() => {
+		model.command.removeListener(onModelCommand);
+		bindings?.dispose();
+	});
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;

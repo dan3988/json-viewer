@@ -3,6 +3,7 @@ import { EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
 import { StateController } from "./state.js";
 import json from "./json.js";
+import Linq from "@daniel.pickett/linq-js";
 
 export interface SelectedPropertyList extends Iterable<json.JProperty> {
 	readonly size: number;
@@ -23,9 +24,12 @@ interface ChangeProps {
 	filterFlags: json.JTokenFilterFlags;
 	requestInfo: undefined | null | DocumentRequestInfo
 	useWebRequest: boolean;
+	formatIndent: string;
 }
 
 export interface ViewerCommands {
+	focusSearch: [];
+	saveAs: [];
 	scrollTo: [token: json.JProperty];
 	context: [token: json.JProperty, x: number, y: number];
 }
@@ -33,6 +37,14 @@ export interface ViewerCommands {
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
 
 export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
+
+function serializeForCopy(token: json.JToken, indent: undefined | string, escapeValues?: boolean) {
+	if (!escapeValues && token.is("value")) {
+		return String(token.value);
+	} else {
+		return JSON.stringify(token, undefined, indent);
+	}
+}
 
 export class ViewerModel {
 	static readonly #SelectedList = class implements SelectedPropertyList {
@@ -111,6 +123,14 @@ export class ViewerModel {
 		this.#state.setValue("requestInfo", v);
 	}
 
+	get formatIndent() {
+		return this.#state.getValue("formatIndent");
+	}
+
+	set formatIndent(v) {
+		this.#state.setValue("formatIndent", v);
+	}
+
 	get useWebRequest() {
 		return this.#state.getValue("useWebRequest");
 	}
@@ -137,7 +157,16 @@ export class ViewerModel {
 
 	constructor(root: json.JProperty) {
 		this.#root = root;
-		this.#state = new StateController<ChangeProps>({ selected: [], lastSelected: null, filterFlags: json.JTokenFilterFlags.Both, filterText: "", requestInfo: undefined, useWebRequest: false });
+		this.#state = new StateController<ChangeProps>({
+			selected: [],
+			lastSelected: null,
+			filterFlags: json.JTokenFilterFlags.Both,
+			filterText: "",
+			requestInfo: undefined,
+			useWebRequest: false,
+			formatIndent: ""
+		});
+
 		this.#command = new EventHandlers();
 		this.#selected = new Set();
 		this.#lastSelected = null;
@@ -150,6 +179,19 @@ export class ViewerModel {
 		if (handlers.hasListeners)
 			handlers.fire(this, <any>{ command, args });
 	}
+
+	formatValue(token: json.JToken, minify?: boolean, escapeValues?: boolean) {
+		const indent = minify ? undefined : this.formatIndent;
+		return serializeForCopy(token, indent, escapeValues);
+	}
+	
+	formatValues(values: Iterable<json.JProperty>, minify?: boolean) {
+		const indent = minify ? undefined : this.formatIndent;
+		return Linq(values)
+			.select(p => serializeForCopy(p.value, indent, true))
+			.joinText(minify ? "," : ",\r\n");
+	}
+	
 
 	filter(text: string, flags?: json.JTokenFilterFlags) {
 		text = text.toLowerCase();
