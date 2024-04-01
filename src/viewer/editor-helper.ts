@@ -1,6 +1,6 @@
-import type { EditAction } from "../edit-stack";
-import type json from "../json";
-import type ViewerModel from "../viewer-model";
+import type { EditAction } from "../edit-stack.js";
+import type json from "../json.js";
+import type ViewerModel from "../viewer-model.js";
 import Linq from "@daniel.pickett/linq-js";
 
 export namespace edits {
