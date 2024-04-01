@@ -4,7 +4,7 @@
 	}
 </script>
 <script lang="ts">
-	import { fade, slide } from "svelte/transition";
+	import { slide } from "svelte/transition";
 
 	export let title: string;
 	export let items: string[];
