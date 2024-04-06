@@ -76,9 +76,15 @@ function run() {
 			const bag = await settingsBag("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background", "useWebRequest");
 			const bound = bag.bind()
 				.map(["background", "menuAlign", "scheme"])
-				.map(["indentChar", "indentCount"], "indent", (char, count) => char.repeat(count))
 				.map("scheme", "indentCount", v => schemes[v].indents)
 				.build();
+
+			function updateIndent() {
+				const { indentChar, indentCount } = bag.getValues(["indentChar", "indentCount"]);
+				model.formatIndent = indentChar.repeat(indentCount);
+			}
+
+			updateIndent();
 
 			function preferDark() {
 				const { scheme, darkMode } = bag.props;
@@ -95,6 +101,9 @@ function run() {
 			bag.onChange(v => {
 				if ("darkMode" in v || "scheme" in v)
 					tracker.preferDark = preferDark();
+
+				if ("indentCount" in v || "indentChar" in v)
+					updateIndent();
 			});
 
 			const tracker = new ThemeTracker(document.documentElement, preferDark());
