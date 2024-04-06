@@ -106,6 +106,10 @@
 	}
 
 	let canSave = false;
+
+	function onUnload(evt: BeforeUnloadEvent) {
+		evt.returnValue = canSave || "";
+	}
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
@@ -187,6 +191,7 @@
 		z-index: -1;
 	}
 </style>
+<svelte:window on:beforeunload={onUnload} />
 <div class="base cr d-flex flex-column p-1 gap-1" data-editor-bg={$background.value}>
 	<div class="input-group" class:dirty={$enabled.changed}>
 		<label class="input-group-text flex-fill align-items-start gap-1">
