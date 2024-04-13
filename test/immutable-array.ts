@@ -159,6 +159,42 @@ describe("ImmutableArray", () => {
 		assertReturnsEmpty(ImmutableArray.from(sequence), "slice", 10, 0);
 	});
 
+	it("Should return correct values when calling splice()", () => {
+		function test(start: number, deleteCount?: number, ...values: any[]) {
+			const expected = Array.from(sequence);
+
+			let msg = `expected ImmutableArray(${sequence}).splice(${start}`;
+			if (deleteCount === undefined) {
+				expected.splice(start);
+			} else {
+				expected.splice(start, deleteCount, ...values);
+				msg += `, ${deleteCount}`;
+
+				if (values.length)
+					msg += `, ${values}`;
+			}
+
+			msg += `) to return ${expected}`;
+
+			testInstance(ImmutableArray.from(sequence).splice(start, deleteCount, ...values), expected, msg);
+		}
+
+		test(5, 5);
+		test(5, -5);
+		test(0, 0, 'a', 'b', 'c');
+		test(5, 0, 'a', 'b', 'c');
+		test(0, 10, 'a', 'b', 'c');
+		test(1);
+		test(-1);
+		test(NaN, NaN);
+		test(5, 4);
+
+		assertReturnsSelf(ImmutableArray.from(sequence), "splice", 0, 0);
+		assertReturnsSelf(ImmutableArray.from(sequence), "splice", -10, 0);
+		assertReturnsEmpty(ImmutableArray.from(sequence), "splice", 0, 10);
+		assertReturnsEmpty(ImmutableArray.from(sequence), "splice", -10, Infinity);
+	});
+
 	it("Should return correct values when calling filter()", () => {
 		const value = ImmutableArray.from([0, "0", false, 1, "1", true, 2n, "test", null, { test: 1 }]);
 		testInstance(value.filter(v => typeof v === "number"), [0, 1]);

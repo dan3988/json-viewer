@@ -14,22 +14,26 @@ namespace impl {
 		return typeof value === "string" || "length" in value;
 	}
 
+	function clamp(value: number, min: number, max: number) {
+		return value <= min ? min : (value > max ? max : value)
+	}
+
 	export class ImmutableArray<T = any> implements IImmutableArray<T> {
 		static readonly #empty = new this<any>().#finalize(0);
 		static readonly empty: ImmutableArray<never> = ImmutableArray.#empty as any;
 
-		static from(values: Iterable<any>, mapping?: (value: any) => any, thisArg?: any) {
-			if (values instanceof ImmutableArray)
-				return mapping ? values.map(mapping) : values;
+		static from(items: Iterable<any>, mapping?: (value: any) => any, thisArg?: any) {
+			if (items instanceof ImmutableArray)
+				return mapping ? items.map(mapping) : items;
 
-			if (isArrayLike(values)) {
-				const length = Number(values.length);
+			if (isArrayLike(items)) {
+				const length = Number(items.length);
 				if (length === 0 || isNaN(length))
 					return ImmutableArray.#empty;
 
 				const array = new ImmutableArray();
 				for (let i = 0; i < length; i++) {
-					let value = values[i];
+					let value = items[i];
 					if (mapping)
 						value = mapping.call(thisArg, value);
 
@@ -37,8 +41,8 @@ namespace impl {
 				}
 
 				return array.#finalize(length);
-			} else if (Symbol.iterator in values) {
-				const it = values[Symbol.iterator]();
+			} else if (Symbol.iterator in items) {
+				const it = items[Symbol.iterator]();
 				let res = it.next();
 				if (res.done)
 					return ImmutableArray.#empty;
@@ -52,7 +56,7 @@ namespace impl {
 						return array.#finalize(i + 1);
 				}
 			} else {
-				throw new TypeError(`${values} is not iterable`);
+				throw new TypeError(`${items} is not iterable`);
 			}
 		}
 
@@ -148,13 +152,13 @@ namespace impl {
 			return result.#finalize(length);
 		}
 
-		add(...values: any[]) {
-			if (values.length === 0)
+		add(...items: any[]) {
+			if (items.length === 0)
 				return this;
 
 			const result = new ImmutableArray<T>();
 			result.#addValues(0, this);
-			const length = result.#addValues(this.length, values, 0, values.length);
+			const length = result.#addValues(this.length, items, 0, items.length);
 			result.#finalize(length);
 			return result;
 		}
@@ -171,8 +175,8 @@ namespace impl {
 			return result.#finalize(this.length);
 		}
 
-		insert(index: number, ...values: any[]) {
-			if (values.length === 0)
+		insert(index: number, ...items: any[]) {
+			if (items.length === 0)
 				return this;
 
 			index = toIndex(index, this.length);
@@ -181,7 +185,7 @@ namespace impl {
 
 			const result = new ImmutableArray<T>();
 			i = result.#addValues(0, this, 0, index);
-			i = result.#addValues(i, values);
+			i = result.#addValues(i, items);
 			i = result.#addValues(i, this, index);
 			return result.#finalize(i);
 		}
@@ -201,6 +205,31 @@ namespace impl {
 			result.#addValues(0, this, 0, start);
 			const resultLength = result.#addValues(start, this, end);
 			return result.#finalize(resultLength);
+		}
+
+		splice(start: number): ImmutableArray<T>;
+		splice<V>(start: number, deleteCount: number, ...items: V[]): ImmutableArray<T | V>;
+		splice(start: number, deleteCount: number, ...items: T[]): ImmutableArray<T>;
+		splice(start: number, deleteCount?: number, ...items: any[]): ImmutableArray {
+			const { length } = this;
+			start = toIndex(start, length);
+			const end = deleteCount === undefined ? length : clamp(start + toIntegerOrInfinity(deleteCount), start, length);
+
+			if (items.length === 0) {
+				if (start === end)
+					return this;
+
+				if (start === 0 && end === length)
+					return ImmutableArray.#empty;
+			}
+
+			let i: number;
+
+			const result = new ImmutableArray<T>();
+			i = result.#addValues(0, this, 0, start);
+			i = result.#addValues(i, items);
+			i = result.#addValues(i, this, end);
+			return result.#finalize(i);
 		}
 
 		slice(start: number, end?: number) {
@@ -234,8 +263,8 @@ namespace impl {
 			if (this.length == 0)
 				return this;
 
-			const values = Array.prototype.sort.call(this, comparefn);
-			return ImmutableArray.from(values);
+			const items = Array.prototype.sort.call(this, comparefn);
+			return ImmutableArray.from(items);
 		}
 	}
 
@@ -252,16 +281,21 @@ export interface ImmutableArray<T = any> extends ArrayLike<T>, Iterable<T> {
 
 	at(index: number): T | undefined;
 
-	add<V>(...values: V[]): ImmutableArray<T | V>;
-	add(...values: T[]): ImmutableArray<T>;
+	add<V>(...items: V[]): ImmutableArray<T | V>;
+	add(...items: T[]): ImmutableArray<T>;
 
 	set<V>(index: number, value: V): ImmutableArray<T | V>;
 	set(index: number, value: T): ImmutableArray<T>;
 
-	insert<V>(index: number, ...values: V[]): ImmutableArray<T | V>;
-	insert(index: number, ...values: T[]): ImmutableArray<T>;
+	insert<V>(index: number, ...items: V[]): ImmutableArray<T | V>;
+	insert(index: number, ...items: T[]): ImmutableArray<T>;
 
 	remove(start: number, end?: number): ImmutableArray<T>;
+
+	splice(start: number): ImmutableArray<T>;
+	splice<V>(start: number, deleteCount: number, ...items: V[]): ImmutableArray<T | V>;
+	splice(start: number, deleteCount: number, ...items: T[]): ImmutableArray<T>;
+
 	slice(start: number, end?: number): ImmutableArray<T>;
 
 	sort(comparefn?: (a: T, b: T) => number): ImmutableArray<T>;
@@ -309,8 +343,8 @@ export interface ImmutableArray<T = any> extends ArrayLike<T>, Iterable<T> {
 interface ImmutableArrayConstructorBase extends Function {
 	readonly prototype: ImmutableArray<any>;
 	readonly empty: ImmutableArray<never>;
-	from<T>(values: Iterable<T>): ImmutableArray<T>;
-	from<T, V>(values: Iterable<T>, mapping: (value: T) => V, thisArg?: any): ImmutableArray<V>; 
+	from<T>(items: Iterable<T>): ImmutableArray<T>;
+	from<T, V>(items: Iterable<T>, mapping: (value: T) => V, thisArg?: any): ImmutableArray<V>; 
 }
 
 interface ImmutableArrayConstructor extends ImmutableArrayConstructorBase {
