@@ -1,6 +1,6 @@
 /// <reference path="../../node_modules/json5/lib/index.d.ts" />
 import "../dom-extensions";
-import settingsBag from "../settings-bag";
+import preferences from "../preferences-lite";
 import createComponent from "../component-tracker";
 import schemes from "../schemes.json";
 import { getValue } from "../scheme-modes";
@@ -73,32 +73,32 @@ function run() {
 		}
 
 		async function loadAsync() {
-			const bag = await settingsBag("darkMode", "indentChar", "indentCount", "scheme", "useHistory", "menuAlign", "background", "useWebRequest");
-			const bound = bag.bind()
+			const prefs = await preferences.lite.manager.watch();
+			const bound = prefs.bind()
 				.map(["background", "menuAlign", "scheme"])
 				.map("scheme", "indentCount", v => schemes[v].indents)
 				.build();
 
 			function updateIndent() {
-				const { indentChar, indentCount } = bag.getValues(["indentChar", "indentCount"]);
+				const { indentChar, indentCount } = prefs.getValues(["indentChar", "indentCount"]);
 				model.formatIndent = indentChar.repeat(indentCount);
 			}
 
 			updateIndent();
 
 			function preferDark() {
-				const { scheme, darkMode } = bag.props;
-				return getValue(scheme.value, darkMode.value);
+				const { scheme, darkMode } = prefs.getValues(["scheme", "darkMode"]);
+				return getValue(scheme, darkMode);
 			}
 
-			model.useWebRequest = bag.getValue("useWebRequest");
+			model.useWebRequest = prefs.getValue("useWebRequest");
 
 			chrome.runtime.sendMessage({ type: "requestInfo" }, v => model.requestInfo = v);
 
-			if (bag.getValue("useHistory"))
+			if (prefs.getValue("useHistory"))
 				model.state.props.selected.subscribe(pushHistory);
 
-			bag.onChange(v => {
+			prefs.onChange(v => {
 				if ("darkMode" in v || "scheme" in v)
 					tracker.preferDark = preferDark();
 

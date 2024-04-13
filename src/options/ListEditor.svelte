@@ -1,13 +1,14 @@
 <script lang="ts" context="module">
 	export interface ListValidator {
-		validate(items: readonly string[], index: number, item: string): undefined | string;
+		validate(items: ImmutableArray<string>, index: number, item: string): undefined | string;
 	}
 </script>
 <script lang="ts">
+	import type ImmutableArray from "../immutable-array";
 	import { slide } from "svelte/transition";
 
 	export let title: string;
-	export let items: string[];
+	export let items: ImmutableArray<string>;
 	export let help: string = "";
 	export let validator: null | ListValidator = null;
 	export let expanded = false;
@@ -19,7 +20,7 @@
 			if (validation == null) {
 				target.value = "";
 				target.setCustomValidity("");
-				items = [...items, text];
+				items = items.add(text);
 			} else {
 				target.setCustomValidity(validation);
 				target.reportValidity();
@@ -40,16 +41,7 @@
 	}
 
 	function deleteAt(index: number) {
-		let copy = Array(items.length - 1);
-		let i = 0;
-
-		while (i < index)
-			copy[i] = items[i++];
-
-		while (i < copy.length)
-			copy[i] = items[++i];
-
-		items = copy;
+		items = items.splice(index, 1);
 	}
 
 	function tryEdit(e: HTMLInputElement, index: number) {
@@ -71,9 +63,7 @@
 		}
 
 		e.setCustomValidity("");
-		const copy = Array.from(items);
-		copy[index] = newValue;
-		items = copy;
+		items = items.set(index, newValue);
 	}
 
 	function onKeyDown(e: HTMLInputElement, evt: KeyboardEvent, index: number) {

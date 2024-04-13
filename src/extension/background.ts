@@ -1,5 +1,6 @@
 import type { DocumentHeader, DocumentRequestInfo, WorkerMessage } from "../types.js";
-import settings from "../settings.js";
+import type { ImmutableArray } from "../immutable-array.js";
+import preferences from "../preferences-lite.js";
 import lib from "../lib.json";
 import WebRequestInterceptor from "./web-request.js";
 
@@ -13,29 +14,26 @@ function updateIcon(path: Record<string, string>, title: string) {
 
 function onEnabledChanged(enabled: boolean) {
 	return enabled
-		? updateIcon(mf.action.default_icon, mf.action.default_title)
-		: updateIcon(gsIcons, mf.action.default_title + " (Disabled)");
+		? void updateIcon(mf.action.default_icon, mf.action.default_title)
+		: void updateIcon(gsIcons, mf.action.default_title + " (Disabled)");
+}
+
+function reset<T>(set: Set<T>, source: ImmutableArray<T>) {
+	set.clear();
+	source.forEach(set.add, set);
 }
 
 async function loadExtension() {
-	const bag = await settings.get();
-	if (!bag.enabled)
-		await onEnabledChanged(false);
+	const prefs = await preferences.lite.manager.watch();
+	const whitelist = new Set<string>();
+	const blacklist = new Set<string>();
+	const mimes = new Set<string>();
 
-	if (bag.useWebRequest)
-		setRequestListening(true);
-
-	settings.addListener(det => {
-		for (let [key, change] of Object.entries(det.changes))
-			(bag as any)[key] = change.newValue;
-
-		const { enabled, useWebRequest } = det.changes;
-		if (enabled !== undefined)
-			onEnabledChanged(enabled.newValue);
-
-		if (useWebRequest) 
-			setRequestListening(useWebRequest.newValue);
-	});
+	prefs.props.enabled.subscribe(onEnabledChanged);
+	prefs.props.useWebRequest.subscribe(setRequestListening);
+	prefs.props.whitelist.subscribe(v => reset(whitelist, v));
+	prefs.props.blacklist.subscribe(v => reset(blacklist, v));
+	prefs.props.mimes.subscribe(v => reset(mimes, v));
 
 	const gsIcons: Record<number, string> = { ...mf.action.default_icon };
 	for (const key in gsIcons)
@@ -44,13 +42,13 @@ async function loadExtension() {
 	function setRequestListening(enabled: boolean) {
 		if (enabled) {
 			try {
-				currentRequestListener = new RequestListener(bag);
+				currentRequestListener = new RequestListener(blacklist);
 			} catch (e) {
 				console.error("Failed to start listening to webRequest events", e);
 			}
 		} else {
 			try {
-				currentRequestListener!.dispose();
+				currentRequestListener?.dispose();
 			} catch (e) {
 				console.error("Failed to dispose webRequest listener", e);
 			} finally {
@@ -83,27 +81,28 @@ async function loadExtension() {
 			case "remember": {
 				if (sender.url) {
 					const url = new URL(sender.url);
-					const key = message.autoload ? "whitelist" : "blacklist"
-					const list = bag[key];
-					list.push(url.host);
-					settings.setValue(key, list).then(() => respond(true));
-					return true;
+					const [key, set] = message.autoload ? ["whitelist", whitelist] as const : ["blacklist", blacklist] as const;
+					if (!set.has(url.host)) {
+						const list = prefs.getValue(key).add(url.host);
+						preferences.lite.manager.set(key, list);
+						return true;
+					}
 				}
 
 				respond(false);
 				break;
 			}
 			case "checkme":
-				if (bag.enabled && bag.mimes.includes(message.contentType)) {
+				if (prefs.getValue("enabled") && mimes.has(message.contentType)) {
 					const url = sender.url && new URL(sender.url);
 					let autoload = false;
 					if (url) {
-						if (bag.blacklist.includes(url.host)) {
+						if (blacklist.has(url.host)) {
 							respond(false);
 							return;
 						}
 
-						autoload = bag.whitelist.includes(url.host);
+						autoload = whitelist.has(url.host);
 					}
 
 					const fn = autoload ? injectViewer : injectPopup;
@@ -168,7 +167,7 @@ class RequestListener {
 	readonly #currentRequestsMap = new Map<string, DocumentRequestInfo>();
 	readonly #interceptor: WebRequestInterceptor;
 
-	constructor(bag: settings.SettingsBag<"blacklist">) {
+	constructor(blacklist: Set<string>) {
 		this._onTabRemoved = this._onTabRemoved.bind(this);
 		this.#interceptor = WebRequestInterceptor.builder()
 			.addFilterTypes("main_frame", "sub_frame")
@@ -177,7 +176,7 @@ class RequestListener {
 					this.#requestInfoMap.delete(det.tabId);
 	
 				const url = new URL(det.url);
-				if (bag.blacklist.includes(url.hostname))
+				if (blacklist.has(url.hostname))
 					return;
 
 				this.#currentRequestsMap.set(det.requestId, {

@@ -1,5 +1,4 @@
 import type { Invalidator, Readable, Subscriber, Unsubscriber, Updater, Writable } from "svelte/store";
-import Linq from "@daniel.pickett/linq-js";
 import { defValue } from "./util.js";
 
 export interface Property<Props extends Dict, Key extends keyof Props> extends Readable<Props[Key]> {
@@ -52,7 +51,7 @@ export interface MappedStateBuilder<TRecord extends Dict, TCurrent extends Dict>
 	build(): State<{ [P in keyof TCurrent]: TCurrent[P] }>;
 }
 
-type PropertyBagChangeHandler<TRecord> = (changes: Partial<TRecord>) => void;
+export type PropertyBagChangeHandler<TRecord> = (changes: Partial<TRecord>) => void;
 
 type Entries<T extends Dict> = { readonly [P in keyof T]: Entry<T, P> };
 
@@ -156,7 +155,7 @@ class MappedEntry<Source extends Dict, Props extends Dict = any, Key extends key
 		this.#transformer = transformer;
 	}
 
-	update(src: State<Source>) {
+	update(src: IState<Source>) {
 		const value = this.#transformer.call(undefined, src);
 		return this.setValue(value);
 	}
@@ -175,7 +174,16 @@ function createDict<T extends Dict, M>(input: T, mapper: <K extends keyof T>(val
 	return Object.preventExtensions(dict);
 }
 
-class State<Props extends Dict = Dict> {
+export interface IState<Props extends Dict> {
+	getValue<K extends string & keyof Props>(key: K): Props[K]
+	onChange(handler: PropertyBagChangeHandler<Props>): void;
+}
+
+class State<Props extends Dict = Dict> implements IState<Props> {
+	static bind<T extends Dict>(state: IState<T>): IMappedStateBuilder<T, {}> {
+		return new State.#MappedStateBuilder(state);
+	}
+
 	readonly #keys: ReadonlySet<string>;
 	readonly #entries: Entries<Props>;
 	readonly #props: StateDict<Props>;
@@ -190,18 +198,18 @@ class State<Props extends Dict = Dict> {
 	}
 
 	protected constructor(entries: Entries<Props>, owner?: State<Props>) {
-		this.#keys = Linq.fromKeys(entries).toSet();
+		this.#keys = new Set(Object.keys(entries));
 		this.#entries = entries;
 		this.#props = <any>createDict(entries, v => v.prop.prop);
 		this.#handlers = owner == null ? [] : owner.#handlers;
 	}
 
-	getValue<K extends keyof Props>(key: K): Props[K] {
+	getValue<K extends string & keyof Props>(key: K): Props[K] {
 		return this.#entries[key].value;
 	}
 
 	getValues(): Props;
-	getValues<const K extends (keyof Props)[]>(keys: K): { [P in K[number]]: Props[P] };
+	getValues<const K extends (string & keyof Props)[]>(keys: K): { [P in K[number]]: Props[P] };
 	getValues(keys?: string[]): any {
 		const result: any = {};
 		for (const key of keys ?? this.#keys)
@@ -275,11 +283,11 @@ class State<Props extends Dict = Dict> {
 		}
 	}
 
-	static #MappedStateBuilder = class MappedStateBuailder<TRecord extends Dict, TCurrent extends Dict> implements IMappedStateBuilder<TRecord, TCurrent> {
-		readonly #source: State<any>;
+	static #MappedStateBuilder = class MappedStateBuilder<TRecord extends Dict, TCurrent extends Dict> implements IMappedStateBuilder<TRecord, TCurrent> {
+		readonly #source: IState<any>;
 		readonly #transformers: Record<string, Transformer<any>>;
 
-		constructor(source: State<any>) {
+		constructor(source: IState<any>) {
 			this.#source = source;
 			this.#transformers = Object.create(null);
 		}
@@ -330,11 +338,11 @@ class State<Props extends Dict = Dict> {
 	}
 
 	static #MappedState = class MappedState<TSource extends Dict, TRecord extends Dict> extends this<TRecord> {
-		readonly #source: State<TSource>;
+		readonly #source: IState<TSource>;
 		readonly #entries: MappedEntries<TSource, TRecord>
 		readonly #mappings: Map<string, string[]>;
 	
-		constructor(source: State<TSource>, transformers: Dict<Transformer<TSource>>) {
+		constructor(source: IState<TSource>, transformers: Dict<Transformer<TSource>>) {
 			const entries = Object.create(null);
 			const mappings = new Map<string, string[]>();
 	
@@ -419,12 +427,12 @@ interface StateControllerConstructor {
 
 var StateController: StateControllerConstructor;
 
-type TransformerHandler<TSource extends Dict> = (src: State<TSource>) => any;
+type TransformerHandler<TSource extends Dict> = (src: IState<TSource>) => any;
 type Transformer<TSource extends Dict> = [OneOrMany<string & keyof TSource>, TransformerHandler<TSource>];
 
 type KeysToArgs<TRecord, K extends readonly (keyof TRecord)[]> = { [I in keyof K]: TRecord[K[I]] };
 
-function transformMany<T extends Dict>(this: string[], transform: Fn, src: State<T>) {
+function transformMany<T extends Dict>(this: string[], transform: Fn, src: IState<T>) {
 	const args = Array(this.length);
 	for (let i = 0; i < args.length; i++)
 		args[i] = src.getValue(this[i]);
@@ -432,12 +440,12 @@ function transformMany<T extends Dict>(this: string[], transform: Fn, src: State
 	return transform.apply(undefined, args);
 };
 
-function transformSingle<T extends Dict>(key: string, transform: Func<any, any>, state: State<T>) {
+function transformSingle<T extends Dict>(key: string, transform: Func<any, any>, state: IState<T>) {
 	const v = state.getValue(key);
 	return transform(v);
 }
 
-function mapValue<T extends Dict>(key: string, state: State<T>) {
+function mapValue<T extends Dict>(key: string, state: IState<T>) {
 	return state.getValue(key);
 }
 

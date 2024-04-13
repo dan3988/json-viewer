@@ -107,9 +107,9 @@ type EditorListener<T> = (this: T) => void;
 export class EditorModel<T extends Dict = Dict> {
 	readonly #props: PropsTypeInternal<T>;
 	readonly #listeners: EditorListener<this>[];
-	readonly #changed: Set<keyof T>;
+	readonly #changed: Set<string & keyof T>;
 
-	get changed(): ReadonlySet<keyof T> {
+	get changed(): ReadonlySet<string & keyof T> {
 		return this.#changed;
 	}
 

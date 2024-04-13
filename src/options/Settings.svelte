@@ -14,7 +14,7 @@
 			this.#validation = args;
 		}
 
-		validate(items: readonly string[], index: number, item: string): string | undefined {
+		validate(items: ImmutableArray<string>, index: number, item: string): string | undefined {
 			const existing = items.indexOf(item);
 			if (existing >= 0 && existing != index)
 				return "Duplicate";
@@ -45,14 +45,15 @@
 <script lang="ts">
 	import type { EditorModel } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
-	import settings from "../settings";
 	import { onDestroy, onMount } from "svelte";
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
 	import Radio from "./Radio.svelte";
+	import preferences from "../preferences-lite";
+    import type ImmutableArray from "../immutable-array";
 
-	export let model: EditorModel<settings.SettingsBag>;
+	export let model: EditorModel<preferences.lite.Bag>;
 	export let tracker: ThemeTracker;
 
 	let showPreview = false;
@@ -88,7 +89,7 @@
 	]
 
 	async function save() {
-		const bag: settings.SaveType = {};
+		const bag: Dict = {};
 		const { useWebRequest } = model.props;
 		if (useWebRequest.changed) {
 			const result = await chrome.permissions[useWebRequest.value ? "request" : "remove"](webRequestPerm);
@@ -97,9 +98,9 @@
 		}
 
 		for (const key of model.changed)
-			bag[key] = <any>model.props[key].value;
+			bag[key] = model.props[key].value;
 
-		await settings.setValues(bag);
+		await preferences.lite.manager.set(bag);
 
 		model.commit();
 		canSave = false;

@@ -17,7 +17,8 @@ declare type OneOrMany<T> = T | T[];
 declare var JSON5: typeof import("json5");
 
 declare interface Array<T> {
-	at(index: number): undefined | T
+	concat<V>(...items: V[]): (T | V)[];
+	with<V>(index: number, value: V): (T | V)[];
 }
 
 declare interface NamedCustomEvent<N extends string, T = any> extends CustomEvent<T> {
@@ -47,9 +48,6 @@ declare namespace chrome {
 		export interface PermissionsAddedEvent {
 			removeListener(callback: (permissions: Permissions) => void): void;
 		}
-
-		export function request(permissions: Permissions): Promise<boolean>;
-		export function remove(permissions: Permissions): Promise<boolean>;
 	}
 }
 

@@ -124,7 +124,7 @@ namespace impl {
 			Object.defineProperty(this, index, { value, enumerable: true });
 		}
 
-		toArray(): T[] {
+		toJSON(): T[] {
 			return Array.from(this);
 		}
 
@@ -306,7 +306,7 @@ export interface ImmutableArray<T = any> extends ArrayLike<T>, Iterable<T> {
 	filter<S extends T>(predicate: (value: T, index: number, array: this) => value is S, thisArg?: any): ImmutableArray<S>;
 	filter(predicate: (value: T, index: number, array: this) => unknown, thisArg?: any): ImmutableArray<T>;
 
-	toArray(): T[]
+	toJSON(): T[];
 
 	toString(): string;
 	toLocaleString(): string;
