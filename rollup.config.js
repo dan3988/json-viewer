@@ -14,6 +14,7 @@ import Linq from '@daniel.pickett/linq-js';
 import customManifest from './rollup-plugin-custom-manifest.js';
 import copyLibs from './rollup-plugin-copy-libs.js';
 import onwarn from "./rollup-typescript-log.js";
+import hotreload from './rollup-plugin-hotreload.js';
 
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
 const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
@@ -93,14 +94,14 @@ function loader(args) {
 	loadBsIcon("github");
 	
 	/**
-	 * @param {string} baseDir
+	 * @param {string} srcDir
 	 * @param {string} entry
 	 * @param {string} output
 	 * @returns {rl.RollupOptions}
 	 */
-	function svelteConfig(baseDir, entry, output) {
+	function svelteConfig(srcDir, entry, output) {
 		return {
-			input: path.join(baseDir, entry),
+			input: path.join(srcDir, entry),
 			output: {
 				sourcemap: !dist,
 				dir: lib,
@@ -140,7 +141,9 @@ function loader(args) {
 					],
 					compilerOptions: {
 						// enable run-time checks when not in production
-						dev: !dist
+						dev: !dist,
+						// use the filename instead of contents to generate the css class names otherwise hot-reload won't work
+						cssHash: ({ hash, filename }) => "svelte-" + hash(filename)
 					},
 					onwarn(warning, handler) {
 						!ignore.has(warning.code) && handler(warning);
@@ -153,12 +156,16 @@ function loader(args) {
 				}),
 				commonjs(),
 				typescript({
-					tsconfig: path.join(baseDir, "tsconfig.json"),
+					tsconfig: path.join(srcDir, "tsconfig.json"),
 					sourceMap: !dist,
 					inlineSources: !dist
 				}),
 				json({
 					preferConst: true
+				}),
+				!dist && hotreload({
+					baseDir,
+					prefix: browserInfo.extUrlScheme
 				}),
 				dist && terser({
 					format: {
@@ -226,6 +233,14 @@ function loader(args) {
 							path: "src/content-scripts",
 							include: "*.js",
 							output: "lib"
+						},
+						{
+							mode: "dir",
+							path: "node_modules/bootstrap-icons/font/fonts",
+							include: [
+								"*.woff",
+								"*.woff2"
+							],
 						}
 					],
 					archive: dist && {
