@@ -42,17 +42,26 @@
 		margin-top: var(--bs-modal-margin);
 	}
 
+	.modal-header {
+		justify-content: space-between;
+	}
+
 	.modal-content {
 		height: 100%;
 	}
 
 	.close {
-		@include bs-icon-btn("x-circle");
+		color: var(--bs-btn-bg);
 		width: 1.5rem;
+		font-size: x-large;
 		aspect-ratio: 1;
 
-		&:hover {
-			--img-btn-src: #{bs-icon("x-circle-fill")};
+		&::before {
+			content: #{bs-icon("x-circle")};
+		}
+
+		&:hover::before {
+			content: #{bs-icon("x-circle-fill")};
 		}
 	}
 </style>
@@ -62,7 +71,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<span id="title" class="h4 modal-title">{title}</span>
-				<span role="button" class="close btn-danger" data-dismiss="modal" aria-label="Close" on:click={cancel}></span>
+				<span role="button" class="close btn-danger bi" data-dismiss="modal" aria-label="Close" on:click={cancel}></span>
 			</div>
 			<div class="modal-body overflow-y-auto">
 				<slot/>

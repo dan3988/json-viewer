@@ -3,7 +3,8 @@
 	<head>
 		<meta charset="utf-8">
 		<title>JSON Viewer Setup</title>
-		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="/node_modules/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet" />
 		<style type="text/css">
 			ol {
 				margin: 0;
@@ -14,37 +15,14 @@
 				font-weight: bold;
 			}
 
-			.copy-btn {
-				vertical-align: baseline;
-				display: inline-flex;
-				--mask-image-src: url("../node_modules/bootstrap-icons/icons/clipboard.svg");
+			.bi::before, [class*=" bi-"]::before, [class^="bi-"]::before {
+				padding-right: 0.25rem;
 			}
 
-			#btn-source {
-				--mask-image-src: url("../node_modules/bootstrap-icons/icons/github.svg");
-			}
-
-			.mask-btn {
+			.bi {
 				display: inline-flex;
 				justify-content: center;
 				align-items: stretch;
-			}
-
-			.mask-btn::after {
-				transition: inherit;
-				transition-property: background-color;
-				content: "";
-				margin-left: 5px;
-				mask-image: var(--mask-image-src);
-				mask-repeat: no-repeat;
-				mask-size: contain;
-				mask-position: center;
-				-webkit-mask-image: var(--mask-image-src);
-				-webkit-mask-repeat: no-repeat;
-				-webkit-mask-size: contain;
-				-webkit-mask-position: center;
-				background-color: var(--bs-btn-color);
-				width: 1rem;
 			}
 
 			.mask-btn:hover::after {
@@ -86,17 +64,17 @@
 				Thank you for installing json-viewer for <span class="browser-name"></span>.
 				<br/>
 				<a id="btn-settings" class="mt-2 body-btn btn btn-primary" href="options.html">Configure</a>
-				<a id="btn-source" class="body-btn mt-2 mask-btn btn btn-secondary" href="https://github.com/dan3988/json-viewer" target="_blank">Source code</a>
+				<a class="body-btn mt-2 mask-btn btn btn-secondary bi-github" href="https://github.com/dan3988/json-viewer" target="_blank">Source code</a>
 				<div class="mt-2" data-browser="firefox">
 					For the viewer to load on pages with an <span class="code">application/json</span> content-type,
 					you will need to disable the built in JSON viewer.
 					To do this:
 					<ol class="text-start d-flex flex-column gap-2 p-2">
 						<li>
-							Go to <span class="code copy-btn mask-btn btn btn-outline-secondary py-0">about:config</span>
+							Go to <span class="code copy-btn bi-clipboard mask-btn btn btn-outline-secondary py-0">about:config</span>
 						</li>
 						<li>
-							Set the value of <span class="code copy-btn mask-btn btn btn-outline-secondary py-0">devtools.jsonview.enabled</span> to <span class="code">false</span>
+							Set the value of <span class="code copy-btn bi-clipboard btn btn-outline-secondary py-0">devtools.jsonview.enabled</span> to <span class="code">false</span>
 						</li>
 					</ol>
 				</div>

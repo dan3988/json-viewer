@@ -190,12 +190,10 @@
 				flex: 1 1 0px;
 			}
 
-			&:after {
-				@include img-mask(bs-icon("chevron-right"), no-repeat, contain, center);
-				content: "";
+			> .bi {
 				flex: 0 0 1rem;
 				margin: 0.5rem;
-				background-color: var(--context-menu-color);
+				color: var(--context-menu-color);
 			}
 		}
 
@@ -226,6 +224,9 @@
 		{:else}
 			<li class="context-menu-item type-{item.type}" class:opened={i === sub} role="button" on:click={() => setSub(i)} on:mouseenter={e => onEnter(i, e)}>
 				<span class="context-menu-label p-1">{item.name}</span>
+				{#if item.type === "menu"}
+					<span class="bi bi-chevron-right"></span>
+				{/if}
 				{#if i === sub}
 					<svelte:self pos={nestedPos} items={item.items}/>
 				{/if}

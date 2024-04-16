@@ -97,17 +97,22 @@
 		}
 	}
 
-	.btn-rm {
-		@include bs-icon-btn("trash-fill", $pad-med);
+	.bi {
+		color: var(--bi-color);
 
-		--bs-btn-border-color: #a52834;
-		--bs-btn-hover-border-color: #b02a37;
-		--bs-btn-active-border-color: #dc3545;
-		--bs-btn-disabled-border-color: #dc3545;
+		&:hover {
+			color: var(--bi-hover-color);
+		}
+	}
+
+	.btn-rm {
+		--bi-color: #b02a3799;
+		--bi-hover-color: #b02a37;
 	}
 
 	.btn-help {
-		@include bs-icon-btn("info-circle-fill", 2px, ("default": var(--bs-link-color), "hover": var(--bs-link-hover-color)));
+		--bi-color: var(--bs-link-color);
+		--bi-hover-color: var(--bs-link-hover-color);
 	}
 
 	.root {
@@ -163,17 +168,17 @@
 <div class="root flex-fill border rounded overflow-hidden expandable" class:expanded>
 	<div class="head nav-header border bg-body-tertiary">
 		{#if help}
-			<span class="button btn-help" title={help}></span>
+			<span class="button btn-help bi bi-info-circle-fill" title={help}></span>
 		{/if}
 		<span class="title">{title}</span>
-		<span role="button" class="expander btn btn-cust-light border-0" on:click={() => expanded = !expanded}></span>
+		<span role="button" class="expander btn btn-cust-light p-0 border-0 bi-chevron-up" on:click={() => expanded = !expanded}></span>
 	</div>
 	{#if expanded}
 		<ul transition:slide|global class="list list-group list-group-flush overflow-y-scroll">
 			{#each items as item, i}
 				<li class="list-group-item">
 					<input class="value" type="text" placeholder="Empty" on:focusout={evt => tryEdit(evt.currentTarget, i)} on:keydown={e => onKeyDown(e.currentTarget, e, i)} value={item}/>
-					<span class="button btn-rm" role="button" title="Delete" on:click={() => deleteAt(i)}></span>
+					<span class="button btn-rm bi bi-trash-fill" role="button" title="Delete" on:click={() => deleteAt(i)}></span>
 				</li>
 			{/each}
 			<li class="list-group-item pc">

@@ -3,6 +3,7 @@
 
 	const css = [
 		chrome.runtime.getURL(lib.bootstrap),
+		chrome.runtime.getURL(lib.bootstrapIcons),
 		chrome.runtime.getURL("/lib/viewer.css")
 	];
 </script>
@@ -327,11 +328,6 @@
 			content: "";
 			flex: 1 1 0px;
 		}
-
-		> .btn-group > .btn,
-		> .input-group > .btn {
-			width: 2.5rem;
-		}
 	}
 
 	.w-path {
@@ -368,41 +364,6 @@
 			flex: 0 0 7rem !important;
 		}
 	}
-
-	.icon {
-		@include bs-icon-btn(null, 25%);
-	}
-
-	.btn-save {
-		--img-btn-src: #{bs-icon("floppy")};
-	}
-
-	.btn-clr {
-		--img-btn-src: #{bs-icon("x-lg")};
-	}
-
-	.btn-expand-all {
-		--img-btn-src: #{bs-icon("plus-square-fill")};
-	}
-
-	.btn-collapse-all {
-		--img-btn-src: #{bs-icon("dash-square-fill")};
-	}
-
-	.btn-undo {
-		--img-btn-src: #{bs-icon("arrow-counterclockwise")};
-	}
-
-	.btn-redo {
-		--img-btn-src: #{bs-icon("arrow-clockwise")};
-	}
-
-	.btn-redo {
-		--img-btn-src: #{bs-icon("arrow-clockwise")};
-	}
-
-	.btn-http {
-		--img-btn-src: #{bs-icon("activity")};}
 </style>
 <svelte:head>
 	{#each css as href}
@@ -416,19 +377,19 @@
 	{/if}
 	<div class="w-bar pb-1 gap-1">
 		<div class="btn-group">
-			<button type="button" class="btn btn-cust-light icon btn-save" title="Save" on:click={saveAs} />
-			<button type="button" class="btn btn-cust-light icon btn-expand-all" title="Expand All" on:click={() => setExpanded(true)} />
-			<button type="button" class="btn btn-cust-light icon btn-collapse-all" title="Collapse All" on:click={() => setExpanded(false)} />
-			<button type="button" class="btn btn-cust-light icon btn-undo" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
-			<button type="button" class="btn btn-cust-light icon btn-redo" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
+			<button type="button" class="btn btn-cust-light bi bi-floppy" title="Save" on:click={saveAs} />
+			<button type="button" class="btn btn-cust-light bi bi-plus-square-fill" title="Expand All" on:click={() => setExpanded(true)} />
+			<button type="button" class="btn btn-cust-light bi bi-dash-square-fill" title="Collapse All" on:click={() => setExpanded(false)} />
+			<button type="button" class="btn btn-cust-light bi bi-arrow-counterclockwise" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
+			<button type="button" class="btn btn-cust-light bi bi-arrow-clockwise" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
 			{#if model.useWebRequest}
-				<button type="button" class="btn btn-cust-light icon btn-http" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
+				<button type="button" class="btn btn-cust-light bi bi-activity" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
 			{/if}
 		</div>
 		<div class="input-group search flex-fit">
 			<span class="input-group-text flex-fit">Filter</span>
 			<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
-			<button type="button" class="btn btn-cust-light icon btn-clr" on:click={clearFilter} />
+			<button type="button" class="btn btn-cust-light bi bi-x-lg" on:click={clearFilter} />
 			<select class="filter-type form-select flex-fit" bind:value={filterMode}>
 				<option value={json.JTokenFilterFlags.Both}>All</option>
 				<option value={json.JTokenFilterFlags.Keys}>Keys</option>

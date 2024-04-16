@@ -74,8 +74,7 @@
 	}
 
 	.copy-btn {
-		@include bs-icon-btn("clipboard", 25%);
-		padding: 0.2rem;
+		font-size: small;
 		transition: none;
 		opacity: 0;
 	}
@@ -95,7 +94,7 @@
 			<ul class="list pairs mono">
 				{#each values as [key, value]}
 					<li class="header pairs">
-						<span class="copy-btn btn btn-cust-light" role="button" title="Copy Header" on:click={() => copyHeader(key, value)}></span>
+						<span class="copy-btn btn btn-cust-light p-0 bi bi-clipboard" role="button" title="Copy Header" on:click={() => copyHeader(key, value)}></span>
 						<span class="row-key" title={key}>{key}</span>
 						<span class="row-val" title={value}>{value}</span>
 					</li>

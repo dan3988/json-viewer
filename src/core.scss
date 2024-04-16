@@ -42,65 +42,15 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 	}
 }
 
-@mixin img-btn($img: null, $padding: 0, $colors: null) {
-	position: relative;
-
-	@if ($img != null) {
-		--img-btn-src: #{$img};
-	}
-
-	@if ($colors != null) {
-		@if map-has-key($colors, "default") {
-			--img-btn-color: #{map-get($colors, "default")};
-		}
-
-		@if map-has-key($colors, "hover") {
-			&:hover {
-				--img-btn-color: #{map-get($colors, "hover")};
-			}
-		}
-	
-		@if map-has-key($colors, "active") {
-			&:active {
-				--img-btn-color: #{map-get($colors, "active")};
-			}
-		}
-	
-		@if map-has-key($colors, "disabled") {
-			&:disabled {
-				--img-btn-color: #{map-get($colors, "disabled")};
-			}
-		}
-	}
-
-	
-	&:before {
-		@include img-mask(var(--img-btn-src), no-repeat, contain, center);
-		content: "";
-		position: absolute;
-		inset: $padding;
-		background-color: var(--img-btn-color);
-
-		@content;
-	}
-}
-
 @function extUrl($path) {
 	@return url("chrome-extension://__MSG_@@extension_id__/" + $path);
 }
 
-@mixin bs-icon-btn($name: null, $padding: 0, $color: "border-color") {
-	@if ($color and type-of($color) != "map") {
-		$color: ("default": var(--bs-btn-#{$color}), "hover": var(--bs-btn-hover-#{$color}), "active": var(--bs-btn-active-#{$color}), "disabled": var(--bs-btn-disabled-#{$color}));
-	}
-
-	@if ($name) {
-		$name: bs-icon($name);
-	}
-
-	@include img-btn($name, $padding, $color) {
-		@content;
-	}
+@mixin bs-swap($prefix, $from, $to) {
+	#{$prefix}-#{$from}: var(#{$prefix}-#{$to});
+	#{$prefix}-hover-#{$from}: var(#{$prefix}-hover-#{$to});
+	#{$prefix}-active-#{$from}: var(#{$prefix}-active-#{$to});
+	#{$prefix}-disabled-#{$from}: var(#{$prefix}-disabled-#{$to});
 }
 
 @mixin anim($prop, $dur, $ease: "ease") {
@@ -115,9 +65,18 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 
 .expandable {
 	.expander {
-		@include bs-icon-btn("chevron-up", $pad-small) {
+		&::before {
 			@include anim(rotate, "medium", "spring");
 			rotate: 180deg;
+			color: var(--bs-btn-color);
+
+			&:hover {
+				color: var(--bs-btn-hover-color);
+			}
+
+			&:active {
+				color: var(--bs-btn-active-color);
+			}
 		}
 
 		aspect-ratio: 1;

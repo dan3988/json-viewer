@@ -113,10 +113,6 @@
 <style lang="scss">
 	@use "../core.scss" as *;
 
-	.btn-clr {
-		@include bs-icon-btn("x-lg", 20%);
-	}
-
 	.input-group:not(.field) > .btn,
 	.input-group.field > .form-control,
 	.input-group.field > .form-select {
@@ -148,7 +144,7 @@
 	<div class="input-group field">
 		<span class="input-group-text">Path</span>
 		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
-		<button type="button" class="btn btn-cust-light btn-clr" on:click={clearJpath}></button>
+		<button type="button" class="btn btn-cust-light bi bi-x-lg" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
 	<div class="jpath-matches input-group">

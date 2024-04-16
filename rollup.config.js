@@ -15,6 +15,7 @@ import customManifest from './rollup-plugin-custom-manifest.js';
 import copyLibs from './rollup-plugin-copy-libs.js';
 import onwarn from "./rollup-typescript-log.js";
 import hotreload from './rollup-plugin-hotreload.js';
+import bootstrapIcons from './node_modules/bootstrap-icons/font/bootstrap-icons.json' assert { type: "json" };
 
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
 const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
@@ -72,27 +73,6 @@ function loader(args) {
 	delete args.browser;
 	delete args.dist;
 
-	const icons = Object.create(null);
-	function loadBsIcon(name) {
-		let file = icons[name];
-		if (file == null) {
-			const fileName = name + ".svg";
-			file = "node_modules/bootstrap-icons/icons/" + fileName;
-			if (!fs.existsSync(file))
-				throw "Icon not found.";
-	
-			const outDir = path.join(baseDir, "node_modules", "bootstrap-icons", "icons");
-			const outFile = path.join(outDir, fileName);
-			fs.mkdirSync(outDir, recursive);
-			fs.copyFileSync(file, outFile);
-			icons[name] = file;
-		}
-	
-		return file;
-	}
-
-	loadBsIcon("github");
-	
 	/**
 	 * @param {string} srcDir
 	 * @param {string} entry
@@ -132,8 +112,12 @@ function loader(args) {
 										if (!(name instanceof sass.types.String))
 											throw "$name: Expected a string";
 	
-										const value = loadBsIcon(name.getValue());
-										return new sass.types.String(`url("${browserInfo.extUrlScheme}://__MSG_@@extension_id__/${value}")`);
+										const value = bootstrapIcons[name.getValue()];
+										if (!value)
+											throw `$name: Unknown icon "${name}"`;
+
+										const text = String.fromCharCode(value);
+										return new sass.types.String(JSON.stringify(text));
 									}
 								}
 							}
@@ -213,7 +197,7 @@ function loader(args) {
 				file: path.join(baseDir, "manifest.json")
 			},
 			plugins: [
-				customManifest({ browser }),
+				customManifest({ browser, dist }),
 				copyLibs({
 					libFile: "src/lib.json",
 					outDir: baseDir,

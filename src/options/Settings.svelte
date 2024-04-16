@@ -45,13 +45,13 @@
 <script lang="ts">
 	import type { EditorModel } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
+	import type ImmutableArray from "../immutable-array";
 	import { onDestroy, onMount } from "svelte";
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
 	import Radio from "./Radio.svelte";
 	import preferences from "../preferences-lite";
-    import type ImmutableArray from "../immutable-array";
 
 	export let model: EditorModel<preferences.lite.Bag>;
 	export let tracker: ThemeTracker;
@@ -148,6 +148,10 @@
 			margin: -1px;
 			display: flex;
 			padding: $pad-med;
+
+			> .flex-fill {
+				padding: 0 calc(0.75rem - $pad-med);
+			}
 		}
 
 		&.expanded {
@@ -267,7 +271,7 @@
 	<div class="grp-preview bg-tetiary border rounded d-flex flex-column overflow-hidden expandable" class:expanded={showPreview}>
 		<div class="preview-head bg-body-tertiary border">
 			<span class="flex-fill">Preview</span>
-			<span class="expander btn btn-cust-light border-0" on:click={() => showPreview = !showPreview} />
+			<span class="expander btn btn-cust-light border-0 p-0 h-100 bi-chevron-up" on:click={() => showPreview = !showPreview} />
 		</div>
 		<div class="preview-wrapper expandable-content">
 			<div class="overflow-auto p-1">

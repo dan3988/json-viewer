@@ -419,6 +419,7 @@
 
 				&:before {
 					content: "";
+					background-color: var(--indent-bg);
 					position: absolute;
 					inset: 0.5em 50%;
 					transform: translateX(-50%);
@@ -430,7 +431,16 @@
 
 		&:not(.expanded) {
 			> .expander {
-				@include bs-icon-btn("caret-right-fill", 1px, ("default": var(--bs-secondary-color), "hover": var(--bs-body-color), "active": var(--bs-emphasis-color)));
+				color: var(--bs-secondary-color);
+				font-size: x-small;
+
+				&:hover {
+					color: var(--bs-body-color);
+				}
+
+				&:active {
+					color: var(--bs-emphasis-color);
+				}
 			}
 		}
 
@@ -470,10 +480,6 @@
 		&:hover {
 			--indent-bg: rgb(var(--json-indent-bg));
 		}
-
-		&:before {
-			background-color: var(--indent-bg);
-		}
 	}
 
 	.json-value {
@@ -507,7 +513,7 @@
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
-			<span class="expander" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
+			<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
 			<span class="prop-count">{prop.value.count}</span>
 			{#if $isExpanded}
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
