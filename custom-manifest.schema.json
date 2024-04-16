@@ -7,6 +7,10 @@
 		"base": {
 			"$ref": "https://json.schemastore.org/chrome-manifest"
 		},
+		"debug": {
+			"type": "object",
+			"$ref": "https://json.schemastore.org/chrome-manifest"
+		},
 		"browsers": {
 			"type": "object",
 			"patternProperties": {

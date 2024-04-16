@@ -53,6 +53,11 @@
 			"webRequest"
 		]
 	},
+	"debug": {
+		"content_security_policy": {
+			"extension_pages": "script-src 'self' http://localhost:*; object-src 'self'"
+		}
+	},
 	"browsers": {
 		"firefox": {
 			"background": {

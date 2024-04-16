@@ -4,6 +4,7 @@ import * as path from "node:path";
 /**
  * @typedef Options
  * @property {string} browser
+ * @property {boolean} [dist]
  */
 
 function merge(a, b) {
@@ -23,7 +24,7 @@ function merge(a, b) {
  * @param {Options} options
  * @returns {rl.Plugin}
  */
-export function customManifest({ browser }) {
+export function customManifest({ browser, dist }) {
 	let data;
 
 	return {
@@ -64,12 +65,14 @@ export function customManifest({ browser }) {
 
 			this.addWatchFile(id);
 
-			const manifest = json.base;
-			const browserSpecific = json.browsers[browser];
+			const { base, debug, browsers: { [browser]: browserSpecific } } = json;
 			if (browserSpecific != null)
-				merge(manifest, browserSpecific);
+				merge(base, browserSpecific);
 
-			data = manifest;
+			if (debug && !dist)
+				merge(base, debug);
+
+			data = base;
 
 			return "";
 		}
