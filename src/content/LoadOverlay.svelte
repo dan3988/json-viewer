@@ -20,7 +20,7 @@
 			await chrome.runtime.sendMessage<WorkerMessage>({ type: "remember", autoload: load })
 
 		if (load)
-			await chrome.runtime.sendMessage<WorkerMessage>({ type: "loadme" }).then(v => v && alert(v));
+			await chrome.runtime.sendMessage<WorkerMessage>({ type: "loadme" });
 
 		self.$destroy();
 	}
