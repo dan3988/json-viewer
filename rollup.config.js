@@ -15,7 +15,7 @@ import customManifest from './rollup-plugin-custom-manifest.js';
 import copyLibs from './rollup-plugin-copy-libs.js';
 import onwarn from "./rollup-typescript-log.js";
 import hotreload from './rollup-plugin-hotreload.js';
-import bootstrapIcons from './node_modules/bootstrap-icons/font/bootstrap-icons.json' assert { type: "json" };
+import bootstrapIcons from './node_modules/bootstrap-icons/font/bootstrap-icons.json' with { type: "json" };
 
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
 const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
