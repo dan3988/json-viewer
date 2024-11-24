@@ -284,6 +284,7 @@
 	@import "../globals.scss";
 
 	.root {
+		user-select: none;
 		position: absolute;
 		inset: 0;
 		display: grid;

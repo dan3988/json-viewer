@@ -316,14 +316,12 @@
 	@use "src/core.scss" as *;
 
 	.json-key {
-		color: var(--col-json-key-fg);
-	}
-
-	.json-key {
 		grid-area: 1 / 2 / span 1 / span 1;
 		cursor: pointer;
 		white-space: nowrap;
 		padding-right: 5px;
+		user-select: text;
+		color: var(--col-json-key-fg);
 
 		&:after {
 			color: var(--bs-body-color);
@@ -483,6 +481,7 @@
 	}
 
 	.json-value {
+		user-select: text;
 		white-space: nowrap;
 
 		&.json-string {
