@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>JSON Viewer</title>
+		<script type="module" src="theme-lite.js"></script>
+		<script type="module" src="popup.js"></script>
+		<link href="/lib/options.css" rel="stylesheet" />
+		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="/node_modules/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet" />
+		<style>
+			body {
+				width: 20rem;
+				user-select: none;
+			}
+
+			.input-group > .input-group-text:first-child {
+				flex: 0 0 10rem;
+			}
+		</style>
+	</head>
+	<body class="d-flex flex-column justify-items-center p-1 gap-1">
+		<img class="m-auto" src="icon256.png" height="64" width="64" />
+		<span class="h4 text-center">Quick Settngs</span>
+		<div class="input-group">
+			<label class="input-group-text flex-fill align-items-start gap-1">
+				<input id="chkEnabled" class="form-check-input" type="checkbox" />
+				Enabled
+			</label>
+		</div>
+		<div class="input-group hoverable-radio" role="group">
+			<span class="input-group-text">Theme</span>
+			<input id="radThemeAuto" name="radThemeAuto" class="btn-check" type="radio" value="null" />
+			<label for="radThemeAuto" class="flex-fill btn btn-cust-light bi-circle-half" title="Auto"></label>
+			<input id="radThemeLight" name="radThemeLight" class="btn-check" type="radio" value="false" />
+			<label for="radThemeLight" class="flex-fill btn btn-cust-light bi-brightness-high-fill" title="Light"></label>
+			<input id="radThemeDark" name="radThemeDark" class="btn-check" type="radio" value="true" />
+			<label for="radThemeDark" class="flex-fill btn btn-cust-light bi-moon-stars-fill" title="Dark"></label>
+		</div>
+		<div class="input-group">
+			<span class="input-group-text">Colour Scheme</span>
+			<select id="drpScheme" class="form-select flex-fill">
+				<optgroup label="Light/Dark">
+					<option value="dracula">Dracula</option>
+					<option value="github">GitHub</option>
+					<option value="mat">Material</option><option value="monokai">Monokai</option>
+					<option value="solarized">Solarized</option>
+					<option value="default">Visual Studio</option>
+				</optgroup>
+				<optgroup label="Dark Only">
+					<option value="abyss">Abyss</option>
+					<option value="cyberpunk">Cyberpunk</option>
+					<option value="terminal">Matrix</option>
+				</optgroup>
+			</select>
+		</div>
+		<a class="btn btn-primary" href="options.html" target="_blank" title="Settings">
+			<span class="bi-gear-fill"></span>
+			<span>More Settings</span>
+		</a>
+	</body>
+</html>
