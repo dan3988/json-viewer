@@ -5,7 +5,7 @@ export namespace preferences {
 	export namespace lite {
 		export const values = [
 			p.Preference.nullable("darkMode", p.types.bool, false),
-			p.Preference.list("mimes", p.types.string, false, ["application/json"]),
+			p.Preference.list("mimes", p.types.string, false, ["application/json", "text/json", "text/plain"]),
 			p.Preference.string("scheme", false, "default"),
 			p.Preference.list("whitelist", p.types.string, false, []),
 			p.Preference.list("blacklist", p.types.string, false, []),
