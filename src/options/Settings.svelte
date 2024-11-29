@@ -116,7 +116,10 @@
 	}
 
 	let canSave = false;
-	let tab: Tab = 'style';
+	let tab = (location.hash.substring(1) as Tab) || 'general';
+	let first = false;
+
+	$: !first ? (first = true) : location.hash = tab;
 
 	function onUnload(evt: BeforeUnloadEvent) {
 		if (canSave) {
