@@ -273,6 +273,13 @@
 		model.root.setExpanded(expanded, true);
 	}
 
+	function onUnload(evt: BeforeUnloadEvent) {
+		if (model.edits.canUndo) {
+			evt.returnValue = true;
+			evt.preventDefault();
+		}
+	}
+
 	onMount(() => prop.focus());
 	onDestroy(() => {
 		model.command.removeListener(onModelCommand);
@@ -366,6 +373,7 @@
 		}
 	}
 </style>
+<svelte:window on:beforeunload={onUnload} />
 <svelte:head>
 	{#each css as href}
 		<link rel="stylesheet" {href} />
