@@ -117,7 +117,7 @@
 	import type json from "../json.js";
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import { onDestroy } from "svelte";
-    import { writable } from "svelte/store";
+	import { writable } from "svelte/store";
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
@@ -162,6 +162,11 @@
 		} else {
 			prop.isExpanded = true;
 		}
+	}
+
+	function onGutterClicked() {
+		model.selected.reset(prop);
+		keyElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
 	}
 
 	function * getAllParents(prop: json.JProperty) {
@@ -316,6 +321,7 @@
 	@use "src/core.scss" as *;
 
 	.json-key {
+		scroll-margin-top: $pad-med;
 		grid-area: 1 / 2 / span 1 / span 1;
 		cursor: pointer;
 		white-space: nowrap;
@@ -334,6 +340,7 @@
 	}
 
 	.json-prop {
+		--expander-rotate: 0deg;
 		display: grid;
 		grid-template-columns: 1em auto auto auto 1fr;
 		grid-template-rows: auto auto auto;
@@ -377,6 +384,8 @@
 			}
 
 			&.expanded {
+				--expander-rotate: 90deg;
+
 				>.prop-count {
 					display: none;
 				}
@@ -411,53 +420,26 @@
 			}
 		}
 
-		&.expanded {
-			> .expander {
-				position: relative;
-
-				&:before {
-					content: "";
-					background-color: var(--indent-bg);
-					position: absolute;
-					inset: 0.5em 50%;
-					transform: translateX(-50%);
-					width: 2px;
-					border-radius: 1px;
-				}
-			}
-		}
-
-		&:not(.expanded) {
-			> .expander {
-				color: var(--bs-secondary-color);
-				font-size: x-small;
-
-				&:hover {
-					color: var(--bs-body-color);
-				}
-
-				&:active {
-					color: var(--bs-emphasis-color);
-				}
-			}
-		}
-
-		>.prop-count, >.empty-container {
+		> .prop-count, >.empty-container {
 			padding: 0 5px;
 			grid-area: 1 / 4 / span 1 / span 1;
 		}
 
-		>.prop-count {
+		> .prop-count {
 			color: var(--col-json-num-fg);
 		}
 
-		>.empty-container {
+		> .empty-container {
 			font-style: italic;
 			color: var(--col-shadow);
 		}
 
-		>.expander {
-			grid-area: 1 / 1 / -1 / span 1;
+		> .expander {
+			grid-area: 1 / 1 / span 1 / span 1;
+		}
+
+		> .gutter {
+			grid-area: 2 / 1 / span 1 / span 1;
 		}
 		
 		> .json-value {
@@ -471,12 +453,39 @@
 
 	.expander {
 		cursor: pointer;
+		color: var(--bs-secondary-color);
+		font-size: x-small;
+		rotate: var(--expander-rotate);
+		transition: rotate .15s ease-in-out;
+
+
+		&:hover {
+			color: var(--bs-body-color);
+		}
+
+		&:active {
+			color: var(--bs-emphasis-color);
+		}
+	}
+
+	.gutter {
+		cursor: pointer;
 		position: relative;
 
-		--indent-bg: rgb(var(--json-indent-bg), 0.2);
+		--indent-bg: rgb(var(--json-indent-bg), 0.33);
 
 		&:hover {
 			--indent-bg: rgb(var(--json-indent-bg));
+		}
+
+		&:before {
+			content: "";
+			background-color: var(--indent-bg);
+			position: absolute;
+			inset: 0 50%;
+			transform: translateX(-50%);
+			width: 2px;
+			border-radius: 1px;
 		}
 	}
 
@@ -515,6 +524,7 @@
 			<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
 			<span class="prop-count">{prop.value.count}</span>
 			{#if $isExpanded}
+				<span class="gutter" on:click={onGutterClicked}></span>
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
 					{#each props as prop (prop)}
 						<li>
