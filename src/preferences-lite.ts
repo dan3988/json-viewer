@@ -2,7 +2,11 @@
 import p from "./preferences-core.js";
 
 export namespace preferences {
+	export type Preference<T = any, K extends string = string> = p.Preference<T, K>;
+
 	export namespace lite {
+		export type Key = typeof values[number]['key'];
+
 		export const values = [
 			p.Preference.nullable("darkMode", p.types.bool, false),
 			p.Preference.list("mimes", p.types.string, false, ["application/json", "text/json", "text/plain"]),

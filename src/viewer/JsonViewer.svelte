@@ -127,12 +127,12 @@
 			{
 				description: "JSON file",
 				accept: {
-					"application/json": ".json"
+					"application/json": ".json" as const
 				}
 			}
 		];
 
-		const result = await showSaveFilePicker({ suggestedName, types });
+		const result = await showSaveFilePicker({ suggestedName, types, startIn: 'downloads' });
 		if (result) {
 			const data = model.formatValue(model.root.value);
 			const w = await result.createWritable();

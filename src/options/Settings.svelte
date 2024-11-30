@@ -53,7 +53,7 @@
 	const radioTheme: NamedRadioItem<boolean | null>[] = [[null, "Auto"], [false, "Light"], [true, "Dark"]];
 </script>
 <script lang="ts">
-	import type { EditorModel } from "./editor";
+	import type { EditorModel, EntryRef } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
 	import type ImmutableArray from "../immutable-array";
 	import { onDestroy, onMount } from "svelte";
@@ -113,6 +113,62 @@
 
 		model.commit();
 		canSave = false;
+	}
+
+	async function exportSettings() {
+		const settings = await preferences.lite.manager.get();
+		const indent = settings.indentChar.repeat(settings.indentCount);
+		const json = JSON.stringify(settings, undefined, indent);
+		const file = await showSaveFilePicker({
+			startIn: 'downloads',
+			suggestedName: `jsonviewer-${new Date().toISOString().slice(0, -5)}`,
+			types: [
+				{
+					description: 'JSON File',
+					accept: {
+						['application/json']: '.json'
+					}
+				}
+			]
+		});
+
+		const w = await file.createWritable();
+		try {
+			await w.write(json);
+		} finally {
+			await w.close();
+		}
+	}
+
+	async function importSettings() {
+		const [handle] = await showOpenFilePicker({
+			startIn: 'downloads',
+			types: [
+				{
+					description: 'JSON File',
+					accept: {
+						['application/json']: '.json'
+					}
+				}
+			]
+		});
+
+		let file: any;
+		try {
+			file = await handle.getFile().then(v => v.text()).then(JSON.parse);
+		} catch (error) {
+			console.warn({ error });
+			alert(error.message);
+		}
+
+		for (const setting of preferences.lite.values as readonly preferences.Preference<any, preferences.lite.Key>[]) {
+			let value: any = file[setting.key];
+			if (value !== undefined) {
+				value = setting.type(value);
+				const entry: EntryRef<any, any> = model.props[setting.key];
+				entry.set({ value, changed: false });
+			}
+		}
 	}
 
 	let canSave = false;
@@ -318,6 +374,8 @@
 				{tabNames[tab]}
 			</button>
 		</TabBar>
+		<button class="btn btn-primary bi-box-arrow-down" on:click={exportSettings} title="Export"></button>
+		<button class="btn btn-primary bi-box-arrow-up" on:click={importSettings} title="Import"></button>
 		<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>
 	</div>
 	<div class="panel-root d-flex flex-fill flex-column overflow-hidden">
