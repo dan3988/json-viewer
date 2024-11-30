@@ -122,7 +122,7 @@
 	.root {
 		display: grid;
 		grid-template-rows: repeat(2, auto) 1fr;
-		grid-template-columns: 6rem 1fr 2rem 6rem;
+		grid-template-columns: 4rem 2rem 1fr 2rem 6rem;
 		grid-row-gap: $pad-med;
 		align-items: stretch;
 
@@ -143,6 +143,7 @@
 <div class="root">
 	<div class="input-group field">
 		<span class="input-group-text">Path</span>
+		<a class="btn btn-cust-light bi bi-question-circle-fill" href="https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html" title="Syntax" target="_blank"></a>
 		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
 		<button type="button" class="btn btn-cust-light bi bi-x-lg" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
