@@ -56,7 +56,6 @@
 	import type { EditorModel, EntryRef } from "./editor";
 	import type ThemeTracker from "../theme-tracker";
 	import type ImmutableArray from "../immutable-array";
-	import { onDestroy, onMount } from "svelte";
 	import TabBar from "../shared/TabBar.svelte";
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
@@ -74,23 +73,11 @@
 		tracker.preferDark = getValueByMode(scheme.mode, userPref);
 	}
 
-	onMount(() => {
-		model.addListener(onModelChange);
-	});
-
-	onDestroy(() => {
-		model.removeListener(onModelChange);
-	});
-
-	$: ({ darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign, background, useWebRequest } = model.props);
-	$: currentScheme = schemes[$scheme.value];
+	$: ({ changed, props: { darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign, background, useWebRequest } } = model);
+	$: currentScheme = schemes[$scheme];
 	$: {
-		updateTheme(currentScheme, $darkMode.value);
-		document.documentElement.dataset["scheme"] = $scheme.value;
-	}
-
-	function onModelChange(this: EditorModel) {
-		canSave = this.changed.size > 0;
+		updateTheme(currentScheme, $darkMode);
+		document.documentElement.dataset["scheme"] = $scheme;
 	}
 
 	const indents = [
@@ -102,12 +89,12 @@
 		const bag: Dict = {};
 		const { useWebRequest } = model.props;
 		if (useWebRequest.changed) {
-			const result = await chrome.permissions[useWebRequest.value ? "request" : "remove"](webRequestPerm);
+			const result = await chrome.permissions[useWebRequest ? "request" : "remove"](webRequestPerm);
 			if (!result)
 				useWebRequest.reset();
 		}
 
-		for (const key of model.changed)
+		for (const key of $changed)
 			bag[key] = model.props[key].value;
 
 		await preferences.lite.manager.set(bag);
@@ -136,7 +123,7 @@
 				if (value !== undefined) {
 					value = setting.type(value);
 					const entry: EntryRef<any, any> = model.props[setting.key];
-					entry.set({ value, changed: false });
+					entry.set(value);
 				}
 			}
 		} catch (error) {
@@ -145,7 +132,7 @@
 		}
 	}
 
-	let canSave = false;
+	$: canSave = $changed.length > 0;
 	let tab = (location.hash.substring(1) as Tab) || 'general';
 	let first = false;
 
@@ -339,7 +326,7 @@
 	}
 </style>
 <svelte:window on:beforeunload={onUnload} />
-<div class="root bg-body overflow-hidden d-flex flex-column" data-editor-bg={$background.value}>
+<div class="root bg-body overflow-hidden d-flex flex-column" data-editor-bg={$background}>
 	<div class="header bg-body-tertiary border-bottom gap-2">
 		<img src="/res/icon128.png" alt="icon" />
 		<span class="h3 m-0">Settings</span>
@@ -355,28 +342,28 @@
 	<div class="panel-root d-flex flex-fill flex-column overflow-hidden">
 		<div class="tab tab-short" hidden={tab !== 'general'}>
 			<div class="tab-content">
-				<div class="input-group" class:dirty={$enabled.changed}>
+				<div class="input-group" class:dirty={$changed.includes('enabled')}>
 					<label class="input-group-text flex-fill align-items-start gap-1">
-						<input class="form-check-input" type="checkbox" bind:checked={$enabled.value}/>
+						<input class="form-check-input" type="checkbox" bind:checked={$enabled}/>
 						Enabled
 					</label>
 				</div>
-				<div class="input-group" class:dirty={$useHistory.changed}>
+				<div class="input-group" class:dirty={$changed.includes('useHistory')}>
 					<label class="input-group-text flex-fill align-items-start gap-1">
-						<input class="form-check-input" type="checkbox" bind:checked={$useHistory.value}/>
+						<input class="form-check-input" type="checkbox" bind:checked={$useHistory}/>
 						Use History
 					</label>
 				</div>
-				<div class="input-group" class:dirty={$useWebRequest.changed}>
+				<div class="input-group" class:dirty={$changed.includes('useWebRequest')}>
 					<label class="input-group-text flex-fill align-items-start gap-1">
-						<input class="form-check-input" type="checkbox" bind:checked={$useWebRequest.value}/>
+						<input class="form-check-input" type="checkbox" bind:checked={$useWebRequest}/>
 						Show Request Headers
 					</label>
 				</div>
 				<div class="input-group grp-indent">
 					<span class="input-group-text">Clipboard Indent</span>
-					<NumberEditor class="form-control {$indentCount.changed ? "dirty" : ""}" bind:value={$indentCount.value} type="integer" min={1} max={10}/>
-					<select class="form-select" class:dirty={$indentChar.changed} bind:value={$indentChar.value}>
+					<NumberEditor class="form-control {$changed.includes('indentCount') ? "dirty" : ""}" bind:value={$indentCount} type="integer" min={1} max={10}/>
+					<select class="form-select" class:dirty={$changed.includes('indentChar')} bind:value={$indentChar}>
 						{#each indents as [key, value]}
 							<option value={value}>{key}</option>
 						{/each}
@@ -386,17 +373,17 @@
 		</div>
 		<div class="tab tab-style" hidden={tab !== 'style'}>
 			<div class="tab-left">
-				<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$menuAlign.changed}>
+				<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$changed.includes('menuAlign')}>
 					<span class="input-group-text">Menu Alignment</span>
-					<Radio class="flex-fill btn btn-cust-light" items={radioMenuAlign} bind:value={$menuAlign.value}></Radio>
+					<Radio class="flex-fill btn btn-cust-light" items={radioMenuAlign} bind:value={$menuAlign}></Radio>
 				</div>
-				<div class="input-group hoverable-radio grp-theme" role="group" class:dirty={$darkMode.changed}>
+				<div class="input-group hoverable-radio grp-theme" role="group" class:dirty={$changed.includes('darkMode')}>
 					<span class="input-group-text">Theme</span>
-					<Radio class="flex-fill btn btn-cust-light" items={radioTheme} bind:value={$darkMode.value}/>
+					<Radio class="flex-fill btn btn-cust-light" items={radioTheme} bind:value={$darkMode}/>
 				</div>
 				<div class="input-group grp-json-bg">
 					<span class="input-group-text">Background</span>
-					<select class="form-select flex-fill" class:dirty={$background.changed} bind:value={$background.value}>
+					<select class="form-select flex-fill" class:dirty={$changed.includes('background')} bind:value={$background}>
 						<option value="">None</option>
 						<option value="bricks">Bricks</option>
 						<option value="cubes">Cubes</option>
@@ -410,7 +397,7 @@
 				</div>
 				<div class="input-group grp-json-style">
 					<span class="input-group-text">Colour Scheme</span>
-					<select class="form-select flex-fill" class:dirty={$scheme.changed} bind:value={$scheme.value}>
+					<select class="form-select flex-fill" class:dirty={$changed.includes('scheme')} bind:value={$scheme}>
 						{#each groupedSchemes as [ label, themes ]}
 							<optgroup {label}>
 								{#each themes as [ id, name ]}
@@ -430,14 +417,14 @@
 		</div>
 		<div class="tab tab-network" hidden={tab !== 'network'}>
 			<div class="tab-content">
-				<div class="input-group grp-mimes list" class:dirty={$mimes.changed}>
-					<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." validator={mimeValidator} bind:items={$mimes.value}/>
+				<div class="input-group grp-mimes list" class:dirty={$changed.includes('mimes')}>
+					<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." validator={mimeValidator} bind:items={$mimes}/>
 				</div>
-				<div class="input-group grp-whitelist list" class:dirty={$whitelist.changed}>
-					<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." validator={hostValidator} bind:items={$whitelist.value}/>
+				<div class="input-group grp-whitelist list" class:dirty={$changed.includes('whitelist')}>
+					<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." validator={hostValidator} bind:items={$whitelist}/>
 				</div>
-				<div class="input-group grp-whitelist list" class:dirty={$blacklist.changed}>
-					<ListEditor title="Blacklist" help="A list of hosts to not load the extension for." validator={hostValidator} bind:items={$blacklist.value}/>
+				<div class="input-group grp-whitelist list" class:dirty={$changed.includes('blacklist')}>
+					<ListEditor title="Blacklist" help="A list of hosts to not load the extension for." validator={hostValidator} bind:items={$blacklist}/>
 				</div>
 			</div>
 		</div>
