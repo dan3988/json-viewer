@@ -1,4 +1,5 @@
 import type { Writable, Readable, Subscriber, Unsubscriber, Updater } from "svelte/store";
+import type preferences from "../preferences-core";
 import { writable } from "svelte/store";
 import ImmutableArray from "../immutable-array";
 
@@ -40,7 +41,7 @@ export class EditorModel<T extends Dict = Dict> {
 		return this.#props;
 	}
 
-	constructor(values: T) {
+	constructor(values: preferences.ToEntries<T>) {
 		const props: any = {};
 
 		this.#props = props;
@@ -48,8 +49,8 @@ export class EditorModel<T extends Dict = Dict> {
 		this.#changedSet = new Set();
 		this.#changed = writable(ImmutableArray.empty);
 		
-		for (const [key, value] of Object.entries(values))
-			props[key] = new EditorModel.#EntryImpl(this, key, value);
+		for (const [key, [pref, value]] of Object.entries(values))
+			props[key] = new EditorModel.#EntryImpl(this, pref, value);
 	}
 
 	addListener(listener: EditorListener<this>) {
@@ -64,7 +65,7 @@ export class EditorModel<T extends Dict = Dict> {
 	#onEntryChanged(e: NamedEntry<string & keyof T>) {
 		const wasChanged = this.#changedSet.has(e.key);
 		if (wasChanged !== e.changed) {
-			const fn = e.changed ? 'add' : 'delete'; 
+			const fn = e.changed ? 'add' : 'delete';
 			this.#changedSet[fn](e.key);
 			this.#changed.set(ImmutableArray.from(this.#changedSet));
 		}
@@ -85,14 +86,18 @@ export class EditorModel<T extends Dict = Dict> {
 
 	static readonly #EntryImpl = class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 		readonly #owner: EditorModel;
-		readonly #key: K;
+		readonly #preference: preferences.Preference<V, K>;
 		readonly #listeners: Subscriber<V>[];
 		#original: V;
 		#current: V;
 		#changed: boolean;
-		
+
 		get key() {
-			return this.#key;
+			return this.#preference.key;
+		}
+		
+		get preference() {
+			return this.#preference;
 		}
 	
 		get changed() {
@@ -103,9 +108,9 @@ export class EditorModel<T extends Dict = Dict> {
 			return this.#current;
 		}
 	
-		constructor(owner: EditorModel, key: K, value: V) {
+		constructor(owner: EditorModel, preference: preferences.Preference<V, K>, value: V) {
 			this.#owner = owner;
-			this.#key = key;
+			this.#preference = preference;
 			this.#original = value;
 			this.#current = value;
 			this.#changed = false;
@@ -134,7 +139,7 @@ export class EditorModel<T extends Dict = Dict> {
 		}
 	
 		set(value: V): void {
-			const changed = value !== this.#original;
+			const changed = !this.#preference.type.areSame(value, this.#original);
 			if (changed !== this.#changed || value !== this.#current) {
 				this.#changed = changed;
 				this.#current = value;

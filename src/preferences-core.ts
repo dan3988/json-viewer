@@ -26,7 +26,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 		return pref;
 	}
 
-	async #get(prefs: preferences.Preference[]): Promise<[Dict, WatchTypes]> {
+	async #get(prefs: preferences.Preference[], entries = false): Promise<[Dict, WatchTypes]> {
 		let local: string[] = [];
 		let synced: string[] = [];
 		let watching = WatchTypes.None;
@@ -46,16 +46,18 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 			watching |= WatchTypes.Sync;
 		}
 
-		const results = await Promise.all(promises);
-		const output: Dict = {};
+		const results: Dict = {};
 
-		for (const obj of results)
+		for (const obj of await Promise.all(promises))
 			for (const key in obj)
-				output[key] = obj[key];
+				results[key] = obj[key];
+
+		const output: Dict = {};
 
 		for (const pref of prefs) {
 			const { key, type } = pref;
-			output[key] = key in output ? type(output[key]) : pref.getDefaultValue();
+			const value = key in results ? type(results[key]) : pref.getDefaultValue();
+			output[key] = entries ? [pref, value] : value;
 		}
 		
 		return [output, watching];
@@ -67,9 +69,18 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 
 	get(): Promise<T>;
 	get<const K extends (string & keyof T)[]>(...keys: K): Promise<Pick<T, K[number]>>;
-	get(...keys: string[]): Promise<Dict> {
+	async get(...keys: string[]): Promise<Dict> {
 		const prefs = this.#getPreferences(keys);
-		return this.#get(prefs).then(([result]) => result);
+		const [result] = await this.#get(prefs);
+		return result;
+	}
+
+	getEntries(): Promise<preferences.ToEntries<T>>;
+	getEntries<const K extends (string & keyof T)[]>(...keys: K): Promise<preferences.ToEntries<T, K[number]>>;
+	async getEntries(...keys: string[]): Promise<Dict> {
+		const prefs = this.#getPreferences(keys);
+		const [result] = await this.#get(prefs, true);
+		return result;
 	}
 
 	set<K extends keyof T>(key: K, value: T[K]): Promise<void>;
@@ -264,9 +275,15 @@ export namespace preferences {
 		}
 	}
 
+	export type Entries<V, K extends string> = [preferences.Preference<V, K>, V];
+	export type ToEntries<T, K extends string & keyof T = string & keyof T> = { [P in K]: Entries<T[P], P> };
+
 	export interface PreferencesManager<T extends Dict> {
 		get(): Promise<T>;
 		get<const K extends (string & keyof T)[]>(...keys: K): Promise<Pick<T, K[number]>>;
+		
+		getEntries(): Promise<ToEntries<T>>;
+		getEntries<const K extends (string & keyof T)[]>(...keys: K): Promise<ToEntries<T, K[number]>>;
 
 		set<K extends keyof T>(key: K, value: T[K]): Promise<void>;
 		set(values: Partial<T>): Promise<void>;
