@@ -335,9 +335,20 @@
 				{tabNames[tab]}
 			</button>
 		</TabBar>
-		<button class="btn btn-primary bi-box-arrow-down" on:click={exportSettings} title="Export"></button>
-		<button class="btn btn-primary bi-box-arrow-up" on:click={importSettings} title="Import"></button>
-		<button class="btn btn-primary" disabled={!canSave} on:click={save}>Save</button>
+		<div class="btn-group">
+			<button class="btn btn-primary" title="Export" on:click={exportSettings}>
+				<i class="bi-box-arrow-down"></i>
+				Export
+			</button>
+			<button class="btn btn-primary" title="Import" on:click={importSettings}>
+				<i class="bi-box-arrow-up"></i>
+				Import
+			</button>
+		</div>
+		<button class="btn btn-primary" disabled={!canSave} title="Save" on:click={save}>
+			<i class="bi-floppy-fill"></i>
+			Save
+		</button>
 	</div>
 	<div class="panel-root d-flex flex-fill flex-column overflow-hidden">
 		<div class="tab tab-short" hidden={tab !== 'general'}>
