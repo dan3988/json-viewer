@@ -25,6 +25,7 @@
 	import json from "../json.js";
 	import edits from "./editor-helper";
 	import Linq from "@daniel.pickett/linq-js";
+	import fs from "../fs";
 
 	export let model: ViewerModel;
 	export let indentCount: number;
@@ -116,32 +117,12 @@
 		}
 	}
 
-	function getFileName(pathName: string) {
-		const i = pathName.lastIndexOf("/");
-		return pathName.slice(i + 1);
-	}
-
 	async function saveAs() {
-		const suggestedName = getFileName(window.location.pathname);
-		const types = [
-			{
-				description: "JSON file",
-				accept: {
-					"application/json": ".json" as const
-				}
-			}
-		];
-
-		const result = await showSaveFilePicker({ suggestedName, types, startIn: 'downloads' });
-		if (result) {
-			const data = model.formatValue(model.root.value);
-			const w = await result.createWritable();
-			try {
-				await w.write(data);
-			} finally {
-				await w.close();
-			}
-		}
+		const pathName = window.location.pathname;
+		const i = pathName.lastIndexOf("/");
+		const suggestedName = pathName.slice(i + 1);
+		const data = model.root.value.toString(model.formatIndent);
+		await fs.saveFile(data, suggestedName, 'json');
 	}
 
 	function clearProp(value: json.JContainer) {

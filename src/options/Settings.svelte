@@ -63,6 +63,7 @@
 	import NumberEditor from "../shared/NumberEditor.svelte";
 	import Radio from "./Radio.svelte";
 	import preferences from "../preferences-lite";
+	import fs from "../fs";
 
 	export let model: EditorModel<preferences.lite.Bag>;
 	export let tracker: ThemeTracker;
@@ -119,55 +120,28 @@
 		const settings = await preferences.lite.manager.get();
 		const indent = settings.indentChar.repeat(settings.indentCount);
 		const json = JSON.stringify(settings, undefined, indent);
-		const file = await showSaveFilePicker({
-			startIn: 'downloads',
-			suggestedName: `jsonviewer-${new Date().toISOString().slice(0, -5)}`,
-			types: [
-				{
-					description: 'JSON File',
-					accept: {
-						['application/json']: '.json'
-					}
-				}
-			]
-		});
-
-		const w = await file.createWritable();
-		try {
-			await w.write(json);
-		} finally {
-			await w.close();
-		}
+		await fs.saveFile(json, `jsonviewer-${new Date().toISOString().slice(0, -5)}`, 'json');
 	}
 
 	async function importSettings() {
-		const [handle] = await showOpenFilePicker({
-			startIn: 'downloads',
-			types: [
-				{
-					description: 'JSON File',
-					accept: {
-						['application/json']: '.json'
-					}
-				}
-			]
-		});
+		const file = await fs.openFile('json');
+		if (file == null)
+			return;
 
-		let file: any;
 		try {
-			file = await handle.getFile().then(v => v.text()).then(JSON.parse);
+			const values = await file.text().then(JSON.parse);
+
+			for (const setting of preferences.lite.values as readonly preferences.Preference<any, preferences.lite.Key>[]) {
+				let value: any = values[setting.key];
+				if (value !== undefined) {
+					value = setting.type(value);
+					const entry: EntryRef<any, any> = model.props[setting.key];
+					entry.set({ value, changed: false });
+				}
+			}
 		} catch (error) {
 			console.warn({ error });
 			alert(error.message);
-		}
-
-		for (const setting of preferences.lite.values as readonly preferences.Preference<any, preferences.lite.Key>[]) {
-			let value: any = file[setting.key];
-			if (value !== undefined) {
-				value = setting.type(value);
-				const entry: EntryRef<any, any> = model.props[setting.key];
-				entry.set({ value, changed: false });
-			}
 		}
 	}
 

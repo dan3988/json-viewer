@@ -124,29 +124,9 @@ const commandHandlers: Record<string, CommandInvoker> = {
 		model.edits.redo()
 		return true;
 	},
-	async fileSave(model) {
-		const pathName = window.location.pathname;
-		const i = pathName.lastIndexOf("/");
-		const suggestedName = pathName.slice(i + 1);
-		const types = [
-			{
-				description: "JSON file",
-				accept: {
-					"application/json": ".json"
-				}
-			}
-		];
-
-		const result = await showSaveFilePicker({ suggestedName, types });
-		if (result) {
-			const data = model.root.value.toString(model.formatIndent);
-			const w = await result.createWritable();
-			try {
-				await w.write(data);
-			} finally {
-				await w.close();
-			}
-		}
+	fileSave(model) {
+		model.execute('saveAs');
+		return true;
 	}
 } satisfies CommandHandlers;
 

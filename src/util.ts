@@ -1,4 +1,3 @@
-
 const jsIdentifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
 export function isIdentifier(text: string) {

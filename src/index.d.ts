@@ -16,6 +16,14 @@ declare type OneOrMany<T> = T | T[];
 
 declare var JSON5: typeof import("json5");
 
+declare interface OpenFilePickerOptions {
+	startIn?: WellKnownDirectory;
+}
+
+declare interface SaveFilePickerOptions {
+	startIn?: WellKnownDirectory;
+}
+
 declare interface Array<T> {
 	concat<V>(...items: V[]): (T | V)[];
 	with<V>(index: number, value: V): (T | V)[];
