@@ -72,54 +72,49 @@ async function loadExtension() {
 		}
 	}
 
-	chrome.runtime.onMessage.addListener((message: WorkerMessage, sender, respond) => {
+	function handleMessage(message: WorkerMessage, sender: chrome.runtime.MessageSender) {
 		const tabId = sender.tab?.id;
 		if (tabId == null)
 			return;
 
 		switch (message.type) {
-			case "remember": {
+			case "remember":
 				if (sender.url) {
 					const url = new URL(sender.url);
 					const [key, set] = message.autoload ? ["whitelist", whitelist] as const : ["blacklist", blacklist] as const;
 					if (!set.has(url.host)) {
 						const list = prefs.getValue(key).add(url.host);
 						preferences.lite.manager.set(key, list);
-						respond(true);
-						return;
+						return true;
 					}
 				}
 
-				respond(false);
-				break;
-			}
+				return false;
 			case "checkme":
 				if (prefs.getValue("enabled") && mimes.has(message.contentType)) {
 					const url = sender.url && new URL(sender.url);
 					let autoload = false;
 					if (url) {
-						if (blacklist.has(url.host)) {
-							respond(false);
-							return;
-						}
+						if (blacklist.has(url.host))
+							return false;
 
 						autoload = whitelist.has(url.host);
 					}
 
 					const fn = autoload ? injectViewer : injectPopup;
-					fn(tabId, sender.frameId).then(respond);
-					return true;
+					return fn(tabId, sender.frameId);
 				}
 				break;
-			case "loadme": {
-				injectViewer(tabId, sender.frameId).then(respond);
-				return true;
-			}
-			case "requestInfo": {
-				const info = currentRequestListener?.get(tabId);
-				respond(info);
-			}
+			case "loadme":
+				return injectViewer(tabId, sender.frameId);
+			case "requestInfo":
+				return currentRequestListener?.get(tabId);
 		}
+	}
+
+	chrome.runtime.onMessage.addListener((message, sender, respond) => {
+		const result = handleMessage(message, sender);
+		result instanceof Promise ? result.then(respond) : respond(result);
 	});
 }
 
