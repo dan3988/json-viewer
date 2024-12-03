@@ -85,7 +85,8 @@ async function loadExtension() {
 					if (!set.has(url.host)) {
 						const list = prefs.getValue(key).add(url.host);
 						preferences.lite.manager.set(key, list);
-						return true;
+						respond(true);
+						return;
 					}
 				}
 
