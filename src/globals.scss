@@ -95,12 +95,8 @@
 	--bs-body-color-rgb: var(--jv-body-text-rgb);
 	--bs-tertiary-bg: var(--jv-tertiary-bg);
 	--bs-tertiary-bg-rgb: var(--jv-tertiary-bg-rgb);
-	--bs-tertiary-color: rgba(var(--jv-body-bg-rgb), 0.5);
-	--bs-tertiary-color-rgb: var(--jv-body-bg-rgb);
-	--bs-secondary-bg: var(--jv-secondary-bg);
-	--bs-secondary-bg-rgb: var(--jv-secondary-bg-rgb);
-	--bs-secondary-color: rgba(var(--jv-body-bg-rgb), 0.75);
-	--bs-secondary-color-rgb: var(--jv-body-bg-rgb);
+	--bs-tertiary-color: rgba(var(--jv-body-text-rgb), 0.5);
+	--bs-tertiary-color-rgb: var(--jv-body-text-rgb);
 	--checkbox-bg-color: var(--jv-primary-border);
 	--checkbox-border-color: var(--jv-primary-border);
 	--focus-shadow-color: rgba(var(--jv-primary-border-rgb), 0.25);
@@ -116,10 +112,10 @@
 		--bs-btn-hover-border-color: var(--jv-primary-active-border);
 		--bs-btn-active-border-color: var(--jv-primary-hover-border);
 		--bs-btn-disabled-border-color: var(--jv-primary-disabled-border);
-		--bs-btn-color: var(--jv-primary-color);
-		--bs-btn-hover-color: var(--jv-primary-active-color);
-		--bs-btn-active-color: var(--jv-primary-hover-color);
-		--bs-btn-disabled-color: var(--jv-primary-disabled-color);
+		--bs-btn-color: var(--jv-primary-text);
+		--bs-btn-hover-color: var(--jv-primary-active-text);
+		--bs-btn-active-color: var(--jv-primary-hover-text);
+		--bs-btn-disabled-color: var(--jv-primary-disabled-text);
 	}
 
 	:global(.btn-base) {
@@ -131,9 +127,9 @@
 		--bs-btn-hover-border-color: var(--jv-tertiary-active-border);
 		--bs-btn-active-border-color: var(--jv-tertiary-hover-border);
 		--bs-btn-disabled-border-color: var(--jv-tertiary-border);
-		--bs-btn-color: var(--jv-body-color);
-		--bs-btn-hover-color: var(--jv-body-color);
-		--bs-btn-active-color: var(--jv-body-color);
-		--bs-btn-disabled-color: var(--jv-body-color);
+		--bs-btn-color: var(--jv-body-text);
+		--bs-btn-hover-color: var(--jv-body-text);
+		--bs-btn-active-color: var(--jv-body-text);
+		--bs-btn-disabled-color: var(--jv-body-text);
 	}
 }

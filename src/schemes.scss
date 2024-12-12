@@ -30,14 +30,14 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 
 @mixin scheme-lt($name, $key, $keywd, $str, $num, $text: #212529, $base: #fff, $bgModif: -3%, $tertiaryModif: 2%, $borderModif: 10%, $indents: $def-indent-lt) {
 	@include scheme($name, light, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif, $indents) {
-		@include bs-effects("jv-primary", "color", $base);
+		@include bs-effects("jv-primary", "text", $base);
 		@content;
 	}
 }
 
 @mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $base: #212529, $bgModif: 5%, $tertiaryModif: -5%, $borderModif: -20%, $indents: $def-indent-dk) {
 	@include scheme($name, dark, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif, $indents) {
-		@include bs-effects("jv-primary", "color", #fff);
+		@include bs-effects("jv-primary", "text", #fff);
 		@content;
 	}
 }
@@ -70,8 +70,6 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 		@include bs-color(jv-body-text, $text);
 		@include bs-color(jv-tertiary-bg, $tertiary);
 		@include bs-color(jv-tertiary-text, rgba($text, 0.5));
-		@include bs-color(jv-secondary-bg, $secondary);
-		@include bs-color(jv-secondary-text, rgba($text, 0.75));
 
 		@if ($indents) {
 			@for $i from 1 through length($indents) {
@@ -92,7 +90,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 @mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif, $indents: null) {
 	@include scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $indents) {
 		@include bs-colors("jv-tertiary", "bg", $tertiary, $tertiaryModif);
-		@include bs-colors("jv-tertiary", "color", $text);
+		@include bs-colors("jv-tertiary", "text", $text);
 		@include bs-colors("jv-tertiary", "border", $border, $borderModif, $disabled: 0);
 
 		@content;
@@ -146,7 +144,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#33ccbd, 5%);
 
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "color", #d6f5f2, -20%, $disabled: 0.5);
+		@include bs-colors("bs-btn", "text", #d6f5f2, -20%, $disabled: 0.5);
 	}
 }
 
@@ -154,7 +152,7 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 	@include primary(#3d8f87, -10%);
 
 	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "color", #b3e0dc, -50%, $disabled: 0.5);
+		@include bs-colors("bs-btn", "text", #b3e0dc, -50%, $disabled: 0.5);
 	}
 }
 
@@ -194,13 +192,13 @@ $cyberpunk-border: #80002f;
 	--bs-link-color: #{$cyberpunk-text};
 
 	@include bs-colors2("jv-tertiary", "bg", $cyberpunk-base, $cyberpunk-text, 25%, 50%, #111);
-	@include bs-colors2("jv-tertiary", "color", $cyberpunk-text, $cyberpunk-text, 50%, 100%, $cyberpunk-text);
+	@include bs-colors2("jv-tertiary", "text", $cyberpunk-text, $cyberpunk-text, 50%, 100%, $cyberpunk-text);
 	@include bs-colors2("jv-tertiary", "border", $cyberpunk-border, $cyberpunk-text, 50%, 100%, $cyberpunk-text);
 	
 	@include bs-colors2("jv-primary", "bg", #4d001c, $cyberpunk-text, 20%, 40%, $cyberpunk-base);
 	--jv-primary-bg-rgb: #{toRGB($cyberpunk-text)};
 	@include bs-colors2("jv-primary", "border", $cyberpunk-text, #fff, 10%, 20%, $cyberpunk-border);
-	@include bs-colors2("jv-primary", "color", $cyberpunk-text, #fff, 10%, 20%, $cyberpunk-border);
+	@include bs-colors2("jv-primary", "text", $cyberpunk-text, #fff, 10%, 20%, $cyberpunk-border);
 	--jv-primary-border-rgb: #{toRGB($cyberpunk-text)};
 }
 
@@ -211,12 +209,12 @@ $terminal-secondary: #8f8;
 
 @include scheme-base("terminal", null, $terminal-base, $terminal-secondary, $terminal-secondary, $terminal-secondary, $text: $terminal-text, $border: $terminal-text, $body: #040804, $tertiary: black, $secondary: #0f01, $indents: (#08f, #ff0, #f00)) {
 	@include bs-colors2("jv-tertiary", "bg", #000, $terminal-base, 15%, 30%, #111);
-	@include bs-colors2("jv-tertiary", "color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
+	@include bs-colors2("jv-tertiary", "text", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
 	@include bs-colors2("jv-tertiary", "border", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
 
 	@include bs-colors2("jv-primary", "bg", #000, $terminal-base, 15%, 30%, #111);
 	--jv-primary-bg-rgb: #{toRGB(#000)};
-	@include bs-colors2("jv-primary", "color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
+	@include bs-colors2("jv-primary", "text", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
 	@include bs-colors2("jv-primary", "border", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
 	--jv-primary-border-rgb: #{toRGB($terminal-base)};
 }

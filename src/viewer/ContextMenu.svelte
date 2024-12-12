@@ -80,7 +80,7 @@
 			}
 		}
 
-	const nestedPos = ["100%", "calc(var(--bs-border-width) * -1)"] as const;
+	const nestedPos = ["100%", "0"] as const;
 	const nestedKey = Symbol("ContextMenu.nested");
 
 	function unwrapPos(pos: Coords | undefined): readonly [string, string] {
@@ -176,13 +176,9 @@
 	}
 
 	.context-menu-item {
-		display: flex;
 		--context-menu-color: var(--bs-body-color);
-		border-style: solid;
-		border-width: 0;
-		border-color: var(--bs-border-color);
+		display: flex;
 		color: var(--context-menu-color);
-
 		position: relative;
 
 		&.type-menu {
@@ -204,9 +200,7 @@
 		
 		&:hover,
 		&.opened {
-			background-color: var(--bs-secondary-bg);
-			border-width: var(--bs-border-width);
-			margin: calc(var(--bs-border-width) * -1);
+			background-color: var(--jv-tertiary-border);
 		}
 
 		&:hover + &.opened {
