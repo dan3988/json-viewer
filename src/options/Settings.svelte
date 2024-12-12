@@ -200,13 +200,13 @@
 	.tab-btn {
 		--text-opacity: 0.5;
 		border-color: var(--bs-btn-bg);
-		
-		--bs-btn-color: var(--bs-tertiary-color);
+
+		--bs-btn-color: rgba(var(--jv-body-text-rgb), 0.5);
 		--bs-btn-bg: transparent;
-		--bs-btn-hover-color: var(--bs-secondary-color);
-		--bs-btn-hover-bg: var(--cst-btn-hover-bg);
-		--bs-btn-active-color: var(--bs-body);
-		--bs-btn-active-bg: var(--cst-btn-active-bg);
+		--bs-btn-hover-color: rgba(var(--jv-body-text-rgb), 1);
+		--bs-btn-hover-bg: var(--jv-tertiary-hover-bg);
+		--bs-btn-active-color: rgba(var(--jv-body-text-rgb), 0.8);
+		--bs-btn-active-bg: var(--jv-tertiary-active-bg);
 		--bs-btn-active-border-color: var(--bs-btn-bg);
 	}
 
@@ -301,7 +301,7 @@
 		border-bottom-left-radius: 0 !important;
 
 		> li {
-			background-color: var(--json-indent-bg);
+			background-color: var(--jv-indent);
 		}
 	}
 

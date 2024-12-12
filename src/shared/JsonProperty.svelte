@@ -327,7 +327,7 @@
 		white-space: nowrap;
 		padding-right: 5px;
 		user-select: text;
-		color: var(--col-json-key-fg);
+		color: var(--jv-key-fg);
 
 		&:after {
 			color: var(--bs-body-color);
@@ -336,7 +336,7 @@
 	}
 
 	:global(.esc) {
-		color: var(--col-json-num-fg);
+		color: var(--jv-num-fg);
 	}
 
 	.json-prop {
@@ -353,7 +353,7 @@
 		}
 
 		&.selected {
-			background-color: rgba(var(--bs-secondary-bg-rgb), 0.5);
+			background-color: rgba(var(--jv-tertiary-bg-rgb), 0.5);
 			border-color: transparent var(--bs-border-color);
 		}
 
@@ -372,7 +372,7 @@
 		&.for-container {
 			&:before,
 			&:after {
-				color: rgb(var(--json-indent-bg));
+				color: rgb(var(--jv-indent));
 			}
 
 			&:before {
@@ -416,7 +416,7 @@
 			}
 
 			> .json-container > :global(li > .json-prop > .json-key) {
-				color: var(--col-json-num-fg);
+				color: var(--jv-num-fg);
 			}
 		}
 
@@ -426,7 +426,7 @@
 		}
 
 		> .prop-count {
-			color: var(--col-json-num-fg);
+			color: var(--jv-num-fg);
 		}
 
 		> .empty-container {
@@ -453,14 +453,14 @@
 
 	.expander {
 		cursor: pointer;
-		color: var(--bs-secondary-color);
+		color: rgba(var(--jv-body-text-rgb), 0.5);
 		font-size: x-small;
 		rotate: var(--expander-rotate);
 		transition: rotate .15s ease-in-out;
 
 
 		&:hover {
-			color: var(--bs-body-color);
+			color: rgb(var(--jv-body-text-rgb));
 		}
 
 		&:active {
@@ -472,10 +472,10 @@
 		cursor: pointer;
 		position: relative;
 
-		--indent-bg: rgb(var(--json-indent-bg), 0.33);
+		--indent-bg: rgb(var(--jv-indent), 0.33);
 
 		&:hover {
-			--indent-bg: rgb(var(--json-indent-bg));
+			--indent-bg: rgb(var(--jv-indent));
 		}
 
 		&:before {
@@ -494,16 +494,16 @@
 		white-space: nowrap;
 
 		&.json-string {
-			color: var(--col-json-str-fg);
+			color: var(--jv-str-fg);
 		}
 
 		&.json-number {
-			color: var(--col-json-num-fg);
+			color: var(--jv-num-fg);
 		}
 
 		&.json-boolean,
 		&.json-null {
-			color: var(--col-json-keywd-fg);
+			color: var(--jv-keywd-fg);
 		}
 	}
 </style>

@@ -30,12 +30,14 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 
 @mixin scheme-lt($name, $key, $keywd, $str, $num, $text: #212529, $base: #fff, $bgModif: -3%, $tertiaryModif: 2%, $borderModif: 10%, $indents: $def-indent-lt) {
 	@include scheme($name, light, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif, $indents) {
+		@include bs-effects("jv-primary", "color", $base);
 		@content;
 	}
 }
 
 @mixin scheme-dk($name, $key, $keywd, $str, $num, $text: #adb5bd, $base: #212529, $bgModif: 5%, $tertiaryModif: -5%, $borderModif: -20%, $indents: $def-indent-dk) {
 	@include scheme($name, dark, $key, $keywd, $str, $num, $text, adjust-color($base, $lightness: $bgModif * 4), $base, adjust-color($base, $lightness: $bgModif), adjust-color($base, $lightness: $bgModif * 2), $tertiaryModif, $borderModif, $indents) {
+		@include bs-effects("jv-primary", "color", #fff);
 		@content;
 	}
 }
@@ -58,27 +60,27 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 
 @mixin scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $indents: null) {
 	@include scheme-selector($name, $mode) {
-		--col-json-key-fg: #{$key};
-		--col-json-keywd-fg: #{$keywd};
-		--col-json-str-fg: #{$str};
-		--col-json-num-fg: #{$num};
-		--bs-border-color: #{$border};
+		--jv-key-fg: #{$key};
+		--jv-keywd-fg: #{$keywd};
+		--jv-str-fg: #{$str};
+		--jv-num-fg: #{$num};
+		--jv-border-color: #{$border};
 
-		@include bs-color(body-bg, $body);
-		@include bs-color(body-color, $text);
-		@include bs-color(tertiary-bg, $tertiary);
-		@include bs-color(tertiary-color, rgba($text, 0.5));
-		@include bs-color(secondary-bg, $secondary);
-		@include bs-color(secondary-color, rgba($text, 0.75));
+		@include bs-color(jv-body-bg, $body);
+		@include bs-color(jv-body-text, $text);
+		@include bs-color(jv-tertiary-bg, $tertiary);
+		@include bs-color(jv-tertiary-text, rgba($text, 0.5));
+		@include bs-color(jv-secondary-bg, $secondary);
+		@include bs-color(jv-secondary-text, rgba($text, 0.75));
 
 		@if ($indents) {
 			@for $i from 1 through length($indents) {
-				--json-indent#{$i}: #{toRGB(nth($indents, $i))};
+				--jv-indent-#{$i}: #{toRGB(nth($indents, $i))};
 			}
 
 			@for $i from 1 through length($indents) {
 				:global(.json-indent[data-indent="#{$i - 1}"]) {
-					--json-indent-bg: var(--json-indent#{$i});
+					--jv-indent: var(--jv-indent-#{$i});
 				}
 			}
 		}
@@ -89,30 +91,24 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 
 @mixin scheme($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $tertiaryModif, $borderModif, $indents: null) {
 	@include scheme-base($name, $mode, $key, $keywd, $str, $num, $text, $border, $body, $tertiary, $secondary, $indents) {
-		@include bs-colors("cst-btn", "bg", $tertiary, $tertiaryModif);
-		@include bs-colors("cst-btn", "color", $text);
-		@include bs-colors("cst-btn", "border-color", $border, $borderModif, $disabled: 0);
+		@include bs-colors("jv-tertiary", "bg", $tertiary, $tertiaryModif);
+		@include bs-colors("jv-tertiary", "color", $text);
+		@include bs-colors("jv-tertiary", "border", $border, $borderModif, $disabled: 0);
 
 		@content;
 	}
 }
 
 @mixin bs-color($key, $value) {
-	--bs-#{$key}: #{$value};
-	--bs-#{$key}-rgb: #{toRGB($value)};
+	--#{$key}: #{$value};
+	--#{$key}-rgb: #{toRGB($value)};
 }
 
 @mixin primary($color, $modif) {
-	--checkbox-bg-color: #{$color};
-	--checkbox-border-color: #{$color};
-	--focus-shadow-color: #{change-color($color, $alpha: 0.25)};
-	--focus-border-color: #{adjust-color($color, $lightness: 20%, $saturation: -50%)};
-	--editor-bg-color: #{change-color($color, $alpha: 0.5)};
-
-	:global(.btn-primary) {
-		@include bs-colors("bs-btn", "bg", $color, $modif);
-		@include bs-colors("bs-btn", "border-color", $color, $modif);
-	}
+	@include bs-colors("jv-primary", "bg", $color, $modif);
+	--jv-primary-bg-rgb: #{toRGB($color)};
+	@include bs-colors("jv-primary", "border", $color, $modif);
+	--jv-primary-border-rgb: #{toRGB($color)};
 }
 
 @mixin bs-effects($name, $postfix, $default, $hover: $default, $active: $default, $disabled: $default) {
@@ -131,11 +127,11 @@ $def-indent-dk: (#ffd700, #da70d6, #179fff);
 }
 
 @include scheme-lt("default", #000000, #0000ff, #a31515, #098658, $base: #fafafa) {
-	--editor-bg-color: #0d6efd40
+	@include primary(#0d6efd, 5%);
 }
 
 @include scheme-dk("default", #9cdcfe, #569cd6, #ce9178, #b5cea8, $base: #1f1f1f) {
-	--editor-bg-color: #0d6efd40;
+	@include primary(#0d6efd, -10%);
 }
 
 @include scheme-lt("dracula", #e60073, #bf95f9, #bec757, #1fc749, $text: #0d0d08, $base: #f1f1f4, $indents: (hsl(60, 30%, 4%), hsl(326, 100%, 54%), hsl(191, 97%, 57%), hsl(135, 94%, 45%), hsl(265, 89%, 58%), hsl(31, 100%, 51%))) {
@@ -195,26 +191,17 @@ $cyberpunk-text: #ff0055;
 $cyberpunk-border: #80002f;
 
 @include scheme-base("cyberpunk", null, $cyberpunk-text, #d57bff, #76c1ff, #fffc58, $text: $cyberpunk-text, $border: $cyberpunk-border, $body: $cyberpunk-base, $tertiary: $cyberpunk-base, $secondary: #330013, $indents: (#ff00d5, #55cc00, #00d5ff)) {
-	--checkbox-bg-color: #{$cyberpunk-text};
-	--checkbox-border-color: #{$cyberpunk-text};
-	--focus-shadow-color: #8800ff40;
-	--focus-border-color: #8800ff;
 	--bs-link-color: #{$cyberpunk-text};
-	--editor-bg-color: #f004;
 
-	@include bs-colors2("cst-dirty", "bg", #330022, #ff00aa, 20%, 50%, #000);
-	@include bs-colors2("cst-dirty", "color", #ff00aa, #ff66cc, 50%, 100%, $cyberpunk-text);
-	@include bs-colors2("cst-dirty", "border-color", #990066, #ff66cc, 50%, 100%, $cyberpunk-text);
-
-	@include bs-colors2("cst-btn", "bg", $cyberpunk-base, $cyberpunk-text, 25%, 50%, #111);
-	@include bs-colors2("cst-btn", "color", $cyberpunk-text, $cyberpunk-text, 50%, 100%, $cyberpunk-text);
-	@include bs-colors2("cst-btn", "border-color", $cyberpunk-border, $cyberpunk-text, 50%, 100%, $cyberpunk-text);
-
-	:global(.btn-primary) {
-		@include bs-colors2("bs-btn", "bg", #4d001c, $cyberpunk-text, 20%, 40%, $cyberpunk-base);
-		@include bs-colors2("bs-btn", "color", $cyberpunk-text, #fff, 10%, 20%, $cyberpunk-border);
-		@include bs-colors2("bs-btn", "border-color", $cyberpunk-border, $cyberpunk-text, 50%, 100%, $cyberpunk-border);
-	}
+	@include bs-colors2("jv-tertiary", "bg", $cyberpunk-base, $cyberpunk-text, 25%, 50%, #111);
+	@include bs-colors2("jv-tertiary", "color", $cyberpunk-text, $cyberpunk-text, 50%, 100%, $cyberpunk-text);
+	@include bs-colors2("jv-tertiary", "border", $cyberpunk-border, $cyberpunk-text, 50%, 100%, $cyberpunk-text);
+	
+	@include bs-colors2("jv-primary", "bg", #4d001c, $cyberpunk-text, 20%, 40%, $cyberpunk-base);
+	--jv-primary-bg-rgb: #{toRGB($cyberpunk-text)};
+	@include bs-colors2("jv-primary", "border", $cyberpunk-text, #fff, 10%, 20%, $cyberpunk-border);
+	@include bs-colors2("jv-primary", "color", $cyberpunk-text, #fff, 10%, 20%, $cyberpunk-border);
+	--jv-primary-border-rgb: #{toRGB($cyberpunk-text)};
 }
 
 $terminal-base: #3D6;
@@ -223,25 +210,15 @@ $terminal-disabled: #595;
 $terminal-secondary: #8f8;
 
 @include scheme-base("terminal", null, $terminal-base, $terminal-secondary, $terminal-secondary, $terminal-secondary, $text: $terminal-text, $border: $terminal-text, $body: #040804, $tertiary: black, $secondary: #0f01, $indents: (#08f, #ff0, #f00)) {
-	--checkbox-bg-color: #{$terminal-base};
-	--checkbox-border-color: #{$terminal-base};
-	--focus-shadow-color: #{change-color($terminal-base, $alpha: 0.25)};
-	--focus-border-color: #{adjust-color($terminal-base, $lightness: 20%, $saturation: -50%)};
-	--editor-bg-color: #{rgba($terminal-base, 0.25)};
-	
-	@include bs-colors2("cst-dirty", "bg", #330, #ff0, 20%, 50%, #000);
-	@include bs-colors2("cst-dirty", "color", $terminal-text, #fff, 50%, 100%, $terminal-disabled);
-	@include bs-colors2("cst-dirty", "border-color", $terminal-text, #DD6, 50%, 100%, $terminal-disabled);
+	@include bs-colors2("jv-tertiary", "bg", #000, $terminal-base, 15%, 30%, #111);
+	@include bs-colors2("jv-tertiary", "color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
+	@include bs-colors2("jv-tertiary", "border", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
 
-	@include bs-colors2("cst-btn", "bg", #000, $terminal-base, 15%, 30%, #111);
-	@include bs-colors2("cst-btn", "color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
-	@include bs-colors2("cst-btn", "border-color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
-
-	:global(.btn-primary) {
-		@include bs-colors2("bs-btn", "bg", #000, $terminal-base, 15%, 30%, #111);
-		@include bs-colors2("bs-btn", "color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
-		@include bs-colors2("bs-btn", "border-color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
-	}
+	@include bs-colors2("jv-primary", "bg", #000, $terminal-base, 15%, 30%, #111);
+	--jv-primary-bg-rgb: #{toRGB(#000)};
+	@include bs-colors2("jv-primary", "color", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
+	@include bs-colors2("jv-primary", "border", $terminal-text, $terminal-base, 50%, 100%, $terminal-disabled);
+	--jv-primary-border-rgb: #{toRGB($terminal-base)};
 }
 
 @mixin bg($name, $filename: "res/" + $name + ".png", $repeat: null, $size: null) {

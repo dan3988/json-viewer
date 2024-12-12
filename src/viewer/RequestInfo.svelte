@@ -47,12 +47,12 @@
 	.row-key {
 		grid-column: 1 / span 2;
 		text-align: right;
-		color: var(--col-json-key-fg);
+		color: var(--jv-key-fg);
 	}
 
 	.row-val {
 		grid-column: 3 / span 1;
-		color: var(--col-json-str-fg);
+		color: var(--jv-str-fg);
 	}
 
 	.header {
