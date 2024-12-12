@@ -386,11 +386,11 @@
 			<div class="tab-left">
 				<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$changed.includes('menuAlign')}>
 					<span class="input-group-text">Menu Alignment</span>
-					<Radio class="flex-fill btn btn-cust-light" items={radioMenuAlign} bind:value={$menuAlign}></Radio>
+					<Radio class="flex-fill btn btn-base" items={radioMenuAlign} bind:value={$menuAlign}></Radio>
 				</div>
 				<div class="input-group hoverable-radio grp-theme" role="group" class:dirty={$changed.includes('darkMode')}>
 					<span class="input-group-text">Theme</span>
-					<Radio class="flex-fill btn btn-cust-light" items={radioTheme} bind:value={$darkMode}/>
+					<Radio class="flex-fill btn btn-base" items={radioTheme} bind:value={$darkMode}/>
 				</div>
 				<div class="input-group grp-json-bg">
 					<span class="input-group-text">Background</span>

@@ -367,19 +367,19 @@
 	{/if}
 	<div class="w-bar pb-1 gap-1">
 		<div class="btn-group">
-			<button type="button" class="btn btn-cust-light bi bi-floppy" title="Save" on:click={saveAs} />
-			<button type="button" class="btn btn-cust-light bi bi-plus-square-fill" title="Expand All" on:click={() => setExpanded(true)} />
-			<button type="button" class="btn btn-cust-light bi bi-dash-square-fill" title="Collapse All" on:click={() => setExpanded(false)} />
-			<button type="button" class="btn btn-cust-light bi bi-arrow-counterclockwise" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
-			<button type="button" class="btn btn-cust-light bi bi-arrow-clockwise" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
+			<button type="button" class="btn btn-base bi bi-floppy" title="Save" on:click={saveAs} />
+			<button type="button" class="btn btn-base bi bi-plus-square-fill" title="Expand All" on:click={() => setExpanded(true)} />
+			<button type="button" class="btn btn-base bi bi-dash-square-fill" title="Collapse All" on:click={() => setExpanded(false)} />
+			<button type="button" class="btn btn-base bi bi-arrow-counterclockwise" title="Undo" disabled={!$canUndo} on:click={() => model.edits.undo()} />
+			<button type="button" class="btn btn-base bi bi-arrow-clockwise" title="Redo" disabled={!$canRedo} on:click={() => model.edits.redo()} />
 			{#if model.useWebRequest}
-				<button type="button" class="btn btn-cust-light bi bi-activity" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
+				<button type="button" class="btn btn-base bi bi-activity" title="Request Info" disabled={!$requestInfo} on:click={showRequestInfo} />
 			{/if}
 		</div>
 		<div class="input-group search flex-fit">
 			<span class="input-group-text flex-fit">Filter</span>
 			<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
-			<button type="button" class="btn btn-cust-light bi bi-x-lg" on:click={clearFilter} />
+			<button type="button" class="btn btn-base bi bi-x-lg" on:click={clearFilter} />
 			<select class="filter-type form-select flex-fit" bind:value={filterMode}>
 				<option value={json.JTokenFilterFlags.Both}>All</option>
 				<option value={json.JTokenFilterFlags.Keys}>Keys</option>
@@ -387,7 +387,7 @@
 			</select>
 		</div>
 		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
-		<label class="btn btn-cust-light" for="chk-jpath">JPath</label>
+		<label class="btn btn-base" for="chk-jpath">JPath</label>
 	</div>
 	<div class="w-menu">
 		<MenuView

@@ -143,16 +143,16 @@
 <div class="root">
 	<div class="input-group field">
 		<span class="input-group-text">Path</span>
-		<a class="btn btn-cust-light bi bi-question-circle-fill" href="https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html" title="Syntax" target="_blank"></a>
+		<a class="btn btn-base bi bi-question-circle-fill" href="https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html" title="Syntax" target="_blank"></a>
 		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
-		<button type="button" class="btn btn-cust-light bi bi-x-lg" on:click={clearJpath}></button>
+		<button type="button" class="btn btn-base bi bi-x-lg" on:click={clearJpath}></button>
 		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
 	</div>
 	<div class="jpath-matches input-group">
 		<span class="flex-fill0 input-group-text">{jpathResults.length} {jpathResults.length == 1 ? "Match" : "Matches"}</span>
 		{#if jpathResults.length}
-			<button class="flex-fill0 btn btn-cust-light" on:click={jpathResultsExpand}>Expand Matches</button>
-			<button class="flex-fill0 btn btn-cust-light" on:click={jpathResultsDelete}>Delete Matches</button>
+			<button class="flex-fill0 btn btn-base" on:click={jpathResultsExpand}>Expand Matches</button>
+			<button class="flex-fill0 btn btn-base" on:click={jpathResultsDelete}>Delete Matches</button>
 		{/if}
 	</div>
 	<ul class="jpath-results list-group list-group-flush overflow-y-scroll overflow-x-hidden border rounded">
