@@ -83,8 +83,8 @@
 	align-items: center;
 }
 
-:global([data-bs-theme][data-scheme]),
-:global([data-bs-theme] [data-scheme]) {
+:global([data-bs-theme].scheme),
+:global([data-bs-theme] .scheme) {
 	color: var(--jv-body-text);
 	--bs-border-color: var(--jv-tertiary-border);
 	--bs-body-bg: var(--jv-body-bg);

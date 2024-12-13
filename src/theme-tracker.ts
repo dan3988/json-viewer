@@ -1,23 +1,31 @@
-type ThemeChangedListener = (dark: boolean, overriden: boolean) => void;
+import type { Readable, Subscriber } from "svelte/store";
 
-export class ThemeTracker {
+type ThemeChangedListener = (dark: boolean, preference: boolean | null) => void;
+
+export class ThemeTracker implements Readable<boolean> {
+	readonly #onRuleChange = this.#update.bind(this);
 	readonly #listeners: ThemeChangedListener[];
 	readonly #root;
 	readonly #rule;
-	#value: null | boolean;
+	#preferDark: null | boolean;
+	#value: boolean;
 
 	get isOverridden() {
 		return this.#value != null;
 	}
 
-	get preferDark() {
+	get value() {
 		return this.#value ?? this.#rule.matches;
 	}
 
+	get preferDark() {
+		return this.#preferDark;
+	}
+
 	set preferDark(value: null | boolean) {
-		if (this.#value !== value) {
-			this.#value = value;
-			this.#fireChange();
+		if (this.#preferDark !== value) {
+			this.#preferDark = value;
+			this.#update();
 		}
 	}
 
@@ -27,8 +35,29 @@ export class ThemeTracker {
 		this.#rule = matchMedia("(prefers-color-scheme: dark)");
 		this.#onRuleChange = this.#onRuleChange.bind(this);
 		this.#rule.addEventListener("change", this.#onRuleChange);
-		this.#value = initialValue;
-		this.#fireChange();
+		this.#preferDark = initialValue;
+		this.#value = undefined!;
+		this.#setValueCore(this.#preferDark ?? this.#rule.matches)
+	}
+
+	#setValueCore(value: boolean) {
+		this.#value = value;
+		this.#root.setAttribute("data-bs-theme", value ? "dark" : "light");
+	}
+
+	#update() {
+		const preferDark = this.#preferDark;
+		const value = preferDark ?? this.#rule.matches;
+		if (this.#value !== value) {
+			this.#setValueCore(value);
+			this.#listeners.forEach(v => v(value, preferDark));
+		}
+	}
+
+	#unsubscribe(listener: any) {
+		const i = this.#listeners.indexOf(listener);
+		if (i >= 0)
+			this.#listeners.splice(i, 1);
 	}
 
 	destroy() {
@@ -39,15 +68,10 @@ export class ThemeTracker {
 		this.#listeners.push(listener);
 	}
 
-	#fireChange() {
-		const [value, overridden] = this.#value == null ? [this.#rule.matches, false] : [this.#value, true];
-		this.#root.setAttribute("data-bs-theme", value ? "dark" : "light");
-		this.#listeners.forEach(v => v(value, overridden));
-	}
-
-	#onRuleChange = function(this: ThemeTracker) {
-		if (this.#value === null)
-			this.#fireChange();
+	subscribe(listener: Subscriber<boolean>) {
+		listener(this.#value);
+		this.#listeners.push(listener);
+		return this.#unsubscribe.bind(this, listener);
 	}
 }
 

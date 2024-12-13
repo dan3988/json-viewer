@@ -2,9 +2,7 @@
 import "../dom-extensions";
 import preferences from "../preferences-lite";
 import createComponent from "../component-tracker";
-import schemes from "../schemes.json";
-import { getValue } from "../scheme-modes";
-import ThemeTracker from "../theme-tracker";
+import schemes from "../schemes.js";
 import JsonViewer from "./JsonViewer.svelte";
 import json from "../json"
 import { ViewerModel } from "../viewer-model";
@@ -75,8 +73,8 @@ function run() {
 		async function loadAsync() {
 			const prefs = await preferences.lite.manager.watch();
 			const bound = prefs.bind()
-				.map(["background", "menuAlign", "scheme"])
-				.map("scheme", "indentCount", v => schemes[v].indents)
+				.map(["background", "menuAlign", "darkMode"])
+				.map("scheme", "currentScheme", v => schemes.presets[v])
 				.build();
 
 			function updateIndent() {
@@ -86,11 +84,6 @@ function run() {
 
 			updateIndent();
 
-			function preferDark() {
-				const { scheme, darkMode } = prefs.getValues(["scheme", "darkMode"]);
-				return getValue(scheme, darkMode);
-			}
-
 			model.useWebRequest = prefs.getValue("useWebRequest");
 
 			chrome.runtime.sendMessage({ type: "requestInfo" }, v => model.requestInfo = v);
@@ -99,15 +92,11 @@ function run() {
 				model.state.props.selected.subscribe(pushHistory);
 
 			prefs.onChange(v => {
-				if ("darkMode" in v || "scheme" in v)
-					tracker.preferDark = preferDark();
-
 				if ("indentCount" in v || "indentChar" in v)
 					updateIndent();
 			});
 
-			const tracker = new ThemeTracker(document.documentElement, preferDark());
-			const component = createComponent(JsonViewer, document.body, bound, { model });
+			createComponent(JsonViewer, document.body, bound, { model });
 
 			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}

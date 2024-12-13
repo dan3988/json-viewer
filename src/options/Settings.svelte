@@ -1,9 +1,7 @@
 <script lang="ts" context="module">
 	import type { ListValidator } from "./ListEditor.svelte";
 	import type { NamedRadioItem } from "./Radio.svelte";
-	import Linq from "@daniel.pickett/linq-js";
-	import schemes from "../schemes.json";
-	import schemeModes, { getValueByMode, type Scheme } from "../scheme-modes";
+	import schemes from "../schemes.js";
 
 	class SettingListValidator implements ListValidator {
 		readonly #validation: [] | [RegExp, string];
@@ -38,13 +36,18 @@
 
 	const tabs: Tab[] = Object.keys(tabNames) as any;
 
-	const groupedSchemes = Linq.fromObject(schemes)
-		.select(([id, { mode, name }]) => ({ id, mode, name }))
-		.orderBy(v => v.name)
-		.groupBy(v => v.mode)
-		.orderBy(v => v.key)
-		.select(v => [schemeModes[v.key][1], Linq(v).select(({ id, name }) => [id, name] as const).toArray()] as const)
-		.toArray();
+	type SchemeReference = [id: string, name: string];
+
+	const groupedSchemes: [name: string, schemes: SchemeReference[]][] = [
+		['Auto', []],
+		['Light', []],
+		['Dark', []],
+	];
+
+	for (const [key, value] of Object.entries(schemes.presets)) {
+		const index = value.light ? (value.dark ? 0 : 1) : 2;
+		groupedSchemes[index][1].push([key, value.name]);
+	}
 
 	const mimeValidator = new SettingListValidator();
 	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
@@ -60,6 +63,7 @@
 	import ListEditor from "./ListEditor.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import NumberEditor from "../shared/NumberEditor.svelte";
+	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import Radio from "./Radio.svelte";
 	import preferences from "../preferences-lite";
 	import fs from "../fs";
@@ -69,16 +73,10 @@
 
 	const webRequestPerm: chrome.permissions.Permissions = { permissions: ["webRequest"] };
 
-	function updateTheme(scheme: Scheme, userPref: null | boolean) {
-		tracker.preferDark = getValueByMode(scheme.mode, userPref);
-	}
-
 	$: ({ changed, props: { darkMode, enabled, mimes, whitelist, blacklist, indentChar, indentCount, scheme, useHistory, menuAlign, background, useWebRequest } } = model);
-	$: currentScheme = schemes[$scheme];
-	$: {
-		updateTheme(currentScheme, $darkMode);
-		document.documentElement.dataset["scheme"] = $scheme;
-	}
+	$: currentScheme = schemes.presets[$scheme] as schemes.ColorScheme;
+	$: tracker.preferDark = $darkMode;
+	$: maxIndentClass = schemes.getIndentCount(currentScheme, $tracker);
 
 	const indents = [
 		["Tab", "\t"],
@@ -326,7 +324,8 @@
 	}
 </style>
 <svelte:window on:beforeunload={onUnload} />
-<div class="root bg-body overflow-hidden d-flex flex-column" data-editor-bg={$background}>
+<SchemeStyleSheet scheme={currentScheme} />
+<div class="root bg-body overflow-hidden d-flex flex-column scheme" data-editor-bg={$background}>
 	<div class="header bg-body-tertiary border-bottom gap-2">
 		<img src="/res/icon128.png" alt="icon" />
 		<span class="h3 m-0">Settings</span>
@@ -409,12 +408,14 @@
 				<div class="input-group grp-json-style">
 					<span class="input-group-text">Colour Scheme</span>
 					<select class="form-select flex-fill" class:dirty={$changed.includes('scheme')} bind:value={$scheme}>
-						{#each groupedSchemes as [ label, themes ]}
-							<optgroup {label}>
-								{#each themes as [ id, name ]}
-									<option value={id}>{name}</option>
-								{/each}
-							</optgroup>
+						{#each groupedSchemes as [ label, values ]}
+							{#if values.length}
+								<optgroup {label}>
+									{#each values as [ value, name ]}
+										<option {value}>{name}</option>
+									{/each}
+								</optgroup>
+							{/if}
 						{/each}
 					</select>
 				</div>
@@ -422,7 +423,7 @@
 			<div class="preview-wrapper border rounded">
 				<div class="editor-bg"></div>
 				<div class="overflow-auto p-1">
-					<ViewerPreview maxIndentClass={currentScheme.indents} />
+					<ViewerPreview {maxIndentClass} />
 				</div>
 			</div>
 		</div>

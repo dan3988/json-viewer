@@ -169,6 +169,7 @@
 		width: 10rem;
 		z-index: 100;
 		font-size: small;
+		background-color: var(--jv-body-bg);
 
 		> li {
 			position: relative;
@@ -209,7 +210,7 @@
 		}
 	}
 </style>
-<ul class="root context-menu bg-body-tertiary border" style:left style:top bind:this={elem} transition:slide={{ duration: 150 }}>
+<ul class="root context-menu border" style:left style:top bind:this={elem} transition:slide={{ duration: 150 }}>
 	{#each items as item, i}
 		{#if item.type === "action"}
 			<li class="context-menu-item type-{item.type}" role="button" on:click={invoke.bind(undefined, item.action)}>

@@ -16,6 +16,7 @@
 	import MenuView, { MenuAlign } from "./MenuView.svelte";
 	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
 	import PopupInputText from "../shared/PopupInputText.svelte";
+	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import PopupPanel from "../shared/PopupPanel.svelte";
 	import RequestInfo from "./RequestInfo.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
@@ -23,21 +24,27 @@
 	import { KeyBindingListener } from "../keyboard";
 	import { commands } from "../commands";
 	import json from "../json.js";
+	import ThemeTracker from "../theme-tracker.js";
 	import edits from "./editor-helper";
 	import Linq from "@daniel.pickett/linq-js";
 	import fs from "../fs";
+	import schemes from "../schemes.js";
 
 	export let model: ViewerModel;
-	export let indentCount: number;
 	export let menuAlign: string;
-	export let scheme: string;
+	export let currentScheme: schemes.ColorScheme;
 	export let background: string;
+	export let darkMode: null | boolean;
+
+	const tracker = new ThemeTracker(document.documentElement, darkMode);
 
 	model.command.addListener(onModelCommand);
 
 	$: ({ requestInfo } = model.state.props);
 	$: ({ canUndo, canRedo } = model.edits.state.props);
+	$: tracker.preferDark = darkMode;
 	$: model.filter(filter, filterMode);
+	$: maxIndentClass = schemes.getIndentCount(currentScheme, $tracker);
 
 	let bindings: KeyBindingListener;
 
@@ -357,10 +364,11 @@
 <svelte:window on:beforeunload={onUnload} />
 <svelte:head>
 	{#each css as href}
-		<link rel="stylesheet" {href} />
+	<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
-<div class="root bg-body p-1" data-scheme={scheme} data-editor-bg={background}>
+<SchemeStyleSheet scheme={currentScheme} />
+<div class="root bg-body p-1 scheme" data-editor-bg={background}>
 	{#if contextMenu}
 		{@const [pos, items] = contextMenu}
 		<ContextMenu {pos} {items} on:closed={() => contextMenu = undefined}/>
@@ -403,7 +411,7 @@
 				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
-						<JsonProperty {model} prop={model.root} indent={0} maxIndentClass={indentCount}/>
+						<JsonProperty {model} prop={model.root} indent={0} {maxIndentClass} />
 					</div>
 				</div>
 			</div>
