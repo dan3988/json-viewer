@@ -87,7 +87,6 @@ class TextCssBuilder extends CssBuilder {
 		
 		color(key: string, color: Color) {
 			const [r, g, b] = color.unitArray();
-			this.#owner.#line('--', key, ':', color.hex(), ';');
 			this.#owner.#line('--', key, '-rgb:', Math.trunc(r * 255), ',', Math.trunc(g * 255), ',', Math.trunc(b * 255), ';');
 			return this;
 		}
@@ -149,10 +148,10 @@ function compileVariables(builder: CssRuleBuilder, values: schemes.ColorSchemeVa
 	const text = parseColor(values.text);
 	const background = parseColor(values.background);
 	builder
-		.variable('jv-key-fg', key.hex())
-		.variable('jv-keywd-fg', keyword.hex())
-		.variable('jv-str-fg', str.hex())
-		.variable('jv-num-fg', num.hex())
+		.color('jv-key-fg', key)
+		.color('jv-keywd-fg', keyword)
+		.color('jv-str-fg', str)
+		.color('jv-num-fg', num)
 		.color('jv-body-text', text)
 		.color('jv-body-bg', background);
 

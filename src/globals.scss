@@ -85,6 +85,37 @@
 
 :global([data-bs-theme].scheme),
 :global([data-bs-theme] .scheme) {
+	--jv-key-fg: rgb(var(--jv-key-fg-rgb));
+	--jv-keywd-fg: rgb(var(--jv-keywd-fg-rgb));
+	--jv-str-fg: rgb(var(--jv-str-fg-rgb));
+	--jv-num-fg: rgb(var(--jv-num-fg-rgb));
+	--jv-body-text: rgb(var(--jv-body-text-rgb));
+	--jv-body-bg: rgb(var(--jv-body-bg-rgb));
+	--jv-tertiary-text: rgb(var(--jv-tertiary-text-rgb));
+	--jv-tertiary-hover-text: rgb(var(--jv-tertiary-hover-text-rgb));
+	--jv-tertiary-active-text: rgb(var(--jv-tertiary-active-text-rgb));
+	--jv-tertiary-disabled-text: rgb(var(--jv-tertiary-disabled-text-rgb));
+	--jv-tertiary-bg: rgb(var(--jv-tertiary-bg-rgb));
+	--jv-tertiary-hover-bg: rgb(var(--jv-tertiary-hover-bg-rgb));
+	--jv-tertiary-active-bg: rgb(var(--jv-tertiary-active-bg-rgb));
+	--jv-tertiary-disabled-bg: rgb(var(--jv-tertiary-disabled-bg-rgb));
+	--jv-tertiary-border: rgb(var(--jv-tertiary-border-rgb));
+	--jv-tertiary-hover-border: rgb(var(--jv-tertiary-hover-border-rgb));
+	--jv-tertiary-active-border: rgb(var(--jv-tertiary-active-border-rgb));
+	--jv-tertiary-disabled-border: rgb(var(--jv-tertiary-disabled-border-rgb));
+	--jv-primary-text: rgb(var(--jv-primary-text-rgb));
+	--jv-primary-hover-text: rgb(var(--jv-primary-hover-text-rgb));
+	--jv-primary-active-text: rgb(var(--jv-primary-active-text-rgb));
+	--jv-primary-disabled-text: rgb(var(--jv-primary-disabled-text-rgb));
+	--jv-primary-bg: rgb(var(--jv-primary-bg-rgb));
+	--jv-primary-hover-bg: rgb(var(--jv-primary-hover-bg-rgb));
+	--jv-primary-active-bg: rgb(var(--jv-primary-active-bg-rgb));
+	--jv-primary-disabled-bg: rgb(var(--jv-primary-disabled-bg-rgb));
+	--jv-primary-border: rgb(var(--jv-primary-border-rgb));
+	--jv-primary-hover-border: rgb(var(--jv-primary-hover-border-rgb));
+	--jv-primary-active-border: rgb(var(--jv-primary-active-border-rgb));
+	--jv-primary-disabled-border: rgb(var(--jv-primary-disabled-border-rgb));
+
 	color: var(--jv-body-text);
 	--bs-border-color: var(--jv-tertiary-border);
 	--bs-body-bg: var(--jv-body-bg);
