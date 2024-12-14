@@ -107,8 +107,9 @@ export async function hotreload(options = {}) {
 		},
 		writeBundle(options, output) {
 			const files = {};
+			const directory = options.dir ?? path.dirname(options.file);
 			for (const file in output) {
-				const full = path.join(options.dir, file);
+				const full = path.join(directory, file);
 				const relative = '/' + path.relative(baseDir, full).replaceAll('\\', '/');
 				const val = output[file];
 				files[relative] = checksum(val.type === "chunk" ? val.code : val.source);

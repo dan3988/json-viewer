@@ -75,16 +75,15 @@ function loader(args) {
 
 	/**
 	 * @param {string} srcDir
-	 * @param {string} entry
 	 * @param {string} output
 	 * @returns {rl.RollupOptions}
 	 */
-	function svelteConfig(srcDir, entry, output) {
+	function svelteConfig(directory) {
 		return {
-			input: path.join(srcDir, entry),
+			input: path.join('src', directory, 'index.ts'),
 			output: {
 				sourcemap: !dist,
-				dir: lib,
+				file: path.join(lib, directory + '.js'),
 				indent,
 				name: 'app',
 				intro: '{',
@@ -133,14 +132,14 @@ function loader(args) {
 						!ignore.has(warning.code) && handler(warning);
 					}
 				}),
-				css({ output: output + ".css" }),
+				css({ output: directory + ".css" }),
 				resolve({
 					browser: true,
 					dedupe: ['svelte']
 				}),
 				commonjs(),
 				typescript({
-					tsconfig: path.join(srcDir, "tsconfig.json"),
+					tsconfig: path.join("src", directory, "tsconfig.json"),
 					sourceMap: !dist,
 					inlineSources: !dist
 				}),
@@ -165,11 +164,11 @@ function loader(args) {
 	
 	/** @type {rl.RollupOptions[]} */
 	const configs = [
-		svelteConfig("src/content", "content.ts", "content"),
-		svelteConfig("src/viewer", "viewer.ts", "viewer"),
-		svelteConfig("src/options", "options.ts", "options", "esm"),
+		svelteConfig("content"),
+		svelteConfig("viewer"),
+		svelteConfig("options"),
 		{
-			input: "src/extension/background.ts",
+			input: "src/extension/index.ts",
 			output: {
 				indent,
 				sourcemap: !dist,
