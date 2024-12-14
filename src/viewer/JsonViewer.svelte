@@ -4,7 +4,8 @@
 	const css = [
 		chrome.runtime.getURL(lib.bootstrap),
 		chrome.runtime.getURL(lib.bootstrapIcons),
-		chrome.runtime.getURL("/lib/viewer.css")
+		chrome.runtime.getURL("/lib/viewer.css"),
+		chrome.runtime.getURL("/lib/schemes.css")
 	];
 </script>
 <script lang="ts">

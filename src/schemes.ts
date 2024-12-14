@@ -32,6 +32,23 @@ export namespace schemes {
 
 	export const presets = json as any as { [P in keyof typeof json]: ColorScheme };
 
+	type SchemeGroup = [name: string, schemes: SchemeReference[]];
+	type SchemeReference = [id: string, name: string];
+
+	export const groupedPresets: SchemeGroup[] = [
+		['Auto', []],
+		['Light', []],
+		['Dark', []],
+	];
+	
+	for (const [key, value] of Object.entries(schemes.presets)) {
+		const index = value.light ? (value.dark ? 0 : 1) : 2;
+		groupedPresets[index][1].push([key, value.name]);
+	}
+	
+	for (const [, list] of groupedPresets)
+		list.sort(([, x], [, y]) => x.localeCompare(y));
+	
 	export function getIndentCount(scheme: ColorScheme, darkMode: boolean) {
 		const { indents } = scheme[darkMode ? 'dark' : 'light'] ?? scheme.light ?? scheme.dark!;
 		return indents.length;

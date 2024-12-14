@@ -1,8 +1,7 @@
 @use "./core.scss" as core;
 
-
 @mixin bg($name, $filename: "res/" + $name + ".png", $repeat: null, $size: null) {
-	:global([data-editor-bg="#{$name}"] .editor-bg) {
+	[data-editor-bg="#{$name}"] .editor-bg {
 		background-color: var(--editor-bg-color);
 		@include core.img-mask(ext-url($filename), $repeat, $size);
 		@content;
@@ -18,3 +17,85 @@
 @include bg("triangles", $size: 64px);
 @include bg("waves", $size: 64px);
 @include bg("web");
+
+[data-bs-theme].scheme,
+[data-bs-theme] .scheme {
+	--jv-key-fg: rgb(var(--jv-key-fg-rgb));
+	--jv-keywd-fg: rgb(var(--jv-keywd-fg-rgb));
+	--jv-str-fg: rgb(var(--jv-str-fg-rgb));
+	--jv-num-fg: rgb(var(--jv-num-fg-rgb));
+	--jv-body-text: rgb(var(--jv-body-text-rgb));
+	--jv-body-bg: rgb(var(--jv-body-bg-rgb));
+	--jv-tertiary-text: rgb(var(--jv-tertiary-text-rgb));
+	--jv-tertiary-hover-text: rgb(var(--jv-tertiary-hover-text-rgb));
+	--jv-tertiary-active-text: rgb(var(--jv-tertiary-active-text-rgb));
+	--jv-tertiary-disabled-text: rgb(var(--jv-tertiary-disabled-text-rgb));
+	--jv-tertiary-bg: rgb(var(--jv-tertiary-bg-rgb));
+	--jv-tertiary-hover-bg: rgb(var(--jv-tertiary-hover-bg-rgb));
+	--jv-tertiary-active-bg: rgb(var(--jv-tertiary-active-bg-rgb));
+	--jv-tertiary-disabled-bg: rgb(var(--jv-tertiary-disabled-bg-rgb));
+	--jv-tertiary-border: rgb(var(--jv-tertiary-border-rgb));
+	--jv-tertiary-hover-border: rgb(var(--jv-tertiary-hover-border-rgb));
+	--jv-tertiary-active-border: rgb(var(--jv-tertiary-active-border-rgb));
+	--jv-tertiary-disabled-border: rgb(var(--jv-tertiary-disabled-border-rgb));
+	--jv-primary-text: rgb(var(--jv-primary-text-rgb));
+	--jv-primary-hover-text: rgb(var(--jv-primary-hover-text-rgb));
+	--jv-primary-active-text: rgb(var(--jv-primary-active-text-rgb));
+	--jv-primary-disabled-text: rgb(var(--jv-primary-disabled-text-rgb));
+	--jv-primary-bg: rgb(var(--jv-primary-bg-rgb));
+	--jv-primary-hover-bg: rgb(var(--jv-primary-hover-bg-rgb));
+	--jv-primary-active-bg: rgb(var(--jv-primary-active-bg-rgb));
+	--jv-primary-disabled-bg: rgb(var(--jv-primary-disabled-bg-rgb));
+	--jv-primary-border: rgb(var(--jv-primary-border-rgb));
+	--jv-primary-hover-border: rgb(var(--jv-primary-hover-border-rgb));
+	--jv-primary-active-border: rgb(var(--jv-primary-active-border-rgb));
+	--jv-primary-disabled-border: rgb(var(--jv-primary-disabled-border-rgb));
+
+	color: var(--jv-body-text);
+	--bs-border-color: var(--jv-tertiary-border);
+	--bs-body-bg: var(--jv-body-bg);
+	--bs-body-bg-rgb: var(--jv-body-bg-rgb);
+	--bs-body-color: var(--jv-body-text);
+	--bs-emphasis-color: var(--jv-body-text);
+	--bs-heading-color: var(--jv-body-text);
+	--bs-body-color-rgb: var(--jv-body-text-rgb);
+	--bs-tertiary-bg: var(--jv-tertiary-bg);
+	--bs-tertiary-bg-rgb: var(--jv-tertiary-bg-rgb);
+	--bs-tertiary-color: rgba(var(--jv-body-text-rgb), 0.5);
+	--bs-tertiary-color-rgb: var(--jv-body-text-rgb);
+	--checkbox-bg-color: var(--jv-primary-border);
+	--checkbox-border-color: var(--jv-primary-border);
+	--focus-shadow-color: rgba(var(--jv-primary-border-rgb), 0.25);
+	--focus-border-color: rgba(var(--jv-primary-border-rgb));
+	--editor-bg-color: rgba(var(--jv-primary-border-rgb), 0.5);
+
+	.btn-primary {
+		--bs-btn-bg: var(--jv-primary-bg);
+		--bs-btn-hover-bg: var(--jv-primary-active-bg);
+		--bs-btn-active-bg: var(--jv-primary-hover-bg);
+		--bs-btn-disabled-bg: var(--jv-primary-disabled-bg);
+		--bs-btn-border-color: var(--jv-primary-border);
+		--bs-btn-hover-border-color: var(--jv-primary-active-border);
+		--bs-btn-active-border-color: var(--jv-primary-hover-border);
+		--bs-btn-disabled-border-color: var(--jv-primary-disabled-border);
+		--bs-btn-color: var(--jv-primary-text);
+		--bs-btn-hover-color: var(--jv-primary-active-text);
+		--bs-btn-active-color: var(--jv-primary-hover-text);
+		--bs-btn-disabled-color: var(--jv-primary-disabled-text);
+	}
+
+	.btn-base {
+		--bs-btn-bg: var(--jv-tertiary-bg);
+		--bs-btn-hover-bg: var(--jv-tertiary-hover-bg);
+		--bs-btn-active-bg: var(--jv-tertiary-active-bg);
+		--bs-btn-disabled-bg: var(--jv-tertiary-bg);
+		--bs-btn-border-color: var(--jv-tertiary-border);
+		--bs-btn-hover-border-color: var(--jv-tertiary-active-border);
+		--bs-btn-active-border-color: var(--jv-tertiary-hover-border);
+		--bs-btn-disabled-border-color: var(--jv-tertiary-border);
+		--bs-btn-color: var(--jv-body-text);
+		--bs-btn-hover-color: var(--jv-body-text);
+		--bs-btn-active-color: var(--jv-body-text);
+		--bs-btn-disabled-color: var(--jv-body-text);
+	}
+}

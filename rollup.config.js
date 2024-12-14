@@ -5,6 +5,7 @@ import terser from '@rollup/plugin-terser';
 import json from '@rollup/plugin-json';
 import svelte from 'rollup-plugin-svelte';
 import css from 'rollup-plugin-css-only';
+import scss from 'rollup-plugin-scss';
 import * as rl from "rollup";
 import sveltePreprocess from 'svelte-preprocess';
 import * as sass from "sass";
@@ -182,12 +183,35 @@ function loader(args) {
 					sourceMap: !dist,
 					inlineSources: !dist
 				}),
-				json(),
+				json({ preferConst: true }),
 				dist && terser()
 			],
 			watch: {
 				clearScreen: false
 			},
+		},
+		{
+			input: "src/scheme-import.ts",
+			output: {
+				indent,
+				sourcemap: !dist,
+				file: path.join(lib, "schemes.js"),
+				format: 'module',
+			},
+			plugins: [
+				typescript({
+					tsconfig: "src/tsconfig.svelte.json",
+					sourceMap: !dist,
+					inlineSources: !dist
+				}),
+				resolve({
+					browser: true,
+					dedupe: ['svelte']
+				}),
+				commonjs(),
+				json({ preferConst: true }),
+				scss({ fileName: "schemes.css" }),
+			],
 		},
 		{
 			input: "./custom-manifest.json",

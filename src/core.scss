@@ -62,31 +62,3 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 		@content;
 	}
 }
-
-.expandable {
-	.expander {
-		&::before {
-			@include anim(rotate, "medium", "spring");
-			rotate: 180deg;
-			color: var(--bs-btn-color);
-
-			&:hover {
-				color: var(--bs-btn-hover-color);
-			}
-
-			&:active {
-				color: var(--bs-btn-active-color);
-			}
-		}
-
-		aspect-ratio: 1;
-	}
-
-	&:not(.expanded) > .expandable-content {
-		display: none;
-	}
-
-	&.expanded .expander::before {
-		rotate: 0deg;
-	}
-}

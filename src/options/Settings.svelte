@@ -36,19 +36,6 @@
 
 	const tabs: Tab[] = Object.keys(tabNames) as any;
 
-	type SchemeReference = [id: string, name: string];
-
-	const groupedSchemes: [name: string, schemes: SchemeReference[]][] = [
-		['Auto', []],
-		['Light', []],
-		['Dark', []],
-	];
-
-	for (const [key, value] of Object.entries(schemes.presets)) {
-		const index = value.light ? (value.dark ? 0 : 1) : 2;
-		groupedSchemes[index][1].push([key, value.name]);
-	}
-
 	const mimeValidator = new SettingListValidator();
 	const hostValidator = new SettingListValidator(/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])(:\d{1,5})?$/gi, "Invalid hostname");
 
@@ -408,7 +395,7 @@
 				<div class="input-group grp-json-style">
 					<span class="input-group-text">Colour Scheme</span>
 					<select class="form-select flex-fill" class:dirty={$changed.includes('scheme')} bind:value={$scheme}>
-						{#each groupedSchemes as [ label, values ]}
+						{#each schemes.groupedPresets as [ label, values ]}
 							{#if values.length}
 								<optgroup {label}>
 									{#each values as [ value, name ]}
