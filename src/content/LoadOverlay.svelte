@@ -25,31 +25,51 @@
 		self.$destroy();
 	}
 </script>
+<svelte:head>
+	<link rel="stylesheet" href={css}/>
+</svelte:head>
+<template>
+	<div class="root">
+		<div class="content" bind:this={elem} data-bs-theme="">
+			<span class="full-row">Load JSON viewer?</span>
+			<label class="full-row">
+				<input type="checkbox" class="form-check-input" bind:checked={remember}/>
+				Remember for this host
+			</label>
+			<button class="btn btn-success" on:click={() => action(true)}>Yes</button>
+			<button class="btn btn-danger" on:click={() => action(false)}>No</button>
+		</div>
+	</div>
+</template>
 <style lang="scss">
 	@use "../core.scss" as *;
-	@import "../../node_modules/bootstrap/scss/bootstrap.scss";
+	@import "./bootstrap.scss";
 	@import "../globals.scss";
 
-	.root {
-		display: block;
-		position: absolute;
-		inset: 0;
-	}
-	
 	:global(body) {
 		position: relative;
 	}
 
-	.content {
-		@extend body;
+	.root {
+		font-family: var(--bs-body-font-family);
 
+		display: block;
+		position: absolute;
+		inset: 0;
+	}
+
+	.content {
 		position: sticky;
 		width: max-content;
 		margin: 0 auto;
 		top: 1rem;
-		padding: $pad-med;
+		padding: $pad-med 3rem;
 		background-color: var(--bs-body-bg);
+		border-radius: var(--bs-border-radius);
+		border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
 		display: grid;
+		gap: 0.25rem;
+		text-align: center;
 
 		grid-template-rows: repeat(3, auto);
 		grid-template-columns: auto 5rem 5rem auto;
@@ -70,20 +90,10 @@
 			padding: 0 $pad-med;
 		}
 	}
+
+	label {
+		display: flex;
+		justify-content: center;
+		gap: 0.25rem;
+	}
 </style>
-<svelte:head>
-	<link rel="stylesheet" href={css}/>
-</svelte:head>
-<template>
-	<div class="root">
-		<div class="content border rounded gap-1 text-center px-5" bind:this={elem} data-bs-theme="">
-			<span class="full-row">Load JSON viewer?</span>
-			<label class="full-row d-flex justify-content-center gap-1">
-				<input type="checkbox" class="form-check-input" bind:checked={remember}/>
-				Remember for this host
-			</label>
-			<button class="btn btn-success" on:click={() => action(true)}>Yes</button>
-			<button class="btn btn-danger" on:click={() => action(false)}>No</button>
-		</div>
-	</div>
-</template>

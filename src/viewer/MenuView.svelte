@@ -129,12 +129,6 @@
 				display: none;
 			}
 		}
-
-		&[data-menu-shown="true"] {
-			> .menu-btn {
-				display: none;
-			}
-		}
 	}
 
 	.gripper {

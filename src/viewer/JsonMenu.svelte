@@ -114,8 +114,7 @@
 	@use "../core.scss" as *;
 
 	.input-group:not(.field) > .btn,
-	.input-group.field > .form-control,
-	.input-group.field > .form-select {
+	.input-group.field > .form-control {
 		width: unset;
 	}
 
