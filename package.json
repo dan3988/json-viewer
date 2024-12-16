@@ -47,7 +47,7 @@
 		"svelte": "^4.0.0",
 		"svelte-preprocess": "^5.0.4",
 		"tslib": "^2.4.1",
-		"typescript": "^5.0.4",
+		"typescript": "5.7",
 		"ws": "^8.16.0"
 	},
 	"dependencies": {

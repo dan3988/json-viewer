@@ -1,4 +1,4 @@
-import json from './schemes.json';
+import json from './schemes.json' with { type: 'json' };
 import Color from 'color';
 
 export namespace schemes {

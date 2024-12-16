@@ -1,7 +1,7 @@
 import type { DocumentHeader, DocumentRequestInfo, WorkerMessage } from "../types.js";
 import type { ImmutableArray } from "../immutable-array.js";
 import preferences from "../preferences-lite.js";
-import lib from "../lib.json";
+import lib from "../lib.json" with { type: "json" };
 import WebRequestInterceptor from "./web-request.js";
 
 var currentRequestListener: null | RequestListener = null;

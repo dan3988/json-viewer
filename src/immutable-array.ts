@@ -18,7 +18,7 @@ namespace impl {
 		return value <= min ? min : (value > max ? max : value)
 	}
 
-	export class ImmutableArray<T = any> implements IImmutableArray<T> {
+	export class ImmutableArray<T = any> {
 		static readonly #empty = new this<any>().#finalize(0);
 		static readonly empty: ImmutableArray<never> = ImmutableArray.#empty as any;
 
@@ -63,32 +63,6 @@ namespace impl {
 		readonly [i: number]: T;
 
 		declare readonly length: number;
-
-		declare [Symbol.iterator]: () => IterableIterator<T>;
-		declare includes: (searchElement: T, fromIndex?: number) => boolean;
-		declare at: (index: number) => T | undefined;
-
-		declare toString: () => string;
-		declare toLocaleString: () => string;
-
-		declare join: (separator?: string) => string;
-
-		declare indexOf: (searchElement: T, fromIndex?: number) => number;
-		declare lastIndexOf: (searchElement: T, fromIndex?: number) => number;
-
-		declare find: (predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any) => T | undefined;
-		declare findIndex: (predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any) => number;
-		declare findLast: (predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any) => T | undefined;
-		declare findLastIndex: (predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any) => number;
-
-		declare every: (predicate: (value: T, index: number, array: this) => unknown, thisArg?: any) => boolean;
-
-		declare some: (predicate: (value: T, index: number, array: this) => unknown, thisArg?: any) => boolean;
-
-		declare forEach: (callbackfn: (value: T, index: number, array: this) => void, thisArg?: any) => boolean;
-
-		declare reduce: (callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T) => T;
-		declare reduceRight: (callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T) =>T;
 
 		/**
 		 * 
@@ -352,7 +326,7 @@ interface ImmutableArrayConstructor extends ImmutableArrayConstructorBase {
 	<T>(...value: T[]): ImmutableArray<T>;
 }
 
-export const ImmutableArray: ImmutableArrayConstructor = <any>new Proxy(impl.ImmutableArray as ImmutableArrayConstructorBase, {
+export const ImmutableArray: ImmutableArrayConstructor = <any>new Proxy(impl.ImmutableArray as any as ImmutableArrayConstructorBase, {
 	apply(target, _, argArray) {
 		return target.from(argArray);
 	},
