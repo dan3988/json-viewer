@@ -74,7 +74,7 @@ function run() {
 			const prefs = await preferences.lite.manager.watch();
 			const bound = prefs.bind()
 				.map(["background", "menuAlign", "darkMode"])
-				.map("scheme", "currentScheme", v => schemes.presets[v])
+				.map(["scheme", "customSchemes"], "currentScheme", (scheme, customSchemes) => schemes.presets[scheme] ?? customSchemes[scheme])
 				.build();
 
 			function updateIndent() {

@@ -5,19 +5,47 @@
 	const radioTheme: NamedRadioItem<boolean | null>[] = [[null, "Auto"], [false, "Light"], [true, "Dark"]];
 </script>
 <script lang="ts">
+	import { CustomScheme } from "./custom-scheme";
 	import type preferences from "../preferences-lite";
 	import type EditorModel from "./editor";
 	import type ThemeTracker from "../theme-tracker";
 	import schemes from "../schemes";
 	import Radio from "./Radio.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
+	import ColorSchemeEditor from "./ColorSchemeEditor.svelte";
 
 	export let model: EditorModel<preferences.lite.Bag>;
+	export let tracker: ThemeTracker;
 	export let maxIndentClass: number;
+	export let schemeEditor: CustomScheme;
 
-	$: ({ changed, props: { darkMode, scheme, menuAlign, background } } = model);
+	$: ({ changed, props: { darkMode, scheme, menuAlign, background, customSchemes } } = model);
+
+	$: customSchemeList = Object.entries($customSchemes);
+
+	function copyScheme() {
+		const copy = structuredClone(schemeEditor.scheme.value);
+		const id = crypto.randomUUID();
+		copy.name = copy.name + " (Copy)";
+		customSchemes.set({ ...customSchemes.value, [id]: copy as any });
+		schemeEditor = new CustomScheme(copy);
+		scheme.set(id);
+	}
+
+	function removeScheme() {
+		const copy = { ...customSchemes };
+		delete copy[$scheme];
+		let nextScheme = 'default';
+		if (customSchemeList.length > 1) {
+			const index =  customSchemeList.findIndex(([key]) => key === scheme.value);
+			nextScheme = customSchemeList[Math.max(0, index)][0];
+		}
+
+		scheme.set(nextScheme);
+		customSchemes.set(copy as any);
+	}
 </script>
-<div class="root">
+<div class="root overflow-hidden">
 	<div class="options">
 		<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$changed.includes('menuAlign')}>
 			<span class="input-group-text">Menu Alignment</span>
@@ -53,7 +81,18 @@
 						</optgroup>
 					{/if}
 				{/each}
+				{#if customSchemeList.length}
+					<optgroup label="Custom">
+						{#each customSchemeList as [ id, scheme ]}
+							<option value={id}>{scheme.name}</option>
+						{/each}
+					</optgroup>
+				{/if}
 			</select>
+			<button class="btn btn-base" on:click={copyScheme}>Copy</button>
+		</div>
+		<div class="scheme-editor flex-fill border rounded p-1 overflow-y-auto">
+			<ColorSchemeEditor darkMode={$tracker} disabled={$scheme in schemes.presets} scheme={schemeEditor} remove={removeScheme} />
 		</div>
 	</div>
 	<div class="preview-wrapper border rounded">
@@ -64,16 +103,16 @@
 	</div>
 </div>
 <style lang="scss">
-	$breakpoint-lg: 960px;
+	$breakpoint: 960px;
 
-	@media only screen and (max-width: $breakpoint-lg) {
+	@media only screen and (max-width: $breakpoint) {
 		.root {
 			--start-flex: 0 0 auto;
 			flex-direction: column;
 		}
 	}
 
-	@media only screen and (min-width: $breakpoint-lg) {
+	@media only screen and (min-width: $breakpoint) {
 		.root {
 			--start-flex: 0 0 500px;
 			flex-direction: row;

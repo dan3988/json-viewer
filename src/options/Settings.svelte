@@ -1,4 +1,6 @@
 <script lang="ts" context="module">
+	export type SchemeRef = [id: string, scheme: schemes.ColorScheme];
+
 	type Tab = keyof typeof tabNames;
 
 	const tabNames = {
@@ -11,26 +13,40 @@
 </script>
 <script lang="ts">
 	import type { EditorModel, EntryRef } from "./editor";
+	import type { Unsubscriber } from "svelte/store";
 	import type ThemeTracker from "../theme-tracker";
-	import type ImmutableArray from "../immutable-array";
 	import TabBar from "../shared/TabBar.svelte";
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import preferences from "../preferences-lite";
 	import fs from "../fs";
 	import SettingsGeneral from "./SettingsGeneral.svelte";
 	import SettingsAppearance from "./SettingsAppearance.svelte";
-    import schemes from "../schemes";
-    import SettingsAdvanced from "./SettingsAdvanced.svelte";
+	import schemes from "../schemes";
+	import SettingsAdvanced from "./SettingsAdvanced.svelte";
+	import { CustomScheme } from "./custom-scheme";
 
 	export let model: EditorModel<preferences.lite.Bag>;
 	export let tracker: ThemeTracker;
 
 	const webRequestPerm: chrome.permissions.Permissions = { permissions: ["webRequest"] };
 
-	$: ({ changed, props: { darkMode, scheme, background } } = model);
+	$: ({ changed, props: { darkMode, scheme, background, customSchemes } } = model);
 	$: tracker.preferDark = $darkMode;
-	$: currentScheme = schemes.presets[$scheme] as schemes.ColorScheme;
-	$: maxIndentClass = schemes.getIndentCount(currentScheme, $tracker);
+	$: schemeEditor = new CustomScheme(schemes.presets[$scheme] ?? $customSchemes[$scheme]);
+	$: currentScheme = schemeEditor.scheme;
+	$: maxIndentClass = schemes.getIndentCount($currentScheme, $tracker);
+	$: schemeEditor, onSchemeEditorChanged();
+
+	let unsub: undefined | Unsubscriber;
+
+	function onSchemeEditorChanged() {
+		unsub?.();
+		unsub = schemeEditor.scheme.listen(v => {
+			const copy = { ...$customSchemes };
+			copy[$scheme] = v as any;
+			customSchemes.set(copy);
+		})
+	}
 
 	async function save() {
 		const bag: Dict = {};
@@ -41,8 +57,11 @@
 				useWebRequest.reset();
 		}
 
-		for (const key of $changed)
-			bag[key] = model.props[key].value;
+		for (const key of $changed) {
+			const preference = preferences.lite.manager.getPreference(key);
+			const value = model.props[key].value;
+			bag[key] = preference.type.serialize(value);
+		}
 
 		await preferences.lite.manager.set(bag);
 
@@ -51,9 +70,16 @@
 	}
 
 	async function exportSettings() {
-		const settings = await preferences.lite.manager.get();
-		const indent = settings.indentChar.repeat(settings.indentCount);
-		const json = JSON.stringify(settings, undefined, indent);
+		const values = await preferences.lite.manager.get();
+		const result: any = {};
+		for (const setting of preferences.lite.values as readonly preferences.Preference<any, preferences.lite.Key>[]) {
+			let value: any = values[setting.key];
+			if (value !== undefined)
+				result[setting.key] = setting.type.serialize(value);
+		}
+
+		const indent = values.indentChar.repeat(values.indentCount);
+		const json = JSON.stringify(result, undefined, indent);
 		await fs.saveFile(json, `jsonviewer-${new Date().toISOString().slice(0, -5)}`, 'json');
 	}
 
@@ -68,7 +94,7 @@
 			for (const setting of preferences.lite.values as readonly preferences.Preference<any, preferences.lite.Key>[]) {
 				let value: any = values[setting.key];
 				if (value !== undefined) {
-					value = setting.type(value);
+					value = setting.type.deserialize(value);
 					const entry: EntryRef<any, any> = model.props[setting.key];
 					entry.set(value);
 				}
@@ -130,7 +156,7 @@
 	}
 </style>
 <svelte:window on:beforeunload={onUnload} />
-<SchemeStyleSheet scheme={currentScheme} />
+<SchemeStyleSheet scheme={$currentScheme} />
 <div class="root bg-body overflow-hidden d-flex flex-column scheme" data-editor-bg={$background}>
 	<div class="header bg-body-tertiary border-bottom gap-2">
 		<img src="/res/icon128.png" alt="icon" />
@@ -160,7 +186,7 @@
 			<SettingsGeneral {model} />
 		</div>
 		<div class="tab-wrapper" hidden={tab !== 'style'}>
-			<SettingsAppearance {model} {maxIndentClass} />
+			<SettingsAppearance {model} {tracker} {maxIndentClass} bind:schemeEditor />
 		</div>
 		<div class="tab-wrapper" hidden={tab !== 'network'}>
 			<SettingsAdvanced {model} />
