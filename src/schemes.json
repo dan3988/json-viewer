@@ -17,7 +17,6 @@
 			"primary": {
 				"text": [ 0, 0, 0.98 ],
 				"background": [ 0.6, 0.98, 0.52 ],
-				"border": [ 0.6, 0.98, 0.52 ],
 				"lightnessMod": -0.25
 			},
 			"indents": [
@@ -42,7 +41,6 @@
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.6, 0.98, 0.52 ],
-				"border": [ 0.6, 0.98, 0.52 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [
@@ -70,7 +68,6 @@
 			"primary": {
 				"text": [ 0.67, 0.12, 0.95 ],
 				"background": [ 0.92, 1, 0.45 ],
-				"border": [ 0.92, 1, 0.45 ],
 				"lightnessMod": -0.25
 			},
 			"indents": [
@@ -98,7 +95,6 @@
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.92, 1, 0.45 ],
-				"border": [ 0.92, 1, 0.45 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [
@@ -129,7 +125,6 @@
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.78, 1, 0.4 ],
-				"border": [ 0.78, 1, 0.4 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [
@@ -157,7 +152,6 @@
 			"primary": {
 				"text": [ 0.61, 0.27, 0.98 ],
 				"background": [ 0.48, 0.6, 0.5 ],
-				"border": [ 0.48, 0.6, 0.5 ],
 				"lightnessMod": -0.25
 			},
 			"indents": [
@@ -185,7 +179,6 @@
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.48, 0.4, 0.4 ],
-				"border": [ 0.48, 0.4, 0.4 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [
@@ -216,7 +209,6 @@
 			"primary": {
 				"text": [ 0, 0, 0.98 ],
 				"background": [ 0.58, 1, 0.38 ],
-				"border": [ 0.58, 1, 0.38 ],
 				"lightnessMod": -0.25
 			},
 			"indents": [
@@ -241,7 +233,6 @@
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.14, 0.11, 0.41 ],
-				"border": [ 0.14, 0.11, 0.41 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [
@@ -269,7 +260,6 @@
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.38, 0.76, 0.34 ],
-				"border": [ 0.38, 0.76, 0.34 ],
 				"lightnessMod": -0.25
 			},
 			"indents": [
@@ -294,7 +284,6 @@
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.37, 0.66, 0.26 ],
-				"border": [ 0.37, 0.66, 0.26 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [
@@ -322,7 +311,6 @@
 			"primary": {
 				"text": [ 0.94, 1, 0.5 ],
 				"background": [ 0.94, 1, 0.15 ],
-				"border": [ 0.94, 1, 0.5 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [
@@ -380,7 +368,6 @@
 			"primary": {
 				"text": [ 0.12, 0.87, 0.94 ],
 				"background": [ 0.14, 0.34, 0.51 ],
-				"border": [ 0.14, 0.34, 0.51 ],
 				"lightnessMod": -0.25
 			},
 			"indents": [
@@ -399,13 +386,12 @@
 			"tertiary": {
 				"text": [ 0.52, 0.08, 0.55 ],
 				"background": [ 0.54, 1, 0.16 ],
-				"border": [ 0.53, 1, 0.31 ],
+				"border": [ 0.53, 1, 0.25 ],
 				"lightnessMod": 0.1
 			},
 			"primary": {
 				"text": [ 0, 0, 1 ],
 				"background": [ 0.49, 0.59, 0.4 ],
-				"border": [ 0.49, 0.59, 0.4 ],
 				"lightnessMod": 0.2
 			},
 			"indents": [

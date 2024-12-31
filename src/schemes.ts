@@ -18,7 +18,7 @@ export namespace schemes {
 
 	export interface ColorSet {
 		text?: ColorValues;
-		background?: ColorValues;
+		background: ColorValues;
 		border?: ColorValues;
 		lightnessMod?: number;
 		saturationMod?: number;
@@ -67,6 +67,17 @@ export namespace schemes {
 		}
 
 		return builder.toString();
+	}
+
+	export function deserializeColor([h, s, l]: schemes.ColorValues) {
+		return Color.hsl(h * 360, s * 100, l * 100);
+	}
+
+	export function serializeColor(color: Color): schemes.ColorValues {
+		const h = color.hue();
+		const s = color.saturationl();
+		const l = color.lightness();
+		return [h / 360, s / 100, l / 100];
 	}
 }
 
@@ -147,23 +158,18 @@ class TextCssBuilder extends CssBuilder {
 		return this;
 	}
 
-	
 	toString(): string {
 		return this.#parts.join('');
 	}
 }
 
-function parseColor([h, s, l]: schemes.ColorValues) {
-	return Color.hsl(h * 360, s * 100, l * 100);
-}
-
 function compileVariables(builder: CssRuleBuilder, values: schemes.ColorSchemeValues) {
-	const key = parseColor(values.key);
-	const keyword = parseColor(values.keyword);
-	const str = parseColor(values.str);
-	const num = parseColor(values.num);
-	const text = parseColor(values.text);
-	const background = parseColor(values.background);
+	const key = schemes.deserializeColor(values.key);
+	const keyword = schemes.deserializeColor(values.keyword);
+	const str = schemes.deserializeColor(values.str);
+	const num = schemes.deserializeColor(values.num);
+	const text = schemes.deserializeColor(values.text);
+	const background = schemes.deserializeColor(values.background);
 	builder
 		.color('jv-key-fg', key)
 		.color('jv-keywd-fg', keyword)
@@ -176,19 +182,23 @@ function compileVariables(builder: CssRuleBuilder, values: schemes.ColorSchemeVa
 	compileSet(builder, 'jv-primary', values.primary);
 
 	for (let i = 0; i < values.indents.length; i++)
-		builder.color(`jv-indent-${i}`, parseColor(values.indents[i]));
+		builder.color(`jv-indent-${i}`, schemes.deserializeColor(values.indents[i]));
 }
 
 function applyModifier(h: number, s: number, l: number, set: schemes.ColorSet, factor = 1) {
 	const { lightnessMod = 0, saturationMod = 0 } = set;
-	return parseColor([h, s + (factor * saturationMod), l + (factor * lightnessMod)]);
+	return schemes.deserializeColor([h, s + (factor * saturationMod), l + (factor * lightnessMod)]);
 }
 
-function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: 'text' | 'background' | 'border', set: schemes.ColorSet) {
-	const value = set[key];
+type SetColor = 'text' | 'background' | 'border';
+
+function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSet): void;
+function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string, suffix: string, key: K, set: schemes.ColorSet, fallback: Exclude<SetColor, K>): void;
+function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSet, fallback?: SetColor) {
+	const value = set[key] ?? (fallback && set[fallback]);
 	if (value) {
 		const [h, s, l] = value;
-		const color = parseColor(value);
+		const color = schemes.deserializeColor(value);
 		builder
 			.color(`${prefix}-${suffix}`, color)
 			.color(`${prefix}-hover-${suffix}`, applyModifier(h, s, l, set, 2))
@@ -200,7 +210,7 @@ function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key
 function compileSet(builder: CssRuleBuilder, prefix: string, set: schemes.ColorSet) {
 	writeColor(builder, prefix, 'text', 'text', set);
 	writeColor(builder, prefix, 'bg', 'background', set);
-	writeColor(builder, prefix, 'border', 'border', set);
+	writeColor(builder, prefix, 'border', 'border', set, 'background');
 }
 
 function compileValues(builder: CssBuilder, theme: string, values: schemes.ColorSchemeValues, forceColorScheme = false) {
