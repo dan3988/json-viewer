@@ -18,12 +18,12 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 			this.#prefs.set(pref.key, pref);
 	}
 
-	#getPref(key: string) {
+	getPreference<K extends string & keyof T>(key: K): preferences.Preference<T[K], K> {
 		const pref = this.#prefs.get(key);
 		if (pref == null)
 			throw new TypeError(`Unknown setting: '${key}'`);
 
-		return pref;
+		return pref as any;
 	}
 
 	async #get(prefs: preferences.Preference[], entries = false): Promise<[Dict, WatchTypes]> {
@@ -56,7 +56,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 
 		for (const pref of prefs) {
 			const { key, type } = pref;
-			const value = key in results ? type(results[key]) : pref.getDefaultValue();
+			const value = key in results ? type.deserialize(results[key]) : pref.getDefaultValue();
 			output[key] = entries ? [pref, value] : value;
 		}
 		
@@ -64,7 +64,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 	}
 
 	#getPreferences(keys: readonly string[]) {
-		return keys.length ? keys.map(this.#getPref, this) : Array.from(this.#prefs.values());
+		return keys.length ? keys.map(this.getPreference, this) : Array.from(this.#prefs.values());
 	}
 
 	get(): Promise<T>;
@@ -87,7 +87,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 	set(values: Partial<T>): Promise<void>;
 	async set(arg0: string | Dict, arg1?: any): Promise<void> {
 		if (typeof arg0 === "string") {
-			const pref = this.#getPref(arg0);
+			const pref = this.getPreference(arg0);
 			const store = chrome.storage[pref.synced ? "sync" : "local"];
 			if (pref.type.serialize)
 				arg1 = pref.type.serialize(arg1);
@@ -98,7 +98,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 			let sync: undefined | Dict;
 
 			for (const key in arg0) {
-				const pref = this.#getPref(key);
+				const pref = this.getPreference(key);
 				const bag = (pref.synced ? local ??= {} : sync ??= {})
 				let value = arg0[key];
 				if (pref.type.serialize)
@@ -130,7 +130,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 			for (const key in changes) {
 				if (controller.keys.has(key)) {
 					const pref = this.#prefs.get(key)!;
-					values[key] = pref.type(changes[key].newValue);
+					values[key] = pref.type.deserialize(changes[key].newValue);
 					count++;
 				}
 			}
@@ -151,8 +151,9 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 
 export namespace preferences {
 	export interface SettingType<T = unknown> {
-		(value: any): T;
-		serialize?(value: T): any;
+		readonly name: string;
+		deserialize(value: any): T;
+		serialize(value: T): any;
 		areSame(x: T, y: T): boolean;
 	}
 
@@ -161,53 +162,239 @@ export namespace preferences {
 	}
 
 	export namespace types {
-		const strictEquals = (x: any, y: any) => x === y;
+		abstract class BaseSettingType<T> implements SettingType<T> {
+			constructor(readonly name: string) {}
 
-		export const bool: SettingType<boolean> = (v) => Boolean(v);
-		bool.areSame = strictEquals;
+			abstract deserialize(value: any): T;
+			abstract areSame(x: T, y: T): boolean;
 
-		export const int: SettingType<number> = (v) => Number(v);
-		int.areSame = strictEquals;
-
-		export const number: SettingType<number> = (v) => Number(v);
-		number.areSame = strictEquals;
-
-		export const string: SettingType<string> = (v) => String(v);
-		string.areSame = strictEquals;
-
-		export function enumeration<T, const E extends T[]>(underlyingType: SettingType<T>, values: E, defaultValue: E[number]) {
-			const impl: SettingType<E[number]> = (value: any) => {
-				var i = values.indexOf(value);
-				return i < 0 ? defaultValue : values[i];
-			};
-
-			impl.areSame = underlyingType.areSame;
-			return impl;
+			serialize(value: T): any {
+				return value;
+			}
 		}
 
-		export function list<T>(underlyingType: SettingType<T>) {
-			const impl: SettingType<ImmutableArray<T>> = (value: any) => ImmutableArray.from(value, underlyingType);
-			impl.areSame = (x, y) => {
+		class PrimitiveSettingType<T> extends BaseSettingType<T> {
+			constructor(readonly type: (v: any) => T, name: string = type.name) {
+				super(name);
+			}
+
+			deserialize(value: any): T {
+				return this.type(value);
+			}
+
+			areSame(x: T, y: T): boolean {
+				return x === y;
+			}
+		}
+
+		export const bool = new PrimitiveSettingType(Boolean);
+		export const int = new PrimitiveSettingType(parseInt, 'Integer');
+		export const number = new PrimitiveSettingType(Number);
+		export const string = new PrimitiveSettingType(String);
+
+		const primitives = { bool, int, number, string };
+
+		type Primitives = { [P in keyof typeof primitives]: typeof primitives[P] extends SettingType<infer V> ? V : never };
+
+		function toType(value: SettingType | keyof Primitives) {
+			return typeof value === 'string' ? primitives[value] : value;
+		}
+
+		class EnumerationSettingType<T, const E extends T[]> extends BaseSettingType<E[number]> {
+			constructor(readonly underlyingType: SettingType<T>, readonly values: E, readonly defaultValue: E[number]) {
+				super(`Enum<${underlyingType.name}>`);
+			}
+
+			deserialize(value: any): E[number] {
+				var i = this.values.indexOf(value);
+				return i < 0 ? this.defaultValue : this.values[i];
+			}
+
+			areSame(x: E[number], y: E[number]): boolean {
+				return this.underlyingType.areSame(x, y);
+			}
+		}
+
+		export function enumeration<T, const E extends T[]>(underlyingType: SettingType<T>, values: E, defaultValue: E[number]): SettingType<E[number]>
+		export function enumeration<K extends keyof Primitives, const E extends Primitives[K][]>(underlyingType: K, values: E, defaultValue: E[number]): SettingType<E[number]>
+		export function enumeration(underlyingType: SettingType | keyof Primitives, values: any[], defaultValue: any) {
+			return new EnumerationSettingType(toType(underlyingType), values, defaultValue);
+		}
+
+		class ListSettingType<T> extends BaseSettingType<ImmutableArray<T>> {
+			constructor(readonly underlyingType: SettingType<T>) {
+				super(`List<${underlyingType.name}>`);
+			}
+
+			serialize(value: ImmutableArray<T>) {
+				return Array.isArray(value) ? value : value.toJSON();
+			}
+
+			deserialize(value: any): ImmutableArray<T> {
+				return ImmutableArray.from<T>(value);
+			}
+			
+			areSame(x: ImmutableArray<T>, y: ImmutableArray<T>): boolean {
 				if (x.length !== y.length)
 					return false;
 
 				for (let i = 0; i < x.length; i++)
-					if (!underlyingType.areSame(x[i], y[i]))
+					if (!this.underlyingType.areSame(x[i], y[i]))
 						return false;
 
 				return true;
-			};
-
-			impl.serialize = (v) => v.toJSON();
-
-			return impl;
+			}
 		}
 
-		export function nullable<T>(underlyingType: SettingType<T>) {
-			const impl: SettingType<T | null> = (value: any) => value == null ? null : underlyingType(value);
-			impl.areSame = strictEquals;
-			return impl;
+		export function list<T>(underlyingType: SettingType<T>): SettingType<ImmutableArray<T>>
+		export function list<K extends keyof Primitives>(underlyingType: K): SettingType<ImmutableArray<Primitives[K]>>
+		export function list(underlyingType: SettingType | keyof Primitives) {
+			return new ListSettingType(toType(underlyingType));
 		}
+
+		class DictionarySettingType<T> extends BaseSettingType<Dict<T>> {
+			constructor(readonly valueType: SettingType<T>) {
+				super(`Dictionary<${valueType.name}>`);
+			}
+
+			serialize(value: Dict<T>) {
+				const result: Dict<T> = {};
+				for (const key in value)
+					result[key] = this.valueType.serialize(value[key]);
+
+				return result;
+			}
+
+			deserialize(value: any): Dict<T> {
+				const result: Dict<T> = Object.create(null);
+				for (const key in value)
+					result[key] = this.valueType.deserialize(value[key]);
+	
+				return result;
+			}
+
+			areSame(x: Dict<T>, y: Dict<T>): boolean {
+				const keys = Object.keys(x);
+				if (keys.length != Object.keys(y).length)
+					return false;
+	
+				for (const key of keys)
+					if (!(key in y) || !this.valueType.areSame(x[key], y[key]))
+						return false;
+
+				return true;
+			}
+		}
+
+		export function dictionary<T>(valueType: SettingType<T>): SettingType<Dict<T>>
+		export function dictionary<K extends keyof Primitives>(valueType: K): SettingType<Dict<Primitives[K]>>
+		export function dictionary(valueType: SettingType | keyof Primitives) {
+			return new DictionarySettingType(toType(valueType));
+		}
+
+		class ObjectSettingType<T> extends BaseSettingType<T> {
+			constructor(readonly schema: { [P in keyof T]: SettingType<T[P]> }) {
+				super('Object');
+			}
+
+			serialize(value: T) {
+				const result: any = {};
+				for (const key in this.schema)
+					result[key] = this.schema[key].serialize(value[key]);
+
+				return result;
+			}
+
+			deserialize(value: any): T {
+				const result: any = {};
+				for (const key in this.schema)
+					result[key] = this.schema[key].deserialize(value[key]);
+
+				return result;
+			}
+
+			areSame(x: T, y: T): boolean {
+				for (const key in this.schema) {
+					const type = this.schema[key];
+					if (!type.areSame(x[key], y[key]))
+						return false;
+				}
+
+				return true;
+			}
+		}
+
+		export function object<T>(schema: { [P in keyof T]: SettingType<T[P]> }) {
+			return new ObjectSettingType(schema);
+		}
+
+		type TupleSchema<T extends readonly any[]> = readonly SettingType[] & { [P in number & keyof T]: SettingType<T[P]> };
+
+		class TupleSettingType<const T extends readonly any[]> extends BaseSettingType<T> {
+			constructor(readonly schema: TupleSchema<T>) {
+				super('Tuple');
+			}
+
+			serialize(value: T) {
+				const result: any[] = [];
+				for (let i = 0; i < this.schema.length; i++) {
+					const v = this.schema[i].serialize(value[i]);
+					result.push(v);
+				}
+
+				return result as any;
+			}
+			
+			deserialize(value: any): T {
+				const result: any[] = [];
+				for (let i = 0; i < this.schema.length; i++) {
+					const v = this.schema[i].deserialize(value[i]);
+					result.push(v);
+				}
+
+				return result as any;
+			}
+
+			areSame(x: T, y: T): boolean {
+				for (const key in this.schema) {
+					const type = this.schema[key];
+					if (!type.areSame(x[key], y[key]))
+						return false;
+				}
+
+				return true;
+			}
+		}
+
+		export function tuple<const T extends readonly any[]>(...schema: TupleSchema<T>) {
+			return new TupleSettingType(schema);
+		}
+
+		class NullableSettingType<T> extends BaseSettingType<T | null> {
+			constructor(readonly underlyingType: SettingType<T>) {
+				super(`Nullable<${underlyingType.name}>`);
+			}
+
+			serialize(value: T | null) {
+				return value == null ? null : this.underlyingType.serialize(value);
+			}
+
+			deserialize(value: any): T | null {
+				return value == null ? null : this.underlyingType.deserialize(value);
+			}
+
+			areSame(x: T | null, y: T | null): boolean {
+				return x === null ? y === null : (y !== null && this.underlyingType.areSame(x, y));
+			}
+		}
+
+		export function nullable<T>(underlyingType: SettingType<T>): SettingType<null | T>
+		export function nullable<K extends keyof Primitives>(underlyingType: K): SettingType<null | Primitives[K]>
+		export function nullable(underlyingType: SettingType | keyof Primitives) {
+			return new NullableSettingType(toType(underlyingType));
+		}
+
+		export type ValueOf<T extends SettingType> = T extends SettingType<infer V> ? V : unknown;
 	}
 
 	export class Preference<T = any, K extends string = string> {
@@ -235,8 +422,12 @@ export namespace preferences {
 			return new Preference(key, types.enumeration(underlyingType, values, defaultValue), synced, defaultValue);
 		}
 
-		static nullable<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: null | T): Preference<T | null, K> {
+		static nullable<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: null | T): Preference<null | T, K> {
 			return new Preference(key, types.nullable(underlyingType), synced, defaultValue ?? null);
+		}
+
+		static dictionary<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue: Dict<T> = {}): Preference<Dict<T>, K> {
+			return new Preference(key, types.dictionary(underlyingType), synced, defaultValue);
 		}
 
 		readonly #key: K;
@@ -279,6 +470,8 @@ export namespace preferences {
 	export type ToEntries<T, K extends string & keyof T = string & keyof T> = { [P in K]: Entries<T[P], P> };
 
 	export interface PreferencesManager<T extends Dict> {
+		getPreference<K extends string & keyof T>(key: K): Preference<T[K], K>;
+
 		get(): Promise<T>;
 		get<const K extends (string & keyof T)[]>(...keys: K): Promise<Pick<T, K[number]>>;
 		
@@ -300,6 +493,7 @@ export namespace preferences {
 	export var PreferencesManager: PreferencesManagerConstructor = _PreferencesManager;
 
 	export type ValuesOf<T extends PreferencesManager<any>> = T extends PreferencesManager<infer V> ? V : unknown;
+	export type ValueOf<T extends Preference> = T extends Preference<infer V> ? V : unknown;
 }
 
 export default preferences;
