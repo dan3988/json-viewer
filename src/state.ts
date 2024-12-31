@@ -1,7 +1,8 @@
-import type { Invalidator, Readable, Subscriber, Unsubscriber, Updater, Writable } from "svelte/store";
+import type { Subscriber, Unsubscriber, Updater, Writable } from "svelte/store";
+import { Store, WritableStoreImpl } from "./store.js";
 import { defValue } from "./util.js";
 
-export interface Property<Props extends Dict, Key extends keyof Props> extends Readable<Props[Key]> {
+export interface Property<Props extends Dict, Key extends keyof Props> extends Store<Props[Key]> {
 	readonly key: Key;
 	readonly value: Props[Key];
 }
@@ -57,8 +58,8 @@ type Entries<T extends Dict> = { readonly [P in keyof T]: Entry<T, P> };
 
 type IProperty<Props extends Dict, Key extends keyof Props> = Property<Props, Key>;
 
-class Entry<Props extends Dict = any, Key extends keyof Props = any> {
-	static readonly Property = class Property<Props extends Dict, Key extends keyof Props> implements IProperty<Props, Key> {
+class Entry<Props extends Dict = any, Key extends keyof Props = any> extends WritableStoreImpl<Props[Key]> {
+	static readonly Property = class Property<Props extends Dict, Key extends keyof Props> extends Store<Props[Key]> implements IProperty<Props, Key> {
 		readonly #entry: Entry<Props, Key>;
 
 		get key() {
@@ -66,17 +67,18 @@ class Entry<Props extends Dict = any, Key extends keyof Props = any> {
 		}
 
 		get value() {
-			return this.#entry.#value;
+			return this.#entry.value;
 		}
 
 		constructor(entry: Entry<Props, Key>) {
+			super();
 			this.#entry = entry;
 		}
 
-		subscribe(run: Subscriber<Props[Key]>, invalidate?: Invalidator<Props[Key]> | undefined): Unsubscriber {
-			return this.#entry.subscribe(run, invalidate);
+		listen(listener: Subscriber<Props[Key]>, invalidate?: Action): Unsubscriber {
+			return this.#entry.listen(listener, invalidate);
 		}
-		
+
 		static readonly WritableProperty = class<Props extends Dict, Key extends keyof Props> extends this<Props, Key> implements WritableProperty<Props, Key> {
 			readonly #prop: Property<Props, Key>;
 	
@@ -90,58 +92,39 @@ class Entry<Props extends Dict = any, Key extends keyof Props = any> {
 			}
 	
 			set(value: Props[Key]): void {
-				this.#entry.setValue(value);
+				this.#entry.set(value);
 			}
 
 			update(updater: Updater<Props[Key]>): void {
-				const v = updater(this.#entry.#value);
-				this.#entry.setValue(v);
+				const v = updater(this.#entry.value);
+				this.#entry.set(v);
 			}
 		}
 	}
 
 	readonly #key: Key;
-	readonly #subs: Map<number, Invalidator<Props[Key]>>;
 	readonly #prop: WritableProperty<Props, Key>;
-	#subNo: number;
-	#value: Props[Key];
 
 	get prop() {
 		return this.#prop;
 	}
 
-	get value() {
-		return this.#value;
-	}
-
 	constructor(key: Key, value: Props[Key]) {
+		super(value);
 		this.#key = key;
-		this.#value = value;
 		this.#prop = new Entry.Property.WritableProperty(this);
-		this.#subs = new Map;
-		this.#subNo = 0;
 	}
 
-	#unsubscribe(subNo: number): void {
-		this.#subs.delete(subNo);
-	}
-
+	/**
+	 * @deprecated use set(value);
+	 */
 	setValue(v: Props[Key]): boolean {
-		if (this.#value !== v) {
-			this.#value = v;
-			this.#subs.forEach(fn => fn(v));
+		if (this.value !== v) {
+			this.value = v;
 			return true;
 		} else {
 			return false;
 		}
-	}
-
-	subscribe(run: Subscriber<Props[Key]>, invalidate?: Invalidator<Props[Key]>): Unsubscriber {
-		const value = this.#value;
-		run(value);
-		const subNo = this.#subNo++;
-		this.#subs.set(subNo, <any>(invalidate ?? run));
-		return this.#unsubscribe.bind(this, subNo);
 	}
 }
 
@@ -155,9 +138,9 @@ class MappedEntry<Source extends Dict, Props extends Dict = any, Key extends key
 		this.#transformer = transformer;
 	}
 
-	update(src: IState<Source>) {
+	sourceUpdated(src: IState<Source>) {
 		const value = this.#transformer.call(undefined, src);
-		return this.setValue(value);
+		return this.set(value);
 	}
 }
 
@@ -394,7 +377,7 @@ class State<Props extends Dict = Dict> implements IState<Props> {
 	
 				for (const key of toUpdate) {
 					const entry = this.#entries[key];
-					if (entry.update(src)) {
+					if (entry.sourceUpdated(src)) {
 						count++;
 						changes[key] = entry.value;
 					}
@@ -404,7 +387,7 @@ class State<Props extends Dict = Dict> implements IState<Props> {
 					this.#fireChange(changes);
 			} else {
 				for (const key of toUpdate)
-					this.#entries[key].update(src);
+					this.#entries[key].sourceUpdated(src);
 			}
 		}
 	}
