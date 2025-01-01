@@ -64,7 +64,7 @@ export class CustomScheme {
 		readonly #key: SetModKey;
 	
 		constructor(owner: CustomScheme, darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, key: SetModKey) {
-			const value = (values[key] ?? 0) * 100;
+			const value = (values[set][key] ?? 0) * 100;
 			super(value);
 			this.#owner = owner;
 			this.#darkMode = darkMode;
