@@ -20,23 +20,23 @@ function testInstance<T>(value: ImmutableArray<T>, expected: Iterable<T>, msg?: 
 	assert.isFrozen(value, msg && msg + ': expected result to be sealed');
 }
 
-function assertReturnsSelf<T, K extends string & keyof ImmutableArray>(arr: ImmutableArray<T>, key: K, ...args: ImmutableArray<T>[K] extends (...args: infer A) => any ? A : never): ImmutableArray<T>[K] extends (...args: any[]) => infer R ? R : never {
-	const fn = arr[key] as Function;
-	const result = Reflect.apply(fn, arr, args);
+function assertReturnsSelf<T, K extends string & keyof typeof ImmutableArray>(arr: ImmutableArray<T>, key: K, ...args: typeof ImmutableArray[K] extends (array: ImmutableArray<T>, ...args: infer A) => any ? A : never): typeof ImmutableArray[K] extends (...args: any[]) => infer R ? R : never {
+	const fn = ImmutableArray[key] as Function;
+	const result = Reflect.apply(fn, undefined, [ arr, ...args ]);
 	assert.strictEqual(result, arr, `expected ${key}(${args}) to return the same instance`);
 	return result;
 }
 
-function assertReturnsEmpty<T, K extends string & keyof ImmutableArray>(arr: ImmutableArray<T>, key: K, ...args: ImmutableArray<T>[K] extends (...args: infer A) => any ? A : never): ImmutableArray<T>[K] extends (...args: any[]) => infer R ? R : never {
-	const fn = arr[key] as Function;
-	const result = Reflect.apply(fn, arr, args);
+function assertReturnsEmpty<T, K extends string & keyof typeof ImmutableArray>(arr: ImmutableArray<T>, key: K, ...args: typeof ImmutableArray[K] extends (array: ImmutableArray<T>, ...args: infer A) => any ? A : never): typeof ImmutableArray[K] extends (...args: any[]) => infer R ? R : never {
+	const fn = ImmutableArray[key] as Function;
+	const result = Reflect.apply(fn, undefined, [ arr, ...args ]);
 	assert.strictEqual(result, ImmutableArray.empty, `expected ${key}(${args}) to return ImmutableArray.empty`);
 	return result;
 }
 
 /** create an array-like object that returns `false` when calling `Array.isArray` for passing into `assert.deepEqual`. */
 function makeObjectArray<T>(values: Iterable<T>): Iterable<T> & ArrayLike<T> {
-	if (values instanceof ImmutableArray)
+	if (Array.isArray(values))
 		return values;
 
 	const obj: T[] = Object.create(Array.prototype, {
@@ -61,7 +61,6 @@ const sequence = [...generateSequence(1, 10)];
 
 describe("ImmutableArray", () => {
 	it("Should copy value when creating instance from array", () => {
-		testInstance(new ImmutableArray(...sequence), sequence);
 		testInstance(ImmutableArray(...sequence), sequence);
 		testInstance(ImmutableArray.from(sequence), sequence);
 		testInstance(ImmutableArray.from(sequence, v => v * 5), sequence.map(v => v * 5));
@@ -81,24 +80,24 @@ describe("ImmutableArray", () => {
 	it("Should return ImmutableArray.empty when creating from an empty array", () => {
 		assert.strictEqual(ImmutableArray.empty, ImmutableArray.from([]));
 		assert.strictEqual(ImmutableArray.empty, ImmutableArray());
-		assert.strictEqual(ImmutableArray.empty, new ImmutableArray());
+		assert.deepEqual(ImmutableArray.empty, []);
 	});
 
 	it("Should return correct values when calling set()", () => {
 		const value = ImmutableArray.from<any>(sequence);
-		testInstance(value.set(0, 'start'), sequence.with(0, 'start'));
-		testInstance(value.set(-1, 'end'), sequence.with(-1, 'end'));
+		testInstance(ImmutableArray.set(value, 0, 'start'), sequence.with(0, 'start'));
+		testInstance(ImmutableArray.set(value, -1, 'end'), sequence.with(-1, 'end'));
 	});
 
 	it("Should return correct values when calling add()", () => {
 		const value = ImmutableArray.from(sequence);
-		const modded = value.add('value1', 'value2', 'value3');
+		const modded = ImmutableArray.append(value, 'value1', 'value2', 'value3');
 		testInstance(modded, sequence.concat('value1', 'value2', 'value3'));
 	});
 
 	it("Should return correct values when calling insert()", () => {
 		const value = ImmutableArray.from(sequence);
-		const modded = value.insert(1, 'value1', 'value2', 'value3');
+		const modded = ImmutableArray.insert(value, 1, 'value1', 'value2', 'value3');
 		const expected = Array.from<string | number>(sequence);
 		expected.splice(1, 0, 'value1', 'value2', 'value3')
 		testInstance(modded, expected);
@@ -115,7 +114,7 @@ describe("ImmutableArray", () => {
 
 			msg += `) to return ${expected}`;
 
-			testInstance(ImmutableArray.from(sequence).remove(start, end), expected, msg);
+			testInstance(ImmutableArray.remove(sequence, start, end), expected, msg);
 		}
 
 		test(5, 6);
@@ -142,7 +141,7 @@ describe("ImmutableArray", () => {
 
 			msg += `) to return ${expected}`;
 
-			testInstance(ImmutableArray.from(sequence).slice(start, end), expected, msg);
+			testInstance(ImmutableArray.slice(sequence, start, end), expected, msg);
 		}
 
 		test(5, 6);
@@ -176,7 +175,7 @@ describe("ImmutableArray", () => {
 
 			msg += `) to return ${expected}`;
 
-			testInstance(ImmutableArray.from(sequence).splice(start, deleteCount, ...values), expected, msg);
+			testInstance(ImmutableArray.splice(sequence, start, deleteCount, ...values), expected, msg);
 		}
 
 		test(5, 5);
@@ -197,10 +196,10 @@ describe("ImmutableArray", () => {
 
 	it("Should return correct values when calling filter()", () => {
 		const value = ImmutableArray.from([0, "0", false, 1, "1", true, 2n, "test", null, { test: 1 }]);
-		testInstance(value.filter(v => typeof v === "number"), [0, 1]);
-		testInstance(value.filter(v => typeof v === "string"), ["0", "1", "test"]);
-		testInstance(value.filter(v => typeof v === "boolean"), [false, true]);
-		testInstance(value.filter(v => typeof v === "object"), [null, { test: 1 }]);
+		testInstance(ImmutableArray.filter(value, v => typeof v === "number"), [0, 1]);
+		testInstance(ImmutableArray.filter(value, v => typeof v === "string"), ["0", "1", "test"]);
+		testInstance(ImmutableArray.filter(value, v => typeof v === "boolean"), [false, true]);
+		testInstance(ImmutableArray.filter(value, v => typeof v === "object"), [null, { test: 1 }]);
 	});
 
 	it("Should return correct value for toString()", () => {
@@ -293,7 +292,7 @@ describe("ImmutableArray", () => {
 	it("Should return the correct value for reverse()", () => {
 		function test(...values: any[]) {
 			const arr = ImmutableArray.from(values);
-			testInstance(arr.reverse(), values.reverse());
+			testInstance(ImmutableArray.reverse(arr), values.reverse());
 		}
 
 		test(...sequence);

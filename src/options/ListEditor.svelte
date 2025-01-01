@@ -4,7 +4,7 @@
 	}
 </script>
 <script lang="ts">
-	import type ImmutableArray from "../immutable-array";
+	import ImmutableArray from "../immutable-array";
 
 	export let title: string;
 	export let items: ImmutableArray<string>;
@@ -18,7 +18,7 @@
 			if (validation == null) {
 				target.value = "";
 				target.setCustomValidity("");
-				items = items.add(text);
+				items = ImmutableArray.append(items, text);
 			} else {
 				target.setCustomValidity(validation);
 				target.reportValidity();
@@ -39,7 +39,7 @@
 	}
 
 	function deleteAt(index: number) {
-		items = items.splice(index, 1);
+		items = ImmutableArray.splice(items, index, 1);
 	}
 
 	function tryEdit(e: HTMLInputElement, index: number) {
@@ -61,7 +61,7 @@
 		}
 
 		e.setCustomValidity("");
-		items = items.set(index, newValue);
+		items = ImmutableArray.set(items, index, newValue);
 	}
 
 	function onKeyDown(e: HTMLInputElement, evt: KeyboardEvent, index: number) {

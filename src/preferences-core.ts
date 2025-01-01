@@ -1,5 +1,5 @@
-import { ImmutableArray } from "./immutable-array.js";
 import { State, StateController } from "./state.js";
+import ImmutableArray from "./immutable-array.js";
 
 const enum WatchTypes {
 	None,
@@ -226,14 +226,11 @@ export namespace preferences {
 				super(`List<${underlyingType.name}>`);
 			}
 
-			serialize(value: ImmutableArray<T>) {
-				return Array.isArray(value) ? value : value.toJSON();
+			deserialize(value: any): ImmutableArray<T> {
+				const type = this.underlyingType;
+				return ImmutableArray.from(value, (value) => type.deserialize(value));
 			}
 
-			deserialize(value: any): ImmutableArray<T> {
-				return ImmutableArray.from<T>(value);
-			}
-			
 			areSame(x: ImmutableArray<T>, y: ImmutableArray<T>): boolean {
 				if (x.length !== y.length)
 					return false;
@@ -247,7 +244,7 @@ export namespace preferences {
 		}
 
 		export function list<T>(underlyingType: SettingType<T>): SettingType<ImmutableArray<T>>
-		export function list<K extends keyof Primitives>(underlyingType: K): SettingType<ImmutableArray<Primitives[K]>>
+		export function list<K extends keyof Primitives>(underlyingType: K): SettingType<readonly Primitives[K][]>
 		export function list(underlyingType: SettingType | keyof Primitives) {
 			return new ListSettingType(toType(underlyingType));
 		}
@@ -328,9 +325,9 @@ export namespace preferences {
 			return new ObjectSettingType(schema);
 		}
 
-		type TupleSchema<T extends readonly any[]> = readonly SettingType[] & { [P in number & keyof T]: SettingType<T[P]> };
+		type TupleSchema<T extends ImmutableArray> = readonly SettingType[] & { [P in number & keyof T]: SettingType<T[P]> };
 
-		class TupleSettingType<const T extends readonly any[]> extends BaseSettingType<T> {
+		class TupleSettingType<const T extends ImmutableArray> extends BaseSettingType<T> {
 			constructor(readonly schema: TupleSchema<T>) {
 				super('Tuple');
 			}
@@ -366,7 +363,7 @@ export namespace preferences {
 			}
 		}
 
-		export function tuple<const T extends readonly any[]>(...schema: TupleSchema<T>) {
+		export function tuple<const T extends ImmutableArray>(...schema: TupleSchema<T>) {
 			return new TupleSettingType(schema);
 		}
 
@@ -414,7 +411,7 @@ export namespace preferences {
 			return new Preference(key, types.string, synced, defaultValue);
 		}
 
-		static list<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue: T[] | ImmutableArray<T>): Preference<ImmutableArray<T>, K> {
+		static list<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue: T[]): Preference<ImmutableArray<T>, K> {
 			return new Preference(key, types.list(underlyingType), synced, ImmutableArray.from(defaultValue));
 		}
 

@@ -1,338 +1,219 @@
-type IImmutableArray<T> = ImmutableArray<T>;
+export type ImmutableArray<T = any> = readonly T[];
 
-namespace impl {
-	function toIntegerOrInfinity(value: any) {
-		return (value = +value) !== value || value === 0 ? 0 : Math.trunc(value);
-	}
+export function ImmutableArray<T>(...values: T[]): ImmutableArray<T> {
+	return ImmutableArray.from(values);
+}
 
-	function toIndex(value: any, length: number) {
-		const int = toIntegerOrInfinity(value);
-		return int < 0 ? Math.max(length + int, 0) : Math.min(int, length);
-	}
+function clamp(value: number, min: number, max: number) {
+	return value <= min ? min : (value > max ? max : value)
+}
 
-	function isArrayLike(value: any): value is ArrayLike<any> {
-		return typeof value === "string" || "length" in value;
-	}
+/**
+ * Define a range of values starting at {@link index}, using a range of values in {@link src} starting from {@link srcIndex} and ending at {@link srcEnd}.
+ * @param index Index in this array to start defining values.
+ * @param src The object to copy values from.
+ * @param srcIndex The first index in the source to copy.
+ * @param srcEnd The last index in the source to copy.
+ * @returns The index of the last value defined, plus one.
+ */
+function addValues(array: any[], index: number, src: ArrayLike<any>, srcIndex: number = 0, srcEnd: number = src.length): number {
+	for (; srcIndex < srcEnd; index++, srcIndex++)
+		Object.defineProperty(array, index, { value: src[srcIndex], enumerable: true });
 
-	function clamp(value: number, min: number, max: number) {
-		return value <= min ? min : (value > max ? max : value)
-	}
+	return index;
+}
 
-	export class ImmutableArray<T = any> {
-		static readonly #empty = new this<any>().#finalize(0);
-		static readonly empty: ImmutableArray<never> = ImmutableArray.#empty as any;
+function asFrozen<T>(array: readonly T[]) {
+	return Object.isFrozen(array) ? array : Object.freeze([ ...array ]);
+}
 
-		static from(items: Iterable<any>, mapping?: (value: any) => any, thisArg?: any) {
-			if (items instanceof ImmutableArray)
-				return mapping ? items.map(mapping) : items;
+export namespace ImmutableArray {
+	export const empty: readonly [] = Object.freeze([]);
 
-			if (isArrayLike(items)) {
-				const length = Number(items.length);
-				if (length === 0 || isNaN(length))
-					return ImmutableArray.#empty;
+	export function from<T>(items: Iterable<T>): ImmutableArray<T>;
+	export function from<T, V>(items: Iterable<T>, mapping: (value: T) => V, thisArg?: any): ImmutableArray<V>; 
+	export function from(items: Iterable<any>, mapping?: (value: any) => any, thisArg?: any) {
+		if (isArrayLike(items)) {
+			const length = Number(items.length);
+			if (length === 0 || isNaN(length))
+				return empty;
 
-				const array = new ImmutableArray();
-				for (let i = 0; i < length; i++) {
-					let value = items[i];
-					if (mapping)
-						value = mapping.call(thisArg, value);
+			const array: any[] = [];
+			for (let i = 0; i < length; i++) {
+				let value = items[i];
+				if (mapping)
+					value = mapping.call(thisArg, value);
 
-					array.#setValue(i, value);
-				}
-
-				return array.#finalize(length);
-			} else if (Symbol.iterator in items) {
-				const it = items[Symbol.iterator]();
-				let res = it.next();
-				if (res.done)
-					return ImmutableArray.#empty;
-
-				const array = new ImmutableArray();
-				for (let i = 0; ; i++) {
-					const value = mapping ? mapping.call(thisArg, res.value) : res.value;
-					array.#setValue(i, value);
-
-					if ((res = it.next()).done)
-						return array.#finalize(i + 1);
-				}
-			} else {
-				throw new TypeError(`${items} is not iterable`);
-			}
-		}
-
-		readonly [i: number]: T;
-
-		declare readonly length: number;
-
-		/**
-		 * 
-		 * @param length 
-		 * @returns 
-		 */
-		#finalize(length: number) {
-			Object.defineProperty(this, "length", { value: length });
-			return Object.preventExtensions(this);
-		}
-
-		/**
-		 * Define a range of values starting at {@link index}, using a range of values in {@link src} starting from {@link srcIndex} and ending at {@link srcEnd}.
-		 * @param index Index in this array to start defining values.
-		 * @param src The object to copy values from.
-		 * @param srcIndex The first index in the source to copy.
-		 * @param srcEnd The last index in the source to copy.
-		 * @returns The index of the last value defined, plus one.
-		 */
-		#addValues(index: number, src: ArrayLike<any>, srcIndex: number = 0, srcEnd: number = src.length): number {
-			for (; srcIndex < srcEnd; index++, srcIndex++)
-				Object.defineProperty(this, index, { value: src[srcIndex], enumerable: true });
-
-			return index;
-		}
-
-		/**
-		 * Declares an enumerable, read-only & non-configurable property with key {@link index} and value {@link value}
-		 * @param index 
-		 * @param value 
-		 */
-		#setValue(index: number, value: T) {
-			Object.defineProperty(this, index, { value, enumerable: true });
-		}
-
-		toJSON(): T[] {
-			return Array.from(this);
-		}
-
-		map<V>(mapping: (value: T, index: number, array: this) => V, thisArg?: any): ImmutableArray<V> {
-			const result = new ImmutableArray();
-			for (let i = 0; i < this.length; i++) {
-				const value = mapping.call(thisArg, this[i], i, this);
-				result.#setValue(i, value);
-			}
-			
-			return result.#finalize(this.length);
-		}
-
-		filter<S extends T>(predicate: (value: T, index: number, array: this) => value is S, thisArg?: any): ImmutableArray<S>;
-		filter(predicate: (value: T, index: number, array: this) => unknown, thisArg?: any): ImmutableArray<T>;	
-		filter(predicate: (value: any, index: number, array: this) => unknown, thisArg?: any) {
-			let length = 0;
-			const result = new ImmutableArray();
-			for (let i = 0; i < this.length; i++) {
-				const value = this[i];
-				if (predicate.call(thisArg, this[i], i, this))
-					result.#setValue(length++, value);
+				array.push(value);
 			}
 
-			return result.#finalize(length);
+			return Object.freeze(array);
+		} else if (Symbol.iterator in items) {
+			const it = items[Symbol.iterator]();
+			let res = it.next();
+			if (res.done)
+				return empty;
+
+			const array: any[] = [];
+			do {
+				const value = mapping ? mapping.call(thisArg, res.value) : res.value;
+				array.push(value);
+			} while (!(res = it.next()).done);
+
+			return Object.freeze(array);
+		} else {
+			throw new TypeError(`${items} is not iterable`);
 		}
+	}
 
-		add(...items: any[]) {
-			if (items.length === 0)
-				return this;
+	export function append<T extends readonly any[], V extends readonly any[]>(array: T, ...values: V): readonly [...T, ...V];
+	export function append<T>(array: readonly T[], ...values: T[]): ImmutableArray<T>;
+	export function append<T, V>(array: readonly T[], ...values: V[]): ImmutableArray<T | V>;
+	export function append(array: readonly any[], ...values: any[]): ImmutableArray {
+		if (values.length === 0)
+			return array;
 
-			const result = new ImmutableArray<T>();
-			result.#addValues(0, this);
-			const length = result.#addValues(this.length, items, 0, items.length);
-			result.#finalize(length);
-			return result;
-		}
+		const result: any[] = [];
+		result.push(...array);
+		result.push(...values);
+		return Object.freeze(result);
+	}
 
-		set<V>(index: number, value: V): ImmutableArray<T | V>;
-		set(index: number, value: T): ImmutableArray<T>;
-		set(index: number, value: any): ImmutableArray {
-			index = toIndex(index, this.length);
+	export function prepend<T extends ImmutableArray, V extends ImmutableArray>(array: T, ...values: V): readonly [...V, ...T];
+	export function prepend<T>(array: ImmutableArray<T>, ...values: ImmutableArray<T>): ImmutableArray<T>;
+	export function prepend<T, V>(array: ImmutableArray<T>, ...values: readonly V[]): ImmutableArray<T | V>;
+	export function prepend(array: ImmutableArray, ...values: ImmutableArray): ImmutableArray {
+		if (values.length === 0)
+			return array;
 
-			const result = new ImmutableArray<T>();
-			result.#addValues(0, this, 0, index);
-			result.#setValue(index, value);
-			result.#addValues(++index, this, index);
-			return result.#finalize(this.length);
-		}
+		const result: any[] = [];
+		result.push(...values);
+		result.push(...array);
+		return Object.freeze(result);
+	}
 
-		insert(index: number, ...items: any[]) {
-			if (items.length === 0)
-				return this;
+	export function insert<T>(array: ImmutableArray<T>, index: number, ...items: any[]) {
+		if (items.length === 0)
+			return array;
 
-			index = toIndex(index, this.length);
+		index = toIndex(index, array.length);
 
-			let i: number;
+		let i: number;
 
-			const result = new ImmutableArray<T>();
-			i = result.#addValues(0, this, 0, index);
-			i = result.#addValues(i, items);
-			i = result.#addValues(i, this, index);
-			return result.#finalize(i);
-		}
+		const result: any = [];
+		i = addValues(result, 0, array, 0, index);
+		i = addValues(result, i, items);
+		i = addValues(result, i, array, index);
+		return Object.freeze(result);
+	}
 
-		remove(start: number, end?: number) {
-			const { length } = this;
-			start = toIndex(start, length);
-			end = end === undefined ? length : toIndex(end, length);
+	export function set<T, V>(array: ImmutableArray<T>, index: number, value: V): ImmutableArray<T | V>;
+	export function set<T>(array: ImmutableArray<T>, index: number, value: T): ImmutableArray<T>;
+	export function set(array: ImmutableArray, index: number, value: any): ImmutableArray {
+		const result = array.with(index, value);
+		return Object.freeze(result);
+	}
+
+	export function remove<T>(array: ImmutableArray<T>, start: number, end?: number): ImmutableArray<T> {
+		const { length } = array;
+		start = toIndex(start, length);
+		end = end === undefined ? length : toIndex(end, length);
+
+		if (start === 0 && end === length)
+			return empty;
+
+		if (start >= end)
+			return asFrozen(array);
+
+		const result: any[] = [];
+		addValues(result, 0, array, 0, start);
+		addValues(result, start, array, end);
+		return Object.freeze(result);
+	}
+
+	export function splice<T>(array: ImmutableArray<T>, start: number): ImmutableArray<T>;
+	export function splice<T, V>(array: ImmutableArray<T>, start: number, deleteCount: number, ...items: V[]): ImmutableArray<T | V>;
+	export function splice<T>(array: ImmutableArray<T>, start: number, deleteCount: number, ...items: ImmutableArray<T>): ImmutableArray<T>;
+	export function splice(array: ImmutableArray, start: number, deleteCount?: number, ...items: ImmutableArray): ImmutableArray {
+		const { length } = array;
+		start = toIndex(start, length);
+		const end = deleteCount === undefined ? length : clamp(start + toIntegerOrInfinity(deleteCount), start, length);
+
+		if (items.length === 0) {
+			if (start === end && Object.isFrozen(array))
+				return array;
 
 			if (start === 0 && end === length)
-				return ImmutableArray.#empty;
-			
-			if (start >= end)
-				return this;
-				
-			const result = new ImmutableArray<T>();
-			result.#addValues(0, this, 0, start);
-			const resultLength = result.#addValues(start, this, end);
-			return result.#finalize(resultLength);
+				return empty;
 		}
 
-		splice(start: number): ImmutableArray<T>;
-		splice<V>(start: number, deleteCount: number, ...items: V[]): ImmutableArray<T | V>;
-		splice(start: number, deleteCount: number, ...items: T[]): ImmutableArray<T>;
-		splice(start: number, deleteCount?: number, ...items: any[]): ImmutableArray {
-			const { length } = this;
-			start = toIndex(start, length);
-			const end = deleteCount === undefined ? length : clamp(start + toIntegerOrInfinity(deleteCount), start, length);
+		let i: number;
 
-			if (items.length === 0) {
-				if (start === end)
-					return this;
-
-				if (start === 0 && end === length)
-					return ImmutableArray.#empty;
-			}
-
-			let i: number;
-
-			const result = new ImmutableArray<T>();
-			i = result.#addValues(0, this, 0, start);
-			i = result.#addValues(i, items);
-			i = result.#addValues(i, this, end);
-			return result.#finalize(i);
-		}
-
-		slice(start: number, end?: number) {
-			const { length } = this;
-			start = toIndex(start, length);
-			end = end === undefined ? length : toIndex(end, length);
-
-			if (start === 0 && end === length)
-				return this;
-
-			if (start >= end)
-				return ImmutableArray.#empty;
-
-			const result = new ImmutableArray<T>();
-			const resultLength = result.#addValues(0, this, start, end);
-			return result.#finalize(resultLength);
-		}
-
-		reverse() {
-			if (this.length == 0)
-				return this;
-
-			const other = new ImmutableArray<T>();
-			for (let i = 0, j = this.length; j > 0; i++)
-				other.#setValue(i, this[--j]);
-			
-			return other.#finalize(this.length);
-		}
-
-		sort(comparefn?: (a: T, b: T) => number): ImmutableArray<T> {
-			if (this.length == 0)
-				return this;
-
-			const items = Array.prototype.sort.call(this, comparefn);
-			return ImmutableArray.from(items);
-		}
+		const result: any[] = [];
+		i = addValues(result, 0, array, 0, start);
+		i = addValues(result, i, items);
+		i = addValues(result, i, array, end);
+		return Object.freeze(result);
 	}
 
-	function copy<V, const K extends (keyof V)[]>(src: V, dst: any, ...keys: K) {
-		for (const key of keys)
-			Object.defineProperty(dst, key, Object.getOwnPropertyDescriptor(src, key)!);
+	export function slice<T>(array: ImmutableArray<T>, start: number, end?: number) {
+		const { length } = array;
+		start = toIndex(start, length);
+		end = end === undefined ? length : toIndex(end, length);
+
+		if (start === 0 && end === length)
+			return asFrozen(array);
+
+		if (start >= end)
+			return empty;
+
+		const result: any[] = [];
+		addValues(result, 0, array, start, end);
+		return Object.freeze(result);
 	}
 
-	copy(Array.prototype, ImmutableArray.prototype, Symbol.iterator, "at", "toString", "toLocaleString", "join", "indexOf", "lastIndexOf", "includes", "forEach", "find", "findIndex", "findLast", "findLastIndex", "reduce", "reduceRight");
-}
+	export function reverse<T extends readonly any[]>(array: T): Reverse<T>;
+	export function reverse<T>(array: ImmutableArray<T>): ImmutableArray<T>;
+	export function reverse(array: ImmutableArray): ImmutableArray {
+		if (array.length == 0)
+			return array;
 
-export interface ImmutableArray<T = any> extends ArrayLike<T>, Iterable<T> {
-	[Symbol.iterator](): IterableIterator<T>;
+		const other: any[] = [];
+		for (let i = 0, j = array.length; j > 0; i++)
+			other[i] = array[--j];
 
-	at(index: number): T | undefined;
-
-	add<V>(...items: V[]): ImmutableArray<T | V>;
-	add(...items: T[]): ImmutableArray<T>;
-
-	set<V>(index: number, value: V): ImmutableArray<T | V>;
-	set(index: number, value: T): ImmutableArray<T>;
-
-	insert<V>(index: number, ...items: V[]): ImmutableArray<T | V>;
-	insert(index: number, ...items: T[]): ImmutableArray<T>;
-
-	remove(start: number, end?: number): ImmutableArray<T>;
-
-	splice(start: number): ImmutableArray<T>;
-	splice<V>(start: number, deleteCount: number, ...items: V[]): ImmutableArray<T | V>;
-	splice(start: number, deleteCount: number, ...items: T[]): ImmutableArray<T>;
-
-	slice(start: number, end?: number): ImmutableArray<T>;
-
-	sort(comparefn?: (a: T, b: T) => number): ImmutableArray<T>;
-	reverse(): ImmutableArray<T>;
-
-	map<V>(mapping: (value: T, index: number, array: this) => V, thisArg?: any): ImmutableArray<V>;
-
-	filter<S extends T>(predicate: (value: T, index: number, array: this) => value is S, thisArg?: any): ImmutableArray<S>;
-	filter(predicate: (value: T, index: number, array: this) => unknown, thisArg?: any): ImmutableArray<T>;
-
-	toJSON(): T[];
-
-	toString(): string;
-	toLocaleString(): string;
-
-	join(separator?: string): string;
-
-	includes(value: T, fromIndex?: number): boolean;
-
-	indexOf(searchElement: T, fromIndex?: number): number;
-	lastIndexOf(searchElement: T, fromIndex?: number): number;
-
-	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
-	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
-	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
-
-	findLast<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
-	findLast(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
-	findLastIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
-
-	every<S extends T>(predicate: (value: T, index: number, array: this) => value is S, thisArg?: any): this is ImmutableArray<S>;
-	every(predicate: (value: T, index: number, array: this) => unknown, thisArg?: any): boolean;
-
-	some(predicate: (value: T, index: number, array: this) => unknown, thisArg?: any): boolean;
-
-	forEach(callbackfn: (value: T, index: number, array: this) => void, thisArg?: any): void;
-
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T): T;
-	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue: U): U;
-
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: this) => T): T;
-	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: this) => U, initialValue: U): U;
-}
-
-interface ImmutableArrayConstructorBase extends Function {
-	readonly prototype: ImmutableArray<any>;
-	readonly empty: ImmutableArray<never>;
-	from<T>(items: Iterable<T>): ImmutableArray<T>;
-	from<T, V>(items: Iterable<T>, mapping: (value: T) => V, thisArg?: any): ImmutableArray<V>; 
-}
-
-interface ImmutableArrayConstructor extends ImmutableArrayConstructorBase {
-	new<T>(...value: T[]): ImmutableArray<T>;
-	<T>(...value: T[]): ImmutableArray<T>;
-}
-
-export const ImmutableArray: ImmutableArrayConstructor = <any>new Proxy(impl.ImmutableArray as any as ImmutableArrayConstructorBase, {
-	apply(target, _, argArray) {
-		return target.from(argArray);
-	},
-	construct(target, argArray) {
-		return target.from(argArray);
+		return Object.freeze(other);
 	}
-});
+
+	export function filter<T, S extends T>(array: ImmutableArray<T>, predicate: (value: T, index: number, array: ImmutableArray<T>) => value is S, thisArg?: any): ImmutableArray<S>;
+	export function filter<T>(array: ImmutableArray<T>, predicate: (value: T, index: number, array: ImmutableArray<T>) => unknown, thisArg?: any): ImmutableArray<T>;	
+	export function filter(array: ImmutableArray, predicate: (value: any, index: number, array: ImmutableArray) => unknown, thisArg?: any) {
+		let length = 0;
+		const result: any = [];
+		for (let i = 0; i < array.length; i++) {
+			const value = array[i];
+			if (predicate.call(thisArg, array[i], i, array))
+				result[length++] = value;
+		}
+
+		return Object.freeze(result);
+	}
+}
+
+type Reverse<T extends readonly any[]> = T extends [infer A, ...infer B] ? _Reverse<[A], B> : (T extends (infer V)[] ? readonly V[] : T);
+type _Reverse<X extends readonly any[], Y extends any[]> = Y extends [infer A, ...infer B] ? _Reverse<readonly [A, ...X], B> : X;
 
 export default ImmutableArray;
+
+function toIntegerOrInfinity(value: any) {
+	return (value = +value) !== value || value === 0 ? 0 : Math.trunc(value);
+}
+
+function toIndex(value: any, length: number) {
+	const int = toIntegerOrInfinity(value);
+	return int < 0 ? Math.max(length + int, 0) : Math.min(int, length);
+}
+
+function isArrayLike(value: any): value is ArrayLike<any> {
+	return typeof value === "string" || "length" in value;
+}

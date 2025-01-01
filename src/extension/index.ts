@@ -1,5 +1,5 @@
 import type { DocumentHeader, DocumentRequestInfo, WorkerMessage } from "../types.js";
-import type { ImmutableArray } from "../immutable-array.js";
+import ImmutableArray from "../immutable-array.js";
 import preferences from "../preferences-lite.js";
 import lib from "../lib.json" with { type: "json" };
 import WebRequestInterceptor from "./web-request.js";
@@ -83,8 +83,9 @@ async function loadExtension() {
 					const url = new URL(sender.url);
 					const [key, set] = message.autoload ? ["whitelist", whitelist] as const : ["blacklist", blacklist] as const;
 					if (!set.has(url.host)) {
-						const list = prefs.getValue(key).add(url.host);
-						preferences.lite.manager.set(key, list);
+						const list = prefs.getValue(key)
+						const updated = ImmutableArray.append(list, url.host);
+						preferences.lite.manager.set(key, updated);
 						return true;
 					}
 				}

@@ -1,34 +1,13 @@
+import type preferences from './preferences-lite';
 import json from './schemes.json' with { type: 'json' };
 import Color from 'color';
 
 export namespace schemes {
-	export type ColorValues = [h: number, s: number, l: number];
+	export type ColorValues = readonly [h: number, s: number, l: number];
 
-	export interface ColorSchemeValues {
-		key: ColorValues;
-		keyword: ColorValues;
-		str: ColorValues;
-		num: ColorValues;
-		text: ColorValues;
-		background: ColorValues;
-		tertiary: ColorSet;
-		primary: ColorSet;
-		indents: ColorValues[];
-	}
-
-	export interface ColorSet {
-		text?: ColorValues;
-		background: ColorValues;
-		border?: ColorValues;
-		lightnessMod?: number;
-		saturationMod?: number;
-	}
-
-	export interface ColorScheme {
-		name: string;
-		light?: ColorSchemeValues;
-		dark?: ColorSchemeValues;
-	}
+	export type ColorScheme = preferences.lite.CustomColorScheme;
+	export type ColorSchemeValues = preferences.lite.CustomColorSchemeValues;
+	export type ColorSchemeSet = preferences.lite.CustomColorSchemeSet;
 
 	export const presets = json as any as { [P in keyof typeof json]: ColorScheme };
 
@@ -185,16 +164,16 @@ function compileVariables(builder: CssRuleBuilder, values: schemes.ColorSchemeVa
 		builder.color(`jv-indent-${i}`, schemes.deserializeColor(values.indents[i]));
 }
 
-function applyModifier(h: number, s: number, l: number, set: schemes.ColorSet, factor = 1) {
-	const { lightnessMod = 0, saturationMod = 0 } = set;
-	return schemes.deserializeColor([h, s + (factor * saturationMod), l + (factor * lightnessMod)]);
+function applyModifier(h: number, s: number, l: number, set: schemes.ColorSchemeSet, factor = 1) {
+	const { lightnessMod, saturationMod } = set;
+	return schemes.deserializeColor([h, s + (factor * (saturationMod ?? 0)), l + (factor * (lightnessMod ?? 0))]);
 }
 
 type SetColor = 'text' | 'background' | 'border';
 
-function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSet): void;
-function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string, suffix: string, key: K, set: schemes.ColorSet, fallback: Exclude<SetColor, K>): void;
-function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSet, fallback?: SetColor) {
+function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSchemeSet): void;
+function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string, suffix: string, key: K, set: schemes.ColorSchemeSet, fallback: Exclude<SetColor, K>): void;
+function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSchemeSet, fallback?: SetColor) {
 	const value = set[key] ?? (fallback && set[fallback]);
 	if (value) {
 		const [h, s, l] = value;
@@ -207,7 +186,7 @@ function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key
 	}
 }
 
-function compileSet(builder: CssRuleBuilder, prefix: string, set: schemes.ColorSet) {
+function compileSet(builder: CssRuleBuilder, prefix: string, set: schemes.ColorSchemeSet) {
 	writeColor(builder, prefix, 'text', 'text', set);
 	writeColor(builder, prefix, 'bg', 'background', set);
 	writeColor(builder, prefix, 'border', 'border', set, 'background');

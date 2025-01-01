@@ -1,6 +1,6 @@
 import json from "../src/json.js";
 import * as s from "./json-shared.js";
-import sample from "../test-data/syntax.json";
+import sample from "../test-data/syntax.json" with { type: "json" };
 import helpers from "./helpers.js";
 
 describe("JObject", () => {

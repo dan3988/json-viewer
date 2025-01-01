@@ -2,7 +2,6 @@ import StoreController from "../store";
 import Color from "color";
 import schemes from "../schemes";
 import { WritableStore, WritableStoreImpl } from "../store";
-import ImmutableArray from "../immutable-array";
 
 type SchemeColorKey = 'key' | 'keyword' | 'str' | 'num' | 'text' | 'background';
 type SetColorKey = 'text' | 'background' | 'border';
@@ -24,9 +23,6 @@ export class CustomScheme {
 		constructor(owner: CustomScheme, darkMode: boolean, values: schemes.ColorSchemeValues, key: SchemeColorKey) {
 			const value = values[key];
 			const color = schemes.deserializeColor(value);
-			if (values.indents instanceof ImmutableArray)
-				values.indents = Array.from(values.indents);
-
 			super(color);
 			this.#owner = owner;
 			this.#darkMode = darkMode;
@@ -78,7 +74,7 @@ export class CustomScheme {
 	
 		protected onChanged(_: number, value: number): void {
 			const [set, key] = [this.#set, this.#key];
-			this.#owner.#update(this.#darkMode, v => v[set][key] = value ? Math.floor(value) / 100 : undefined);
+			this.#owner.#update(this.#darkMode, v => v[set][key] = value ? Math.floor(value) / 100 : null);
 		}
 	}
 
