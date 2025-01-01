@@ -72,7 +72,7 @@
 	async function exportSettings() {
 		const values = await preferences.lite.manager.get();
 		const result: any = {};
-		for (const setting of preferences.lite.values as readonly preferences.Preference<any, preferences.lite.Key>[]) {
+		for (const setting of preferences.lite.values as readonly preferences.core.Preference<any, preferences.lite.Key>[]) {
 			let value: any = values[setting.key];
 			if (value !== undefined)
 				result[setting.key] = setting.type.serialize(value);
@@ -91,7 +91,7 @@
 		try {
 			const values = await file.text().then(JSON.parse);
 
-			for (const setting of preferences.lite.values as readonly preferences.Preference<any, preferences.lite.Key>[]) {
+			for (const setting of preferences.lite.values as readonly preferences.core.Preference<any, preferences.lite.Key>[]) {
 				let value: any = values[setting.key];
 				if (value !== undefined) {
 					value = setting.type.deserialize(value);

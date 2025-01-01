@@ -41,7 +41,7 @@ export class EditorModel<T extends Dict = Dict> {
 		return this.#props;
 	}
 
-	constructor(values: preferences.ToEntries<T>) {
+	constructor(values: preferences.core.ToEntries<T>) {
 		const props: any = {};
 
 		this.#props = props;
@@ -86,7 +86,7 @@ export class EditorModel<T extends Dict = Dict> {
 
 	static readonly #EntryImpl = class EntryImpl<K extends string, V> implements EntryRef<K, V> {
 		readonly #owner: EditorModel;
-		readonly #preference: preferences.Preference<V, K>;
+		readonly #preference: preferences.core.Preference<V, K>;
 		readonly #listeners: Subscriber<V>[];
 		#original: V;
 		#current: V;
@@ -108,7 +108,7 @@ export class EditorModel<T extends Dict = Dict> {
 			return this.#current;
 		}
 	
-		constructor(owner: EditorModel, preference: preferences.Preference<V, K>, value: V) {
+		constructor(owner: EditorModel, preference: preferences.core.Preference<V, K>, value: V) {
 			this.#owner = owner;
 			this.#preference = preference;
 			this.#original = value;
