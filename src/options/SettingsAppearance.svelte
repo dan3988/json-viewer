@@ -33,12 +33,13 @@
 	}
 
 	function removeScheme() {
-		const copy = { ...customSchemes };
+		const copy = { ...$customSchemes };
 		delete copy[$scheme];
 		let nextScheme = 'default';
 		if (customSchemeList.length > 1) {
 			const index =  customSchemeList.findIndex(([key]) => key === scheme.value);
-			nextScheme = customSchemeList[Math.max(0, index)][0];
+			const keys = Object.keys(copy);
+			nextScheme = keys[Math.max(0, index - 1)];
 		}
 
 		scheme.set(nextScheme);
