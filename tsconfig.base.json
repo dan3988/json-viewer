@@ -6,6 +6,7 @@
 			"DOM.Iterable"
 		],
 		"target": "ESNext",
+		"module": "ESNext",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"useDefineForClassFields": true,
