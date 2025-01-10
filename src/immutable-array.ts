@@ -31,8 +31,8 @@ export namespace ImmutableArray {
 	export const empty: readonly [] = Object.freeze([]);
 
 	export function from<T>(items: Iterable<T>): ImmutableArray<T>;
-	export function from<T, V>(items: Iterable<T>, mapping: (value: T) => V, thisArg?: any): ImmutableArray<V>; 
-	export function from(items: Iterable<any>, mapping?: (value: any) => any, thisArg?: any) {
+	export function from<T, V>(items: Iterable<T>, mapping: (value: T, index: number) => V, thisArg?: any): ImmutableArray<V>; 
+	export function from(items: Iterable<any>, mapping?: (value: any, index: number) => any, thisArg?: any) {
 		if (isArrayLike(items)) {
 			const length = Number(items.length);
 			if (length === 0 || isNaN(length))
@@ -42,7 +42,7 @@ export namespace ImmutableArray {
 			for (let i = 0; i < length; i++) {
 				let value = items[i];
 				if (mapping)
-					value = mapping.call(thisArg, value);
+					value = mapping.call(thisArg, value, i);
 
 				array.push(value);
 			}
@@ -56,7 +56,7 @@ export namespace ImmutableArray {
 
 			const array: any[] = [];
 			do {
-				const value = mapping ? mapping.call(thisArg, res.value) : res.value;
+				const value = mapping ? mapping.call(thisArg, res.value, array.length) : res.value;
 				array.push(value);
 			} while (!(res = it.next()).done);
 
