@@ -163,6 +163,27 @@ export namespace preferences {
 		}
 
 		export namespace types {
+			let scopePath: undefined | (string | number)[];
+
+			function scoped<TKey extends string | number, TResult>(operation: string, path: TKey, work: (key: TKey) => TResult): TResult {
+				if (scopePath) {
+					scopePath.push(path);
+					const result = work(path);
+					scopePath.pop();
+					return result;
+				}
+
+				try {
+					scopePath = [];
+					return work(path);
+				} catch (cause) {
+					const path = scopePath!.join('.');
+					throw new TypeError(`Error perfoming ${operation} at '${path}'`, { cause });
+				} finally {
+					scopePath = undefined;
+				}
+			}
+
 			abstract class BaseSettingType<T> implements SettingType<T> {
 				constructor(readonly name: string) {}
 
@@ -227,9 +248,17 @@ export namespace preferences {
 					super(`List<${underlyingType.name}>`);
 				}
 
+				serialize(value: ImmutableArray<T>) {
+					const result: any[] = [];
+					for (let i = 0; i < value.length; i++)
+						result[i] = scoped('serialize', i, i => value[i]);
+
+					return result;
+				}
+
 				deserialize(value: any): ImmutableArray<T> {
 					const type = this.underlyingType;
-					return ImmutableArray.from(value, (value) => type.deserialize(value));
+					return ImmutableArray.from(value, (v, i) => scoped('deserialize', i, () => type.deserialize(v)));
 				}
 
 				areSame(x: ImmutableArray<T>, y: ImmutableArray<T>): boolean {
@@ -258,7 +287,7 @@ export namespace preferences {
 				serialize(value: Dict<T>) {
 					const result: Dict<T> = {};
 					for (const key in value)
-						result[key] = this.valueType.serialize(value[key]);
+						result[key] = scoped('serialize', key, k => this.valueType.serialize(value[k]));
 
 					return result;
 				}
@@ -266,7 +295,7 @@ export namespace preferences {
 				deserialize(value: any): Dict<T> {
 					const result: Dict<T> = Object.create(null);
 					for (const key in value)
-						result[key] = this.valueType.deserialize(value[key]);
+						result[key] = scoped('deserialize', key, k => this.valueType.deserialize(value[k]));
 		
 					return result;
 				}
@@ -290,7 +319,9 @@ export namespace preferences {
 				return new DictionarySettingType(toType(valueType));
 			}
 
-			class ObjectSettingType<T> extends BaseSettingType<T> {
+			type ObjectSettingValue<T> = Expand<{ [P in keyof T as null extends T[P] ? never : P]: T[P] } & { [P in keyof T as null extends T[P] ? P : never]?: T[P] }>;
+
+			class ObjectSettingType<T> extends BaseSettingType<ObjectSettingValue<T>> {
 				constructor(readonly schema: { [P in keyof T]: SettingType<T[P]> }) {
 					super('Object');
 				}
@@ -298,7 +329,7 @@ export namespace preferences {
 				serialize(value: T) {
 					const result: any = {};
 					for (const key in this.schema)
-						result[key] = this.schema[key].serialize(value[key]);
+						result[key] = scoped('serialize', key, k => this.schema[k].serialize(value[k]));
 
 					return result;
 				}
@@ -306,7 +337,7 @@ export namespace preferences {
 				deserialize(value: any): T {
 					const result: any = {};
 					for (const key in this.schema)
-						result[key] = this.schema[key].deserialize(value[key]);
+						result[key] = scoped('deserialize', key, k => this.schema[k].deserialize(value[k]));
 
 					return result;
 				}
@@ -322,7 +353,7 @@ export namespace preferences {
 				}
 			}
 
-			export function object<T>(schema: { [P in keyof T]: SettingType<T[P]> }) {
+			export function object<T>(schema: { [P in keyof T]: SettingType<T[P]> }): SettingType<ObjectSettingValue<T>> {
 				return new ObjectSettingType(schema);
 			}
 
@@ -336,17 +367,17 @@ export namespace preferences {
 				serialize(value: T) {
 					const result: any[] = [];
 					for (let i = 0; i < this.schema.length; i++) {
-						const v = this.schema[i].serialize(value[i]);
+						const v = scoped('serialize', i, i => this.schema[i].serialize(value[i]));
 						result.push(v);
 					}
 
 					return result as any;
 				}
-				
+
 				deserialize(value: any): T {
 					const result: any[] = [];
 					for (let i = 0; i < this.schema.length; i++) {
-						const v = this.schema[i].deserialize(value[i]);
+						const v = scoped('deserialize', i, i => this.schema[i].deserialize(value[i]));
 						result.push(v);
 					}
 
