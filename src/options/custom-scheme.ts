@@ -5,79 +5,14 @@ import { WritableStore, WritableStoreImpl } from "../store";
 
 type SchemeColorKey = 'key' | 'keyword' | 'str' | 'num' | 'text' | 'background';
 type SetColorKey = 'text' | 'background' | 'border';
-type SetModKey = 'lightnessMod' | 'saturationMod';
+type SetColorMode = 'def' | 'act' | 'hov';
 
 type SchemeKey = 'light' | 'dark';
 type SchemeSetKey = 'primary' | 'tertiary';
 
 type ColorStore = WritableStore<Color<any>>;
-type OptionalColorStore = WritableStore<Color<any> | null>;
-type ModifierColorStore = WritableStore<number>;
 
 export class CustomScheme {
-	static readonly #RootColorStore = class extends WritableStoreImpl<Color> {
-		readonly #owner: CustomScheme;
-		readonly #darkMode: boolean;
-		readonly #key: SchemeColorKey;
-	
-		constructor(owner: CustomScheme, darkMode: boolean, values: schemes.ColorSchemeValues, key: SchemeColorKey) {
-			const value = values[key];
-			const color = schemes.deserializeColor(value);
-			super(color);
-			this.#owner = owner;
-			this.#darkMode = darkMode;
-			this.#key = key;
-		}
-	
-		protected onChanged(_: Color, value: Color): void {
-			const key = this.#key;
-			this.#owner.#update(this.#darkMode, v => v[key] = schemes.serializeColor(value));
-		}
-	}
-
-	static readonly #SetColorStore = class extends WritableStoreImpl<Color | null> {
-		readonly #owner: CustomScheme;
-		readonly #darkMode: boolean;
-		readonly #set: SchemeSetKey;
-		readonly #key: SetColorKey;
-	
-		constructor(owner: CustomScheme, darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, key: SetColorKey) {
-			const value = values[set][key];
-			const color = (value && schemes.deserializeColor(value)) ?? null;
-			super(color);
-			this.#owner = owner;
-			this.#darkMode = darkMode;
-			this.#set = set;
-			this.#key = key;
-		}
-	
-		protected onChanged(_: Color, value: Color): void {
-			const [set, key] = [this.#set, this.#key];
-			this.#owner.#update(this.#darkMode, v => v[set][key] = value ? schemes.serializeColor(value) : undefined!);
-		}
-	}
-
-	static readonly #SetModStore = class extends WritableStoreImpl<number> {
-		readonly #owner: CustomScheme;
-		readonly #darkMode: boolean;
-		readonly #set: SchemeSetKey;
-		readonly #key: SetModKey;
-	
-		constructor(owner: CustomScheme, darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, key: SetModKey) {
-			const value = (values[set][key] ?? 0) * 100;
-			super(value);
-			this.#owner = owner;
-			this.#darkMode = darkMode;
-			this.#set = set;
-			this.#key = key;
-		}
-	
-		protected onChanged(_: number, value: number): void {
-			const [set, key] = [this.#set, this.#key];
-			this.#owner.#update(this.#darkMode, v => v[set][key] = value ? Math.floor(value) / 100 : null);
-		}
-	}
-
 	readonly #scheme: StoreController<schemes.ColorScheme>;
 	readonly #name: WritableStore<string>;
 
@@ -136,40 +71,111 @@ export class CustomScheme {
 	}
 
 	#createValues(darkMode: boolean, values: schemes.ColorSchemeValues) {
-		const indentColors = Array.from(values!.indents, schemes.deserializeColor);
-		const indents = new StoreController<Color[]>(indentColors);
-		indents.listen(value => this.#update(darkMode, v => v.indents = Array.from(value, schemes.serializeColor)));
-		return new CustomSchemeValues(
-			new CustomScheme.#RootColorStore(this, darkMode, values, 'key'),
-			new CustomScheme.#RootColorStore(this, darkMode, values, 'keyword'),
-			new CustomScheme.#RootColorStore(this, darkMode, values, 'str'),
-			new CustomScheme.#RootColorStore(this, darkMode, values, 'num'),
-			new CustomScheme.#RootColorStore(this, darkMode, values, 'text'),
-			new CustomScheme.#RootColorStore(this, darkMode, values, 'background'),
-			this.#createSet(values, darkMode, 'primary'),
-			this.#createSet(values, darkMode, 'tertiary'),
-			indents,
-		)
+		const key = this.#rootColorStore(darkMode, values, 'key');
+		const keyword = this.#rootColorStore(darkMode, values, 'keyword');
+		const str = this.#rootColorStore(darkMode, values, 'str');
+		const num = this.#rootColorStore(darkMode, values, 'num');
+		const text = this.#rootColorStore(darkMode, values, 'text');
+		const background = this.#rootColorStore(darkMode, values, 'background');
+		const primary = this.#createSet(values, darkMode, 'primary', text);
+		const tertiary = this.#createSet(values, darkMode, 'tertiary', text);
+		const indents = new StoreController<Color[]>(Array.from(values.indents, v => Color(v)));
+		indents.listen(value => this.#update(darkMode, v => v.indents = Array.from(value, v => v.hex())));
+		return new CustomSchemeValues(key, keyword, str, num, text, background, primary, tertiary, indents);
 	}
 
-	#createSet(values: schemes.ColorSchemeValues, darkMode: boolean, key: SchemeSetKey) {
-		return new CustomSchemeColorSet(
-			new CustomScheme.#SetColorStore(this, darkMode, values, key, 'text'),
-			new CustomScheme.#SetColorStore(this, darkMode, values, key, 'background') as ColorStore,
-			new CustomScheme.#SetColorStore(this, darkMode, values, key, 'border'),
-			new CustomScheme.#SetModStore(this, darkMode, values, key, 'lightnessMod'),
-			new CustomScheme.#SetModStore(this, darkMode, values, key, 'saturationMod'),
-		);
+	#rootColorStore(darkMode: boolean, values: schemes.ColorSchemeValues, key: SchemeColorKey) {
+		const value = values[key];
+		const color = Color(value);
+		const store = new WritableStoreImpl(color);
+		store.listen(v => this.#update(darkMode, obj => obj[key] = v.hex()));
+		return store;
+	}
+
+	#createSet(values: schemes.ColorSchemeValues, darkMode: boolean, set: SchemeSetKey, rootText: ColorStore) {
+		const background = (() => {
+			const init = values[set].background;
+
+			function handler(this: CustomScheme, mode: SetColorMode, value: Color) {
+				this.#update(darkMode, v => v[set].background[mode] = value.hex());
+			}
+
+			const defStore = new WritableStoreImpl(Color(init.def));
+			defStore.listen(handler.bind(this, 'def'));
+			const actStore = new WritableStoreImpl(Color(init.act));
+			actStore.listen(handler.bind(this, 'act'));
+			const hovStore = new WritableStoreImpl(Color(init.hov));
+			hovStore.listen(handler.bind(this, 'hov'));
+
+			return new SetColors(defStore, actStore, hovStore);
+		})();
+
+		const border = this.#createTogglebleSetColors(darkMode, values, set, 'border', background.def, background.act, background.hov);
+		const text = this.#createTogglebleSetColors(darkMode, values, set, 'text', rootText, rootText, rootText);
+		return new CustomSchemeColorSet(background, border, text);
+	}
+
+	#createTogglebleSetColors(darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, prop: 'border' | 'text', fallbackDef: ColorStore, fallbackAct: ColorStore, fallbackHov: ColorStore) {
+		const init = values[set][prop];
+
+		let active = !!init;
+		const activeStore = new WritableStoreImpl(active);
+
+		activeStore.listen(v => {
+			if (active = v) {
+				const def = defStore.value.hex();
+				const act = actStore.value.hex();
+				const hov = hovStore.value.hex();
+				this.#update(darkMode, v => v[set][prop] = { def, act, hov });
+			} else {
+				this.#update(darkMode, v => v[set][prop] = null);
+			}
+		});
+
+		let defStore: ColorStore;
+		let actStore: ColorStore;
+		let hovStore: ColorStore;
+		if (init) {
+			defStore = new WritableStoreImpl(Color(init.def));
+			actStore = new WritableStoreImpl(Color(init.act));
+			hovStore = new WritableStoreImpl(Color(init.hov));
+		} else {
+			defStore = WritableStore.rewritable(fallbackDef);
+			actStore = WritableStore.rewritable(fallbackAct);
+			hovStore = WritableStore.rewritable(fallbackHov);
+		}
+
+		function handler(this: CustomScheme, mode: SetColorMode, value: Color) {
+			active && this.#update(darkMode, v => v[set][prop]![mode] = value.hex());
+		}
+
+		defStore.listen(handler.bind(this, 'def'));
+		actStore.listen(handler.bind(this, 'act'));
+		hovStore.listen(handler.bind(this, 'hov'));
+
+		return new TogglebleSetColors(defStore, actStore, hovStore, activeStore);
 	}
 }
 
 export class CustomSchemeColorSet {
 	constructor(
-		readonly text: OptionalColorStore,
-		readonly background: ColorStore,
-		readonly border: OptionalColorStore,
-		readonly lightnessMod: ModifierColorStore,
-		readonly saturationMod: ModifierColorStore) {
+		readonly background: SetColors,
+		readonly border: TogglebleSetColors,
+		readonly text: TogglebleSetColors) {
+	}
+}
+
+export class SetColors {
+	constructor(
+		readonly def: ColorStore,
+		readonly hov: ColorStore,
+		readonly act: ColorStore) {
+	}
+}
+
+export class TogglebleSetColors extends SetColors {
+	constructor(def: ColorStore, hov: ColorStore, act: ColorStore, readonly active: WritableStore<boolean>) {
+		super(def, hov, act)
 	}
 }
 

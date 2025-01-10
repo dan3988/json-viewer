@@ -68,9 +68,9 @@
 		<ColorEditor {disabled} bind:value={$background} />
 	</div>
 	<span class="h5 text-center">Primary</span>
-	<ColorSetEditor {disabled} value={primary} />
+	<ColorSetEditor {disabled} value={primary} previewClass="btn-primary" />
 	<span class="h5 text-center">Tertiary</span>
-	<ColorSetEditor {disabled} value={tertiary} />
+	<ColorSetEditor {disabled} value={tertiary} previewClass="btn-base" />
 	<span class="h5 text-center">Indents</span>
 	<ul class="d-flex flex-column gap-1 m-0 p-0">
 		{#each $indents as value, i}

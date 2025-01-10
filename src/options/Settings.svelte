@@ -32,7 +32,7 @@
 
 	$: ({ changed, props: { darkMode, scheme, background, customSchemes } } = model);
 	$: tracker.preferDark = $darkMode;
-	$: schemeEditor = new CustomScheme(schemes.presets[$scheme] ?? $customSchemes[$scheme]);
+	$: schemeEditor = new CustomScheme($customSchemes[$scheme] ?? schemes.presets[$scheme]);
 	$: currentScheme = schemeEditor.scheme;
 	$: maxIndentClass = schemes.getIndentCount($currentScheme, $tracker);
 	$: schemeEditor, onSchemeEditorChanged();

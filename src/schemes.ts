@@ -3,13 +3,24 @@ import json from './schemes.json' with { type: 'json' };
 import Color from 'color';
 
 export namespace schemes {
-	export type ColorValues = readonly [h: number, s: number, l: number];
+	type SetKey = "primary" | "tertiary";
+
+	interface JsonColorScheme {
+		name: string;
+		light?: JsonColorSchemeValues;
+		dark?: JsonColorSchemeValues
+	}
+
+	type JsonColorSchemeValues = Expand<Omit<ColorSchemeValues, SetKey> & Record<SetKey, JsonColorSchemeSet>>;
+	type JsonColorSchemeSet = { [P in keyof ColorSchemeSet]: TupleJson<ColorSchemeSet[P]> };
+	type TupleJson<T> = T extends readonly any[] ? T[number][] : T;
 
 	export type ColorScheme = preferences.lite.CustomColorScheme;
 	export type ColorSchemeValues = preferences.lite.CustomColorSchemeValues;
 	export type ColorSchemeSet = preferences.lite.CustomColorSchemeSet;
+	export type ColorSchemeSetColors = preferences.lite.CustomColorSchemeSetColors;
 
-	export const presets = json as any as { [P in keyof typeof json]: ColorScheme };
+	export const presets = (json satisfies Dict<JsonColorScheme>) as any as Dict<ColorScheme>;
 
 	type SchemeGroup = [name: string, schemes: SchemeReference[]];
 	type SchemeReference = [id: string, name: string];
@@ -21,7 +32,7 @@ export namespace schemes {
 	];
 	
 	for (const [key, value] of Object.entries(schemes.presets)) {
-		const index = value.light ? (value.dark ? 0 : 1) : 2;
+		const index = (value as any).light ? (value.dark ? 0 : 1) : 2;
 		groupedPresets[index][1].push([key, value.name]);
 	}
 	
@@ -46,17 +57,6 @@ export namespace schemes {
 		}
 
 		return builder.toString();
-	}
-
-	export function deserializeColor([h, s, l]: schemes.ColorValues) {
-		return Color.hsl(h * 360, s * 100, l * 100);
-	}
-
-	export function serializeColor(color: Color): schemes.ColorValues {
-		const h = color.hue();
-		const s = color.saturationl();
-		const l = color.lightness();
-		return [h / 360, s / 100, l / 100];
 	}
 }
 
@@ -143,12 +143,12 @@ class TextCssBuilder extends CssBuilder {
 }
 
 function compileVariables(builder: CssRuleBuilder, values: schemes.ColorSchemeValues) {
-	const key = schemes.deserializeColor(values.key);
-	const keyword = schemes.deserializeColor(values.keyword);
-	const str = schemes.deserializeColor(values.str);
-	const num = schemes.deserializeColor(values.num);
-	const text = schemes.deserializeColor(values.text);
-	const background = schemes.deserializeColor(values.background);
+	const key = Color(values.key);
+	const keyword = Color(values.keyword);
+	const str = Color(values.str);
+	const num = Color(values.num);
+	const text = Color(values.text);
+	const background = Color(values.background);
 	builder
 		.color('jv-key-fg', key)
 		.color('jv-keywd-fg', keyword)
@@ -161,12 +161,7 @@ function compileVariables(builder: CssRuleBuilder, values: schemes.ColorSchemeVa
 	compileSet(builder, 'jv-primary', values.primary);
 
 	for (let i = 0; i < values.indents.length; i++)
-		builder.color(`jv-indent-${i}`, schemes.deserializeColor(values.indents[i]));
-}
-
-function applyModifier(h: number, s: number, l: number, set: schemes.ColorSchemeSet, factor = 1) {
-	const { lightnessMod, saturationMod } = set;
-	return schemes.deserializeColor([h, s + (factor * (saturationMod ?? 0)), l + (factor * (lightnessMod ?? 0))]);
+		builder.color(`jv-indent-${i}`, Color(values.indents[i]));
 }
 
 type SetColor = 'text' | 'background' | 'border';
@@ -176,13 +171,12 @@ function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string,
 function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSchemeSet, fallback?: SetColor) {
 	const value = set[key] ?? (fallback && set[fallback]);
 	if (value) {
-		const [h, s, l] = value;
-		const color = schemes.deserializeColor(value);
+		const def = Color(value.def);
 		builder
-			.color(`${prefix}-${suffix}`, color)
-			.color(`${prefix}-hover-${suffix}`, applyModifier(h, s, l, set, 2))
-			.color(`${prefix}-active-${suffix}`, applyModifier(h, s, l, set))
-			.color(`${prefix}-disabled-${suffix}`, color);
+			.color(`${prefix}-${suffix}`, def)
+			.color(`${prefix}-hover-${suffix}`, Color(value.hov))
+			.color(`${prefix}-active-${suffix}`, Color(value.act))
+			.color(`${prefix}-disabled-${suffix}`, def);
 	}
 }
 

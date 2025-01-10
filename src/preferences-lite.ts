@@ -1,6 +1,5 @@
 // preferences shared between the frontend and background script
 import p from "./preferences-core.js";
-import schemes from "./schemes.js";
 
 export namespace preferences {
 	export import core = p.core;
@@ -8,26 +7,28 @@ export namespace preferences {
 	export namespace lite {
 		export type Key = typeof values[number]['key'];
 
-		const colorSchema = p.core.types.tuple<schemes.ColorValues>(p.core.types.number, p.core.types.number, p.core.types.number);
+		const setColors = p.core.types.object({
+			def: p.core.types.string,
+			act: p.core.types.string,
+			hov: p.core.types.string,
+		});
 
-		const colorSetSchema = p.core.types.object({
-			text: p.core.types.nullable(colorSchema),
-			background: colorSchema,
-			border: p.core.types.nullable(colorSchema),
-			lightnessMod: p.core.types.nullable('number'),
-			saturationMod: p.core.types.nullable('number'),
+		const colorSet = p.core.types.object({
+			background: setColors,
+			border: p.core.types.nullable(setColors),
+			text: p.core.types.nullable(setColors),
 		});
 
 		const colorSchemeValuesType = p.core.types.object({
-			key: colorSchema,
-			keyword: colorSchema,
-			str: colorSchema,
-			num: colorSchema,
-			background: colorSchema,
-			text: colorSchema,
-			tertiary: colorSetSchema,
-			primary: colorSetSchema,
-			indents: p.core.types.list(colorSchema),
+			key: p.core.types.string,
+			keyword: p.core.types.string,
+			str: p.core.types.string,
+			num: p.core.types.string,
+			background: p.core.types.string,
+			text: p.core.types.string,
+			tertiary: colorSet,
+			primary: colorSet,
+			indents: p.core.types.list('string'),
 		});
 
 		const colorSchemeType = p.core.types.object({
@@ -36,8 +37,9 @@ export namespace preferences {
 			dark: p.core.types.nullable(colorSchemeValuesType),
 		});
 
+		export type CustomColorSchemeSetColors = p.core.types.ValueOf<typeof setColors>;
 		export type CustomColorScheme = p.core.types.ValueOf<typeof colorSchemeType>;
-		export type CustomColorSchemeSet = p.core.types.ValueOf<typeof colorSetSchema>;
+		export type CustomColorSchemeSet = p.core.types.ValueOf<typeof colorSet>;
 		export type CustomColorSchemeValues = p.core.types.ValueOf<typeof colorSchemeValuesType>;
 
 		export const values = [

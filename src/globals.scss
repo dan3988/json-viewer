@@ -85,3 +85,15 @@
 :global(.flex-even > *) {
 	flex: 1 1 0 !important;
 }
+
+:global(.btn.force-hover) {
+	color: var(--bs-btn-hover-color);
+	background-color: var(--bs-btn-hover-bg);
+	border-color: var(--bs-btn-hover-border-color);
+}
+
+:global(.btn.force-active) {
+	color: var(--bs-btn-active-color);
+	background-color: var(--bs-btn-active-bg);
+	border-color: var(--bs-btn-active-border-color);
+}

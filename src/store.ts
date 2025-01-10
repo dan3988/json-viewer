@@ -26,6 +26,15 @@ export abstract class Store<T> implements Readable<T> {
 }
 
 export abstract class WritableStore<T> extends Store<T> implements Writable<T> {
+	/**
+	 * Use another store's value until set() is called
+	 */
+	static rewritable<T>(source: Readable<T>): WritableStore<T>;
+	static rewritable<T, V>(source: Readable<V>, converter: (row: V) => T): WritableStore<T>;
+	static rewritable(source: Readable<any>, converter?: (row: any) => any): WritableStore<any> {
+		return new RewritableStore(source, converter);
+	}
+
 	abstract get value(): T;
 	abstract set value(value: T);
 
@@ -42,37 +51,16 @@ export abstract class WritableStore<T> extends Store<T> implements Writable<T> {
 	}
 }
 
-export type Comparer<T> = (x: T, y: T) => boolean;
-
-const strictEquals: Comparer<any> = (x, y) => x === y;
-
-export class WritableStoreImpl<T> extends WritableStore<T> {
-	readonly #comparer: Comparer<T>;
+class StoreListeners<T> {
 	readonly #subs: Map<number, Subscriber<T> | readonly [Subscriber<T>, Action]>;
 	#subId: number;
-	#value: T;
 
-	get value() {
-		return this.#value;
-	}
-
-	set value(value: T) {
-		this.set(value);
-	}
-
-	constructor(value: T, comparer: Comparer<T> = strictEquals) {
-		super();
-		this.#value = value;
-		this.#comparer = comparer;
+	constructor() {
 		this.#subs = new Map();
 		this.#subId = 0;
 	}
 
-	protected onChanged(oldValue: T, newValue: T) {
-	}
-
-	#fire() {
-		const value = this.#value;
+	fire(value: T) {
 		for (const subscriber of this.#subs.values()) {
 			const run = typeof subscriber === 'function' ? subscriber : subscriber[0];
 			run(value);
@@ -88,6 +76,93 @@ export class WritableStoreImpl<T> extends WritableStore<T> {
 		}
 	}
 
+	listen(listener: Subscriber<T>, invalidate?: Action | undefined) {
+		const value = invalidate ? [listener, invalidate] as const : listener;
+		const id = ++this.#subId;
+		this.#subs.set(id, value);
+		return this.#unsub.bind(this, id);
+	}
+}
+
+class RewritableStore<T> extends WritableStore<T> {
+	readonly #converter?: (row: any) => T;
+	readonly #listeners: StoreListeners<T>;
+	#unsub: Action;
+	#isSet = false;
+	#value!: T;
+
+	get value(): T {
+		return this.#value;
+	}
+
+	set value(value: T) {
+		this.set(value);
+	}
+
+	constructor(source: Readable<any>, converter?: (row: any) => T) {
+		super();
+		this.#converter = converter;
+		this.#listeners = new StoreListeners();
+		this.#unsub = source.subscribe(this.#onSourceUpdated.bind(this));
+	}
+
+	#onSourceUpdated(value: any) {
+		if (this.#converter)
+			value = this.#converter(value);
+
+		if (this.#value !== value) {
+			this.#value = value;
+			this.#listeners.fire(value);
+		}
+	}
+
+	set(value: T): boolean {
+		if (!this.#isSet) {
+			this.#isSet = true;
+			this.#unsub();
+			this.#unsub = undefined!;
+		}
+
+		if (this.#value === value)
+			return false;
+
+		this.#value = value;
+		this.#listeners.fire(value);
+		return true;
+	}
+
+	listen(listener: Subscriber<T>, invalidate?: Action): Unsubscriber {
+		return this.#listeners.listen(listener, invalidate);
+	}
+}
+
+export type Comparer<T> = (x: T, y: T) => boolean;
+
+const strictEquals: Comparer<any> = (x, y) => x === y;
+
+export class WritableStoreImpl<T> extends WritableStore<T> {
+	readonly #comparer: Comparer<T>;
+	readonly #listeners: StoreListeners<T>;
+	#value: T;
+
+	get value() {
+		return this.#value;
+	}
+
+	set value(value: T) {
+		this.set(value);
+	}
+
+	constructor(value: T, comparer: Comparer<T> = strictEquals) {
+		super();
+		this.#value = value;
+		this.#comparer = comparer;
+		this.#listeners = new StoreListeners();
+	}
+
+	protected onChanged(oldValue: T, newValue: T) {
+	}
+
 	set(value: T): boolean {
 		const old = this.#value;
 		if (this.#comparer(old, value))
@@ -95,20 +170,18 @@ export class WritableStoreImpl<T> extends WritableStore<T> {
 
 		this.#value = value;
 		this.onChanged(old, value);
-		this.#fire();
+		this.#listeners.fire(value);
 		return true;
 	}
 
 	listen(listener: Subscriber<T>, invalidate?: Action | undefined) {
-		const value = invalidate ? [listener, invalidate] as const : listener;
-		const id = ++this.#subId;
-		this.#subs.set(id, value);
-		return this.#unsub.bind(this, id);
+		return this.#listeners.listen(listener, invalidate);
 	}
 
 	update(updater: Updater<T>): void {
-		this.#value = updater(this.#value);
-		this.#fire();
+		const value = updater(this.#value);
+		this.#value = value;
+		this.#listeners.fire(value);
 	}
 }
 

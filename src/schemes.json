@@ -2,402 +2,706 @@
 	"default": {
 		"name": "Visual Studio",
 		"light": {
-			"key": [ 0, 0, 0 ],
-			"keyword": [ 0.67, 1, 0.5 ],
-			"str": [ 0, 0.77, 0.36 ],
-			"num": [ 0.44, 0.87, 0.28 ],
-			"background": [ 0, 0, 0.98 ],
-			"text": [ 0.58, 0.11, 0.15 ],
+			"key": "#000000",
+			"keyword": "#0400FF",
+			"str": "#A21515",
+			"num": "#098658",
+			"background": "#FAFAFA",
+			"text": "#22262A",
 			"tertiary": {
-				"text": [ 0.58, 0.11, 0.15 ],
-				"background": [ 0, 0, 0.95 ],
-				"border": [ 0, 0, 0.86 ],
+				"text": {
+					"def": "#22262A",
+					"act": "#0B0D0E",
+					"hov": "#000000"
+				},
+				"background": {
+					"def": "#F2F2F2",
+					"act": "#D9D9D9",
+					"hov": "#BFBFBF"
+				},
+				"border": {
+					"def": "#DBDBDB",
+					"act": "#C2C2C2",
+					"hov": "#A8A8A8"
+				},
 				"lightnessMod": -0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 0.98 ],
-				"background": [ 0.6, 0.98, 0.52 ],
+				"text": {
+					"def": "#FAFAFA",
+					"act": "#BABABA",
+					"hov": "#7A7A7A"
+				},
+				"background": {
+					"def": "#0D6DFD",
+					"act": "#013788",
+					"hov": "#00040A"
+				},
 				"lightnessMod": -0.25
 			},
 			"indents": [
-				[ 0.64, 0.97, 0.5 ],
-				[ 0.33, 0.5, 0.38 ],
-				[ 0.06, 0.72, 0.28 ]
+				"#042DFB",
+				"#329130",
+				"#7B3A14"
 			]
 		},
 		"dark": {
-			"key": [ 0.56, 0.98, 0.8 ],
-			"keyword": [ 0.58, 0.61, 0.59 ],
-			"str": [ 0.05, 0.47, 0.64 ],
-			"num": [ 0.28, 0.28, 0.73 ],
-			"background": [ 0, 0, 0.12 ],
-			"text": [ 0.58, 0.11, 0.71 ],
+			"key": "#9AD9FE",
+			"keyword": "#5799D6",
+			"str": "#CE9278",
+			"num": "#B3CDA7",
+			"background": "#1F1F1F",
+			"text": "#ADB5BD",
 			"tertiary": {
-				"text": [ 0.58, 0.11, 0.71 ],
-				"background": [ 0, 0, 0.17 ],
-				"border": [ 0, 0, 0.32 ],
+				"text": {
+					"def": "#ADB5BD",
+					"act": "#C9CFD4",
+					"hov": "#E6E8EB"
+				},
+				"background": {
+					"def": "#2B2B2B",
+					"act": "#454545",
+					"hov": "#5E5E5E"
+				},
+				"border": {
+					"def": "#525252",
+					"act": "#6B6B6B",
+					"hov": "#858585"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.6, 0.98, 0.52 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#0D6DFD",
+					"act": "#72AAFE",
+					"hov": "#D7E7FF"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0.14, 1, 0.5 ],
-				[ 0.84, 0.59, 0.65 ],
-				[ 0.57, 1, 0.55 ]
+				"#FFD500",
+				"#DA71D7",
+				"#1A9FFF"
 			]
 		}
 	},
 	"dracula": {
 		"name": "Dracula",
 		"light": {
-			"key": [ 0.92, 1, 0.45 ],
-			"keyword": [ 0.74, 0.89, 0.78 ],
-			"str": [ 0.18, 0.5, 0.56 ],
-			"num": [ 0.38, 0.73, 0.45 ],
-			"background": [ 0.67, 0.12, 0.95 ],
-			"text": [ 0.17, 0.24, 0.04 ],
+			"key": "#E6006F",
+			"keyword": "#C095F9",
+			"str": "#BEC757",
+			"num": "#1FC74E",
+			"background": "#F1F1F4",
+			"text": "#0D0D08",
 			"tertiary": {
-				"text": [ 0.17, 0.24, 0.04 ],
-				"background": [ 0.67, 0.12, 0.92 ],
-				"border": [ 0.67, 0.12, 0.83 ],
+				"text": {
+					"def": "#0D0D08",
+					"act": "#000000",
+					"hov": "#000000"
+				},
+				"background": {
+					"def": "#E8E8ED",
+					"act": "#CCCCD7",
+					"hov": "#AFAFC0"
+				},
+				"border": {
+					"def": "#CFCED9",
+					"act": "#B2B2C2",
+					"hov": "#9695AC"
+				},
 				"lightnessMod": -0.1
 			},
 			"primary": {
-				"text": [ 0.67, 0.12, 0.95 ],
-				"background": [ 0.92, 1, 0.45 ],
+				"text": {
+					"def": "#F1F1F4",
+					"act": "#AAA9BC",
+					"hov": "#656581"
+				},
+				"background": {
+					"def": "#E6006F",
+					"act": "#660031",
+					"hov": "#000000"
+				},
 				"lightnessMod": -0.25
 			},
 			"indents": [
-				[ 0.17, 0.3, 0.04 ],
-				[ 0.91, 1, 0.54 ],
-				[ 0.53, 0.97, 0.57 ],
-				[ 0.38, 0.94, 0.45 ],
-				[ 0.74, 0.89, 0.58 ],
-				[ 0.09, 1, 0.51 ]
+				"#0D0D07",
+				"#FF1492",
+				"#27D5FC",
+				"#07DF44",
+				"#8735F3",
+				"#FF8A05"
 			]
 		},
 		"dark": {
-			"key": [ 0.9, 1, 0.74 ],
-			"keyword": [ 0.74, 0.89, 0.78 ],
-			"str": [ 0.18, 0.92, 0.76 ],
-			"num": [ 0.38, 0.94, 0.65 ],
-			"background": [ 0.64, 0.15, 0.18 ],
-			"text": [ 0.17, 0.3, 0.96 ],
+			"key": "#FF7ACA",
+			"keyword": "#C095F9",
+			"str": "#F1FA89",
+			"num": "#52FA81",
+			"background": "#272935",
+			"text": "#F8F8F2",
 			"tertiary": {
-				"text": [ 0.17, 0.3, 0.96 ],
-				"background": [ 0.65, 0.15, 0.23 ],
-				"border": [ 0.64, 0.15, 0.38 ],
+				"text": {
+					"def": "#F8F8F2",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#323443",
+					"act": "#484A61",
+					"hov": "#5D607E"
+				},
+				"border": {
+					"def": "#52576F",
+					"act": "#686E8D",
+					"hov": "#8489A4"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.92, 1, 0.45 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#E6006F",
+					"act": "#FF4DA3",
+					"hov": "#FFB3D7"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0.17, 0.3, 0.96 ],
-				[ 0.9, 1, 0.74 ],
-				[ 0.53, 0.97, 0.77 ],
-				[ 0.38, 0.94, 0.65 ],
-				[ 0.74, 0.89, 0.78 ],
-				[ 0.09, 1, 0.71 ]
+				"#F8F8F2",
+				"#FF7ACA",
+				"#8BE8FD",
+				"#52FA81",
+				"#C095F9",
+				"#FFBA6B"
 			]
 		}
 	},
 	"abyss": {
 		"name": "Abyss",
 		"dark": {
-			"key": [ 0.61, 0.5, 0.6 ],
-			"keyword": [ 0.88, 0.81, 0.73 ],
-			"str": [ 0.38, 0.67, 0.4 ],
-			"num": [ 0.88, 0.81, 0.73 ],
-			"background": [ 0.58, 1, 0.05 ],
-			"text": [ 0.61, 0.5, 0.8 ],
+			"key": "#6688CC",
+			"keyword": "#F282D2",
+			"str": "#22AA48",
+			"num": "#F282D2",
+			"background": "#000D1A",
+			"text": "#B3C3E6",
 			"tertiary": {
-				"text": [ 0.61, 0.5, 0.8 ],
-				"background": [ 0.58, 1, 0.1 ],
-				"border": [ 0.58, 1, 0.25 ],
+				"text": {
+					"def": "#B3C3E6",
+					"act": "#D9E1F2",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#001A33",
+					"act": "#003566",
+					"hov": "#004F99"
+				},
+				"border": {
+					"def": "#004280",
+					"act": "#005CB3",
+					"hov": "#0077E6"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.78, 1, 0.4 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#8B00CC",
+					"act": "#BE33FF",
+					"hov": "#DF99FF"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0.14, 1, 0.5 ],
-				[ 0.84, 0.59, 0.65 ],
-				[ 0.57, 1, 0.55 ]
+				"#FFD500",
+				"#DA71D7",
+				"#1A9FFF"
 			]
 		}
 	},
 	"mat": {
 		"name": "Material",
 		"light": {
-			"key": [ 0.6, 0.38, 0.55 ],
-			"keyword": [ 0.04, 0.92, 0.62 ],
-			"str": [ 0.24, 0.4, 0.54 ],
-			"num": [ 0.04, 0.92, 0.62 ],
-			"background": [ 0.61, 0.27, 0.98 ],
-			"text": [ 0.58, 0.11, 0.15 ],
+			"key": "#6184B8",
+			"keyword": "#F76F45",
+			"str": "#90B95B",
+			"num": "#F76F45",
+			"background": "#F9F9FB",
+			"text": "#22262A",
 			"tertiary": {
-				"text": [ 0.58, 0.11, 0.15 ],
-				"background": [ 0.6, 0.26, 0.95 ],
-				"border": [ 0.61, 0.28, 0.86 ],
+				"text": {
+					"def": "#22262A",
+					"act": "#0B0D0E",
+					"hov": "#000000"
+				},
+				"background": {
+					"def": "#EFF2F6",
+					"act": "#CFD7E3",
+					"hov": "#AFBCD0"
+				},
+				"border": {
+					"def": "#D1D8E5",
+					"act": "#B1BCD3",
+					"hov": "#90A0C1"
+				},
 				"lightnessMod": -0.1
 			},
 			"primary": {
-				"text": [ 0.61, 0.27, 0.98 ],
-				"background": [ 0.48, 0.6, 0.5 ],
+				"text": {
+					"def": "#F9F9FB",
+					"act": "#A8B4CD",
+					"hov": "#596F9B"
+				},
+				"background": {
+					"def": "#33CCBA",
+					"act": "#19665D",
+					"hov": "#000000"
+				},
 				"lightnessMod": -0.25
 			},
 			"indents": [
-				[ 0.71, 1, 0.65 ],
-				[ 0.11, 1, 0.59 ],
-				[ 0.04, 0.92, 0.62 ],
-				[ 0, 0.77, 0.55 ],
-				[ 0.03, 0.4, 0.6 ],
-				[ 0.6, 0.38, 0.55 ]
+				"#7C4DFF",
+				"#FFB92E",
+				"#F76F45",
+				"#E53434",
+				"#C27F70",
+				"#6184B8"
 			]
 		},
 		"dark": {
-			"key": [ 0.77, 0.68, 0.75 ],
-			"keyword": [ 0.61, 1, 0.75 ],
-			"str": [ 0.23, 0.66, 0.73 ],
-			"num": [ 0.04, 0.9, 0.7 ],
-			"background": [ 0.56, 0.19, 0.18 ],
-			"text": [ 0.56, 0.18, 0.9 ],
+			"key": "#C994EB",
+			"keyword": "#80AAFF",
+			"str": "#C5E88D",
+			"num": "#F78E6E",
+			"background": "#253037",
+			"text": "#E1E7EA",
 			"tertiary": {
-				"text": [ 0.56, 0.18, 0.9 ],
-				"background": [ 0.55, 0.19, 0.23 ],
-				"border": [ 0.56, 0.19, 0.38 ],
+				"text": {
+					"def": "#E1E7EA",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#303F46",
+					"act": "#445B64",
+					"hov": "#597682"
+				},
+				"border": {
+					"def": "#4E6673",
+					"act": "#638192",
+					"hov": "#8099A8"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.48, 0.4, 0.4 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#3D8F85",
+					"act": "#70C2B8",
+					"hov": "#B8E0DC"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0.77, 0.68, 0.75 ],
-				[ 0.11, 1, 0.71 ],
-				[ 0.04, 0.9, 0.7 ],
-				[ 0.97, 1, 0.66 ],
-				[ 0.03, 0.4, 0.6 ],
-				[ 0.61, 1, 0.75 ]
+				"#C994EB",
+				"#FFCE6B",
+				"#F78E6E",
+				"#FF5271",
+				"#C27F70",
+				"#80AAFF"
 			]
 		}
 	},
 	"monokai": {
 		"name": "Monokai",
 		"light": {
-			"key": [ 0.94, 1, 0.49 ],
-			"keyword": [ 0.72, 0.4, 0.5 ],
-			"str": [ 0.22, 0.74, 0.42 ],
-			"num": [ 0.54, 0.55, 0.55 ],
-			"background": [ 0, 0, 0.98 ],
-			"text": [ 0.58, 0.11, 0.15 ],
+			"key": "#FA005C",
+			"keyword": "#6D4DB3",
+			"str": "#88BA1C",
+			"num": "#4DAECB",
+			"background": "#FAFAFA",
+			"text": "#22262A",
 			"tertiary": {
-				"text": [ 0.58, 0.11, 0.15 ],
-				"background": [ 0, 0, 0.95 ],
-				"border": [ 0, 0, 0.86 ],
+				"text": {
+					"def": "#22262A",
+					"act": "#0B0D0E",
+					"hov": "#000000"
+				},
+				"background": {
+					"def": "#F2F2F2",
+					"act": "#D9D9D9",
+					"hov": "#BFBFBF"
+				},
+				"border": {
+					"def": "#DBDBDB",
+					"act": "#C2C2C2",
+					"hov": "#A8A8A8"
+				},
 				"lightnessMod": -0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 0.98 ],
-				"background": [ 0.58, 1, 0.38 ],
+				"text": {
+					"def": "#FAFAFA",
+					"act": "#BABABA",
+					"hov": "#7A7A7A"
+				},
+				"background": {
+					"def": "#0064C2",
+					"act": "#002242",
+					"hov": "#000000"
+				},
 				"lightnessMod": -0.25
 			},
 			"indents": [
-				[ 0.64, 0.97, 0.5 ],
-				[ 0.33, 0.5, 0.38 ],
-				[ 0.06, 0.72, 0.28 ]
+				"#042DFB",
+				"#329130",
+				"#7B3A14"
 			]
 		},
 		"dark": {
-			"key": [ 0.94, 0.95, 0.56 ],
-			"keyword": [ 0.73, 1, 0.75 ],
-			"str": [ 0.22, 0.76, 0.53 ],
-			"num": [ 0.53, 0.81, 0.67 ],
-			"background": [ 0.19, 0.08, 0.15 ],
-			"text": [ 0.17, 0.3, 0.96 ],
+			"key": "#F92472",
+			"keyword": "#B080FF",
+			"str": "#A9E22C",
+			"num": "#67D6EF",
+			"background": "#282923",
+			"text": "#F8F8F2",
 			"tertiary": {
-				"text": [ 0.17, 0.3, 0.96 ],
-				"background": [ 0.21, 0.08, 0.2 ],
-				"border": [ 0.19, 0.08, 0.35 ],
+				"text": {
+					"def": "#F8F8F2",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#35372F",
+					"act": "#4F5346",
+					"hov": "#6A6E5E"
+				},
+				"border": {
+					"def": "#5E6052",
+					"act": "#797C6A",
+					"hov": "#939583"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.14, 0.11, 0.41 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#74705D",
+					"act": "#A6A391",
+					"hov": "#D4D2C9"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0.14, 1, 0.5 ],
-				[ 0.84, 0.59, 0.65 ],
-				[ 0.57, 1, 0.55 ]
+				"#FFD500",
+				"#DA71D7",
+				"#1A9FFF"
 			]
 		}
 	},
 	"github": {
 		"name": "GitHub",
 		"light": {
-			"key": [ 0.99, 0.72, 0.47 ],
-			"keyword": [ 0.59, 1, 0.39 ],
-			"str": [ 0.59, 0.94, 0.2 ],
-			"num": [ 0.73, 0.51, 0.51 ],
-			"background": [ 0, 0, 1 ],
-			"text": [ 0.58, 0.11, 0.15 ],
+			"key": "#CE222D",
+			"keyword": "#005DC7",
+			"str": "#033063",
+			"num": "#7342C2",
+			"background": "#FFFFFF",
+			"text": "#22262A",
 			"tertiary": {
-				"text": [ 0.58, 0.11, 0.15 ],
-				"background": [ 0, 0, 0.97 ],
-				"border": [ 0, 0, 0.88 ],
+				"text": {
+					"def": "#22262A",
+					"act": "#0B0D0E",
+					"hov": "#000000"
+				},
+				"background": {
+					"def": "#F7F7F7",
+					"act": "#DEDEDE",
+					"hov": "#C4C4C4"
+				},
+				"border": {
+					"def": "#E0E0E0",
+					"act": "#C7C7C7",
+					"hov": "#ADADAD"
+				},
 				"lightnessMod": -0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.38, 0.76, 0.34 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#BFBFBF",
+					"hov": "#808080"
+				},
+				"background": {
+					"def": "#15993A",
+					"act": "#06280F",
+					"hov": "#000000"
+				},
 				"lightnessMod": -0.25
 			},
 			"indents": [
-				[ 0.59, 1, 0.39 ],
-				[ 0.73, 0.53, 0.42 ],
-				[ 0.07, 0.92, 0.46 ]
+				"#005DC7",
+				"#5E32A4",
+				"#E16309"
 			]
 		},
 		"dark": {
-			"key": [ 0.98, 0.92, 0.72 ],
-			"keyword": [ 0.59, 1, 0.74 ],
-			"str": [ 0.59, 1, 0.81 ],
-			"num": [ 0.73, 0.76, 0.76 ],
-			"background": [ 0.58, 0.12, 0.16 ],
-			"text": [ 0.59, 0.11, 0.84 ],
+			"key": "#F97685",
+			"keyword": "#7AB8FF",
+			"str": "#9ECBFF",
+			"num": "#B793F0",
+			"background": "#24292E",
+			"text": "#D2D6DB",
 			"tertiary": {
-				"text": [ 0.59, 0.11, 0.84 ],
-				"background": [ 0.58, 0.12, 0.21 ],
-				"border": [ 0.58, 0.12, 0.36 ],
+				"text": {
+					"def": "#D2D6DB",
+					"act": "#EEF0F1",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#2F363C",
+					"act": "#464F59",
+					"hov": "#5C6975"
+				},
+				"border": {
+					"def": "#515C67",
+					"act": "#677683",
+					"hov": "#818F9C"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.37, 0.66, 0.26 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#176E2A",
+					"act": "#28C349",
+					"hov": "#6FE288"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0.59, 1, 0.74 ],
-				[ 0.07, 1, 0.72 ],
-				[ 0.73, 0.76, 0.76 ]
+				"#7AB8FF",
+				"#FFAC70",
+				"#B793F0"
 			]
 		}
 	},
 	"cyberpunk": {
 		"name": "Cyberpunk",
 		"dark": {
-			"key": [ 0.94, 1, 0.5 ],
-			"keyword": [ 0.78, 1, 0.74 ],
-			"str": [ 0.58, 1, 0.73 ],
-			"num": [ 0.16, 1, 0.67 ],
-			"background": [ 0.78, 1, 0.03 ],
-			"text": [ 0.94, 1, 0.5 ],
+			"key": "#FF005D",
+			"keyword": "#D57AFF",
+			"str": "#75BCFF",
+			"num": "#FFF957",
+			"background": "#0A000F",
+			"text": "#FF005D",
 			"tertiary": {
-				"text": [ 0.94, 1, 0.5 ],
-				"background": [ 0.78, 0.6, 0.1 ],
-				"border": [ 0.94, 1, 0.25 ],
+				"text": {
+					"def": "#FF005D",
+					"act": "#FF337E",
+					"hov": "#FF669E"
+				},
+				"background": {
+					"def": "#1F0A29",
+					"act": "#3E1452",
+					"hov": "#5D1F7A"
+				},
+				"border": {
+					"def": "#80002F",
+					"act": "#B30041",
+					"hov": "#E60054"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0.94, 1, 0.5 ],
-				"background": [ 0.94, 1, 0.15 ],
+				"text": {
+					"def": "#FF005D",
+					"act": "#FF669E",
+					"hov": "#FFCCDF"
+				},
+				"background": {
+					"def": "#4D001C",
+					"act": "#B30041",
+					"hov": "#FF1A6E"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0.86, 1, 0.5 ],
-				[ 0.26, 1, 0.4 ],
-				[ 0.53, 1, 0.5 ]
+				"#FF00D4",
+				"#58CC00",
+				"#00D0FF"
 			]
 		}
 	},
 	"terminal": {
 		"name": "Matrix",
 		"dark": {
-			"key": [ 0.38, 0.71, 0.53 ],
-			"keyword": [ 0.33, 1, 0.77 ],
-			"str": [ 0.33, 1, 0.77 ],
-			"num": [ 0.33, 1, 0.77 ],
-			"background": [ 0.33, 0.33, 0.02 ],
-			"text": [ 0.33, 1, 0.4 ],
+			"key": "#32DC62",
+			"keyword": "#8CFF8A",
+			"str": "#8CFF8A",
+			"num": "#8CFF8A",
+			"background": "#030703",
+			"text": "#03CC00",
 			"tertiary": {
-				"text": [ 0.33, 1, 0.4 ],
-				"background": [ 0.33, 0, 0 ],
-				"border": [ 0.33, 1, 0.4 ],
+				"text": {
+					"def": "#03CC00",
+					"act": "#04FF00",
+					"hov": "#36FF33"
+				},
+				"background": {
+					"def": "#000000",
+					"act": "#10240F",
+					"hov": "#0C5C0A"
+				},
+				"border": {
+					"def": "#03CC00",
+					"act": "#04FF00",
+					"hov": "#36FF33"
+				},
 				"lightnessMod": 0.1,
 				"saturationMod": 0.4
 			},
 			"primary": {
-				"text": [ 0.33, 1, 0.4 ],
-				"background": [ 0.33, 0, 0 ],
-				"border": [ 0.33, 1, 0.4 ],
+				"text": {
+					"def": "#03CC00",
+					"act": "#04FF00",
+					"hov": "#36FF33"
+				},
+				"background": {
+					"def": "#000000",
+					"act": "#10240F",
+					"hov": "#0C5C0A"
+				},
+				"border": {
+					"def": "#03CC00",
+					"act": "#04FF00",
+					"hov": "#36FF33"
+				},
 				"lightnessMod": 0.1,
 				"saturationMod": 0.4
 			},
 			"indents": [
-				[ 0.58, 1, 0.5 ],
-				[ 0.17, 1, 0.5 ],
-				[ 0, 1, 0.5 ]
+				"#0084FF",
+				"#FBFF00",
+				"#FF0000"
 			]
 		}
 	},
 	"solarized": {
 		"name": "Solarized",
 		"light": {
-			"key": [ 0.19, 1, 0.3 ],
-			"keyword": [ 0.13, 1, 0.35 ],
-			"str": [ 0.49, 0.59, 0.4 ],
-			"num": [ 0.92, 0.64, 0.52 ],
-			"background": [ 0.12, 0.87, 0.94 ],
-			"text": [ 0.54, 0.13, 0.45 ],
+			"key": "#859900",
+			"keyword": "#B38C00",
+			"str": "#2AA29A",
+			"num": "#D33682",
+			"background": "#FDF5E2",
+			"text": "#647B82",
 			"tertiary": {
-				"text": [ 0.54, 0.13, 0.45 ],
-				"background": [ 0.12, 0.87, 0.91 ],
-				"border": [ 0.12, 0.87, 0.82 ],
+				"text": {
+					"def": "#647B82",
+					"act": "#4E5F65",
+					"hov": "#374448"
+				},
+				"background": {
+					"def": "#FCF1D4",
+					"act": "#F9E1A4",
+					"hov": "#F5D175"
+				},
+				"border": {
+					"def": "#F9E2A9",
+					"act": "#F6D379",
+					"hov": "#F2C34A"
+				},
 				"lightnessMod": -0.1
 			},
 			"primary": {
-				"text": [ 0.12, 0.87, 0.94 ],
-				"background": [ 0.14, 0.34, 0.51 ],
+				"text": {
+					"def": "#FDF5E2",
+					"act": "#F5CE6B",
+					"hov": "#D29A0F"
+				},
+				"background": {
+					"def": "#AD9E58",
+					"act": "#59512C",
+					"hov": "#030302"
+				},
 				"lightnessMod": -0.25
 			},
 			"indents": [
-				[ 0.64, 0.97, 0.5 ],
-				[ 0.33, 0.5, 0.38 ],
-				[ 0.06, 0.72, 0.28 ]
+				"#042DFB",
+				"#329130",
+				"#7B3A14"
 			]
 		},
 		"dark": {
-			"key": [ 0.19, 1, 0.3 ],
-			"keyword": [ 0.13, 1, 0.35 ],
-			"str": [ 0.49, 0.59, 0.4 ],
-			"num": [ 0.92, 0.64, 0.52 ],
-			"background": [ 0.53, 1, 0.11 ],
-			"text": [ 0.52, 0.08, 0.55 ],
+			"key": "#859900",
+			"keyword": "#B38C00",
+			"str": "#2AA29A",
+			"num": "#D33682",
+			"background": "#002E38",
+			"text": "#839395",
 			"tertiary": {
-				"text": [ 0.52, 0.08, 0.55 ],
-				"background": [ 0.54, 1, 0.16 ],
-				"border": [ 0.53, 1, 0.25 ],
+				"text": {
+					"def": "#839395",
+					"act": "#9FABAD",
+					"hov": "#BAC3C4"
+				},
+				"background": {
+					"def": "#003F52",
+					"act": "#006685",
+					"hov": "#008DB8"
+				},
+				"border": {
+					"def": "#006880",
+					"act": "#0092B3",
+					"hov": "#00BBE6"
+				},
 				"lightnessMod": 0.1
 			},
 			"primary": {
-				"text": [ 0, 0, 1 ],
-				"background": [ 0.49, 0.59, 0.4 ],
+				"text": {
+					"def": "#FFFFFF",
+					"act": "#FFFFFF",
+					"hov": "#FFFFFF"
+				},
+				"background": {
+					"def": "#2AA29A",
+					"act": "#5DD5CD",
+					"hov": "#AEEAE6"
+				},
 				"lightnessMod": 0.2
 			},
 			"indents": [
-				[ 0, 0, 0.8 ],
-				[ 0.13, 1, 0.35 ],
-				[ 0.92, 0.64, 0.52 ]
+				"#CCCCCC",
+				"#B38C00",
+				"#D33682"
 			]
 		}
 	}
