@@ -1,8 +1,6 @@
 <script lang="ts">
 	import Color from "color";
 
-	type T = $$Generic<{}>;
-
 	export let value: null | Color = null;
 	export let onchange: undefined | ((value: Color) => void) = undefined;
 	export let readonly = false;
