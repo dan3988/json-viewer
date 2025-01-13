@@ -1,6 +1,13 @@
 # Json Viewer
 A modern browser extension to visualise, traverse and search JSON. Made with [Svelte](https://svelte.dev/) and [bootstrap](https://getbootstrap.com/).
 
+<a href="https://chromewebstore.google.com/detail/json-viewer/cempkhpgdolncnkiicodehecdbggnamn">
+	<img height="56" src="https://developer.chrome.com/static/docs/webstore/branding/image/206x58-chrome-web-bcb82d15b2486.png" alt="Download for Google Chrome" />
+</a>
+<a href="https://addons.mozilla.org/en-GB/firefox/addon/dan3988-json-viewer/">
+	<img height="56" background="red" src="readme/ff.png" alt="Download for Firefox" />
+</a>
+
 ![preview](readme/preview.png)
 <details>
 	<summary>See all themes</summary>
