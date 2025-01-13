@@ -1,10 +1,9 @@
 <script lang="ts">
-	import type { CustomSchemeColorSet, SetColors, TogglebleSetColors } from "./custom-scheme";
+	import type { CustomSchemeColorSet, SetColors } from "./custom-scheme";
+	import type { WritableStore } from "../store";
 	import ColorEditor from "./ColorEditor.svelte";
-    import type { WritableStore } from "../store";
 
 	export let value: CustomSchemeColorSet;
-	export let disabled = false;
 	export let previewClass: string;
 
 	let tab: 0 | 1 | 2 = 0;
@@ -28,15 +27,15 @@
 	{/if}
 	<div class="input-group">
 		<span class="input-group-text">Normal</span>
-		<ColorEditor disabled={disabled || (active && !$active)} bind:value={$def} />
+		<ColorEditor disabled={active && !$active} bind:value={$def} />
 	</div>
 	<div class="input-group">
 		<span class="input-group-text">Hover</span>
-		<ColorEditor disabled={disabled || (active && !$active)} bind:value={$hov} />
+		<ColorEditor disabled={active && !$active} bind:value={$hov} />
 	</div>
 	<div class="input-group">
 		<span class="input-group-text">Active</span>
-		<ColorEditor disabled={disabled || (active && !$active)} bind:value={$act} />
+		<ColorEditor disabled={active && !$active} bind:value={$act} />
 	</div>
 	<div class="color-preview d-flex flex-even gap-1">
 		<span class="btn {previewClass}">Normal</span>
