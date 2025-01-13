@@ -1,9 +1,10 @@
 import type preferences from './preferences-lite';
-import json from './schemes.json' with { type: 'json' };
+import json from './json' with { type: 'json' };
 import Color from 'color';
 
 export namespace schemes {
 	type SetKey = "primary" | "tertiary";
+	type SetColor = 'text' | 'background' | 'border';
 
 	interface JsonColorScheme {
 		name: string;
@@ -31,7 +32,7 @@ export namespace schemes {
 		['Dark', []],
 	];
 	
-	for (const [key, value] of Object.entries(schemes.presets)) {
+	for (const [key, value] of Object.entries(presets)) {
 		const index = (value as any).light ? (value.dark ? 0 : 1) : 2;
 		groupedPresets[index][1].push([key, value.name]);
 	}
@@ -58,147 +59,145 @@ export namespace schemes {
 
 		return builder.toString();
 	}
-}
-
-export default schemes;
-
-abstract class CssBuilder {
-	abstract rule(selector: string | string[], build: (builder: CssRuleBuilder) => void): this;
-
-	abstract toString(): string;
-}
-
-interface CssRuleBuilder {
-	prop(key: string, value: any): this;
-	variable(key: string, value: any): this;
-	color(key: string, value: Color): this;
-}
-
-class TextCssBuilder extends CssBuilder {
-	static readonly #RuleBuilder = class implements CssRuleBuilder {
-		readonly #owner: TextCssBuilder;
-
-		constructor(owner: TextCssBuilder) {
-			this.#owner = owner;
-		}
 	
-		prop(key: string, value: any) {
-			this.#owner.#line(key, ':', value, ';');
-			return this;
-		}
+	abstract class CssBuilder {
+		abstract rule(selector: string | string[], build: (builder: CssRuleBuilder) => void): this;
+
+		abstract toString(): string;
+	}
+
+	interface CssRuleBuilder {
+		prop(key: string, value: any): this;
+		variable(key: string, value: any): this;
+		color(key: string, value: Color): this;
+	}
+
+	class TextCssBuilder extends CssBuilder {
+		static readonly #RuleBuilder = class implements CssRuleBuilder {
+			readonly #owner: TextCssBuilder;
+
+			constructor(owner: TextCssBuilder) {
+				this.#owner = owner;
+			}
 		
-		variable(key: string, value: any) {
-			this.#owner.#line('--', key, ':', value, ';');
-			return this;
-		}
-		
-		color(key: string, color: Color) {
-			const [r, g, b] = color.unitArray();
-			this.#owner.#line('--', key, '-rgb:', Math.trunc(r * 255), ',', Math.trunc(g * 255), ',', Math.trunc(b * 255), ';');
-			return this;
-		}
-	}
-
-	readonly #parts: any[] = [];
-	readonly #indent: null | string;
-	readonly #newLine: string;
-
-	constructor(indent: null | string = null) {
-		super();
-		this.#indent = indent;
-		this.#newLine = indent == null ? '' : '\n';
-	}
-
-	#line(...values: any[]) {
-		this.#indent && this.#parts.push('\n', this.#indent);
-		this.#parts.push(...values);
-	}
-
-	rule(selectors: string | string[], build: (builder: CssRuleBuilder) => void) {
-		if (Array.isArray(selectors)) {
-			if (selectors.length === 0)
-				throw new TypeError('Must provide at least 1 rule selector.');
-
-			for (let i = 0; ;) {
-				const selector = selectors[i];
-				if (++i < selectors.length) {
-					this.#parts.push(selector, ',', this.#newLine);
-				} else {
-					selectors = selector;
-					break;
-				}
+			prop(key: string, value: any) {
+				this.#owner.#line(key, ':', value, ';');
+				return this;
+			}
+			
+			variable(key: string, value: any) {
+				this.#owner.#line('--', key, ':', value, ';');
+				return this;
+			}
+			
+			color(key: string, color: Color) {
+				const [r, g, b] = color.unitArray();
+				this.#owner.#line('--', key, '-rgb:', Math.trunc(r * 255), ',', Math.trunc(g * 255), ',', Math.trunc(b * 255), ';');
+				return this;
 			}
 		}
 
-		this.#parts.push(selectors, ' {');
-		const builder = new TextCssBuilder.#RuleBuilder(this);
-		build(builder);
-		this.#parts.push(this.#newLine, '}', this.#newLine, this.#newLine);
-		return this;
+		readonly #parts: any[] = [];
+		readonly #indent: null | string;
+		readonly #newLine: string;
+
+		constructor(indent: null | string = null) {
+			super();
+			this.#indent = indent;
+			this.#newLine = indent == null ? '' : '\n';
+		}
+
+		#line(...values: any[]) {
+			this.#indent && this.#parts.push('\n', this.#indent);
+			this.#parts.push(...values);
+		}
+
+		rule(selectors: string | string[], build: (builder: CssRuleBuilder) => void) {
+			if (Array.isArray(selectors)) {
+				if (selectors.length === 0)
+					throw new TypeError('Must provide at least 1 rule selector.');
+
+				for (let i = 0; ;) {
+					const selector = selectors[i];
+					if (++i < selectors.length) {
+						this.#parts.push(selector, ',', this.#newLine);
+					} else {
+						selectors = selector;
+						break;
+					}
+				}
+			}
+
+			this.#parts.push(selectors, ' {');
+			const builder = new TextCssBuilder.#RuleBuilder(this);
+			build(builder);
+			this.#parts.push(this.#newLine, '}', this.#newLine, this.#newLine);
+			return this;
+		}
+
+		toString(): string {
+			return this.#parts.join('');
+		}
 	}
 
-	toString(): string {
-		return this.#parts.join('');
-	}
-}
-
-function compileVariables(builder: CssRuleBuilder, values: schemes.ColorSchemeValues) {
-	const key = Color(values.key);
-	const keyword = Color(values.keyword);
-	const str = Color(values.str);
-	const num = Color(values.num);
-	const text = Color(values.text);
-	const background = Color(values.background);
-	builder
-		.color('jv-key-fg', key)
-		.color('jv-keywd-fg', keyword)
-		.color('jv-str-fg', str)
-		.color('jv-num-fg', num)
-		.color('jv-body-text', text)
-		.color('jv-body-bg', background);
-
-	compileSet(builder, 'jv-tertiary', values.tertiary);
-	compileSet(builder, 'jv-primary', values.primary);
-
-	for (let i = 0; i < values.indents.length; i++)
-		builder.color(`jv-indent-${i}`, Color(values.indents[i]));
-}
-
-type SetColor = 'text' | 'background' | 'border';
-
-function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSchemeSet): void;
-function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string, suffix: string, key: K, set: schemes.ColorSchemeSet, fallback: Exclude<SetColor, K>): void;
-function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: schemes.ColorSchemeSet, fallback?: SetColor) {
-	const value = set[key] ?? (fallback && set[fallback]);
-	if (value) {
-		const def = Color(value.def);
+	function compileVariables(builder: CssRuleBuilder, values: ColorSchemeValues) {
+		const key = Color(values.key);
+		const keyword = Color(values.keyword);
+		const str = Color(values.str);
+		const num = Color(values.num);
+		const text = Color(values.text);
+		const background = Color(values.background);
 		builder
-			.color(`${prefix}-${suffix}`, def)
-			.color(`${prefix}-hover-${suffix}`, Color(value.hov))
-			.color(`${prefix}-active-${suffix}`, Color(value.act))
-			.color(`${prefix}-disabled-${suffix}`, def);
+			.color('jv-key-fg', key)
+			.color('jv-keywd-fg', keyword)
+			.color('jv-str-fg', str)
+			.color('jv-num-fg', num)
+			.color('jv-body-text', text)
+			.color('jv-body-bg', background);
+
+		compileSet(builder, 'jv-tertiary', values.tertiary);
+		compileSet(builder, 'jv-primary', values.primary);
+
+		for (let i = 0; i < values.indents.length; i++)
+			builder.color(`jv-indent-${i}`, Color(values.indents[i]));
 	}
-}
 
-function compileSet(builder: CssRuleBuilder, prefix: string, set: schemes.ColorSchemeSet) {
-	writeColor(builder, prefix, 'text', 'text', set);
-	writeColor(builder, prefix, 'bg', 'background', set);
-	writeColor(builder, prefix, 'border', 'border', set, 'background');
-}
+	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet): void;
+	function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string, suffix: string, key: K, set: ColorSchemeSet, fallback: Exclude<SetColor, K>): void;
+	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet, fallback?: SetColor) {
+		const value = set[key] ?? (fallback && set[fallback]);
+		if (value) {
+			const def = Color(value.def);
+			builder
+				.color(`${prefix}-${suffix}`, def)
+				.color(`${prefix}-hover-${suffix}`, Color(value.hov))
+				.color(`${prefix}-active-${suffix}`, Color(value.act))
+				.color(`${prefix}-disabled-${suffix}`, def);
+		}
+	}
 
-function compileValues(builder: CssBuilder, theme: string, values: schemes.ColorSchemeValues, forceColorScheme = false) {
-	const themeSelector = forceColorScheme ? '[data-bs-theme]' : `[data-bs-theme="${theme}"]`;
-	const selectors = [ `${themeSelector}.scheme`, `${themeSelector} .scheme` ];
-	builder.rule(selectors, b => {
-		if (forceColorScheme)
-			b.prop('color-scheme', theme);
+	function compileSet(builder: CssRuleBuilder, prefix: string, set: ColorSchemeSet) {
+		writeColor(builder, prefix, 'text', 'text', set);
+		writeColor(builder, prefix, 'bg', 'background', set);
+		writeColor(builder, prefix, 'border', 'border', set, 'background');
+	}
 
-		compileVariables(b, values);
-	});
+	function compileValues(builder: CssBuilder, theme: string, values: ColorSchemeValues, forceColorScheme = false) {
+		const themeSelector = forceColorScheme ? '[data-bs-theme]' : `[data-bs-theme="${theme}"]`;
+		const selectors = [ `${themeSelector}.scheme`, `${themeSelector} .scheme` ];
+		builder.rule(selectors, b => {
+			if (forceColorScheme)
+				b.prop('color-scheme', theme);
 
-	for (let i = 0; i < values.indents.length; i++) {
-		builder.rule([ `${themeSelector}.scheme .json-indent[data-indent="${i}"]`, `${themeSelector} .scheme .json-indent[data-indent="${i}"]` ], b => {
-			b.variable('jv-indent', `var(--jv-indent-${i}-rgb)`);
+			compileVariables(b, values);
 		});
+
+		for (let i = 0; i < values.indents.length; i++) {
+			builder.rule([ `${themeSelector}.scheme .json-indent[data-indent="${i}"]`, `${themeSelector} .scheme .json-indent[data-indent="${i}"]` ], b => {
+				b.variable('jv-indent', `var(--jv-indent-${i}-rgb)`);
+			});
+		}
 	}
 }
+
+export default schemes;
