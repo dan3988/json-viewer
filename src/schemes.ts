@@ -1,5 +1,5 @@
 import type preferences from './preferences-lite';
-import json from './json' with { type: 'json' };
+import json from './schemes.json' with { type: 'json' };
 import Color from 'color';
 
 export namespace schemes {

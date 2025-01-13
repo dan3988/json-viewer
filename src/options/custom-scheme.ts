@@ -1,4 +1,4 @@
-import StoreController from "../store";
+import Store, { type IStoreController } from "../store";
 import Color from "color";
 import schemes from "../schemes";
 import { WritableStore, WritableStoreImpl } from "../store";
@@ -13,7 +13,7 @@ type SchemeSetKey = 'primary' | 'tertiary';
 type ColorStore = WritableStore<Color<any>>;
 
 export class CustomScheme {
-	readonly #scheme: StoreController<schemes.ColorScheme>;
+	readonly #scheme: IStoreController<schemes.ColorScheme>;
 	readonly #name: WritableStore<string>;
 
 	#light: null | CustomSchemeValues;
@@ -36,7 +36,7 @@ export class CustomScheme {
 	}
 
 	constructor(value: schemes.ColorScheme) {
-		this.#scheme = new StoreController(value);
+		this.#scheme = Store.controller(value);
 		this.#name = new WritableStoreImpl(value.name);
 		this.#name.listen(this.#updateName.bind(this));
 		this.#light = value.light ? this.#createValues(false, value.light) : null;
@@ -79,7 +79,7 @@ export class CustomScheme {
 		const background = this.#rootColorStore(darkMode, values, 'background');
 		const primary = this.#createSet(values, darkMode, 'primary', text);
 		const tertiary = this.#createSet(values, darkMode, 'tertiary', text);
-		const indents = new StoreController<Color[]>(Array.from(values.indents, v => Color(v)));
+		const indents = Store.controller(Array.from(values.indents, v => Color(v)));
 		indents.listen(value => this.#update(darkMode, v => v.indents = Array.from(value, v => v.hex())));
 		return new CustomSchemeValues(key, keyword, str, num, text, background, primary, tertiary, indents);
 	}
