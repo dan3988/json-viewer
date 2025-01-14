@@ -9,11 +9,6 @@
 			"background": "#FAFAFA",
 			"text": "#22262A",
 			"tertiary": {
-				"text": {
-					"def": "#22262A",
-					"act": "#0B0D0E",
-					"hov": "#000000"
-				},
 				"background": {
 					"def": "#F2F2F2",
 					"act": "#D9D9D9",
@@ -51,11 +46,6 @@
 			"background": "#1F1F1F",
 			"text": "#ADB5BD",
 			"tertiary": {
-				"text": {
-					"def": "#ADB5BD",
-					"act": "#C9CFD4",
-					"hov": "#E6E8EB"
-				},
 				"background": {
 					"def": "#2B2B2B",
 					"act": "#454545",
@@ -96,11 +86,6 @@
 			"background": "#F1F1F4",
 			"text": "#0D0D08",
 			"tertiary": {
-				"text": {
-					"def": "#0D0D08",
-					"act": "#000000",
-					"hov": "#000000"
-				},
 				"background": {
 					"def": "#E8E8ED",
 					"act": "#CCCCD7",
@@ -141,11 +126,6 @@
 			"background": "#272935",
 			"text": "#F8F8F2",
 			"tertiary": {
-				"text": {
-					"def": "#F8F8F2",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
-				},
 				"background": {
 					"def": "#323443",
 					"act": "#484A61",
@@ -189,11 +169,6 @@
 			"background": "#000D1A",
 			"text": "#B3C3E6",
 			"tertiary": {
-				"text": {
-					"def": "#B3C3E6",
-					"act": "#D9E1F2",
-					"hov": "#FFFFFF"
-				},
 				"background": {
 					"def": "#001A33",
 					"act": "#003566",
@@ -234,11 +209,6 @@
 			"background": "#F9F9FB",
 			"text": "#22262A",
 			"tertiary": {
-				"text": {
-					"def": "#22262A",
-					"act": "#0B0D0E",
-					"hov": "#000000"
-				},
 				"background": {
 					"def": "#EFF2F6",
 					"act": "#CFD7E3",
@@ -279,11 +249,6 @@
 			"background": "#253037",
 			"text": "#E1E7EA",
 			"tertiary": {
-				"text": {
-					"def": "#E1E7EA",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
-				},
 				"background": {
 					"def": "#303F46",
 					"act": "#445B64",
@@ -327,11 +292,6 @@
 			"background": "#FAFAFA",
 			"text": "#22262A",
 			"tertiary": {
-				"text": {
-					"def": "#22262A",
-					"act": "#0B0D0E",
-					"hov": "#000000"
-				},
 				"background": {
 					"def": "#F2F2F2",
 					"act": "#D9D9D9",
@@ -369,11 +329,6 @@
 			"background": "#282923",
 			"text": "#F8F8F2",
 			"tertiary": {
-				"text": {
-					"def": "#F8F8F2",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
-				},
 				"background": {
 					"def": "#35372F",
 					"act": "#4F5346",
@@ -414,11 +369,6 @@
 			"background": "#FFFFFF",
 			"text": "#22262A",
 			"tertiary": {
-				"text": {
-					"def": "#22262A",
-					"act": "#0B0D0E",
-					"hov": "#000000"
-				},
 				"background": {
 					"def": "#F7F7F7",
 					"act": "#DEDEDE",
@@ -456,11 +406,6 @@
 			"background": "#24292E",
 			"text": "#D2D6DB",
 			"tertiary": {
-				"text": {
-					"def": "#D2D6DB",
-					"act": "#EEF0F1",
-					"hov": "#FFFFFF"
-				},
 				"background": {
 					"def": "#2F363C",
 					"act": "#464F59",
@@ -501,11 +446,6 @@
 			"background": "#0A000F",
 			"text": "#FF005D",
 			"tertiary": {
-				"text": {
-					"def": "#FF005D",
-					"act": "#FF337E",
-					"hov": "#FF669E"
-				},
 				"background": {
 					"def": "#1F0A29",
 					"act": "#3E1452",
@@ -546,11 +486,6 @@
 			"background": "#030703",
 			"text": "#03CC00",
 			"tertiary": {
-				"text": {
-					"def": "#03CC00",
-					"act": "#04FF00",
-					"hov": "#36FF33"
-				},
 				"background": {
 					"def": "#000000",
 					"act": "#10240F",
@@ -596,11 +531,6 @@
 			"background": "#FDF5E2",
 			"text": "#647B82",
 			"tertiary": {
-				"text": {
-					"def": "#647B82",
-					"act": "#4E5F65",
-					"hov": "#374448"
-				},
 				"background": {
 					"def": "#FCF1D4",
 					"act": "#F9E1A4",
@@ -638,11 +568,6 @@
 			"background": "#002E38",
 			"text": "#839395",
 			"tertiary": {
-				"text": {
-					"def": "#839395",
-					"act": "#9FABAD",
-					"hov": "#BAC3C4"
-				},
 				"background": {
 					"def": "#003F52",
 					"act": "#006685",
