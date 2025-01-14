@@ -71,16 +71,16 @@
 
 	.btn-primary {
 		--bs-btn-bg: var(--jv-primary-bg);
-		--bs-btn-hover-bg: var(--jv-primary-active-bg);
-		--bs-btn-active-bg: var(--jv-primary-hover-bg);
+		--bs-btn-hover-bg: var(--jv-primary-hover-bg);
+		--bs-btn-active-bg: var(--jv-primary-active-bg);
 		--bs-btn-disabled-bg: var(--jv-primary-disabled-bg);
 		--bs-btn-border-color: var(--jv-primary-border);
-		--bs-btn-hover-border-color: var(--jv-primary-active-border);
-		--bs-btn-active-border-color: var(--jv-primary-hover-border);
+		--bs-btn-hover-border-color: var(--jv-primary-hover-border);
+		--bs-btn-active-border-color: var(--jv-primary-active-border);
 		--bs-btn-disabled-border-color: var(--jv-primary-disabled-border);
 		--bs-btn-color: var(--jv-primary-text);
-		--bs-btn-hover-color: var(--jv-primary-active-text);
-		--bs-btn-active-color: var(--jv-primary-hover-text);
+		--bs-btn-hover-color: var(--jv-primary-hover-text);
+		--bs-btn-active-color: var(--jv-primary-active-text);
 		--bs-btn-disabled-color: var(--jv-primary-disabled-text);
 	}
 
@@ -88,14 +88,14 @@
 		--bs-btn-bg: var(--jv-tertiary-bg);
 		--bs-btn-hover-bg: var(--jv-tertiary-hover-bg);
 		--bs-btn-active-bg: var(--jv-tertiary-active-bg);
-		--bs-btn-disabled-bg: var(--jv-tertiary-bg);
+		--bs-btn-disabled-bg: var(--jv-tertiary-disabled-bg);
 		--bs-btn-border-color: var(--jv-tertiary-border);
-		--bs-btn-hover-border-color: var(--jv-tertiary-active-border);
-		--bs-btn-active-border-color: var(--jv-tertiary-hover-border);
-		--bs-btn-disabled-border-color: var(--jv-tertiary-border);
-		--bs-btn-color: var(--jv-body-text);
-		--bs-btn-hover-color: var(--jv-body-text);
-		--bs-btn-active-color: var(--jv-body-text);
-		--bs-btn-disabled-color: var(--jv-body-text);
+		--bs-btn-hover-border-color: var(--jv-tertiary-hover-border);
+		--bs-btn-active-border-color: var(--jv-tertiary-active-border);
+		--bs-btn-disabled-border-color: var(--jv-tertiary-disabled-border);
+		--bs-btn-color: var(--jv-tertiary-text);
+		--bs-btn-hover-color: var(--jv-tertiary-hover-text);
+		--bs-btn-active-color: var(--jv-tertiary-active-text);
+		--bs-btn-disabled-color: var(--jv-tertiary-disabled-text);
 	}
 }

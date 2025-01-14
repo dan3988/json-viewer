@@ -81,7 +81,7 @@ export class CustomScheme {
 		const tertiary = this.#createSet(values, darkMode, 'tertiary', text);
 		const indents = Store.controller(Array.from(values.indents, v => Color(v)));
 		indents.listen(value => this.#update(darkMode, v => v.indents = Array.from(value, v => v.hex())));
-		return new CustomSchemeValues(key, keyword, str, num, text, background, primary, tertiary, indents);
+		return { key, keyword, str, num, text, background, primary, tertiary, indents };
 	}
 
 	#rootColorStore(darkMode: boolean, values: schemes.ColorSchemeValues, key: SchemeColorKey) {
@@ -100,95 +100,86 @@ export class CustomScheme {
 				this.#update(darkMode, v => v[set].background[mode] = value.hex());
 			}
 
-			const defStore = new WritableStoreImpl(Color(init.def));
-			defStore.listen(handler.bind(this, 'def'));
-			const actStore = new WritableStoreImpl(Color(init.act));
-			actStore.listen(handler.bind(this, 'act'));
-			const hovStore = new WritableStoreImpl(Color(init.hov));
-			hovStore.listen(handler.bind(this, 'hov'));
+			const def = new WritableStoreImpl(Color(init.def));
+			def.listen(handler.bind(this, 'def'));
+			const act = new WritableStoreImpl(Color(init.act));
+			act.listen(handler.bind(this, 'act'));
+			const hov = new WritableStoreImpl(Color(init.hov));
+			hov.listen(handler.bind(this, 'hov'));
 
-			return new SetColors(defStore, actStore, hovStore);
+			return { def, hov, act };
 		})();
 
 		const border = this.#createTogglebleSetColors(darkMode, values, set, 'border', background.def, background.act, background.hov);
 		const text = this.#createTogglebleSetColors(darkMode, values, set, 'text', rootText, rootText, rootText);
-		return new CustomSchemeColorSet(background, border, text);
+		return { background, border, text };
 	}
 
 	#createTogglebleSetColors(darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, prop: 'border' | 'text', fallbackDef: ColorStore, fallbackAct: ColorStore, fallbackHov: ColorStore) {
 		const init = values[set][prop];
+		const active = new WritableStoreImpl(!!init);
 
-		let active = !!init;
-		const activeStore = new WritableStoreImpl(active);
-
-		activeStore.listen(v => {
-			if (active = v) {
-				const def = defStore.value.hex();
-				const act = actStore.value.hex();
-				const hov = hovStore.value.hex();
-				this.#update(darkMode, v => v[set][prop] = { def, act, hov });
+		active.listen(v => {
+			if (v) {
+				this.#update(darkMode, v => v[set][prop] = {
+					def: def.value.hex(),
+					act: act.value.hex(),
+					hov: hov.value.hex()
+				});
 			} else {
 				this.#update(darkMode, v => v[set][prop] = null);
 			}
 		});
 
-		let defStore: ColorStore;
-		let actStore: ColorStore;
-		let hovStore: ColorStore;
+		let def: ColorStore;
+		let act: ColorStore;
+		let hov: ColorStore;
 		if (init) {
-			defStore = new WritableStoreImpl(Color(init.def));
-			actStore = new WritableStoreImpl(Color(init.act));
-			hovStore = new WritableStoreImpl(Color(init.hov));
+			def = new WritableStoreImpl(Color(init.def));
+			act = new WritableStoreImpl(Color(init.act));
+			hov = new WritableStoreImpl(Color(init.hov));
 		} else {
-			defStore = WritableStore.rewritable(fallbackDef);
-			actStore = WritableStore.rewritable(fallbackAct);
-			hovStore = WritableStore.rewritable(fallbackHov);
+			def = WritableStore.rewritable(fallbackDef);
+			act = WritableStore.rewritable(fallbackAct);
+			hov = WritableStore.rewritable(fallbackHov);
 		}
 
 		function handler(this: CustomScheme, mode: SetColorMode, value: Color) {
-			active && this.#update(darkMode, v => v[set][prop]![mode] = value.hex());
+			active.value && this.#update(darkMode, v => v[set][prop]![mode] = value.hex());
 		}
 
-		defStore.listen(handler.bind(this, 'def'));
-		actStore.listen(handler.bind(this, 'act'));
-		hovStore.listen(handler.bind(this, 'hov'));
+		def.listen(handler.bind(this, 'def'));
+		act.listen(handler.bind(this, 'act'));
+		hov.listen(handler.bind(this, 'hov'));
 
-		return new TogglebleSetColors(defStore, actStore, hovStore, activeStore);
+		return { def, act, hov, active };
 	}
 }
 
-export class CustomSchemeColorSet {
-	constructor(
-		readonly background: SetColors,
-		readonly border: TogglebleSetColors,
-		readonly text: TogglebleSetColors) {
-	}
+export interface CustomSchemeColorSet {
+	readonly background: SetColors;
+	readonly border: TogglebleSetColors;
+	readonly text: TogglebleSetColors;
 }
 
-export class SetColors {
-	constructor(
-		readonly def: ColorStore,
-		readonly hov: ColorStore,
-		readonly act: ColorStore) {
-	}
+export interface SetColors {
+	readonly def: ColorStore;
+	readonly hov: ColorStore;
+	readonly act: ColorStore;
 }
 
-export class TogglebleSetColors extends SetColors {
-	constructor(def: ColorStore, hov: ColorStore, act: ColorStore, readonly active: WritableStore<boolean>) {
-		super(def, hov, act)
-	}
+export interface TogglebleSetColors extends SetColors {
+	readonly active: WritableStore<boolean>;
 }
 
-export class CustomSchemeValues {
-	constructor(
-		readonly key: ColorStore,
-		readonly keyword: ColorStore,
-		readonly str: ColorStore,
-		readonly num: ColorStore,
-		readonly text: ColorStore,
-		readonly background: ColorStore,
-		readonly primary: CustomSchemeColorSet,
-		readonly tertiary: CustomSchemeColorSet,
-		readonly indents: WritableStore<Color[]>) {
-	}
+export interface CustomSchemeValues {
+	readonly key: ColorStore;
+	readonly keyword: ColorStore;
+	readonly str: ColorStore;
+	readonly num: ColorStore;
+	readonly text: ColorStore;
+	readonly background: ColorStore;
+	readonly primary: CustomSchemeColorSet;
+	readonly tertiary: CustomSchemeColorSet;
+	readonly indents: WritableStore<Color[]>;
 }
