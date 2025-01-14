@@ -22,9 +22,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FAFAFA",
-					"act": "#BABABA",
-					"hov": "#7A7A7A"
+					"def": "#FAFAFA"
 				},
 				"background": {
 					"def": "#0D6DFD",
@@ -59,9 +57,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#0D6DFD",
@@ -99,9 +95,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#F1F1F4",
-					"act": "#AAA9BC",
-					"hov": "#656581"
+					"def": "#F1F1F4"
 				},
 				"background": {
 					"def": "#E6006F",
@@ -139,9 +133,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#E6006F",
@@ -182,9 +174,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#8B00CC",
@@ -222,9 +212,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#F9F9FB",
-					"act": "#A8B4CD",
-					"hov": "#596F9B"
+					"def": "#F9F9FB"
 				},
 				"background": {
 					"def": "#33CCBA",
@@ -262,9 +250,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#3D8F85",
@@ -305,9 +291,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FAFAFA",
-					"act": "#BABABA",
-					"hov": "#7A7A7A"
+					"def": "#FAFAFA"
 				},
 				"background": {
 					"def": "#0064C2",
@@ -342,9 +326,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#74705D",
@@ -382,9 +364,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#BFBFBF",
-					"hov": "#808080"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#15993A",
@@ -419,9 +399,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#176E2A",
@@ -544,9 +522,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FDF5E2",
-					"act": "#F5CE6B",
-					"hov": "#D29A0F"
+					"def": "#FDF5E2"
 				},
 				"background": {
 					"def": "#AD9E58",
@@ -581,9 +557,7 @@
 			},
 			"primary": {
 				"text": {
-					"def": "#FFFFFF",
-					"act": "#FFFFFF",
-					"hov": "#FFFFFF"
+					"def": "#FFFFFF"
 				},
 				"background": {
 					"def": "#2AA29A",

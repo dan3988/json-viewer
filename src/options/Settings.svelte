@@ -30,14 +30,20 @@
 
 	const webRequestPerm: chrome.permissions.Permissions = { permissions: ["webRequest"] };
 
+	let schemeEditor: CustomScheme;
+
 	$: ({ changed, props: { darkMode, scheme, background, customSchemes } } = model);
 	$: tracker.preferDark = $darkMode;
-	$: schemeEditor = new CustomScheme($customSchemes[$scheme] ?? schemes.presets[$scheme]);
+	$: updateSchemeEditor($scheme);
 	$: currentScheme = schemeEditor.scheme;
 	$: maxIndentClass = schemes.getIndentCount($currentScheme, $tracker);
 	$: schemeEditor, onSchemeEditorChanged();
 
 	let unsub: undefined | Unsubscriber;
+
+	function updateSchemeEditor(scheme: string) {
+		schemeEditor = new CustomScheme($customSchemes[scheme] ?? schemes.presets[scheme]);
+	}
 
 	function onSchemeEditorChanged() {
 		unsub?.();

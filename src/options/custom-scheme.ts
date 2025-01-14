@@ -111,11 +111,11 @@ export class CustomScheme {
 		})();
 
 		const border = this.#createTogglebleSetColors(darkMode, values, set, 'border', background.def, background.act, background.hov);
-		const text = this.#createTogglebleSetColors(darkMode, values, set, 'text', rootText, rootText, rootText);
+		const text = this.#createTogglebleSetColors(darkMode, values, set, 'text', rootText);
 		return { background, border, text };
 	}
 
-	#createTogglebleSetColors(darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, prop: 'border' | 'text', fallbackDef: ColorStore, fallbackAct: ColorStore, fallbackHov: ColorStore) {
+	#createTogglebleSetColors(darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, prop: 'border' | 'text', fallbackDef: ColorStore, fallbackAct?: ColorStore, fallbackHov?: ColorStore) {
 		const init = values[set][prop];
 		const active = new WritableStoreImpl(!!init);
 
@@ -136,12 +136,12 @@ export class CustomScheme {
 		let hov: ColorStore;
 		if (init) {
 			def = new WritableStoreImpl(Color(init.def));
-			act = new WritableStoreImpl(Color(init.act));
-			hov = new WritableStoreImpl(Color(init.hov));
+			act = init.act ? new WritableStoreImpl(Color(init.act)) : Store.rewritable(def);
+			hov = init.hov ? new WritableStoreImpl(Color(init.hov)) : Store.rewritable(def);
 		} else {
-			def = WritableStore.rewritable(fallbackDef);
-			act = WritableStore.rewritable(fallbackAct);
-			hov = WritableStore.rewritable(fallbackHov);
+			def = Store.rewritable(fallbackDef);
+			act = Store.rewritable(fallbackAct ?? def);
+			hov = Store.rewritable(fallbackHov ?? def);
 		}
 
 		function handler(this: CustomScheme, mode: SetColorMode, value: Color) {

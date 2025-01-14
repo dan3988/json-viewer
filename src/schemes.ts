@@ -155,29 +155,37 @@ export namespace schemes {
 			.color('jv-body-text', text)
 			.color('jv-body-bg', background);
 
-		compileSet(builder, 'jv-tertiary', values.tertiary);
-		compileSet(builder, 'jv-primary', values.primary);
+		compileSet(builder, 'jv-tertiary', values.tertiary, text);
+		compileSet(builder, 'jv-primary', values.primary, text);
 
 		for (let i = 0; i < values.indents.length; i++)
 			builder.color(`jv-indent-${i}`, Color(values.indents[i]));
 	}
 
-	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet): void;
+	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet, fallback?: Color): void;
 	function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string, suffix: string, key: K, set: ColorSchemeSet, fallback: Exclude<SetColor, K>): void;
-	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet, fallback?: SetColor) {
-		const value = set[key] ?? (fallback && set[fallback]);
+	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet, fallback?: Color | SetColor) {
+		let value = set[key] ?? (typeof fallback === 'string' && set[fallback]);
+		let def: Color, hov: Color, act: Color;
 		if (value) {
-			const def = Color(value.def);
-			builder
-				.color(`${prefix}-${suffix}`, def)
-				.color(`${prefix}-hover-${suffix}`, Color(value.hov))
-				.color(`${prefix}-active-${suffix}`, Color(value.act))
-				.color(`${prefix}-disabled-${suffix}`, def);
+			def = Color(value.def);
+			hov = value.hov ? Color(value.hov) : def;
+			act = value.hov ? Color(value.act) : def;
+		} else if (fallback instanceof Color) {
+			def = hov = act = fallback;
+		} else {
+			return;
 		}
+		
+		builder
+			.color(`${prefix}-${suffix}`, def)
+			.color(`${prefix}-hover-${suffix}`, hov)
+			.color(`${prefix}-active-${suffix}`, act)
+			.color(`${prefix}-disabled-${suffix}`, def);
 	}
 
-	function compileSet(builder: CssRuleBuilder, prefix: string, set: ColorSchemeSet) {
-		writeColor(builder, prefix, 'text', 'text', set);
+	function compileSet(builder: CssRuleBuilder, prefix: string, set: ColorSchemeSet, textFallback: Color) {
+		writeColor(builder, prefix, 'text', 'text', set, textFallback);
 		writeColor(builder, prefix, 'bg', 'background', set);
 		writeColor(builder, prefix, 'border', 'border', set, 'background');
 	}
