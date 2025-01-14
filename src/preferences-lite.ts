@@ -9,8 +9,8 @@ export namespace preferences {
 
 		const setColors = p.core.types.object({
 			def: p.core.types.string,
-			act: p.core.types.string,
-			hov: p.core.types.string,
+			act: p.core.types.nullable('string'),
+			hov: p.core.types.nullable('string'),
 		});
 
 		const colorSet = p.core.types.object({

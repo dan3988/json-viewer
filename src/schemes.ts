@@ -170,7 +170,7 @@ export namespace schemes {
 		if (value) {
 			def = Color(value.def);
 			hov = value.hov ? Color(value.hov) : def;
-			act = value.hov ? Color(value.act) : def;
+			act = value.act ? Color(value.act) : def;
 		} else if (fallback instanceof Color) {
 			def = hov = act = fallback;
 		} else {

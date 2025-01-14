@@ -102,9 +102,9 @@ export class CustomScheme {
 
 			const def = new WritableStoreImpl(Color(init.def));
 			def.listen(handler.bind(this, 'def'));
-			const act = new WritableStoreImpl(Color(init.act));
+			const act = new WritableStoreImpl(init.act ? Color(init.act) : def.value);
 			act.listen(handler.bind(this, 'act'));
-			const hov = new WritableStoreImpl(Color(init.hov));
+			const hov = new WritableStoreImpl(init.hov ? Color(init.hov) : def.value);
 			hov.listen(handler.bind(this, 'hov'));
 
 			return { def, hov, act };
