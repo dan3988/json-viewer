@@ -48,6 +48,9 @@
 	function onSchemeEditorChanged() {
 		unsub?.();
 		unsub = schemeEditor.scheme.listen(v => {
+			if ($scheme in schemes.presets)
+				return;
+
 			const copy = { ...$customSchemes };
 			copy[$scheme] = v as any;
 			customSchemes.set(copy);
