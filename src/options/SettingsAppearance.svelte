@@ -119,7 +119,7 @@
 			flex-direction: row;
 		}
 	}
-	
+
 	.root {
 		flex: 1 1 auto;
 		padding: var(--padding);

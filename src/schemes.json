@@ -26,8 +26,8 @@
 				},
 				"background": {
 					"def": "#0D6DFD",
-					"act": "#013788",
-					"hov": "#00040A"
+					"act": "#0265F9",
+					"hov": "#0258DA"
 				}
 			},
 			"indents": [
@@ -61,8 +61,8 @@
 				},
 				"background": {
 					"def": "#0D6DFD",
-					"act": "#72AAFE",
-					"hov": "#D7E7FF"
+					"act": "#267CFD",
+					"hov": "#599BFE"
 				}
 			},
 			"indents": [
@@ -99,8 +99,8 @@
 				},
 				"background": {
 					"def": "#E6006F",
-					"act": "#660031",
-					"hov": "#000000"
+					"act": "#D70068",
+					"hov": "#B80059"
 				}
 			},
 			"indents": [
@@ -137,8 +137,8 @@
 				},
 				"background": {
 					"def": "#E6006F",
-					"act": "#FF4DA3",
-					"hov": "#FFB3D7"
+					"act": "#FF007B",
+					"hov": "#FF3496"
 				}
 			},
 			"indents": [
@@ -178,8 +178,8 @@
 				},
 				"background": {
 					"def": "#8B00CC",
-					"act": "#BE33FF",
-					"hov": "#DF99FF"
+					"act": "#9C00E6",
+					"hov": "#B61AFF"
 				}
 			},
 			"indents": [
@@ -216,8 +216,8 @@
 				},
 				"background": {
 					"def": "#33CCBA",
-					"act": "#19665D",
-					"hov": "#000000"
+					"act": "#30C0AF",
+					"hov": "#2AA799"
 				}
 			},
 			"indents": [
@@ -254,8 +254,8 @@
 				},
 				"background": {
 					"def": "#3D8F85",
-					"act": "#70C2B8",
-					"hov": "#B8E0DC"
+					"act": "#45A196",
+					"hov": "#5EBAAF"
 				}
 			},
 			"indents": [
@@ -295,8 +295,8 @@
 				},
 				"background": {
 					"def": "#0064C2",
-					"act": "#002242",
-					"hov": "#000000"
+					"act": "#005CB3",
+					"hov": "#004C94"
 				}
 			},
 			"indents": [
@@ -330,8 +330,8 @@
 				},
 				"background": {
 					"def": "#74705D",
-					"act": "#A6A391",
-					"hov": "#D4D2C9"
+					"act": "#827E68",
+					"hov": "#9B9782"
 				}
 			},
 			"indents": [
@@ -368,8 +368,8 @@
 				},
 				"background": {
 					"def": "#15993A",
-					"act": "#06280F",
-					"hov": "#000000"
+					"act": "#138C35",
+					"hov": "#0F712B"
 				}
 			},
 			"indents": [
@@ -403,8 +403,8 @@
 				},
 				"background": {
 					"def": "#176E2A",
-					"act": "#28C349",
-					"hov": "#6FE288"
+					"act": "#1B8332",
+					"hov": "#24AD42"
 				}
 			},
 			"indents": [
@@ -443,8 +443,8 @@
 				},
 				"background": {
 					"def": "#4D001C",
-					"act": "#B30041",
-					"hov": "#FF1A6E"
+					"act": "#670025",
+					"hov": "#9A0038"
 				}
 			},
 			"indents": [
@@ -526,8 +526,8 @@
 				},
 				"background": {
 					"def": "#AD9E58",
-					"act": "#59512C",
-					"hov": "#030302"
+					"act": "#A59651",
+					"hov": "#908347"
 				}
 			},
 			"indents": [
@@ -561,8 +561,8 @@
 				},
 				"background": {
 					"def": "#2AA29A",
-					"act": "#5DD5CD",
-					"hov": "#AEEAE6"
+					"act": "#2FB6AD",
+					"hov": "#49D0C7"
 				}
 			},
 			"indents": [
