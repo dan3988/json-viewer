@@ -25,7 +25,7 @@
 
 	function copyScheme() {
 		const copy = structuredClone(schemeEditor.scheme.value);
-		const id = crypto.randomUUID();
+		const id = crypto.randomUUID().replaceAll('-', '');
 		copy.name = copy.name + " (Copy)";
 		customSchemes.set({ ...customSchemes.value, [id]: copy as any });
 		schemeEditor = new CustomScheme(copy);
