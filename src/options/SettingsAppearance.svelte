@@ -98,7 +98,7 @@
 	</div>
 	<div class="preview-wrapper border rounded">
 		<div class="editor-bg"></div>
-		<div class="overflow-auto p-1">
+		<div class="preview overflow-auto p-1">
 			<ViewerPreview {maxIndentClass} />
 		</div>
 	</div>
@@ -146,6 +146,10 @@
 		position: relative;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.preview {
+		z-index: 1;
 	}
 
 	.editor-bg {
