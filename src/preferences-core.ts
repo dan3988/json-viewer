@@ -361,7 +361,7 @@ export namespace preferences {
 
 				areSame(x: T, y: T): boolean {
 					for (const key in this.schema)
-						if (key in x ? (key in y || !this.schema[key].areSame(x[key], y[key])) : key in y)
+						if (key in x ? !(key in y && this.schema[key].areSame(x[key], y[key])) : key in y)
 							return false;
 
 					return true;
@@ -369,7 +369,7 @@ export namespace preferences {
 			}
 
 			export function object<T extends {}>(schema: { [P in keyof T]: SettingType<T[P]> }): SettingType<ObjectSettingValue<T>>;
-			export function object<T extends {}, K extends keyof T>(schema: { [P in keyof T]: SettingType<T[P]> }, optional: Iterable<K>): SettingType<ObjectSettingValue<T, K>>;
+			export function object<T extends {}, const K extends keyof T>(schema: { [P in keyof T]: SettingType<T[P]> }, optional: Iterable<K>): SettingType<ObjectSettingValue<T, K>>;
 			export function object(schema: Dict<SettingType>, optional?: Iterable<string>): SettingType {
 				return new ObjectSettingType(schema, optional);
 			}
