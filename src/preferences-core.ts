@@ -223,7 +223,12 @@ export namespace preferences {
 
 			export type Primitives = { [P in keyof typeof primitives]: typeof primitives[P] extends SettingType<infer V> ? V : never };
 
-			function toType(value: SettingType | keyof Primitives) {
+			type PrimitiveKey<T> = { [P in keyof Primitives]: T extends Primitives[P] ? P : never }[keyof Primitives];
+
+			export type SettingTypeInit<T = any> = SettingType<T> | PrimitiveKey<T>;
+			export type SettingTypeOf<T extends SettingTypeInit> = T extends keyof Primitives ? Primitives[T] : (T extends SettingType<infer V> ? V : unknown);
+
+			function toType(value: SettingTypeInit<any>) {
 				return typeof value === 'string' ? primitives[value] : value;
 			}
 
@@ -242,9 +247,7 @@ export namespace preferences {
 				}
 			}
 
-			export function enumeration<T, const E extends T[]>(underlyingType: SettingType<T>, values: E, defaultValue: E[number]): SettingType<E[number]>
-			export function enumeration<K extends keyof Primitives, const E extends Primitives[K][]>(underlyingType: K, values: E, defaultValue: E[number]): SettingType<E[number]>
-			export function enumeration(underlyingType: SettingType | keyof Primitives, values: any[], defaultValue: any) {
+			export function enumeration<T extends SettingTypeInit, const E extends SettingTypeOf<T>[]>(underlyingType: T, values: E, defaultValue: E[number]): SettingType<E[number]> {
 				return new EnumerationSettingType(toType(underlyingType), values, defaultValue);
 			}
 
@@ -278,9 +281,7 @@ export namespace preferences {
 				}
 			}
 
-			export function list<T>(underlyingType: SettingType<T>): SettingType<ImmutableArray<T>>
-			export function list<K extends keyof Primitives>(underlyingType: K): SettingType<readonly Primitives[K][]>
-			export function list(underlyingType: SettingType | keyof Primitives) {
+			export function list<T extends SettingTypeInit>(underlyingType: T): SettingType<ImmutableArray<SettingTypeOf<T>>> {
 				return new ListSettingType(toType(underlyingType));
 			}
 
@@ -318,9 +319,7 @@ export namespace preferences {
 				}
 			}
 
-			export function dictionary<T>(valueType: SettingType<T>): SettingType<Dict<T>>
-			export function dictionary<K extends keyof Primitives>(valueType: K): SettingType<Dict<Primitives[K]>>
-			export function dictionary(valueType: SettingType | keyof Primitives) {
+			export function dictionary<T extends SettingTypeInit>(valueType: T): SettingType<Dict<SettingTypeOf<T>>> {
 				return new DictionarySettingType(toType(valueType));
 			}
 
@@ -435,9 +434,7 @@ export namespace preferences {
 				}
 			}
 
-			export function nullable<T>(underlyingType: SettingType<T>): SettingType<null | T>
-			export function nullable<K extends keyof Primitives>(underlyingType: K): SettingType<null | Primitives[K]>
-			export function nullable(underlyingType: SettingType | keyof Primitives) {
+			export function nullable<T extends SettingTypeInit>(underlyingType: T): SettingType<null | SettingTypeOf<T>> {
 				return new NullableSettingType(toType(underlyingType));
 			}
 
@@ -461,25 +458,19 @@ export namespace preferences {
 				return new Preference(key, types.string, synced, defaultValue);
 			}
 
-			static list<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: T[]): Preference<Dict<T>, K>
-			static list<K extends string, P extends keyof types.Primitives>(key: K, underlyingType: P, synced: boolean, defaultValue?: types.Primitives[P][]): Preference<types.Primitives[P][], K>
-			static list(key: string, underlyingType: any, synced: boolean, defaultValue: any[] = []): Preference {
+			static list<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, synced: boolean, defaultValue: types.SettingTypeOf<T>[] = []): Preference<ImmutableArray<types.SettingTypeOf<T>>, K> {
 				return new Preference(key, types.list(underlyingType), synced, ImmutableArray.from(defaultValue));
 			}
 
-			static enum<K extends string, T, const E extends T[]>(key: K, underlyingType: SettingType<T>, values: E, synced: boolean, defaultValue: E[number]): Preference<E[number], K> {
+			static enum<K extends string, T extends types.SettingTypeInit, const E extends types.SettingTypeOf<T>[]>(key: K, underlyingType: T, values: E, synced: boolean, defaultValue: E[number]): Preference<E[number], K> {
 				return new Preference(key, types.enumeration(underlyingType, values, defaultValue), synced, defaultValue);
 			}
 
-			static nullable<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: null | T): Preference<null | T, K>;
-			static nullable<K extends string, P extends keyof types.Primitives>(key: K, underlyingType: P, synced: boolean, defaultValue?: null | types.Primitives[P]): Preference<null | types.Primitives[P], K>
-			static nullable(key: string, underlyingType: any, synced: boolean, defaultValue?: any): Preference {
+			static nullable<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, synced: boolean, defaultValue?: null | types.SettingTypeOf<T>): Preference<null | types.SettingTypeOf<T>, K> {
 				return new Preference(key, types.nullable(underlyingType), synced, defaultValue ?? null);
 			}
 
-			static dictionary<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: Dict<T> ): Preference<Dict<T>, K>
-			static dictionary<K extends string, P extends keyof types.Primitives>(key: K, underlyingType: P, synced: boolean, defaultValue?: Dict<types.Primitives[P]>): Preference<Dict<types.Primitives[P]>, K>
-			static dictionary(key: string, underlyingType: any, synced: boolean, defaultValue: any = {}): Preference {
+			static dictionary<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, synced: boolean, defaultValue: Dict<types.SettingTypeOf<T>> = {}): Preference<Dict<types.SettingTypeOf<T>>, K> {
 				return new Preference(key, types.dictionary(underlyingType), synced, defaultValue);
 			}
 
