@@ -127,7 +127,7 @@ export class CustomScheme {
 					hov: hov.value.hex()
 				});
 			} else {
-				this.#update(darkMode, v => v[set][prop] = null);
+				this.#update(darkMode, v => v[set][prop] = undefined);
 			}
 		});
 

@@ -130,8 +130,13 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 			for (const key in changes) {
 				if (controller.keys.has(key)) {
 					const pref = this.#prefs.get(key)!;
-					values[key] = pref.type.deserialize(changes[key].newValue);
-					count++;
+					const { newValue } = changes[key];
+					const existing = controller.getValue(key);
+					const value = newValue === undefined ? pref.getDefaultValue() : pref.type.deserialize(newValue);
+					if (!pref.type.areSame(existing, value)) {
+						values[key] = value;
+						count++;
+					}
 				}
 			}
 	
@@ -216,7 +221,7 @@ export namespace preferences {
 
 			const primitives = { bool, int, number, string };
 
-			type Primitives = { [P in keyof typeof primitives]: typeof primitives[P] extends SettingType<infer V> ? V : never };
+			export type Primitives = { [P in keyof typeof primitives]: typeof primitives[P] extends SettingType<infer V> ? V : never };
 
 			function toType(value: SettingType | keyof Primitives) {
 				return typeof value === 'string' ? primitives[value] : value;
@@ -319,42 +324,55 @@ export namespace preferences {
 				return new DictionarySettingType(toType(valueType));
 			}
 
-			type ObjectSettingValue<T> = Expand<{ [P in keyof T as null extends T[P] ? never : P]: T[P] } & { [P in keyof T as null extends T[P] ? P : never]?: T[P] }>;
+			type ObjectSettingValue<T extends {}, O extends keyof T = never> = { [P in Exclude<keyof T, O>]: T[P] } & { [P in O]?: T[P] };
+ 
+			class ObjectSettingType<T extends {}, R extends keyof T> extends BaseSettingType<ObjectSettingValue<T, R>> {
+				readonly optional: ReadonlySet<string>;
 
-			class ObjectSettingType<T> extends BaseSettingType<ObjectSettingValue<T>> {
-				constructor(readonly schema: { [P in keyof T]: SettingType<T[P]> }) {
+				constructor(readonly schema: { [P in keyof T]: SettingType<T[P]> }, optional: Iterable<string> = []) {
 					super('Object');
+					this.optional = new Set(optional);
 				}
 
 				serialize(value: T) {
 					const result: any = {};
 					for (const key in this.schema)
-						result[key] = scoped('serialize', key, k => this.schema[k].serialize(value[k]));
+						if (key in value)
+							result[key] = scoped('serialize', key, k => this.schema[k].serialize(value[k]));
 
 					return result;
 				}
 
 				deserialize(value: any): T {
 					const result: any = {};
-					for (const key in this.schema)
-						result[key] = scoped('deserialize', key, k => this.schema[k].deserialize(value[k]));
+					for (const key in this.schema) {
+						const v = value[key];
+						result[key] = v === undefined ? v : scoped('deserialize', key, k => this.schema[k].deserialize(value[k]));
+						if (v !== undefined) {
+							result[key] = scoped('deserialize', key, k => this.schema[k].deserialize(value[k]));
+						} else if (this.optional.has(key)) {
+							result[key] = undefined;
+						} else {
+							throw new TypeError(`Required key "${key}" not found in value.`);
+						}
+					}
 
 					return result;
 				}
 
 				areSame(x: T, y: T): boolean {
-					for (const key in this.schema) {
-						const type = this.schema[key];
-						if (!type.areSame(x[key], y[key]))
+					for (const key in this.schema)
+						if (key in x ? (key in y || !this.schema[key].areSame(x[key], y[key])) : key in y)
 							return false;
-					}
 
 					return true;
 				}
 			}
 
-			export function object<T>(schema: { [P in keyof T]: SettingType<T[P]> }): SettingType<ObjectSettingValue<T>> {
-				return new ObjectSettingType(schema);
+			export function object<T extends {}>(schema: { [P in keyof T]: SettingType<T[P]> }): SettingType<ObjectSettingValue<T>>;
+			export function object<T extends {}, K extends keyof T>(schema: { [P in keyof T]: SettingType<T[P]> }, optional: Iterable<K>): SettingType<ObjectSettingValue<T, K>>;
+			export function object(schema: Dict<SettingType>, optional?: Iterable<string>): SettingType {
+				return new ObjectSettingType(schema, optional);
 			}
 
 			type TupleSchema<T extends ImmutableArray> = readonly SettingType[] & { [P in number & keyof T]: SettingType<T[P]> };
@@ -443,7 +461,9 @@ export namespace preferences {
 				return new Preference(key, types.string, synced, defaultValue);
 			}
 
-			static list<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue: T[]): Preference<ImmutableArray<T>, K> {
+			static list<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: T[]): Preference<Dict<T>, K>
+			static list<K extends string, P extends keyof types.Primitives>(key: K, underlyingType: P, synced: boolean, defaultValue?: types.Primitives[P][]): Preference<types.Primitives[P][], K>
+			static list(key: string, underlyingType: any, synced: boolean, defaultValue: any[] = []): Preference {
 				return new Preference(key, types.list(underlyingType), synced, ImmutableArray.from(defaultValue));
 			}
 
@@ -451,11 +471,15 @@ export namespace preferences {
 				return new Preference(key, types.enumeration(underlyingType, values, defaultValue), synced, defaultValue);
 			}
 
-			static nullable<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: null | T): Preference<null | T, K> {
+			static nullable<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: null | T): Preference<null | T, K>;
+			static nullable<K extends string, P extends keyof types.Primitives>(key: K, underlyingType: P, synced: boolean, defaultValue?: null | types.Primitives[P]): Preference<null | types.Primitives[P], K>
+			static nullable(key: string, underlyingType: any, synced: boolean, defaultValue?: any): Preference {
 				return new Preference(key, types.nullable(underlyingType), synced, defaultValue ?? null);
 			}
 
-			static dictionary<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue: Dict<T> = {}): Preference<Dict<T>, K> {
+			static dictionary<K extends string, T>(key: K, underlyingType: SettingType<T>, synced: boolean, defaultValue?: Dict<T> ): Preference<Dict<T>, K>
+			static dictionary<K extends string, P extends keyof types.Primitives>(key: K, underlyingType: P, synced: boolean, defaultValue?: Dict<types.Primitives[P]>): Preference<Dict<types.Primitives[P]>, K>
+			static dictionary(key: string, underlyingType: any, synced: boolean, defaultValue: any = {}): Preference {
 				return new Preference(key, types.dictionary(underlyingType), synced, defaultValue);
 			}
 

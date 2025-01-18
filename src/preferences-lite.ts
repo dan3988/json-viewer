@@ -7,17 +7,23 @@ export namespace preferences {
 	export namespace lite {
 		export type Key = typeof values[number]['key'];
 
-		const setColors = p.core.types.object({
-			def: p.core.types.string,
-			act: p.core.types.nullable('string'),
-			hov: p.core.types.nullable('string'),
-		});
+		const setColors = p.core.types.object(
+			{
+				def: p.core.types.string,
+				act: p.core.types.string,
+				hov: p.core.types.string,
+			},
+			['act', 'hov']
+		);
 
-		const colorSet = p.core.types.object({
-			background: setColors,
-			border: p.core.types.nullable(setColors),
-			text: p.core.types.nullable(setColors),
-		});
+		const colorSet = p.core.types.object(
+			{
+				background: setColors,
+				border: setColors,
+				text: setColors,
+			},
+			['border', 'text']
+		);
 
 		const colorSchemeValuesType = p.core.types.object({
 			key: p.core.types.string,
@@ -31,11 +37,14 @@ export namespace preferences {
 			indents: p.core.types.list('string'),
 		});
 
-		const colorSchemeType = p.core.types.object({
-			name: p.core.types.string,
-			light: p.core.types.nullable(colorSchemeValuesType),
-			dark: p.core.types.nullable(colorSchemeValuesType),
-		});
+		const colorSchemeType = p.core.types.object(
+			{
+				name: p.core.types.string,
+				light: colorSchemeValuesType,
+				dark: colorSchemeValuesType,
+			},
+			['dark', 'light']
+		);
 
 		export type CustomColorSchemeSetColors = p.core.types.ValueOf<typeof setColors>;
 		export type CustomColorScheme = p.core.types.ValueOf<typeof colorSchemeType>;
