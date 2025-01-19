@@ -3,10 +3,10 @@ import p from '../src/preferences-core.js';
 describe('Preferences', () => {
 	it('Should fire an event when changing a value', async () => {
 		const prefs = [
-			p.core.Preference.string('string', false, ''),
-			p.core.Preference.number('number', false, 0),
-			p.core.Preference.boolean('boolean', false, false),
-			p.core.Preference.nullable('nullable', 'string', false),
+			p.core.Preference.string('string', ''),
+			p.core.Preference.number('number', 0),
+			p.core.Preference.boolean('boolean', false),
+			p.core.Preference.nullable('nullable', 'string'),
 		];
 
 		const storage = createLocalStorage();
@@ -66,7 +66,7 @@ describe('Preferences', () => {
 	});
 
 	it('Should handle lists', async () => {
-		const pref = p.core.Preference.list('value', 'string', false);
+		const pref = p.core.Preference.list('value', 'string');
 		const storage = createLocalStorage();
 		const manager = new p.core.PreferencesManager([pref]);
 		const values = await manager.watch();
@@ -139,8 +139,7 @@ describe('Preferences', () => {
 			}
 		};
 
-		const pref = new p.core.Preference('value', person, false, structuredClone(defaultValue));
-
+		const pref = new p.core.Preference('value', person, structuredClone(defaultValue));
 		const storage = createLocalStorage();
 		const manager = new p.core.PreferencesManager([pref]);
 		const values = await manager.watch();

@@ -1,13 +1,6 @@
 import { State, StateController } from "./state.js";
 import ImmutableArray from "./immutable-array.js";
 
-const enum WatchTypes {
-	None,
-	Local = 1,
-	Sync = 2,
-	Both = 3
-}
-
 const _PreferencesManager = class PreferencesManager<T extends Dict> implements preferences.core.PreferencesManager<T> {
 	readonly #prefs: Map<string, preferences.core.Preference>;
 
@@ -26,41 +19,17 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 		return pref as any;
 	}
 
-	async #get(prefs: preferences.core.Preference[], entries = false): Promise<[Dict, WatchTypes]> {
-		let local: string[] = [];
-		let synced: string[] = [];
-		let watching = WatchTypes.None;
-
-		for (const pref of prefs)
-			(pref.synced ? synced : local).push(pref.key);
-
-		const promises: Promise<any>[] = [];
-
-		if (local.length) {
-			promises.push(chrome.storage.local.get(local));
-			watching |= WatchTypes.Local;
-		}
-
-		if (synced.length) {
-			promises.push(chrome.storage.sync.get(synced));
-			watching |= WatchTypes.Sync;
-		}
-
-		const results: Dict = {};
-
-		for (const obj of await Promise.all(promises))
-			for (const key in obj)
-				results[key] = obj[key];
-
-		const output: Dict = {};
+	async #get(prefs: preferences.core.Preference[], entries = false): Promise<Dict> {
+		const keys = prefs.map(v => v.key);
+		const values = await chrome.storage.local.get(keys);
 
 		for (const pref of prefs) {
 			const { key, type } = pref;
-			const value = key in results ? type.deserialize(results[key]) : pref.getDefaultValue();
-			output[key] = entries ? [pref, value] : value;
+			const value = key in values ? type.deserialize(values[key]) : pref.getDefaultValue();
+			values[key] = entries ? [pref, value] : value;
 		}
 		
-		return [output, watching];
+		return values;
 	}
 
 	#getPreferences(keys: readonly string[]) {
@@ -69,50 +38,37 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 
 	get(): Promise<T>;
 	get<const K extends (string & keyof T)[]>(...keys: K): Promise<Pick<T, K[number]>>;
-	async get(...keys: string[]): Promise<Dict> {
+	get(...keys: string[]): Promise<Dict> {
 		const prefs = this.#getPreferences(keys);
-		const [result] = await this.#get(prefs);
-		return result;
+		return this.#get(prefs);
 	}
 
 	getEntries(): Promise<preferences.core.ToEntries<T>>;
 	getEntries<const K extends (string & keyof T)[]>(...keys: K): Promise<preferences.core.ToEntries<T, K[number]>>;
-	async getEntries(...keys: string[]): Promise<Dict> {
+	getEntries(...keys: string[]): Promise<Dict> {
 		const prefs = this.#getPreferences(keys);
-		const [result] = await this.#get(prefs, true);
-		return result;
+		return this.#get(prefs, true);
 	}
 
 	set<K extends keyof T>(key: K, value: T[K]): Promise<void>;
 	set(values: Partial<T>): Promise<void>;
-	async set(arg0: string | Dict, arg1?: any): Promise<void> {
+	set(arg0: string | Dict, arg1?: any): Promise<void> {
 		if (typeof arg0 === "string") {
 			const pref = this.getPreference(arg0);
-			const store = chrome.storage[pref.synced ? "sync" : "local"];
-			if (pref.type.serialize)
-				arg1 = pref.type.serialize(arg1);
-
-			await store.set({ [arg0]: arg1 });
+			return chrome.storage.local.set({ [arg0]: pref.type.serialize(arg1) });
 		} else {
-			let local: undefined | Dict;
-			let sync: undefined | Dict;
+			const keys = Object.keys(arg0);
+			if (keys.length === 0)
+				return Promise.resolve();
+
+			let bag: Dict = {};
 
 			for (const key in arg0) {
 				const pref = this.getPreference(key);
-				const bag = (pref.synced ? local ??= {} : sync ??= {})
-				let value = arg0[key];
-				if (pref.type.serialize)
-					value = pref.type.serialize(value);
-
-				bag[key] = value;
+				bag[key] = pref.type.serialize(arg0[key]);
 			}
 
-			const promises: Promise<any>[] = [];
-
-			local && promises.push(chrome.storage.local.set(local));
-			sync && promises.push(chrome.storage.local.set(sync));
-
-			await Promise.all(promises);
+			return chrome.storage.local.set(bag);
 		}
 	}
 
@@ -120,9 +76,8 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 	watch<const K extends (string & keyof T)[]>(...keys: K): Promise<State<Pick<T, K[number]>>>;
 	async watch(...keys: string[]): Promise<State<any>> {
 		const prefs = this.#getPreferences(keys);
-		const [values, watching] = await this.#get(prefs);
+		const values = await this.#get(prefs);
 		const controller = new StateController(values);
-
 		const onChange = (changes: Dict<chrome.storage.StorageChange>) =>{
 			let count = 0;
 			let values: any = {};
@@ -144,12 +99,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 				controller.setValues(values);
 		}
 
-		if ((watching & WatchTypes.Local) != 0)
-			chrome.storage.local.onChanged.addListener(onChange);
-
-		if ((watching & WatchTypes.Sync) != 0)
-			chrome.storage.sync.onChanged.addListener(onChange);
-
+		chrome.storage.local.onChanged.addListener(onChange);
 		return controller.state;
 	}
 }
@@ -442,41 +392,40 @@ export namespace preferences {
 		}
 
 		export class Preference<T = any, K extends string = string> {
-			static int<K extends string>(key: K, synced: boolean, defaultValue: number): Preference<number, K> {
-				return new Preference(key, types.int, synced, defaultValue);
+			static int<K extends string>(key: K, defaultValue: number): Preference<number, K> {
+				return new Preference(key, types.int, defaultValue);
 			}
 
-			static number<K extends string>(key: K, synced: boolean, defaultValue: number): Preference<number, K> {
-				return new Preference(key, types.number, synced, defaultValue);
+			static number<K extends string>(key: K, defaultValue: number): Preference<number, K> {
+				return new Preference(key, types.number, defaultValue);
 			}
 
-			static boolean<K extends string>(key: K, synced: boolean, defaultValue: boolean): Preference<boolean, K> {
-				return new Preference(key, types.bool, synced, defaultValue);
+			static boolean<K extends string>(key: K, defaultValue: boolean): Preference<boolean, K> {
+				return new Preference(key, types.bool, defaultValue);
 			}
 
-			static string<K extends string>(key: K, synced: boolean, defaultValue: string): Preference<string, K> {
-				return new Preference(key, types.string, synced, defaultValue);
+			static string<K extends string>(key: K, defaultValue: string): Preference<string, K> {
+				return new Preference(key, types.string, defaultValue);
 			}
 
-			static list<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, synced: boolean, defaultValue: types.SettingTypeOf<T>[] = []): Preference<ImmutableArray<types.SettingTypeOf<T>>, K> {
-				return new Preference(key, types.list(underlyingType), synced, ImmutableArray.from(defaultValue));
+			static list<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, defaultValue: types.SettingTypeOf<T>[] = []): Preference<ImmutableArray<types.SettingTypeOf<T>>, K> {
+				return new Preference(key, types.list(underlyingType), ImmutableArray.from(defaultValue));
 			}
 
-			static enum<K extends string, T extends types.SettingTypeInit, const E extends types.SettingTypeOf<T>[]>(key: K, underlyingType: T, values: E, synced: boolean, defaultValue: E[number]): Preference<E[number], K> {
-				return new Preference(key, types.enumeration(underlyingType, values, defaultValue), synced, defaultValue);
+			static enum<K extends string, T extends types.SettingTypeInit, const E extends types.SettingTypeOf<T>[]>(key: K, underlyingType: T, values: E, defaultValue: E[number]): Preference<E[number], K> {
+				return new Preference(key, types.enumeration(underlyingType, values, defaultValue), defaultValue);
 			}
 
-			static nullable<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, synced: boolean, defaultValue?: null | types.SettingTypeOf<T>): Preference<null | types.SettingTypeOf<T>, K> {
-				return new Preference(key, types.nullable(underlyingType), synced, defaultValue ?? null);
+			static nullable<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, defaultValue?: null | types.SettingTypeOf<T>): Preference<null | types.SettingTypeOf<T>, K> {
+				return new Preference(key, types.nullable(underlyingType), defaultValue ?? null);
 			}
 
-			static dictionary<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, synced: boolean, defaultValue: Dict<types.SettingTypeOf<T>> = {}): Preference<Dict<types.SettingTypeOf<T>>, K> {
-				return new Preference(key, types.dictionary(underlyingType), synced, defaultValue);
+			static dictionary<K extends string, T extends types.SettingTypeInit>(key: K, underlyingType: T, defaultValue: Dict<types.SettingTypeOf<T>> = {}): Preference<Dict<types.SettingTypeOf<T>>, K> {
+				return new Preference(key, types.dictionary(underlyingType), defaultValue);
 			}
 
 			readonly #key: K;
 			readonly #type: SettingType<T> | DefaultValueSettingType<T>;
-			readonly #synced: boolean;
 			#defaultValue: undefined | T;
 
 			get key() {
@@ -487,16 +436,11 @@ export namespace preferences {
 				return this.#type;
 			}
 
-			get synced() {
-				return this.#synced;
-			}
-
-			constructor(key: K, type: SettingType<T>, synced: boolean, defaultValue: T);
-			constructor(key: K, type: DefaultValueSettingType<T>, synced: boolean);
-			constructor(key: K, type: SettingType<T>, synced: boolean, defaultValue?: T) {
+			constructor(key: K, type: SettingType<T>, defaultValue: T);
+			constructor(key: K, type: DefaultValueSettingType<T>);
+			constructor(key: K, type: SettingType<T>, defaultValue?: T) {
 				this.#key = key;
 				this.#type = type;
-				this.#synced = synced;
 				this.#defaultValue = defaultValue;
 			}
 
