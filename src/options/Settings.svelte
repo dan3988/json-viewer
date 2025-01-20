@@ -19,10 +19,10 @@
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import preferences from "../preferences-lite";
 	import fs from "../fs";
-	import SettingsGeneral from "./SettingsGeneral.svelte";
-	import SettingsAppearance from "./SettingsAppearance.svelte";
 	import schemes from "../schemes";
-	import SettingsAdvanced from "./SettingsAdvanced.svelte";
+	import TabGeneral from "./TabGeneral.svelte";
+	import TabAppearance from "./TabAppearance.svelte";
+	import TabAdvanced from "./TabAdvanced.svelte";
 	import { CustomScheme } from "./custom-scheme";
 
 	export let model: EditorModel<preferences.lite.Bag>;
@@ -192,13 +192,13 @@
 	</div>
 	<div class="panel-root d-flex flex-fill flex-column overflow-hidden">
 		<div class="tab-wrapper" hidden={tab !== 'general'}>
-			<SettingsGeneral {model} />
+			<TabGeneral {model} />
 		</div>
 		<div class="tab-wrapper" hidden={tab !== 'style'}>
-			<SettingsAppearance {model} {tracker} {maxIndentClass} bind:schemeEditor />
+			<TabAppearance {model} {tracker} {maxIndentClass} bind:schemeEditor />
 		</div>
 		<div class="tab-wrapper" hidden={tab !== 'network'}>
-			<SettingsAdvanced {model} />
+			<TabAdvanced {model} />
 		</div>
 	</div>
 </div>
