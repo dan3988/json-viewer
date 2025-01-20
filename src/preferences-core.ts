@@ -296,7 +296,6 @@ export namespace preferences {
 					const result: any = {};
 					for (const key in this.schema) {
 						const v = value[key];
-						result[key] = v === undefined ? v : scoped('deserialize', key, k => this.schema[k].deserialize(value[k]));
 						if (v !== undefined) {
 							result[key] = scoped('deserialize', key, k => this.schema[k].deserialize(value[k]));
 						} else if (this.optional.has(key)) {
