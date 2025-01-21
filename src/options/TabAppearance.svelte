@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	import type { NamedRadioItem } from "./Radio.svelte";
+	export type NamedRadioItem<T> = [value: T, text: string];
 
 	const radioMenuAlign: NamedRadioItem<"l" | "r">[] = [["l", "Left"], ["r", "Right"]];
 	const radioTheme: NamedRadioItem<boolean | null>[] = [[null, "Auto"], [false, "Light"], [true, "Dark"]];
@@ -10,7 +10,7 @@
 	import type EditorModel from "./editor";
 	import type ThemeTracker from "../theme-tracker";
 	import schemes from "../schemes";
-	import Radio from "./Radio.svelte";
+	import Radio from "../shared/Radio.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import ColorSchemeEditor from "./ColorSchemeEditor.svelte";
 
@@ -50,11 +50,15 @@
 	<div class="options">
 		<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$changed.includes('menuAlign')}>
 			<span class="input-group-text">Menu Alignment</span>
-			<Radio class="flex-fill btn btn-base" items={radioMenuAlign} bind:value={$menuAlign}></Radio>
+			<Radio converter={v => v[0]} items={radioMenuAlign} bind:value={$menuAlign}>
+				<label slot="label" let:id let:item={[_, text]} for={id} class="flex-fill btn btn-base">{text}</label>
+			</Radio>
 		</div>
 		<div class="input-group hoverable-radio grp-theme" role="group" class:dirty={$changed.includes('darkMode')}>
 			<span class="input-group-text">Theme</span>
-			<Radio class="flex-fill btn btn-base" items={radioTheme} bind:value={$darkMode}/>
+			<Radio converter={v => v[0]} items={radioTheme} bind:value={$darkMode}>
+				<label slot="label" let:id let:item={[_, text]} for={id} class="flex-fill btn btn-base">{text}</label>
+			</Radio>
 		</div>
 		<div class="input-group grp-json-bg">
 			<span class="input-group-text">Background</span>

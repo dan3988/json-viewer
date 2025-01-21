@@ -168,6 +168,7 @@ function loader(args) {
 		svelteConfig("content"),
 		svelteConfig("viewer"),
 		svelteConfig("options"),
+		svelteConfig("options-mini"),
 		{
 			input: "src/extension/index.ts",
 			output: {

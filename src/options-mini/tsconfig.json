@@ -1,0 +1,12 @@
+{
+	"extends": "../tsconfig.svelte.json",
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext"
+	},
+	"include": [
+		"../*.ts",
+		"../*.svelte",
+		"**/*.*"
+	]
+}

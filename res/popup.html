@@ -2,49 +2,13 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>JSON Viewer</title>
-		<script type="module" src="theme-lite.js"></script>
-		<script type="module" src="popup.js"></script>
-		<link href="/lib/schemes.css" rel="stylesheet" />
-		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
-		<link href="/node_modules/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet" />
-		<style>
-			body {
-				width: 20rem;
-				user-select: none;
-			}
-
-			.input-group > .input-group-text:first-child {
-				flex: 0 0 10rem;
-			}
-		</style>
+		<title>JSON Viewer Settings</title>
+		<link href="../lib/schemes.css" rel="stylesheet" />
+		<link href="../lib/options-mini.css" rel="stylesheet" />
+		<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet"  />
+		<link href="/node_modules/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet"  />
 	</head>
-	<body class="scheme d-flex flex-column justify-items-center p-1 gap-1">
-		<img class="m-auto" src="icon256.png" height="64" width="64" />
-		<span class="h4 text-center">Quick Settngs</span>
-		<div class="input-group">
-			<label class="input-group-text flex-fill align-items-start gap-1">
-				<input id="chkEnabled" class="form-check-input" type="checkbox" />
-				Enabled
-			</label>
-		</div>
-		<div class="input-group hoverable-radio" role="group">
-			<span class="input-group-text">Theme</span>
-			<input id="radThemeAuto" name="radThemeAuto" class="btn-check" type="radio" value="null" />
-			<label for="radThemeAuto" class="flex-fill btn btn-base bi-circle-half" title="Auto"></label>
-			<input id="radThemeLight" name="radThemeLight" class="btn-check" type="radio" value="false" />
-			<label for="radThemeLight" class="flex-fill btn btn-base bi-brightness-high-fill" title="Light"></label>
-			<input id="radThemeDark" name="radThemeDark" class="btn-check" type="radio" value="true" />
-			<label for="radThemeDark" class="flex-fill btn btn-base bi-moon-stars-fill" title="Dark"></label>
-		</div>
-		<div class="input-group">
-			<span class="input-group-text">Colour Scheme</span>
-			<select id="drpScheme" class="form-select flex-fill">
-			</select>
-		</div>
-		<a class="btn btn-primary" href="options.html" target="_blank" title="Settings">
-			<span class="bi-gear-fill"></span>
-			<span>More Settings</span>
-		</a>
+	<body>
+		<script src="../lib/options-mini.js" type="module"></script>
 	</body>
 </html>
