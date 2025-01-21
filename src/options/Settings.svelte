@@ -69,7 +69,7 @@
 		for (const key of $changed) {
 			const preference = preferences.lite.manager.getPreference(key);
 			const value = model.props[key].value;
-			bag[key] = preference.type.serialize(value);
+			bag[key] = preference.serialize(value);
 		}
 
 		await preferences.lite.manager.set(bag);
@@ -84,7 +84,7 @@
 		for (const setting of preferences.lite.values as readonly preferences.core.Preference<any, preferences.lite.Key>[]) {
 			let value: any = values[setting.key];
 			if (value !== undefined)
-				result[setting.key] = setting.type.serialize(value);
+				result[setting.key] = setting.serialize(value);
 		}
 
 		const indent = values.indentChar.repeat(values.indentCount);
@@ -103,7 +103,7 @@
 			for (const setting of preferences.lite.values as readonly preferences.core.Preference<any, preferences.lite.Key>[]) {
 				let value: any = values[setting.key];
 				if (value !== undefined) {
-					value = setting.type.deserialize(value);
+					value = setting.deserialize(value);
 					const entry: EntryRef<any, any> = model.props[setting.key];
 					entry.set(value);
 				}

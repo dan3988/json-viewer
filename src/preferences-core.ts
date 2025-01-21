@@ -24,8 +24,8 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 		const values = await chrome.storage.local.get(keys);
 
 		for (const pref of prefs) {
-			const { key, type } = pref;
-			const value = key in values ? type.deserialize(values[key]) : pref.getDefaultValue();
+			const { key } = pref;
+			const value = key in values ? pref.deserialize(values[key]) : pref.getDefaultValue();
 			values[key] = entries ? [pref, value] : value;
 		}
 		
@@ -55,7 +55,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 	set(arg0: string | Dict, arg1?: any): Promise<void> {
 		if (typeof arg0 === "string") {
 			const pref = this.getPreference(arg0);
-			return chrome.storage.local.set({ [arg0]: pref.type.serialize(arg1) });
+			return chrome.storage.local.set({ [arg0]: pref.serialize(arg1) });
 		} else {
 			const keys = Object.keys(arg0);
 			if (keys.length === 0)
@@ -65,7 +65,7 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 
 			for (const key in arg0) {
 				const pref = this.getPreference(key);
-				bag[key] = pref.type.serialize(arg0[key]);
+				bag[key] = pref.serialize(arg0[key]);
 			}
 
 			return chrome.storage.local.set(bag);
@@ -87,8 +87,8 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 					const pref = this.#prefs.get(key)!;
 					const { newValue } = changes[key];
 					const existing = controller.getValue(key);
-					const value = newValue === undefined ? pref.getDefaultValue() : pref.type.deserialize(newValue);
-					if (!pref.type.areSame(existing, value)) {
+					const value = newValue === undefined ? pref.getDefaultValue() : pref.deserialize(newValue);
+					if (!pref.areSame(existing, value)) {
 						values[key] = value;
 						count++;
 					}
@@ -105,12 +105,29 @@ const _PreferencesManager = class PreferencesManager<T extends Dict> implements 
 }
 
 export namespace preferences {
+	type Key = number | string;
+	
 	export namespace core {
+		export class PreferenceError extends Error {
+			get name(): string {
+				return 'PreferenceError';
+			}
+
+			readonly preference: core.Preference;
+			readonly path: readonly Key[];
+	
+			constructor(preference: core.Preference, path: readonly Key[], operation: string, cause?: any) {
+				super(`Failed to ${operation} value of ${preference.key}. (path: ${path.join('/')})`, { cause });
+				this.preference = preference;
+				this.path = path;
+			}
+		}
+
 		export interface SettingType<T = unknown> {
 			readonly name: string;
-			deserialize(value: any): T;
-			serialize(value: T): any;
-			areSame(x: T, y: T): boolean;
+			deserialize(path: Key[], value: any): T;
+			serialize(path: Key[], value: T): any;
+			areSame(path: Key[], x: T, y: T): boolean;
 		}
 
 		export interface DefaultValueSettingType<T> extends SettingType<T> {
@@ -118,36 +135,12 @@ export namespace preferences {
 		}
 
 		export namespace types {
-			let scopePath: undefined | (string | number)[];
-
-			function scoped<TKey extends string | number, TResult>(operation: string, path: TKey, work: (key: TKey) => TResult): TResult {
-				if (scopePath) {
-					scopePath.push(path);
-					const result = work(path);
-					scopePath.pop();
-					return result;
-				}
-
-				try {
-					scopePath = [];
-					return work(path);
-				} catch (cause) {
-					const path = scopePath!.join('.');
-					throw new TypeError(`Error perfoming ${operation} at '${path}'`, { cause });
-				} finally {
-					scopePath = undefined;
-				}
-			}
-
 			abstract class BaseSettingType<T> implements SettingType<T> {
 				constructor(readonly name: string) {}
 
-				abstract deserialize(value: any): T;
-				abstract areSame(x: T, y: T): boolean;
-
-				serialize(value: T): any {
-					return value;
-				}
+				abstract serialize(path: Key[], value: T): any;
+				abstract deserialize(path: Key[], value: any): T;
+				abstract areSame(path: Key[], x: T, y: T): boolean;
 			}
 
 			class PrimitiveSettingType<T> extends BaseSettingType<T> {
@@ -155,11 +148,15 @@ export namespace preferences {
 					super(name);
 				}
 
-				deserialize(value: any): T {
+				deserialize(_: Key[], value: any): T {
 					return this.type(value);
 				}
 
-				areSame(x: T, y: T): boolean {
+				serialize(_: Key[], value: T): any {
+					return value;
+				}
+
+				areSame(_: Key[], x: T, y: T): boolean {
 					return x === y;
 				}
 			}
@@ -187,13 +184,17 @@ export namespace preferences {
 					super(`Enum<${underlyingType.name}>`);
 				}
 
-				deserialize(value: any): E[number] {
-					var i = this.values.indexOf(value);
-					return i < 0 ? this.defaultValue : this.values[i];
+				serialize(path: Key[], value: T): any {
+					return this.underlyingType.serialize(path, value);
 				}
 
-				areSame(x: E[number], y: E[number]): boolean {
-					return this.underlyingType.areSame(x, y);
+				deserialize(path: Key[], value: T): E[number] {
+					value = this.underlyingType.deserialize(path, value);
+					return this.values.includes(value) ? value : this.defaultValue;
+				}
+
+				areSame(path: Key[], x: E[number], y: E[number]): boolean {
+					return this.underlyingType.areSame(path, x, y);
 				}
 			}
 
@@ -206,28 +207,50 @@ export namespace preferences {
 					super(`List<${underlyingType.name}>`);
 				}
 
-				serialize(value: ImmutableArray<T>) {
-					const result: any[] = [];
-					for (let i = 0; i < value.length; i++)
-						result[i] = scoped('serialize', i, i => value[i]);
+				serialize(path: Key[], value: ImmutableArray<T>) {
+					const result = Array(value.length);
+					const p = path.length;
+					for (let i = 0; i < value.length; i++) {
+						path[p] = i;
+						result[i] = this.underlyingType.serialize(path, value[i]);
+					}
 
+					path.length = p;
 					return result;
 				}
 
-				deserialize(value: any): ImmutableArray<T> {
-					const type = this.underlyingType;
-					return ImmutableArray.from(value, (v, i) => scoped('deserialize', i, () => type.deserialize(v)));
+				deserialize(path: Key[], value: any[]): ImmutableArray<T> {
+					const result = Array(value.length);
+					const p = path.length;
+					for (let i = 0; i < value.length; i++) {
+						path[p] = i;
+						result[i] = this.underlyingType.deserialize(path, value[i]);
+					}
+
+					path.length = p;
+					return result;
 				}
 
-				areSame(x: ImmutableArray<T>, y: ImmutableArray<T>): boolean {
+				areSame(path: Key[], x: ImmutableArray<T>, y: ImmutableArray<T>): boolean {
+					if (x === y)
+						return true;
+
 					if (x.length !== y.length)
 						return false;
 
-					for (let i = 0; i < x.length; i++)
-						if (!this.underlyingType.areSame(x[i], y[i]))
-							return false;
+					const p = path.length;
+					let equal = true;
 
-					return true;
+					for (let i = 0; i < x.length; i++) {
+						path[p] = i;
+						if (!this.underlyingType.areSame(path, x[i], y[i])) {
+							equal = false;
+							break;
+						}
+					}
+
+					path.length = p;
+					return equal;
 				}
 			}
 
@@ -240,32 +263,48 @@ export namespace preferences {
 					super(`Dictionary<${valueType.name}>`);
 				}
 
-				serialize(value: Dict<T>) {
+				serialize(path: Key[], value: Dict<T>) {
 					const result: Dict<T> = {};
-					for (const key in value)
-						result[key] = scoped('serialize', key, k => this.valueType.serialize(value[k]));
+					const p = path.length;
+					for (const key in value) {
+						path[p] = key;
+						result[key] = this.valueType.serialize(path, value[key]);
+					}
 
+					path.length = p;
 					return result;
 				}
 
-				deserialize(value: any): Dict<T> {
-					const result: Dict<T> = Object.create(null);
-					for (const key in value)
-						result[key] = scoped('deserialize', key, k => this.valueType.deserialize(value[k]));
-		
+				deserialize(path: Key[], value: any): Dict<T> {
+					const result: Dict<T> = {};
+					const p = path.length;
+					for (const key in value) {
+						path[p] = key;
+						result[key] = this.valueType.deserialize(path, value[key]);
+					}
+
+					path.length = p;
 					return result;
 				}
 
-				areSame(x: Dict<T>, y: Dict<T>): boolean {
+				areSame(path: Key[], x: Dict<T>, y: Dict<T>): boolean {
 					const keys = Object.keys(x);
 					if (keys.length != Object.keys(y).length)
 						return false;
-		
-					for (const key of keys)
-						if (!(key in y) || !this.valueType.areSame(x[key], y[key]))
-							return false;
 
-					return true;
+					const p = path.length;
+					let equal = true;
+
+					for (const key of keys) {
+						path[p] = key;
+						if (!this.valueType.areSame(path, x[key], y[key])) {
+							equal = false;
+							break;
+						}
+					}
+
+					path.length = p;
+					return equal;
 				}
 			}
 
@@ -283,21 +322,26 @@ export namespace preferences {
 					this.optional = new Set(optional);
 				}
 
-				serialize(value: T) {
+				serialize(path: Key[], value: T) {
 					const result: any = {};
-					for (const key in this.schema)
-						if (key in value)
-							result[key] = scoped('serialize', key, k => this.schema[k].serialize(value[k]));
+					const p = path.length;
+					for (const key in this.schema) {
+						path[p] = key;
+						result[key] = this.schema[key].serialize(path, value[key]);
+					}
 
+					path.length = p;
 					return result;
 				}
 
-				deserialize(value: any): T {
-					const result: any = {};
+				deserialize(path: Key[], value: any): ObjectSettingValue<T> {
+					const result: any = Object.create(null);
+					const p = path.length;
 					for (const key in this.schema) {
+						path[p] = key;
 						const v = value[key];
 						if (v !== undefined) {
-							result[key] = scoped('deserialize', key, k => this.schema[k].deserialize(value[k]));
+							result[key] = this.schema[key].deserialize(path, value[key]);
 						} else if (this.optional.has(key)) {
 							result[key] = undefined;
 						} else {
@@ -305,15 +349,24 @@ export namespace preferences {
 						}
 					}
 
+					path.length = p;
 					return result;
 				}
 
-				areSame(x: T, y: T): boolean {
-					for (const key in this.schema)
-						if (key in x ? !(key in y && this.schema[key].areSame(x[key], y[key])) : key in y)
-							return false;
+				areSame(path: Key[], x: T, y: T): boolean {
+					const p = path.length;
+					let equal = true;
 
-					return true;
+					for (const key in this.schema) {
+						path[p] = key;
+						if (!this.schema[key].areSame(path, x[key], y[key])) {
+							equal = false;
+							break;
+						}
+					}
+
+					path.length = p;
+					return equal;
 				}
 			}
 
@@ -330,34 +383,44 @@ export namespace preferences {
 					super('Tuple');
 				}
 
-				serialize(value: T) {
-					const result: any[] = [];
-					for (let i = 0; i < this.schema.length; i++) {
-						const v = scoped('serialize', i, i => this.schema[i].serialize(value[i]));
-						result.push(v);
-					}
-
-					return result as any;
-				}
-
-				deserialize(value: any): T {
-					const result: any[] = [];
-					for (let i = 0; i < this.schema.length; i++) {
-						const v = scoped('deserialize', i, i => this.schema[i].deserialize(value[i]));
-						result.push(v);
-					}
-
-					return result as any;
-				}
-
-				areSame(x: T, y: T): boolean {
+				serialize(path: Key[], value: T) {
+					const result: any = {};
+					const p = path.length;
 					for (const key in this.schema) {
-						const type = this.schema[key];
-						if (!type.areSame(x[key], y[key]))
-							return false;
+						path[p] = key;
+						result[key] = this.schema[key].deserialize(path, value[key]);
 					}
 
-					return true;
+					path.length = p;
+					return result;
+				}
+
+				deserialize(path: Key[], value: any): T {
+					const result: any = Object.create(null);
+					const p = path.length;
+					for (const key in this.schema) {
+						path[p] = key;
+						result[key] = this.schema[key].deserialize(path, value[key]);
+					}
+
+					path.length = p;
+					return result;
+				}
+
+				areSame(path: Key[], x: T, y: T): boolean {
+					const p = path.length;
+					let equal = true;
+
+					for (const key in this.schema) {
+						path[p] = key;
+						if (!this.schema[key].areSame(path, x[key], y[key])) {
+							equal = false;
+							break;
+						}
+					}
+
+					path.length = p;
+					return equal;
 				}
 			}
 
@@ -370,16 +433,16 @@ export namespace preferences {
 					super(`Nullable<${underlyingType.name}>`);
 				}
 
-				serialize(value: T | null) {
-					return value == null ? null : this.underlyingType.serialize(value);
+				serialize(path: Key[], value: T | null): T | null {
+					return value == null ? null : this.underlyingType.serialize(path, value);
 				}
 
-				deserialize(value: any): T | null {
-					return value == null ? null : this.underlyingType.deserialize(value);
+				deserialize(path: Key[], value: any): T | null {
+					return value == null ? null : this.underlyingType.deserialize(path, value);
 				}
 
-				areSame(x: T | null, y: T | null): boolean {
-					return x === null ? y === null : (y !== null && this.underlyingType.areSame(x, y));
+				areSame(path: Key[], x: T | null, y: T | null): boolean {
+					return x === null ? y === null : (y !== null && this.underlyingType.areSame(path, x, y));
 				}
 			}
 
@@ -450,6 +513,33 @@ export namespace preferences {
 				}
 
 				return this.#defaultValue!;
+			}
+
+			serialize(value: T) {
+				const path: Key[] = [];
+				try {
+					return this.#type.serialize(path, value);
+				} catch (error) {
+					throw new PreferenceError(this, path, 'serialize', error);
+				}
+			}
+
+			deserialize(value: T) {
+				const path: Key[] = [];
+				try {
+					return this.#type.deserialize(path, value);
+				} catch (error) {
+					throw new PreferenceError(this, path, 'deserialize', error);
+				}
+			}
+
+			areSame(x: T, y: T) {
+				const path: Key[] = [];
+				try {
+					return this.#type.areSame(path, x, y);
+				} catch (error) {
+					throw new PreferenceError(this, path, 'compare', error);
+				}
 			}
 		}
 

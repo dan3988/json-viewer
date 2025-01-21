@@ -139,7 +139,7 @@ export class EditorModel<T extends Dict = Dict> {
 		}
 	
 		set(value: V): void {
-			const changed = !this.#preference.type.areSame(value, this.#original);
+			const changed = !this.#preference.areSame(value, this.#original);
 			if (changed !== this.#changed || value !== this.#current) {
 				this.#changed = changed;
 				this.#current = value;
