@@ -5,14 +5,15 @@
 	const radioTheme: NamedRadioItem<boolean | null>[] = [[null, "Auto"], [false, "Light"], [true, "Dark"]];
 </script>
 <script lang="ts">
-	import { CustomScheme } from "./custom-scheme";
 	import type preferences from "../preferences-lite";
 	import type EditorModel from "./editor";
 	import type ThemeTracker from "../theme-tracker";
+	import { CustomScheme } from "./custom-scheme";
 	import schemes from "../schemes";
 	import Radio from "../shared/Radio.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import ColorSchemeEditor from "./ColorSchemeEditor.svelte";
+	import Linq from "@daniel.pickett/linq-js";
 
 	export let model: EditorModel<preferences.lite.Bag>;
 	export let tracker: ThemeTracker;
@@ -21,7 +22,7 @@
 
 	$: ({ changed, props: { darkMode, scheme, menuAlign, background, customSchemes } } = model);
 
-	$: customSchemeList = Object.entries($customSchemes);
+	$: customSchemeList = Linq.fromObject($customSchemes).orderBy(([_, v]) => v.name).toArray();
 
 	function copyScheme() {
 		const copy = structuredClone(schemeEditor.scheme.value);
