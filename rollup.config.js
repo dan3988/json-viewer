@@ -246,7 +246,6 @@ function loader(args) {
 							mode: "dir",
 							path: "node_modules/bootstrap-icons/font/fonts",
 							include: [
-								"*.woff",
 								"*.woff2"
 							],
 						}
