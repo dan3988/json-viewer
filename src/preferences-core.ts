@@ -327,7 +327,9 @@ export namespace preferences {
 					const p = path.length;
 					for (const key in this.schema) {
 						path[p] = key;
-						result[key] = this.schema[key].serialize(path, value[key]);
+						const v = value[key];
+						if (v !== undefined)
+							result[key] = this.schema[key].serialize(path, v);
 					}
 
 					path.length = p;
@@ -359,10 +361,18 @@ export namespace preferences {
 
 					for (const key in this.schema) {
 						path[p] = key;
-						if (!this.schema[key].areSame(path, x[key], y[key])) {
+						const vx = x[key];
+						const vy = y[key];
+						if (vx === undefined) {
+							equal = vy === undefined;
+						} else if (vy === undefined) {
 							equal = false;
-							break;
+						} else {
+							equal = this.schema[key].areSame(path, vx, vy);
 						}
+
+						if (!equal)
+							break;
 					}
 
 					path.length = p;
