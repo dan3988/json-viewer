@@ -146,19 +146,6 @@
 		}
 	}
 
-	.tab-btn {
-		--text-opacity: 0.5;
-		border-color: var(--bs-btn-bg);
-
-		--bs-btn-color: rgba(var(--jv-body-text-rgb), 0.5);
-		--bs-btn-bg: transparent;
-		--bs-btn-hover-color: rgba(var(--jv-body-text-rgb), 1);
-		--bs-btn-hover-bg: var(--jv-tertiary-hover-bg);
-		--bs-btn-active-color: rgba(var(--jv-body-text-rgb), 0.8);
-		--bs-btn-active-bg: var(--jv-tertiary-active-bg);
-		--bs-btn-active-border-color: var(--bs-btn-bg);
-	}
-
 	.tab-wrapper {
 		--padding: .25rem;
 		display: contents;
@@ -171,7 +158,7 @@
 		<img src="/res/icon128.png" alt="icon" />
 		<span class="h3 m-0">Settings</span>
 		<TabBar {tabs} bind:selected={tab}>
-			<button slot="tab" let:tab let:active let:select class="btn tab-btn" class:active on:click={select}>
+			<button slot="tab" let:tab let:active let:select class="btn btn-faded" class:active on:click={select}>
 				{tabNames[tab]}
 			</button>
 		</TabBar>

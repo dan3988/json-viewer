@@ -98,6 +98,18 @@
 	border-color: var(--bs-btn-active-border-color);
 }
 
+:global(.btn-faded) {
+	border-color: var(--bs-btn-bg);
+	--text-opacity: 0.5;
+	--bs-btn-color: rgba(var(--jv-body-text-rgb), 0.5);
+	--bs-btn-bg: transparent;
+	--bs-btn-hover-color: rgba(var(--jv-body-text-rgb), 1);
+	--bs-btn-hover-bg: var(--jv-tertiary-hover-bg);
+	--bs-btn-active-color: rgba(var(--jv-body-text-rgb), 0.8);
+	--bs-btn-active-bg: var(--jv-tertiary-active-bg);
+	--bs-btn-active-border-color: var(--bs-btn-bg);
+}
+
 @mixin bg($name, $filename: "res/" + $name + ".png", $repeat: null, $size: null) {
 	:global([data-editor-bg="#{$name}"] .editor-bg) {
 		background-color: var(--editor-bg-color);
