@@ -67,7 +67,12 @@
 	<ColorSetEditor value={primary} previewClass="btn-primary" />
 	<span class="h5 text-center">Tertiary</span>
 	<ColorSetEditor value={tertiary} previewClass="btn-base" />
-	<span class="h5 text-center">Indents</span>
+	<div class="indents-header">
+		<span class="h5 text-center">Indents</span>
+		<button class="btn btn-faded p-1" on:click={() => addIndent()}>
+			<i class="bi-plus-lg"></i>
+		</button>
+	</div>
 	<ul class="d-flex flex-column gap-1 m-0 p-0">
 		{#each $indents as value, i}
 			<li class="input-group">
@@ -77,11 +82,19 @@
 			</li>
 		{/each}
 	</ul>
-	<button class="btn btn-primary" on:click={() => addIndent()}>Add<i class="bi-plus"></i></button>
 </div>
 <style lang="scss">
 	.input-group > .input-group-text {
 		flex: 1 1 0;
+	}
+
+	.indents-header {
+		display: grid;
+		grid-template-columns: 2rem 1fr 2rem;
+
+		&::before {
+			content: "";
+		}
 	}
 
 	.h5 {
