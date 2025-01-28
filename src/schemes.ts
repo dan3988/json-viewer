@@ -36,7 +36,7 @@ export namespace schemes {
 		const index = (value as any).light ? (value.dark ? 0 : 1) : 2;
 		groupedPresets[index][1].push([key, value.name]);
 	}
-	
+
 	for (const [, list] of groupedPresets)
 		list.sort(([, x], [, y]) => x.localeCompare(y));
 	
@@ -199,12 +199,6 @@ export namespace schemes {
 
 			compileVariables(b, values);
 		});
-
-		for (let i = 0; i < values.indents.length; i++) {
-			builder.rule([ `${themeSelector}.scheme .json-indent[data-indent="${i}"]`, `${themeSelector} .scheme .json-indent[data-indent="${i}"]` ], b => {
-				b.variable('jv-indent', `var(--jv-indent-${i}-rgb)`);
-			});
-		}
 	}
 }
 
