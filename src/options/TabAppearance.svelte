@@ -39,8 +39,7 @@
 		let nextScheme = 'default';
 		if (customSchemeList.length > 1) {
 			const index =  customSchemeList.findIndex(([key]) => key === scheme.value);
-			const keys = Object.keys(copy);
-			nextScheme = keys[Math.max(0, index - 1)];
+			[nextScheme] = customSchemeList[index == 0 ? 1 : index - 1];
 		}
 
 		scheme.set(nextScheme);
