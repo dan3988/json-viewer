@@ -69,11 +69,11 @@
 	<ColorSetEditor value={tertiary} previewClass="btn-base" />
 	<div class="indents-header">
 		<span class="h5 text-center">Indents</span>
-		<button class="btn btn-faded p-1" on:click={() => addIndent()}>
+		<button class="btn btn-faded p-1" class:disabled={$indents.length >= 10} on:click={() => addIndent()}>
 			<i class="bi-plus-lg"></i>
 		</button>
 	</div>
-	<ul class="d-flex flex-column gap-1 m-0 p-0">
+	<ul class="indents-list d-flex flex-column gap-1 m-0 p-0">
 		{#each $indents as value, i}
 			<li class="input-group">
 				<span class="input-group-text">#{i + 1}</span>
@@ -95,6 +95,10 @@
 		&::before {
 			content: "";
 		}
+	}
+
+	.indents-list {
+		height: calc((2.25rem * 10) + (var(--bs-border-width) * 20) + (var(--padding) * 9));
 	}
 
 	.h5 {
