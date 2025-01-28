@@ -96,8 +96,10 @@
 			</select>
 			<button class="btn btn-base" on:click={copyScheme}>Copy</button>
 		</div>
-		<div class="scheme-editor flex-fill border rounded p-1 overflow-y-scroll" class:blur={!($scheme in $customSchemes)}>
-			<ColorSchemeEditor darkMode={$tracker} scheme={schemeEditor} remove={removeScheme} />
+		<div class="flex-fill border rounded p-1 overflow-y-scroll">
+			<div class="scheme-editor" class:blur={!($scheme in $customSchemes)}>
+				<ColorSchemeEditor darkMode={$tracker} scheme={schemeEditor} remove={removeScheme} />
+			</div>
 		</div>
 	</div>
 	<div class="preview-wrapper border rounded">
@@ -132,8 +134,9 @@
 	}
 
 	.scheme-editor.blur {
-		opacity: 0.75;
+		opacity: 0.5;
 		pointer-events: none;
+		user-select: none;
 	}
 
 	.options {
