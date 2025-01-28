@@ -455,7 +455,7 @@
 		}
 	},
 	"terminal": {
-		"name": "Matrix",
+		"name": "Wireframe",
 		"dark": {
 			"key": "#32DC62",
 			"keyword": "#8CFF8A",
