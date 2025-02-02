@@ -37,7 +37,7 @@
 	export let background: string;
 	export let darkMode: null | boolean;
 
-	const tracker = new ThemeTracker(document.documentElement, darkMode);
+	const tracker = new ThemeTracker(darkMode);
 
 	model.command.addListener(onModelCommand);
 
@@ -368,7 +368,7 @@
 	<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
-<SchemeStyleSheet scheme={currentScheme} />
+<SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
 <div class="root bg-body p-1 scheme" data-editor-bg={background}>
 	{#if contextMenu}
 		{@const [pos, items] = contextMenu}

@@ -8,20 +8,24 @@
 	];
 </script>
 <script lang="ts">
+	import type { Writable } from "svelte/store";
+	import ThemeTracker from "../theme-tracker";
 	import Radio from "../shared/Radio.svelte";
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import schemes from "../schemes";
-	import type { Writable } from "svelte/store";
+
+	const tracker = new ThemeTracker();
 
 	export let scheme: Writable<string>;
 	export let darkMode: Writable<boolean | null>;
 	export let enabled: Writable<boolean>;
 	export let customSchemes: Writable<Dict<schemes.ColorScheme>>;
 
+	$: tracker.preferDark = $darkMode;
 	$: customSchemeList = Object.entries($customSchemes);
 	$: currentScheme = $customSchemes[$scheme] ?? schemes.presets[$scheme];
 </script>
-<SchemeStyleSheet scheme={currentScheme} />
+<SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
 <div class="root scheme d-flex flex-column justify-items-center p-1 gap-1">
 	<img class="m-auto" src="../res/icon256.png" alt="icon" height="64" width="64" />
 	<span class="h4 text-center">Quick Settngs</span>

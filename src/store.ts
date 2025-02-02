@@ -83,7 +83,7 @@ export abstract class WritableStore<T> extends Store<T> implements Writable<T> {
 	}
 }
 
-class StoreListeners<T> {
+export class StoreListeners<T> {
 	readonly #subs: Map<number, Subscriber<T> | readonly [Subscriber<T>, Action]>;
 	#subId: number;
 

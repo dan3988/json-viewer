@@ -14,7 +14,7 @@
 <script lang="ts">
 	import type { EditorModel, EntryRef } from "./editor";
 	import type { Unsubscriber } from "svelte/store";
-	import type ThemeTracker from "../theme-tracker";
+	import ThemeTracker from "../theme-tracker";
 	import TabBar from "../shared/TabBar.svelte";
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import preferences from "../preferences-lite";
@@ -26,8 +26,8 @@
 	import { CustomScheme } from "./custom-scheme";
 
 	export let model: EditorModel<preferences.lite.Bag>;
-	export let tracker: ThemeTracker;
 
+	const tracker = new ThemeTracker();
 	const webRequestPerm: chrome.permissions.Permissions = { permissions: ["webRequest"] };
 
 	let schemeEditor: CustomScheme;
@@ -152,7 +152,7 @@
 	}
 </style>
 <svelte:window on:beforeunload={onUnload} />
-<SchemeStyleSheet scheme={$currentScheme} />
+<SchemeStyleSheet scheme={$currentScheme} darkMode={$tracker} />
 <div class="root bg-body overflow-hidden d-flex flex-column scheme" data-editor-bg={$background}>
 	<div class="header bg-body-tertiary border-bottom gap-2">
 		<img src="/res/icon128.png" alt="icon" />

@@ -1,8 +1,5 @@
 import Popup from "./Popup.svelte";
-import ThemeTracker from "../theme-tracker";
 import { WritableStore, WritableStoreImpl } from "../store";
-
-const tracker = new ThemeTracker(document.documentElement);
 
 async function watch<T extends Dict>(defaults: T): Promise<{ [P in keyof T]: WritableStore<T[P]> }> {
 	const values = await chrome.storage.local.get(defaults);
@@ -23,8 +20,6 @@ const { scheme, darkMode, enabled, customSchemes } = await watch({
 	enabled: true,
 	customSchemes: {},
 });
-
-darkMode.subscribe(v => tracker.preferDark = v);
 
 new Popup({
 	target: document.body,

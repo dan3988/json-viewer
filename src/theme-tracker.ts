@@ -1,11 +1,9 @@
-import type { Readable, Subscriber } from "svelte/store";
+import type { Subscriber, Unsubscriber } from "svelte/store";
+import Store, { StoreListeners } from "./store";
 
-type ThemeChangedListener = (dark: boolean, preference: boolean | null) => void;
-
-export class ThemeTracker implements Readable<boolean> {
-	readonly #onRuleChange = this.#update.bind(this);
-	readonly #listeners: ThemeChangedListener[];
-	readonly #root;
+export class ThemeTracker extends Store<boolean> {
+	readonly #listeners;
+	readonly #onRuleChange;
 	readonly #rule;
 	#preferDark: null | boolean;
 	#value: boolean;
@@ -29,49 +27,31 @@ export class ThemeTracker implements Readable<boolean> {
 		}
 	}
 
-	constructor(root: HTMLElement, initialValue: null | boolean = null) {
-		this.#listeners = [];
-		this.#root = root;
+	constructor(initialValue: null | boolean = null) {
+		super();
+		this.#listeners = new StoreListeners<boolean>();
+		this.#onRuleChange = this.#update.bind(this);
 		this.#rule = matchMedia("(prefers-color-scheme: dark)");
-		this.#onRuleChange = this.#onRuleChange.bind(this);
 		this.#rule.addEventListener("change", this.#onRuleChange);
 		this.#preferDark = initialValue;
-		this.#value = undefined!;
-		this.#setValueCore(this.#preferDark ?? this.#rule.matches)
+		this.#value = initialValue ?? this.#rule.matches;
 	}
 
-	#setValueCore(value: boolean) {
-		this.#value = value;
-		this.#root.setAttribute("data-bs-theme", value ? "dark" : "light");
+	listen(listener: Subscriber<boolean>, invalidate?: Action): Unsubscriber {
+		return this.#listeners.listen(listener, invalidate);
 	}
 
 	#update() {
 		const preferDark = this.#preferDark;
 		const value = preferDark ?? this.#rule.matches;
 		if (this.#value !== value) {
-			this.#setValueCore(value);
-			this.#listeners.forEach(v => v(value, preferDark));
+			this.#value = value;
+			this.#listeners.fire(value);
 		}
 	}
 
-	#unsubscribe(listener: any) {
-		const i = this.#listeners.indexOf(listener);
-		if (i >= 0)
-			this.#listeners.splice(i, 1);
-	}
-
-	destroy() {
+	dispose() {
 		this.#rule.removeEventListener("change", this.#onRuleChange);
-	}
-
-	addListener(listener: ThemeChangedListener) {
-		this.#listeners.push(listener);
-	}
-
-	subscribe(listener: Subscriber<boolean>) {
-		listener(this.#value);
-		this.#listeners.push(listener);
-		return this.#unsubscribe.bind(this, listener);
 	}
 }
 

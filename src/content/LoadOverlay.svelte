@@ -6,14 +6,13 @@
 	import { SvelteComponent, onDestroy, onMount } from "svelte";
 	import ThemeTracker from "../theme-tracker";
 
-	let elem: HTMLElement;
 	let tracker: ThemeTracker;
 	let remember = false;
 
 	const self: SvelteComponent = arguments[0];
 
-	onMount(() => tracker = new ThemeTracker(elem));
-	onDestroy(() => tracker.destroy());
+	onMount(() => tracker = new ThemeTracker());
+	onDestroy(() => tracker.dispose());
 
 	async function action(load: boolean) {
 		if (remember)
@@ -30,7 +29,7 @@
 </svelte:head>
 <template>
 	<div class="root">
-		<div class="content" bind:this={elem} data-bs-theme="">
+		<div class="content">
 			<span class="full-row">Load JSON viewer?</span>
 			<label class="full-row">
 				<input type="checkbox" class="form-check-input" bind:checked={remember}/>
