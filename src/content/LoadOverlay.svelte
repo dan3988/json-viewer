@@ -28,7 +28,7 @@
 	<link rel="stylesheet" href={css}/>
 </svelte:head>
 <template>
-	<div class="root">
+	<div class="root" data-bs-theme={$tracker ? 'dark' : 'light'}>
 		<div class="content">
 			<span class="full-row">Load JSON viewer?</span>
 			<label class="full-row">
