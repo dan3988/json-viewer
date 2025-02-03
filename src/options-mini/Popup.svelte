@@ -30,7 +30,7 @@
 <SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
 <div class="root scheme bg-body d-flex flex-column justify-items-center p-1 gap-1">
 	<img class="m-auto" src="../res/icon256.png" alt="icon" height="64" width="64" />
-	<span class="h4 text-center">Quick Settngs</span>
+	<span class="h4 text-center">Quick Settings</span>
 	<div class="input-group">
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input id="chkEnabled" class="form-check-input" type="checkbox" bind:checked={$enabled} />
