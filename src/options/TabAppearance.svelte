@@ -45,7 +45,7 @@
 		customSchemes.set(copy as any);
 	}
 </script>
-<div class="root overflow-hidden">
+<div class="root">
 	<div class="options">
 		<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$changed.includes('menuAlign')}>
 			<span class="input-group-text">Menu Alignment</span>
@@ -91,7 +91,7 @@
 			</select>
 			<button class="btn btn-base" on:click={copyScheme}>Copy</button>
 		</div>
-		<div class="flex-fill border rounded p-1 overflow-y-scroll">
+		<div class="flex-fill">
 			<div class="scheme-editor" class:blur={!($scheme in $customSchemes)}>
 				<ColorSchemeEditor scheme={schemeEditor} remove={removeScheme} />
 			</div>
@@ -110,14 +110,18 @@
 	@media only screen and (max-width: $breakpoint) {
 		.root {
 			--start-flex: 0 0 auto;
+			--preview-flex: 0 0 30rem;
 			flex-direction: column;
+			overflow-y: scroll;
 		}
 	}
 
 	@media only screen and (min-width: $breakpoint) {
 		.root {
 			--start-flex: 0 0 500px;
+			--preview-flex: 1 1 0px;
 			flex-direction: row;
+			overflow-y: hidden;
 		}
 	}
 
@@ -126,6 +130,7 @@
 		padding: var(--padding);
 		display: flex;
 		gap: var(--padding);
+		overflow-x: hidden;
 	}
 
 	.scheme-editor.blur {
@@ -144,7 +149,7 @@
 
 	.preview-wrapper {
 		overflow: hidden;
-		flex: 1 1 0px;
+		flex: var(--preview-flex);
 		position: relative;
 		display: flex;
 		flex-direction: column;
