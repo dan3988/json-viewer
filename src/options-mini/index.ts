@@ -13,9 +13,9 @@ async function watch<T extends Dict>(defaults: T): Promise<{ [P in keyof T]: Wri
 	return stores;
 }
 
-//const { scheme, darkMode, enabled, customSchemes } = await watch('scheme', 'darkMode', 'enabled', 'customSchemes');
-const { scheme, darkMode, enabled, customSchemes } = await watch({
-	scheme: 'default',
+const { schemeLight, schemeDark, darkMode, enabled, customSchemes } = await watch({
+	schemeLight: 'default_light',
+	schemeDark: 'default_dark',
 	darkMode: <boolean | null>null,
 	enabled: true,
 	customSchemes: {},
@@ -24,7 +24,8 @@ const { scheme, darkMode, enabled, customSchemes } = await watch({
 new Popup({
 	target: document.body,
 	props: {
-		scheme,
+		schemeLight,
+		schemeDark,
 		darkMode,
 		enabled,
 		customSchemes

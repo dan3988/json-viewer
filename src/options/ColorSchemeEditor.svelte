@@ -4,30 +4,27 @@
 	import ColorEditor from "./ColorEditor.svelte";
 	import ColorSetEditor from "./ColorSetEditor.svelte";
 
-	export let darkMode: boolean;
 	export let scheme: CustomScheme;
 	export let remove: Action;
 
-	$: values = scheme.getValues(darkMode);
-	$: name = scheme.name;
-	$: ({ key, keyword, str, num, text, background, indents, primary, tertiary } = values);
+	$: ({ name, key, keyword, str, num, text, background, indents, primary, tertiary } = scheme);
 
 	function addIndent(value = Color.rgb(0, 0, 0)) {
-		values.indents.update(v => {
+		scheme.indents.update(v => {
 			v.push(value);
 			return v;
 		});
 	}
 
 	function setIndent(index: number, value: Color) {
-		values.indents.update(v => {
+		scheme.indents.update(v => {
 			v[index] = value;
 			return v;
 		});
 	}
 
 	function removeIndent(index: number) {
-		values.indents.update(v => {
+		scheme.indents.update(v => {
 			v.splice(index, 1);
 			return v;
 		});

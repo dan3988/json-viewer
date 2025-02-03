@@ -16,17 +16,19 @@
 
 	const tracker = new ThemeTracker();
 
-	export let scheme: Writable<string>;
+	export let schemeLight: Writable<string>;
+	export let schemeDark: Writable<string>;
 	export let darkMode: Writable<boolean | null>;
 	export let enabled: Writable<boolean>;
 	export let customSchemes: Writable<Dict<schemes.ColorScheme>>;
 
 	$: tracker.preferDark = $darkMode;
-	$: customSchemeList = Object.entries($customSchemes);
+	$: [presets, scheme] = $tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight];
+	$: customSchemeList = schemes.getCustomEntries($customSchemes, $tracker);
 	$: currentScheme = $customSchemes[$scheme] ?? schemes.presets[$scheme];
 </script>
 <SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
-<div class="root scheme d-flex flex-column justify-items-center p-1 gap-1">
+<div class="root scheme bg-body d-flex flex-column justify-items-center p-1 gap-1">
 	<img class="m-auto" src="../res/icon256.png" alt="icon" height="64" width="64" />
 	<span class="h4 text-center">Quick Settngs</span>
 	<div class="input-group">
@@ -44,19 +46,15 @@
 	<div class="input-group grp-json-style">
 		<span class="input-group-text">Colour Scheme</span>
 		<select class="form-select flex-fill" bind:value={$scheme}>
-			{#each schemes.groupedPresets as [ label, values ]}
-				{#if values.length}
-					<optgroup {label}>
-						{#each values as [ value, name ]}
-							<option {value}>{name}</option>
-						{/each}
-					</optgroup>
-				{/if}
-			{/each}
+			<optgroup label="Presets">
+				{#each presets as { id, name }}
+					<option value={id}>{name}</option>
+				{/each}
+			</optgroup>
 			{#if customSchemeList.length}
 				<optgroup label="Custom">
-					{#each customSchemeList as [ id, scheme ]}
-						<option value={id}>{scheme.name}</option>
+					{#each customSchemeList as { id, name }}
+						<option value={id}>{name}</option>
 					{/each}
 				</optgroup>
 			{/if}

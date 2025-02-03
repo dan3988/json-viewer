@@ -6,56 +6,86 @@ export namespace schemes {
 	type SetKey = "primary" | "tertiary";
 	type SetColor = 'text' | 'background' | 'border';
 
-	interface JsonColorScheme {
-		name: string;
-		light?: JsonColorSchemeValues;
-		dark?: JsonColorSchemeValues
-	}
-
-	type JsonColorSchemeValues = Expand<Omit<ColorSchemeValues, SetKey> & Record<SetKey, JsonColorSchemeSet>>;
-	type JsonColorSchemeSet = { [P in keyof ColorSchemeSet]: TupleJson<ColorSchemeSet[P]> };
-	type TupleJson<T> = T extends readonly any[] ? T[number][] : T;
-
 	export type ColorScheme = preferences.lite.CustomColorScheme;
-	export type ColorSchemeValues = preferences.lite.CustomColorSchemeValues;
 	export type ColorSchemeSet = preferences.lite.CustomColorSchemeSet;
 	export type ColorSchemeSetColors = preferences.lite.CustomColorSchemeSetColors;
 
-	export const presets = (json satisfies Dict<JsonColorScheme>) as any as Dict<ColorScheme>;
+	export const presets = json satisfies Dict<ColorScheme>;
 
-	type SchemeGroup = [name: string, schemes: SchemeReference[]];
-	type SchemeReference = [id: string, name: string];
+	type PresetId = keyof typeof presets;
 
-	export const groupedPresets: SchemeGroup[] = [
-		['Auto', []],
-		['Light', []],
-		['Dark', []],
-	];
-	
-	for (const [key, value] of Object.entries(presets)) {
-		const index = (value as any).light ? (value.dark ? 0 : 1) : 2;
-		groupedPresets[index][1].push([key, value.name]);
+	export const ids: PresetId[] = Object.keys(presets) as any;
+
+	interface SchemeEntry {
+		id: string;
+		name: string;
+		dark: boolean;
 	}
 
-	for (const [, list] of groupedPresets)
-		list.sort(([, x], [, y]) => x.localeCompare(y));
-	
-	export function getIndentCount(scheme: ColorScheme, darkMode: boolean) {
-		const { indents } = scheme[darkMode ? 'dark' : 'light'] ?? scheme.light ?? scheme.dark!;
-		return indents.length;
+	interface PresetSchemeEntry extends SchemeEntry {
+		id: PresetId;
 	}
 
-	export function compileCss({ light, dark }: ColorScheme) {
+	interface PresetSchemeEntries {
+		all: PresetSchemeEntry[];
+		light: PresetSchemeEntry[];
+		dark: PresetSchemeEntry[];
+	}
+
+	function makeEntry(id: PresetId): PresetSchemeEntry {
+		const { name, dark } = presets[id];
+		return { id, name, dark };
+	}
+
+	const all: PresetSchemeEntry[] = ids.map(makeEntry).sort((x, y) => x.name.localeCompare(y.name));
+	const light: PresetSchemeEntry[] = [];
+	const dark: PresetSchemeEntry[] = [];
+
+	for (const entry of all)
+		(entry.dark ? dark : light).push(entry);
+
+	Object.freeze(ids);
+	Object.freeze(all);
+	Object.freeze(light);
+	Object.freeze(dark);
+
+	export const entries: PresetSchemeEntries = Object.freeze({ all, light, dark });
+
+	export function getCustomEntries(customSchemes: Dict<ColorScheme>, darkOnly: boolean) {
+		const result: SchemeEntry[] = [];
+
+		for (const [id, { name, dark }] of Object.entries(customSchemes)) {
+			if (dark === darkOnly)
+				result.push({ id, name, dark })
+		}
+
+		return result.sort((x, y) => x.name.localeCompare(y.name));
+	}
+
+	export function compileCss(scheme: ColorScheme) {
 		//const builder = new TextCssBuilder('\t');
 		const builder = new TextCssBuilder();
-		if (light && dark) {
-			compileValues(builder, 'light', light);
-			compileValues(builder, 'dark', dark);
-		} else if (light) {
-			compileValues(builder, 'light', light, true);
-		} else if (dark) {
-			compileValues(builder, 'dark', dark, true);
-		}
+		builder.rule('.scheme', builder => {
+			const key = Color(scheme.key);
+			const keyword = Color(scheme.keyword);
+			const str = Color(scheme.str);
+			const num = Color(scheme.num);
+			const text = Color(scheme.text);
+			const background = Color(scheme.background);
+			builder
+				.color('jv-key-fg', key)
+				.color('jv-keywd-fg', keyword)
+				.color('jv-str-fg', str)
+				.color('jv-num-fg', num)
+				.color('jv-body-text', text)
+				.color('jv-body-bg', background);
+	
+			compileSet(builder, 'jv-tertiary', scheme.tertiary, text);
+			compileSet(builder, 'jv-primary', scheme.primary, text);
+	
+			for (let i = 0; i < scheme.indents.length; i++)
+				builder.color(`jv-indent-${i}`, Color(scheme.indents[i]));
+		});
 
 		return builder.toString();
 	}
@@ -140,28 +170,6 @@ export namespace schemes {
 		}
 	}
 
-	function compileVariables(builder: CssRuleBuilder, values: ColorSchemeValues) {
-		const key = Color(values.key);
-		const keyword = Color(values.keyword);
-		const str = Color(values.str);
-		const num = Color(values.num);
-		const text = Color(values.text);
-		const background = Color(values.background);
-		builder
-			.color('jv-key-fg', key)
-			.color('jv-keywd-fg', keyword)
-			.color('jv-str-fg', str)
-			.color('jv-num-fg', num)
-			.color('jv-body-text', text)
-			.color('jv-body-bg', background);
-
-		compileSet(builder, 'jv-tertiary', values.tertiary, text);
-		compileSet(builder, 'jv-primary', values.primary, text);
-
-		for (let i = 0; i < values.indents.length; i++)
-			builder.color(`jv-indent-${i}`, Color(values.indents[i]));
-	}
-
 	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet, fallback?: Color): void;
 	function writeColor<K extends SetColor>(builder: CssRuleBuilder, prefix: string, suffix: string, key: K, set: ColorSchemeSet, fallback: Exclude<SetColor, K>): void;
 	function writeColor(builder: CssRuleBuilder, prefix: string, suffix: string, key: SetColor, set: ColorSchemeSet, fallback?: Color | SetColor) {
@@ -188,17 +196,6 @@ export namespace schemes {
 		writeColor(builder, prefix, 'text', 'text', set, textFallback);
 		writeColor(builder, prefix, 'bg', 'background', set);
 		writeColor(builder, prefix, 'border', 'border', set, 'background');
-	}
-
-	function compileValues(builder: CssBuilder, theme: string, values: ColorSchemeValues, forceColorScheme = false) {
-		const themeSelector = forceColorScheme ? '[data-bs-theme]' : `[data-bs-theme="${theme}"]`;
-		const selectors = [ `${themeSelector}.scheme`, `${themeSelector} .scheme` ];
-		builder.rule(selectors, b => {
-			if (forceColorScheme)
-				b.prop('color-scheme', theme);
-
-			compileVariables(b, values);
-		});
 	}
 }
 

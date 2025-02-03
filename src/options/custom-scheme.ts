@@ -14,90 +14,68 @@ type ColorStore = WritableStore<Color<any>>;
 
 export class CustomScheme {
 	readonly #scheme: IStoreController<schemes.ColorScheme>;
-	readonly #name: WritableStore<string>;
 
-	#light: null | CustomSchemeValues;
-	#dark: null | CustomSchemeValues;
+	readonly name: WritableStore<string>;
+	readonly key: ColorStore;
+	readonly keyword: ColorStore;
+	readonly str: ColorStore;
+	readonly num: ColorStore;
+	readonly text: ColorStore;
+	readonly background: ColorStore;
+	readonly primary: CustomSchemeColorSet;
+	readonly tertiary: CustomSchemeColorSet;
+	readonly indents: WritableStore<Color[]>;
 
 	get scheme() {
 		return this.#scheme.store;
 	}
 
-	get name() {
-		return this.#name;
-	}
-
-	get light() {
-		return this.#light;
-	}
-
-	get dark() {
-		return this.#dark;
-	}
-
-	constructor(value: schemes.ColorScheme) {
-		this.#scheme = Store.controller(value);
-		this.#name = new WritableStoreImpl(value.name);
-		this.#name.listen(this.#updateName.bind(this));
-		this.#light = value.light ? this.#createValues(false, value.light) : null;
-		this.#dark = value.dark ? this.#createValues(true, value.dark) : null;
-	}
-
-	getValues(darkMode: boolean) {
-		if (darkMode) {
-			return this.#dark ??= this.#createValues(true, this.#scheme.value.light!);
-		} else {
-			return this.#light ??= this.#createValues(false, this.#scheme.value.dark!);
-		}
+	constructor(schemes: schemes.ColorScheme) {
+		this.#scheme = Store.controller(schemes);
+		this.name = new WritableStoreImpl(schemes.name);
+		this.name.listen(this.#updateName.bind(this));
+		this.key = this.#rootColorStore(schemes, 'key');
+		this.keyword = this.#rootColorStore(schemes, 'keyword');
+		this.str = this.#rootColorStore(schemes, 'str');
+		this.num = this.#rootColorStore(schemes, 'num');
+		this.text = this.#rootColorStore(schemes, 'text');
+		this.background = this.#rootColorStore(schemes, 'background');
+		this.primary = this.#createSet(schemes, 'primary');
+		this.tertiary = this.#createSet(schemes, 'tertiary');
+		this.indents = Store.controller(Array.from(schemes.indents, v => Color(v)));
+		this.indents.listen(value => this.#update(v => v.indents = Array.from(value, v => v.hex())));
 	}
 
 	#updateName(name: string) {
 		this.#scheme.update(v => {
-			const { light, dark } = v;
-			return { name, light, dark };
-		});
-	}
-
-	#update(darkMode: boolean, updater: (v: schemes.ColorSchemeValues) => void) {
-		this.#scheme.update(v => {
-			const { name, light, dark } = v;
-			const copy = { name, light, dark };
-			const [key, other] = darkMode ? ['dark', 'light'] : ['light', 'dark'];
-			const values = structuredClone(v[key] ?? v[other]!);
-			copy[key] = values;
-			updater(values);
+			const copy = { ...v };
+			copy.name = name;
 			return copy;
 		});
 	}
 
-	#createValues(darkMode: boolean, values: schemes.ColorSchemeValues) {
-		const key = this.#rootColorStore(darkMode, values, 'key');
-		const keyword = this.#rootColorStore(darkMode, values, 'keyword');
-		const str = this.#rootColorStore(darkMode, values, 'str');
-		const num = this.#rootColorStore(darkMode, values, 'num');
-		const text = this.#rootColorStore(darkMode, values, 'text');
-		const background = this.#rootColorStore(darkMode, values, 'background');
-		const primary = this.#createSet(values, darkMode, 'primary', text);
-		const tertiary = this.#createSet(values, darkMode, 'tertiary', text);
-		const indents = Store.controller(Array.from(values.indents, v => Color(v)));
-		indents.listen(value => this.#update(darkMode, v => v.indents = Array.from(value, v => v.hex())));
-		return { key, keyword, str, num, text, background, primary, tertiary, indents };
+	#update(updater: (v: schemes.ColorScheme) => void) {
+		this.#scheme.update(v => {
+			const copy = structuredClone(v);
+			updater(copy);
+			return copy;
+		});
 	}
 
-	#rootColorStore(darkMode: boolean, values: schemes.ColorSchemeValues, key: SchemeColorKey) {
-		const value = values[key];
+	#rootColorStore(scheme: schemes.ColorScheme, key: SchemeColorKey) {
+		const value = scheme[key];
 		const color = Color(value);
 		const store = new WritableStoreImpl(color);
-		store.listen(v => this.#update(darkMode, obj => obj[key] = v.hex()));
+		store.listen(v => this.#update(obj => obj[key] = v.hex()));
 		return store;
 	}
 
-	#createSet(values: schemes.ColorSchemeValues, darkMode: boolean, set: SchemeSetKey, rootText: ColorStore) {
+	#createSet(values: schemes.ColorScheme, set: SchemeSetKey) {
 		const background = (() => {
 			const init = values[set].background;
 
 			function handler(this: CustomScheme, mode: SetColorMode, value: Color) {
-				this.#update(darkMode, v => v[set].background[mode] = value.hex());
+				this.#update(v => v[set].background[mode] = value.hex());
 			}
 
 			const def = new WritableStoreImpl(Color(init.def));
@@ -110,24 +88,24 @@ export class CustomScheme {
 			return { def, hov, act };
 		})();
 
-		const border = this.#createTogglebleSetColors(darkMode, values, set, 'border', background.def, background.act, background.hov);
-		const text = this.#createTogglebleSetColors(darkMode, values, set, 'text', rootText);
+		const border = this.#createTogglebleSetColors(values, set, 'border', background.def, background.act, background.hov);
+		const text = this.#createTogglebleSetColors(values, set, 'text', this.text);
 		return { background, border, text };
 	}
 
-	#createTogglebleSetColors(darkMode: boolean, values: schemes.ColorSchemeValues, set: SchemeSetKey, prop: 'border' | 'text', fallbackDef: ColorStore, fallbackAct?: ColorStore, fallbackHov?: ColorStore) {
+	#createTogglebleSetColors(values: schemes.ColorScheme, set: SchemeSetKey, prop: 'border' | 'text', fallbackDef: ColorStore, fallbackAct?: ColorStore, fallbackHov?: ColorStore) {
 		const init = values[set][prop];
 		const active = new WritableStoreImpl(!!init);
 
 		active.listen(v => {
 			if (v) {
-				this.#update(darkMode, v => v[set][prop] = {
+				this.#update(v => v[set][prop] = {
 					def: def.value.hex(),
 					act: act.value.hex(),
 					hov: hov.value.hex()
 				});
 			} else {
-				this.#update(darkMode, v => v[set][prop] = undefined);
+				this.#update(v => v[set][prop] = undefined);
 			}
 		});
 
@@ -145,7 +123,7 @@ export class CustomScheme {
 		}
 
 		function handler(this: CustomScheme, mode: SetColorMode, value: Color) {
-			active.value && this.#update(darkMode, v => v[set][prop]![mode] = value.hex());
+			active.value && this.#update(v => v[set][prop]![mode] = value.hex());
 		}
 
 		def.listen(handler.bind(this, 'def'));

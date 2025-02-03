@@ -2,7 +2,6 @@
 import "../dom-extensions";
 import preferences from "../preferences-lite";
 import createComponent from "../component-tracker";
-import schemes from "../schemes.js";
 import JsonViewer from "./JsonViewer.svelte";
 import json from "../json"
 import { ViewerModel } from "../viewer-model";
@@ -72,9 +71,9 @@ function run() {
 
 		async function loadAsync() {
 			const prefs = await preferences.lite.manager.watch();
-			const bound = prefs.bind()
-				.map(["background", "menuAlign", "darkMode"])
-				.map(["scheme", "customSchemes"], "currentScheme", (scheme, customSchemes) => schemes.presets[scheme] ?? customSchemes[scheme])
+			const mapped = prefs
+				.bind()
+				.map(['menuAlign', 'customSchemes', 'darkMode', 'schemeDark', 'schemeLight', 'background'])
 				.build();
 
 			function updateIndent() {
@@ -96,7 +95,7 @@ function run() {
 					updateIndent();
 			});
 
-			createComponent(JsonViewer, document.body, bound, { model });
+			createComponent(JsonViewer, document.body, mapped, { model });
 
 			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}

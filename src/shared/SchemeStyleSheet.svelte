@@ -7,7 +7,7 @@
 	let element: undefined | HTMLStyleElement;
 
 	$: element && (element.textContent = schemes.compileCss(scheme));
-	$: document.body.dataset.bsTheme = darkMode ? 'dark' : 'light';
+	$: document.documentElement.dataset.bsTheme = darkMode ? 'dark' : 'light';
 </script>
 <svelte:head>
 	<style bind:this={element}></style>

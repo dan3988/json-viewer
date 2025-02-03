@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	export type NamedRadioItem<T> = [value: T, text: string];
+	type NamedRadioItem<T> = [value: T, text: string];
 
 	const radioMenuAlign: NamedRadioItem<"l" | "r">[] = [["l", "Left"], ["r", "Right"]];
 	const radioTheme: NamedRadioItem<boolean | null>[] = [[null, "Auto"], [false, "Light"], [true, "Dark"]];
@@ -13,16 +13,15 @@
 	import Radio from "../shared/Radio.svelte";
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import ColorSchemeEditor from "./ColorSchemeEditor.svelte";
-	import Linq from "@daniel.pickett/linq-js";
 
 	export let model: EditorModel<preferences.lite.Bag>;
 	export let tracker: ThemeTracker;
 	export let maxIndentClass: number;
 	export let schemeEditor: CustomScheme;
 
-	$: ({ changed, props: { darkMode, scheme, menuAlign, background, customSchemes } } = model);
-
-	$: customSchemeList = Linq.fromObject($customSchemes).orderBy(([_, v]) => v.name).toArray();
+	$: ({ changed, props: { darkMode, schemeDark, schemeLight, menuAlign, background, customSchemes } } = model);
+	$: [presets, scheme] = $tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight];
+	$: customSchemeList = schemes.getCustomEntries($customSchemes, $tracker);
 
 	function copyScheme() {
 		const copy = structuredClone(schemeEditor.scheme.value);
@@ -36,10 +35,10 @@
 	function removeScheme() {
 		const copy = { ...$customSchemes };
 		delete copy[$scheme];
-		let nextScheme = 'default';
+		let nextScheme = $tracker ? 'default_dark' : 'default_light';
 		if (customSchemeList.length > 1) {
-			const index =  customSchemeList.findIndex(([key]) => key === scheme.value);
-			[nextScheme] = customSchemeList[index == 0 ? 1 : index - 1];
+			const index =  customSchemeList.findIndex(({ id }) => id === scheme.value);
+			[nextScheme] = customSchemeList[index == 0 ? 1 : index - 1].id;
 		}
 
 		scheme.set(nextScheme);
@@ -76,20 +75,16 @@
 		</div>
 		<div class="input-group grp-json-style">
 			<span class="input-group-text">Colour Scheme</span>
-			<select class="form-select flex-fill" class:dirty={$changed.includes('scheme')} bind:value={$scheme}>
-				{#each schemes.groupedPresets as [ label, values ]}
-					{#if values.length}
-						<optgroup {label}>
-							{#each values as [ value, name ]}
-								<option {value}>{name}</option>
-							{/each}
-						</optgroup>
-					{/if}
-				{/each}
+			<select class="form-select flex-fill" bind:value={$scheme}>
+				<optgroup label="Presets">
+					{#each presets as { id, name }}
+						<option value={id}>{name}</option>
+					{/each}
+				</optgroup>
 				{#if customSchemeList.length}
 					<optgroup label="Custom">
-						{#each customSchemeList as [ id, scheme ]}
-							<option value={id}>{scheme.name}</option>
+						{#each customSchemeList as { id, name }}
+							<option value={id}>{name}</option>
 						{/each}
 					</optgroup>
 				{/if}
@@ -98,7 +93,7 @@
 		</div>
 		<div class="flex-fill border rounded p-1 overflow-y-scroll">
 			<div class="scheme-editor" class:blur={!($scheme in $customSchemes)}>
-				<ColorSchemeEditor darkMode={$tracker} scheme={schemeEditor} remove={removeScheme} />
+				<ColorSchemeEditor scheme={schemeEditor} remove={removeScheme} />
 			</div>
 		</div>
 	</div>

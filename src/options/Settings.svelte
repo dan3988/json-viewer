@@ -32,11 +32,12 @@
 
 	let schemeEditor: CustomScheme;
 
-	$: ({ changed, props: { darkMode, scheme, background, customSchemes } } = model);
+	$: ({ changed, props: { darkMode, schemeDark, schemeLight, background, customSchemes } } = model);
 	$: tracker.preferDark = $darkMode;
-	$: updateSchemeEditor($scheme);
+	$: scheme = $tracker ? $schemeDark : $schemeLight;
+	$: updateSchemeEditor(scheme);
 	$: currentScheme = schemeEditor.scheme;
-	$: maxIndentClass = schemes.getIndentCount($currentScheme, $tracker);
+	$: maxIndentClass = $currentScheme.indents.length;
 	$: schemeEditor, onSchemeEditorChanged();
 
 	let unsub: undefined | Unsubscriber;
@@ -48,11 +49,11 @@
 	function onSchemeEditorChanged() {
 		unsub?.();
 		unsub = schemeEditor.scheme.listen(v => {
-			if ($scheme in schemes.presets)
+			if (scheme in schemes.presets)
 				return;
 
 			const copy = { ...$customSchemes };
-			copy[$scheme] = v as any;
+			copy[scheme] = v as any;
 			customSchemes.set(copy);
 		})
 	}

@@ -81,8 +81,7 @@
 }
 
 @for $i from 0 to 10 {
-	[data-bs-theme].scheme .json-indent[data-indent="#{$i}"],
-	[data-bs-theme] .scheme .json-indent[data-indent="#{$i}"] {
+	.json-indent[data-indent="#{$i}"] {
 		--jv-indent: var(--jv-indent-#{$i}-rgb);
 	}
 }

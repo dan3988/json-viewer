@@ -25,7 +25,9 @@ export namespace preferences {
 			['border', 'text']
 		);
 
-		const colorSchemeValuesType = p.core.types.object({
+		const colorSchemeType = p.core.types.object({
+			name: p.core.types.string,
+			dark: p.core.types.bool,
 			key: p.core.types.string,
 			keyword: p.core.types.string,
 			str: p.core.types.string,
@@ -37,24 +39,15 @@ export namespace preferences {
 			indents: p.core.types.list('string'),
 		});
 
-		const colorSchemeType = p.core.types.object(
-			{
-				name: p.core.types.string,
-				light: colorSchemeValuesType,
-				dark: colorSchemeValuesType,
-			},
-			['dark', 'light']
-		);
-
 		export type CustomColorSchemeSetColors = p.core.types.ValueOf<typeof setColors>;
 		export type CustomColorScheme = p.core.types.ValueOf<typeof colorSchemeType>;
 		export type CustomColorSchemeSet = p.core.types.ValueOf<typeof colorSet>;
-		export type CustomColorSchemeValues = p.core.types.ValueOf<typeof colorSchemeValuesType>;
 
 		export const values = [
 			p.core.Preference.nullable("darkMode", p.core.types.bool),
 			p.core.Preference.list("mimes", p.core.types.string, ["application/json", "text/json", "text/plain"]),
-			p.core.Preference.string("scheme", "default"),
+			p.core.Preference.string("schemeLight", "default_light"),
+			p.core.Preference.string("schemeDark", "default_dark"),
 			p.core.Preference.list("whitelist", p.core.types.string),
 			p.core.Preference.list("blacklist", p.core.types.string),
 			p.core.Preference.boolean("enabled", true),

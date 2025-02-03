@@ -33,7 +33,9 @@
 
 	export let model: ViewerModel;
 	export let menuAlign: string;
-	export let currentScheme: schemes.ColorScheme;
+	export let customSchemes: Dict<schemes.ColorScheme>;
+	export let schemeDark: string;
+	export let schemeLight: string;
 	export let background: string;
 	export let darkMode: null | boolean;
 
@@ -45,7 +47,9 @@
 	$: ({ canUndo, canRedo } = model.edits.state.props);
 	$: tracker.preferDark = darkMode;
 	$: model.filter(filter, filterMode);
-	$: maxIndentClass = schemes.getIndentCount(currentScheme, $tracker);
+	$: scheme = $tracker ? schemeDark : schemeLight;
+	$: currentScheme = customSchemes[scheme] ?? schemes.presets[scheme];
+	$: maxIndentClass = currentScheme.indents.length;
 
 	let bindings: KeyBindingListener;
 
