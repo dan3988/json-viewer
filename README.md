@@ -113,7 +113,7 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 * Search for text in keys, values or both
 * Evaluate JPath expressions
 * Dark and light mode
-* Multiple colour schemes
+* Multiple customisable colour schemes
 
 ## Building
 The project is built using rollup. The following options can be passed into rollup to be used by the build script:
@@ -133,7 +133,7 @@ The build will output the extension to `./out/<browser>`.
 ## TODO
 - [x] Undo / redo edits
 - [x] Allow multiple properties to be selected
-- [x] Support `?.` chain expressions in JPath evaluator
-- [x] Support special characters in the json path editor
 - [x] Show HTTP headers
 - [ ] Allow modified JSON to be used in POST/PUT requests
+- [ ] Inline value editing
+- [ ] Improve object/array manipulation
