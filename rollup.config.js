@@ -18,6 +18,7 @@ import onwarn from "./rollup-typescript-log.js";
 import hotreload from './rollup-plugin-hotreload.js';
 import bootstrapIcons from './node_modules/bootstrap-icons/font/bootstrap-icons.json' with { type: "json" };
 
+const watching = !!process.env.ROLLUP_WATCH;
 const vscSettings = await fs.promises.readFile("./.vscode/settings.json").then(JSON.parse);
 const ignore = Linq.fromObject(vscSettings["svelte.plugin.svelte.compilerWarnings"])
 	.select(([k, v]) => v === "ignore" && k)
@@ -147,7 +148,7 @@ function loader(args) {
 				json({
 					preferConst: true
 				}),
-				!dist && hotreload({
+				watching && hotreload({
 					baseDir,
 					prefix: browserInfo.extUrlScheme
 				}),
