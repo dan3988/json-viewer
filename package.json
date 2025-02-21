@@ -54,8 +54,7 @@
 		"@daniel.pickett/linq-js": "^1.0.9",
 		"bootstrap": "^5.3.3",
 		"bootstrap-icons": "^1.11.3",
-		"espree": "^9.6.1",
 		"json5": "^2.2.3",
-		"jsonpath-plus": "^7.2.0"
+		"jsonpath-plus": "^10.3.0"
 	}
 }

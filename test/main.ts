@@ -6,4 +6,3 @@ import "./immutable-array.js";
 import "./preferences.js";
 import "./props.js";
 import "./viewer-model.js";
-import "./vm.js";

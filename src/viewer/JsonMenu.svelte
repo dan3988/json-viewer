@@ -1,9 +1,8 @@
 <script lang="ts">
-	import type { JSONPathAllResult } from "jsonpath-plus";
-	import json from "../json";
-	import JSONPath from "../json-path";
 	import type { ViewerModel } from "../viewer-model";
+	import json from "../json";
 	import edits from "./editor-helper";
+	import { JSONPath, type JSONPathAllResult } from "jsonpath-plus";
 
 	export let model: ViewerModel;
 
@@ -43,7 +42,7 @@
 		}
 
 		try {
-			const values: any[] = JSONPath({ json: model.root.value.proxy, path, resultType: "all" });
+			const values = JSONPath({ json: model.root.value.proxy, path, resultType: "all" });
 			for (let i = 0; i < values.length; i++)
 				values[i] = unwrapValue(values[i]);
 
