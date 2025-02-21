@@ -281,7 +281,7 @@
 </script>
 <style lang="scss">
 	@use "../core.scss" as *;
-	@import "../globals.scss";
+	@forward "../globals.scss";
 
 	.root {
 		user-select: none;

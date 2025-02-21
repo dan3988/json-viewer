@@ -42,8 +42,8 @@
 </template>
 <style lang="scss">
 	@use "../core.scss" as *;
-	@import "./bootstrap.scss";
-	@import "../globals.scss";
+	@forward "./bootstrap.scss";
+	@forward "../globals.scss";
 
 	:global(body) {
 		position: relative;

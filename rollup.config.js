@@ -101,6 +101,7 @@ function loader(args) {
 								tsconfigFile: "./src/tsconfig.svelte.json"
 							},
 							scss: {
+								silenceDeprecations: ['legacy-js-api'],
 								functions: {
 									'ext-url($name)': function(name) {
 										if (!(name instanceof sass.types.String))
