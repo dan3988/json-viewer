@@ -121,10 +121,11 @@ The project is built using rollup. The following options can be passed into roll
  * `--dist` - If specified, will minify files and archive the output.
 
 The build script uses the following files:
- * `src/content/content.ts`: The UI for the prompt that is shown on non-whitelisted pages.
+ * `src/content/index.ts`: The UI for the prompt that is shown on non-whitelisted pages.
  * `src/content-script/content-script.js`: The content script of the extension.
- * `src/options/options.ts`: The UI for the options page.
- * `src/viewer/viewer.ts`: The UI for the main viewer component.
+ * `src/extension/index.ts`: The background script.
+ * `src/options/index.ts`: The UI for the options page.
+ * `src/viewer/index.ts`: The UI for the main viewer component.
  * `custom-manifest.json`: Used to generate a browser-specific manifest.json file.
  * `res`: The contents of this folder are copied to the output directory.
 
