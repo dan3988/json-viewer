@@ -1,16 +1,11 @@
 import type { DocumentHeader, DocumentRequestInfo, WorkerMessage } from "../types.js";
+import type { State } from "../state.js";
 import ImmutableArray from "../immutable-array.js";
 import preferences from "../preferences-lite.js";
 import lib from "../lib.json" with { type: "json" };
 import WebRequestInterceptor from "./web-request.js";
 
-var currentRequestListener: null | RequestListener = null;
-
-function updateIcon(path: Record<string, string>, title: string) {
-	const setIcon = chrome.action.setIcon({ path });
-	const setTitle = chrome.action.setTitle({ title });
-	return Promise.all([setIcon, setTitle]);
-}
+type PrefsState = State<preferences.lite.Bag>;
 
 function onEnabledChanged(enabled: boolean) {
 	return enabled
@@ -23,100 +18,15 @@ function reset<T>(set: Set<T>, source: ImmutableArray<T>) {
 	source.forEach(set.add, set);
 }
 
-async function loadExtension() {
-	const prefs = await preferences.lite.manager.watch();
-	const whitelist = new Set<string>();
-	const blacklist = new Set<string>();
-	const mimes = new Set<string>();
+function injectPopup(tabId: number, frameId?: number) {
+	const target = getTarget(tabId, frameId);
+	return inject(target, true, "lib/content.js");
+}
 
-	prefs.props.enabled.subscribe(onEnabledChanged);
-	prefs.props.useWebRequest.subscribe(setRequestListening);
-	prefs.props.whitelist.subscribe(v => reset(whitelist, v));
-	prefs.props.blacklist.subscribe(v => reset(blacklist, v));
-	prefs.props.mimes.subscribe(v => reset(mimes, v));
-
-	const gsIcons: Record<number, string> = { ...mf.action.default_icon };
-	for (const key in gsIcons)
-		gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
-
-	function setRequestListening(enabled: boolean) {
-		if (enabled) {
-			try {
-				currentRequestListener = new RequestListener(blacklist);
-			} catch (e) {
-				console.error("Failed to start listening to webRequest events", e);
-			}
-		} else {
-			try {
-				currentRequestListener?.dispose();
-			} catch (e) {
-				console.error("Failed to dispose webRequest listener", e);
-			} finally {
-				currentRequestListener = null;
-			}
-		}
-	}
-
-	function injectPopup(tabId: number, frameId?: number) {
-		const target = getTarget(tabId, frameId);
-		return inject(target, true, "lib/content.js");
-	}
-
-	async function injectViewer(tabId: number, frameId?: number) {
-		const target = getTarget(tabId, frameId);
-		if (isFirefox) {
-			return await inject(target, true, "lib/messaging.firefox.js", "res/ffstub.js", lib.json5, "lib/viewer.js");
-		} else {
-			await inject(target, false, "lib/messaging.chrome.js");
-			return await inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js");
-		}
-	}
-
-	function handleMessage(message: WorkerMessage, sender: chrome.runtime.MessageSender) {
-		const tabId = sender.tab?.id;
-		if (tabId == null)
-			return;
-
-		switch (message.type) {
-			case "remember":
-				if (sender.url) {
-					const url = new URL(sender.url);
-					const [key, set] = message.autoload ? ["whitelist", whitelist] as const : ["blacklist", blacklist] as const;
-					if (!set.has(url.host)) {
-						const list = prefs.getValue(key)
-						const updated = ImmutableArray.append(list, url.host);
-						preferences.lite.manager.set(key, updated);
-						return true;
-					}
-				}
-
-				return false;
-			case "checkme":
-				if (prefs.getValue("enabled") && mimes.has(message.contentType)) {
-					const url = sender.url && new URL(sender.url);
-					let autoload = false;
-					if (url) {
-						if (blacklist.has(url.host))
-							return false;
-
-						autoload = whitelist.has(url.host);
-					}
-
-					const fn = autoload ? injectViewer : injectPopup;
-					return fn(tabId, sender.frameId);
-				}
-				break;
-			case "loadme":
-				return injectViewer(tabId, sender.frameId);
-			case "requestInfo":
-				return currentRequestListener?.get(tabId);
-		}
-	}
-
-	chrome.runtime.onMessage.addListener((message, sender, respond) => {
-		const result = handleMessage(message, sender);
-		result instanceof Promise ? result.then(respond) : respond(result);
-	});
+function updateIcon(path: Record<string, string>, title: string) {
+	const setIcon = chrome.action.setIcon({ path });
+	const setTitle = chrome.action.setTitle({ title });
+	return Promise.all([setIcon, setTitle]);
 }
 
 function getTarget(tabId: number, frameId: number | undefined): chrome.scripting.InjectionTarget {
@@ -134,22 +44,115 @@ async function inject(target: chrome.scripting.InjectionTarget, isolated: boolea
 	return result[0].result;
 }
 
+async function injectViewer(tabId: number, frameId?: number) {
+	const target = getTarget(tabId, frameId);
+	if (isFirefox) {
+		return await inject(target, true, "lib/messaging.firefox.js", "res/ffstub.js", lib.json5, "lib/viewer.js");
+	} else {
+		await inject(target, false, "lib/messaging.chrome.js");
+		return await inject(target, true, "res/ffstub.js", lib.json5, "lib/viewer.js");
+	}
+}
+
 const mf = chrome.runtime.getManifest();
 const isFirefox = !!mf.browser_specific_settings?.gecko;
 const gsIcons: Record<number, string> = { ...mf.action.default_icon };
 for (const key in gsIcons)
 	gsIcons[key] = gsIcons[key].replace(".png", "-gs.png");
 
-loadExtension();
+class ExtensionListener {
+	#prefs: PrefsState | Promise<PrefsState>;
+	readonly #whitelist = new Set<string>();
+	readonly #blacklist = new Set<string>();
+	readonly #mimes = new Set<string>();
+	#requestListener: null | RequestListener = null;
 
-chrome.runtime.onInstalled.addListener(det => {
-	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-		chrome.tabs.create({
-			active: true,
-			url: chrome.runtime.getURL("res/setup.html")
-		});
+	constructor() {
+		this.#prefs = preferences.lite.manager.watch();
+		this.#prefs.then(this.#init.bind(this));
 	}
-});
+
+	async #init(prefs: PrefsState) {
+		this.#prefs = prefs;
+		const [whitelist, blacklist, mimes] = [this.#whitelist, this.#blacklist, this.#mimes];
+		prefs.props.enabled.subscribe(onEnabledChanged);
+		prefs.props.useWebRequest.subscribe(this.#setRequestListening.bind(this));
+		prefs.props.whitelist.subscribe(v => reset(whitelist, v));
+		prefs.props.blacklist.subscribe(v => reset(blacklist, v));
+		prefs.props.mimes.subscribe(v => reset(mimes, v));
+	}
+
+	#setRequestListening(enabled: boolean) {
+		if (enabled) {
+			try {
+				this.#requestListener = new RequestListener(this.#blacklist);
+			} catch (e) {
+				console.error("Failed to start listening to webRequest events", e);
+			}
+		} else {
+			try {
+				this.#requestListener?.dispose();
+			} catch (e) {
+				console.error("Failed to dispose webRequest listener", e);
+			} finally {
+				this.#requestListener = null;
+			}
+		}
+	}
+
+	#withPrefs<V>(handler: (prefs: PrefsState) => V): V | Promise<V> {
+		if (this.#prefs instanceof Promise) {
+			return this.#prefs.then(handler);
+		} else {
+			return handler(this.#prefs);
+		}
+	}
+
+	handleMessage(message: WorkerMessage, sender: chrome.runtime.MessageSender) {
+		console.log(message);
+		const tabId = sender.tab?.id;
+		if (tabId == null)
+			return;
+
+		switch (message.type) {
+			case "remember":
+				if (sender.url) {
+					const url = new URL(sender.url);
+					const [key, set] = message.autoload ? ["whitelist", this.#whitelist] as const : ["blacklist", this.#blacklist] as const;
+					return this.#withPrefs(prefs => {
+						if (!set.has(url.host)) {
+							const list = prefs.getValue(key)
+							const updated = ImmutableArray.append(list, url.host);
+							preferences.lite.manager.set(key, updated);
+							return true;
+						}
+					});
+				}
+
+				return false;
+			case "checkme":
+				return this.#withPrefs(prefs => {
+					if (prefs.getValue("enabled") && this.#mimes.has(message.contentType)) {
+						const url = sender.url && new URL(sender.url);
+						let autoload = false;
+						if (url) {
+							if (this.#blacklist.has(url.host))
+								return false;
+		
+							autoload = this.#whitelist.has(url.host);
+						}
+		
+						const fn = autoload ? injectViewer : injectPopup;
+						return fn(tabId, sender.frameId);
+					}
+				});
+			case "loadme":
+				return injectViewer(tabId, sender.frameId);
+			case "requestInfo":
+				return this.#requestListener?.get(tabId);
+		}
+	}
+}
 
 class RequestListener {
 	static #addHeaders(array: DocumentHeader[], input: undefined | chrome.webRequest.HttpHeader[]): DocumentHeader[] {
@@ -230,3 +233,19 @@ class RequestListener {
 		this.#interceptor.dispose();
 	}
 }
+
+const listener = new ExtensionListener();
+
+chrome.runtime.onInstalled.addListener(det => {
+	if (det.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+		chrome.tabs.create({
+			active: true,
+			url: chrome.runtime.getURL("res/setup.html")
+		});
+	}
+});
+
+chrome.runtime.onMessage.addListener((message, sender, respond) => {
+	const result = listener.handleMessage(message, sender);
+	result instanceof Promise ? result.then(respond) : respond(result);
+});
