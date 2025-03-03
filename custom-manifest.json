@@ -4,7 +4,7 @@
 		"manifest_version": 3,
 		"name": "JSON Viewer",
 		"description": "A modern UI for viewing and manipulating JSON",
-		"version": "1.0.1",
+		"version": "1.0.2",
 		"homepage_url": "https://www.github.com/dan3988/json-viewer",
 		"action": {
 			"default_title": "JSON Viewer",
