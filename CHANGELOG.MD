@@ -6,6 +6,7 @@
 - Updated NPM packages
 - Reduced package size by removing unused font file from bootstrap-icons
 - Fixed confirmation popup not working on non-whitelisted site
+- Fixed viewer not loading when extension worker is suspended
 
 ## [1.0.1]
 
