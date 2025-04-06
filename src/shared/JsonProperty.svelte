@@ -126,12 +126,6 @@
 
 	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
 
-	const isPreviousSelected = writable(false);
-	const isNextSelected = writable(false);
-	
-	prop.previous?.state.props.isSelected.subscribe(v => $isPreviousSelected = v);
-	prop.next?.state.props.isSelected.subscribe(v => $isNextSelected = v);
-
 	let props: json.JProperty[] = [];
 
 	function update() {
@@ -335,6 +329,12 @@
 		}
 	}
 
+	.json-key-text {
+		padding: 2px;
+		border-radius: 5px;
+		border: 1px solid transparent;
+	}
+
 	:global(.esc) {
 		color: var(--jv-num-fg);
 	}
@@ -352,21 +352,10 @@
 			display: none !important;
 		}
 
-		&.selected {
-			background-color: rgba(var(--jv-tertiary-bg-rgb), 0.5);
-			border-color: transparent var(--bs-border-color);
-		}
-
-		&.selected-first {
-			border-top-left-radius: var(--bs-border-radius);
-			border-top-right-radius: var(--bs-border-radius);
-			border-top-color: var(--bs-border-color);
-		}
-
-		&.selected-last {
-			border-bottom-left-radius: var(--bs-border-radius);
-			border-bottom-right-radius: var(--bs-border-radius);
-			border-bottom-color: var(--bs-border-color);
+		&.selected > .json-key > .json-key-text {
+			background-color: var(--jv-tertiary-bg);
+			color: var(--jv-tertiary-text);
+			border-color: var(--bs-border-color);
 		}
 
 		&.for-container {
@@ -513,10 +502,10 @@
 	data-indent={indent % maxIndentClass}
 	class="json-prop for-{prop.value.type} for-{prop.value.subtype} json-indent"
 	class:expanded={$isExpanded}
-	class:selected={$isSelected}
-	class:selected-first={$isSelected && !$isPreviousSelected}
-	class:selected-last={$isSelected && !$isNextSelected}>
-	<span bind:this={keyElement} class="json-key" on:mousedown|preventDefault on:click={onClick} on:contextmenu={onContextMenu} use:renderKey={prop.key}/>
+	class:selected={$isSelected}>
+	<span bind:this={keyElement} class="json-key" on:mousedown|preventDefault on:click={onClick} on:contextmenu={onContextMenu}>
+		<span class="json-key-text" use:renderKey={prop.key}></span>
+	</span>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
