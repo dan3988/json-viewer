@@ -175,7 +175,7 @@
 
 	.text {
 		padding: 2px;
-		border-radius: 5px;
+		border-radius: var(--bs-border-radius);
 		border: 1px solid transparent;
 	}
 </style>
