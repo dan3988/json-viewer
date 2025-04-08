@@ -1,132 +1,19 @@
-<script lang="ts" context="module">
-	import { isIdentifier } from "../util.js";
-
-	interface Renderer<T = any> {
-		update(value: T): void;
-		destroy?(): void;
-	}
-
-	abstract class AbstractRenderer<T> implements Renderer<T> {
-		#target: null | HTMLElement;
-		#value: any;
-
-		constructor(target: HTMLElement, value: T) {
-			this.#target = target;
-			this.#value = value;
-			this.onUpdate(target, value);
-			this.update = this.update.bind(this);
-			this.destroy = this.destroy.bind(this);
-		}
-
-		protected abstract onUpdate(target: HTMLElement, value: T): void;
-
-		update(value: any): void {
-			if (this.#value !== value && this.#target != null) {
-				this.#value = value;
-				this.#target.innerHTML = "";
-				this.onUpdate(this.#target, value);
-			}
-		}
-
-		destroy(): void {
-			if (this.#target) {
-				this.#target.innerHTML = "";
-				this.#target = null;
-			}
-		}
-	}
-
-	class JsonValueRenderer extends AbstractRenderer<any> {
-		protected onUpdate(target: HTMLElement, value: any): void {
-			if (value === null || typeof value !== "string") {
-				target.innerText = String(value);
-			} else {
-				if (value.startsWith("http://") || value.startsWith("https://")) {
-					const a = document.createElement("a");
-					const text = JSON.stringify(value).slice(1, -1);
-					a.href = value;
-					a.textContent = text;
-					a.target = "_blank";
-					target.append(a);
-				} else {
-					renderEscapedText(target, value);
-				}
-			}
-		}
-	}
-
-	export function renderValue(target: HTMLElement, value: any): Renderer {
-		return new JsonValueRenderer(target, value);
-	}
-
-	function appendSpan(parent: HTMLElement, className: string, text: string, start?: number, end?: number) {
-		const span = document.createElement("span");
-		span.textContent = start == null ? text : text.slice(start, end);
-		span.className = className;
-		parent.appendChild(span);
-		return span;
-	}
-
-	function renderEscapedText(target: HTMLElement, value: string) {
-		const json = JSON.stringify(value);
-
-		let last = 1;
-		let i = 1;
-
-		appendSpan(target, "quot", "\"");
-
-		while (true) {
-			let next = json.indexOf("\\", i);
-			if (next < 0) {
-				appendSpan(target, "", json, last, -1);
-				appendSpan(target, "quot", "\"");
-				break;
-			} else {
-				if (last < next)
-					appendSpan(target, "", json, last, last = next);
-
-				let char = json.charAt(++last);
-				if (char !== "u") {
-					appendSpan(target, "esc", "\\" + char);
-					last++;
-				} else {
-					appendSpan(target, "esc", json, next, last += 5);
-				}
-
-				i = last;
-			}
-		}
-	}
-
-	class JsonKeyRenderer extends AbstractRenderer<string | number> {
-		protected onUpdate(target: HTMLElement, value: string | number): void {
-			if (typeof value !== "string" || isIdentifier(value)) {
-				target.textContent = value.toString();
-			} else {
-				renderEscapedText(target, value);
-			}
-		}
-	}
-
-	function renderKey(target: HTMLElement, key: string | number): Renderer<string | number> {
-		return new JsonKeyRenderer(target, key);
-	}
-
-</script>
 <script lang="ts">
 	import type json from "../json.js";
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
+	import JsonPropertyKey from "./JsonPropertyKey.svelte";
 	import { onDestroy } from "svelte";
-	import { writable } from "svelte/store";
+	import { renderValue } from "../renderer.js";
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
 	export let indent = -1;
 	export let maxIndentClass: number;
 
-	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
+	$: ({ isExpanded, isHidden } = prop.state.props);
 
 	let props: json.JProperty[] = [];
+	let key: JsonPropertyKey;
 
 	function update() {
 		props = [...prop.value];
@@ -145,7 +32,7 @@
 
 	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
 		if (command === "scrollTo" && arg0 === prop) {
-			keyElement.scrollIntoView({ block: "center" });
+			key.scrollTo();
 		}
 	}
 
@@ -160,144 +47,7 @@
 
 	function onGutterClicked() {
 		model.selected.reset(prop);
-		keyElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-	}
-
-	function * getAllParents(prop: json.JProperty) {
-		let p: null | json.JProperty = prop;
-		while (true) {
-			if ((p = p.parentProperty) == null)
-				break;
-
-			yield p;
-		}
-	}
-
-	/**
-	 * Checks if a property follows or preceeds another. This function assumes that both properties have the same parent
-	 * @param origin The beginning property
-	 * @param other The property to look for
-	 * @param ifTrue The value to return if the property appears after the origin
-	 * @param ifFalse The value to return if the property appears before the origin
-	 */
-	function isFollowing<const V>(origin: json.JProperty, other: json.JProperty, ifTrue: V, ifFalse: V): V;
-	function isFollowing(origin: json.JProperty, other: json.JProperty): boolean;
-	function isFollowing(origin: json.JProperty, other: json.JProperty, ifTrue: any = true, ifFalse: any = false): any {
-		let p: null | json.JProperty = origin;
-		while (true) {
-			if ((p = p.next) == null)
-				return ifFalse;
-
-			if (p === other)
-				return ifTrue;
-		}
-	}
-
-	function getSharedParentIndex(a: json.JProperty[], b: json.JProperty[]): number {
-		let result = -1;
-
-		for (let i = 0, l = Math.min(a.length, b.length); i < l; i++) {
-			const x = a[i];
-			const y = b[i];
-
-			if (x !== y)
-				break;
-
-			result = i;
-		}
-
-		return result;
-	}
-
-	/**
-	 * Iterate the properties between 2 given properties.
-	 * @param origin
-	 * @param other
-	 */
-	function * getPropertiesBetween(origin: json.JProperty, other: json.JProperty) {
-		if (origin === other)
-			return;
-
-		//if the properties have the same parent, we can just yield the properties between the two and return.
-		if (origin.parent == other.parent) {
-			const key = isFollowing(origin, other, "next", "previous");
-			let p = origin;
-			do {
-				yield p = p[key]!;
-			} while (p !== other)
-
-			return;
-		}
-
-		const originParents = [...getAllParents(origin)].reverse();
-		const otherParents = [...getAllParents(other)].reverse();
-
-		let sharedParentIndex = getSharedParentIndex(originParents, otherParents);
-		if (sharedParentIndex < 0)
-			return;
-
-		originParents.push(origin);
-		otherParents.push(other);
-		sharedParentIndex++;
-
-		const originParent = originParents[sharedParentIndex];
-		const otherParent = otherParents[sharedParentIndex];
-		const [begin, moveNext] = isFollowing(originParent, otherParent, ["first", "next"], ["last", "previous"]);
-
-		//for each parent between the origin and the shared parent, yield all properties until the start / end of the container
-		for (let i = originParents.length; ; ) {
-			let p = originParents[--i];
-			yield p;
-			if (i === sharedParentIndex)
-				break;
-
-			while (true) {
-				if ((p = p[moveNext]!) == null)
-					break;
-
-				yield p;
-			}
-		}
-
-		//now do the opposite, yield all properties from the start / end of each container from the shared parent to the target property
-		let p = originParent;
-		while (true) {
-			let target = otherParents[sharedParentIndex];
-			if (p !== target) {
-				while (true) {
-					let sibling = p[moveNext];
-					if (sibling == null)
-						return;
-
-					yield (p = sibling);
-
-					if (p === target)
-						break;
-				}
-			}
-
-			if (++sharedParentIndex === otherParents.length)
-				break;
-
-			yield p = (target.value as json.JContainer)[begin]!;
-		}
-	}
-
-	function onClick(evt: MouseEvent) {
-		let { last } = model.selected;
-		if (evt.shiftKey && last) {
-			evt.preventDefault();
-			const props = getPropertiesBetween(last, prop);
-			if (evt.ctrlKey) {
-				model.selected.add(...props)
-			} else {
-				model.selected.reset(last, ...props);
-			}
-		} else {
-			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
-		}
-
-		window.getSelection()?.removeAllRanges();
+		key.scrollTo('smooth');
 	}
 
 	function onContextMenu(evt: MouseEvent) {
@@ -308,31 +58,18 @@
 		model.selected.reset(prop);
 		model.execute("context", prop, evt.clientX, evt.clientY);
 	}
-
-	let keyElement: HTMLElement;
 </script>
 <style lang="scss">
 	@use "src/core.scss" as *;
 
 	.json-key {
-		scroll-margin-top: $pad-med;
-		grid-area: 1 / 2 / span 1 / span 1;
-		cursor: pointer;
-		white-space: nowrap;
 		padding-right: 5px;
-		user-select: text;
-		color: var(--jv-key-fg);
+		grid-area: 1 / 2 / span 1 / span 1;
 
 		&:after {
 			color: var(--bs-body-color);
 			content: ":";
 		}
-	}
-
-	.json-key-text {
-		padding: 2px;
-		border-radius: 5px;
-		border: 1px solid transparent;
 	}
 
 	:global(.esc) {
@@ -350,12 +87,6 @@
 
 		&[hidden] {
 			display: none !important;
-		}
-
-		&.selected > .json-key > .json-key-text {
-			background-color: var(--jv-tertiary-bg);
-			color: var(--jv-tertiary-text);
-			border-color: var(--bs-border-color);
 		}
 
 		&.for-container {
@@ -501,10 +232,9 @@
 	hidden={$isHidden}
 	data-indent={indent % maxIndentClass}
 	class="json-prop for-{prop.value.type} for-{prop.value.subtype} json-indent"
-	class:expanded={$isExpanded}
-	class:selected={$isSelected}>
-	<span bind:this={keyElement} class="json-key" on:mousedown|preventDefault on:click={onClick} on:contextmenu={onContextMenu}>
-		<span class="json-key-text" use:renderKey={prop.key}></span>
+	class:expanded={$isExpanded}>
+	<span class="json-key" on:contextmenu={onContextMenu}>
+		<JsonPropertyKey bind:this={key} {model} {prop} />
 	</span>
 	{#if prop.value.is("container")}
 		{#if prop.value.count === 0}
