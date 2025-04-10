@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+port=$(netstat -aon | grep -e "\[::\]:58997" | awk -F'LISTENING       ' '{print $2}');
+if [ -z "$port" ]
+then
+  echo "Build process not running";
+else
+  taskkill -F -PID "$port";
+fi
