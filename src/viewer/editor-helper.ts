@@ -13,7 +13,7 @@ export namespace edits {
 			},
 			undo() {
 				for (const prop of props)
-					value.addProperty(prop);
+					value.setProperty(prop);
 
 				value.owner.isExpanded = true;
 			}
@@ -34,13 +34,13 @@ export namespace edits {
 			const p = prop as json.JProperty<string>;
 			const obj = parent;
 			if (p.previous === null) {
-				undo = () => obj.first === null ? obj.addProperty(p) : obj.insertBefore(p, obj.first);
+				undo = () => obj.first === null ? obj.setProperty(p) : obj.insertBefore(p, obj.first);
 			} else {
 				const prev = p.previous;
 				undo = () => obj.insertAfter(p, prev);
 			}
 		} else {
-			undo = () => (parent as json.JContainer).addProperty(prop);
+			undo = () => (parent as json.JContainer).setProperty(prop);
 		}
 
 		return {
@@ -69,29 +69,8 @@ export namespace edits {
 		model.edits.push(...Linq(props).select(createDeleteAction));
 	}
 
-	export function renameProperty(model: ViewerModel, obj: json.JObject, oldName: string, name: string) {
-		const prop = obj.getProperty(oldName);
-		if (!prop)
-			throw new TypeError(`Property "${oldName}" not found.`);
-		
-		const existing = obj.getProperty(name);
-		const existingSibling = existing?.next;
-
-		model.edits.push({
-			commit() {
-				obj.rename(oldName, name);
-			},
-			undo() {
-				obj.rename(name, oldName);
-				if (existing) {
-					if (existingSibling) {
-						obj.insertBefore(existing, existingSibling);
-					} else {
-						obj.addProperty(existing);
-					}
-				}
-			}
-		});
+	export function renameProperty(model: ViewerModel, obj: json.JObject, oldName: string, newName: string) {
+		modifyStructure(model, obj, newName, obj => obj.rename(oldName, newName), obj => obj.rename(newName, oldName));
 	}
 
 	export function sortObject(model: ViewerModel, obj: json.JObject, desc?: boolean) {
@@ -106,53 +85,54 @@ export namespace edits {
 		});
 	}
 
-	export function addToObject(model: ViewerModel, obj: json.JObject, mode: json.AddType, name: string, sibling?: json.JProperty<string>, insertBefore = false) {
-		const prop = new json.JProperty(name, mode);
-		const existing = obj.getProperty(name);
-		const existingSibling = existing?.next;
-
-		let commit: VoidFunction;
+	export function addToObject(model: ViewerModel, obj: json.JObject, mode: json.AddType, key: string, sibling?: json.JProperty<string>, insertBefore = false) {
+		const prop = new json.JProperty(key, mode);
+		let commit: (obj: json.JObject) => void;
 
 		if (!sibling) {
-			commit = function() {
-				obj.addProperty(prop);
-			}
+			commit = obj => obj.setProperty(prop);
 		} else if (insertBefore) {
-			commit = function() {
-				obj.insertBefore(prop, sibling);
-			}
+			commit = obj => obj.insertBefore(prop, sibling);
 		} else {
-			commit = function() {
-				obj.insertAfter(prop, sibling);
-			}
+			commit = obj => obj.insertAfter(prop, sibling);
 		}
 
-		model.edits.push({
-			commit,
-			undo() {
-				prop.remove();
-				if (existing) {
-					if (existingSibling) {
-						obj.insertBefore(existing, existingSibling);
-					} else {
-						obj.addProperty(existing);
-					}
-				}
-			}
-		});
+		modifyStructure(model, obj, key, commit, () => prop.remove());
 	}
 
 	export async function addToArray(model: ViewerModel, arr: json.JArray, mode: json.AddType, index?: number) {
 		const prop = new json.JProperty(index ?? arr.count, mode);
 		model.edits.push({
 			commit() {
-				arr.addProperty(prop);
+				arr.insertProperty(prop);
 				arr.owner.isExpanded = true;
 			},
 			undo() {
 				prop.remove();
 			},
 		});
+	}
+
+	function modifyStructure(model: ViewerModel, obj: json.JObject, key: string, commit: (obj: json.JObject) => void, undo: (obj: json.JObject) => void) {
+		let existing: undefined | json.JProperty<string>;
+		let existingSibling: undefined | null | json.JProperty<string>;
+		model.edits.push({
+			commit() {
+				existing = obj.getProperty(key);
+				existingSibling = existing?.next;
+				commit(obj);
+			},
+			undo() {
+				undo(obj);
+				if (existing) {
+					if (existingSibling) {
+						obj.insertBefore(existing, existingSibling);
+					} else {
+						obj.setProperty(existing);
+					}
+				}
+			}
+		})
 	}
 }
 

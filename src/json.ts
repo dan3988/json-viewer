@@ -187,7 +187,7 @@ export declare namespace json {
 		readonly count: number;
 		readonly changed: IEvent<this, ChildrenChangedArgs>;
 
-		addProperty(property: JProperty<TKey>): undefined | JProperty<TKey>;
+		setProperty(property: JProperty<TKey>): undefined | JProperty<TKey>;
 
 		getProperty(key: Key): undefined | JProperty<TKey>;
 		remove(key: Key): undefined | JProperty<TKey>;
@@ -200,6 +200,7 @@ export declare namespace json {
 		readonly subtype: "array";
 
 		add<K extends AddType>(type: K, index?: number): JProperty<number, JContainerAddMap[K]>;
+		insertProperty(property: JProperty<number>): void;
 	}
 
 	export interface JObject<T = any> extends JContainer<string, Readonly<Dict<T>>> {
@@ -207,7 +208,7 @@ export declare namespace json {
 
 		insertAfter(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
 		insertBefore(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
-		addProperty(property: JProperty<string>): undefined | JProperty<string>;
+		setProperty(property: JProperty<string>): undefined | JProperty<string>;
 		add<K extends AddType>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
 		sort(reverse?: boolean): void;
 		rename(key: string, newName: string): undefined | JProperty<string>;
@@ -781,7 +782,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		return prop && prop.value;
 	}
 
-	abstract addProperty(property: json.JProperty<TKey>): undefined | JProperty<TKey>;
+	abstract setProperty(property: json.JProperty<TKey>): undefined | JProperty<TKey>;
 
 	abstract getProperty(key: Key): undefined | JProperty<TKey>;
 	abstract clear(): boolean;
@@ -1162,7 +1163,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			}
 		}
 
-		addProperty(property: json.JProperty<string>): undefined | JProperty<string> {
+		setProperty(property: json.JProperty<string>): undefined | JProperty<string> {
 			if (property.parent != null)
 				property = property.clone();
 
@@ -1329,10 +1330,13 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			return this.#items.at(index)?.prop;
 		}
 
-		addProperty(property: json.JProperty<number>): undefined | JProperty<number> {
+		setProperty(property: json.JProperty<number>): undefined | JProperty<number> {
 			const index = property.key;
 			if (!Number.isInteger(index) || index < 0)
 				throw new TypeError("Property key must be a non-negative integer");
+
+			if (property.parent != null)
+				property = property.clone();
 
 			const cont = getController(property);
 			const items = this.#items;
@@ -1346,6 +1350,32 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 				return old.prop;
 			} else {
 				this.#addWithGap(cont);
+			}
+		}
+
+		insertProperty(property: json.JProperty<number>): void {
+			let index = property.key;
+			if (!Number.isInteger(index) || index < 0)
+				throw new TypeError("Property key must be a non-negative integer");
+
+			if (property.parent != null)
+				property = property.clone();
+
+			const cont = getController(property);
+			const items = this.#items;
+			if (index > items.length) {
+				this.#addWithGap(cont);
+			} else if (index === items.length) {
+				items.push(cont);
+				this.#insertedAfter(cont);
+			} else {
+				const next = items[index];
+				items.splice(index, 0, cont);
+
+				while (++index < items.length)
+					items[index].key = index;
+
+				this.#insertedBefore(cont, next);
 			}
 		}
 
@@ -1402,7 +1432,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			} else {
 				cont = JProperty.create(index, clazz);
 
-				if (index < items.length) {
+				if (index <= items.length) {
 					const next = items[index];
 					items.splice(index, 0, cont);
 	
@@ -1410,7 +1440,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 						items[index].key = index;
 	
 					this.#insertedBefore(cont, next);
-				} else {
+				} else if (index) {
 					this.#addWithGap(cont);
 				}
 			}

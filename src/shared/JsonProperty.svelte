@@ -286,7 +286,7 @@
 		flex-direction: column;
 		gap: 1px;
 
-		> li:hover:not(:has(.json-container > li:hover)) {
+		> li:hover:not(:has(> .json-prop > .json-container > li:hover)) {
 			--inserter-visibility: visible;
 		}
 	}
@@ -311,18 +311,19 @@
 		transition-duration: .15s;
 		transition-timing-function: ease-in-out;
 
-		> * {
+		&::before {
+			content: "";
 			transition: inherit;
 			position: absolute;
-		}
-
-		> .inserter-line {
+			display: block;
 			inset: 0;
 			width: 10rem;
 			background-color: var(--inserter-border-color);
 		}
 
 		> .inserter-buttons {
+			transition: inherit;
+			position: absolute;
 			inset: -0.75rem -0.75rem 0 10rem;
 			height: 1.5rem;
 			width: min-content;
@@ -375,7 +376,6 @@
 						<li>
 							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
 							<div class="inserter">
-								<span class="inserter-line"></span>
 								<div class="inserter-buttons btn-group">
 									<span class="btn btn-base bi-braces" title="Insert Object" role="button" on:click={() => insert(i + 1, 'object')}></span>
 									<span class="btn btn-base bi-0-circle" title="Insert Array" role="button" on:click={() => insert(i + 1, 'array')}></span>
