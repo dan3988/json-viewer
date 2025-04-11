@@ -120,7 +120,7 @@ function run() {
 
 			prop && model.execute("scrollTo", prop);
 
-			model.selected.reset(...values);
+			model.selected.reset(values);
 		}
 
 		let popping = false;

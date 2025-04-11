@@ -9,9 +9,10 @@ export interface SelectedPropertyList extends Iterable<json.JProperty> {
 	readonly size: number;
 	readonly last: null | json.JProperty;
 	has(value: json.JProperty): boolean;
-	reset(...values: json.JProperty[]): void;
-	add(...value: json.JProperty[]): number;
-	remove(...value: json.JProperty[]): number;
+	reset(values: json.JProperty[]): void;
+	reset(value: json.JProperty, fromLast?: boolean): void;
+	add(value: json.JProperty, fromLast?: boolean): void;
+	remove(value: json.JProperty): void;
 	toggle(value: json.JProperty, selected?: boolean): boolean;
 	clear(): void;
 	forEach(callback: (v: json.JProperty) => void): void;
@@ -62,20 +63,22 @@ export class ViewerModel {
 			this.#owner = owner;
 		}
 
-		reset(...values: json.JProperty[]): void {
-			this.#owner.#selectedReset(values);
+		reset(values: json.JProperty[]): void;
+		reset(value: json.JProperty, fromLast?: boolean): void;
+		reset(value: json.JProperty | json.JProperty[], fromLast?: boolean): void {
+			this.#owner.#selectedReset(value as any, fromLast);
 		}
 
 		has(value: json.JProperty): boolean {
 			return this.#owner.#selected.has(value);
 		}
 	
-		add(...values: json.JProperty[]): number {
-			return this.#owner.#selectedAdd(values);
+		add(value: json.JProperty, fromLast?: boolean): void {
+			return this.#owner.#selectedAdd(value, fromLast);
 		}
 	
-		remove(...values: json.JProperty[]): number {
-			return this.#owner.#selectedRemove(values);
+		remove(value: json.JProperty): void {
+			return this.#owner.#selectedRemove(value);
 		}
 	
 		toggle(value: json.JProperty, selected?: boolean): boolean {
@@ -250,7 +253,7 @@ export class ViewerModel {
 		if (prop == null)
 			return false;
 
-		return this.#selectedAdd([prop]);
+		return this.#selectedAdd(prop);
 	}
 
 	#onSelected(selected: json.JProperty, expand: boolean, scrollTo: boolean) {
@@ -263,18 +266,32 @@ export class ViewerModel {
 	}
 
 	setSelected(selected: json.JProperty, expand: boolean, scrollTo: boolean) {
-		this.#selectedReset([selected]);
+		this.#selectedReset(selected);
 		this.#onSelected(selected, expand ?? false, scrollTo ?? false);
 	}
 
-	#selectedReset(values: json.JProperty[]) {
-		const set = new Set(values);
-		if (this.#selected.size !== 0)
-			for (const prop of this.#selected)
-				if (!set.has(prop))
-					prop.isSelected = false;
+	#selectedReset(values: json.JProperty[]): void;
+	#selectedReset(value: json.JProperty, fromLast?: boolean): void;
+	#selectedReset(value: json.JProperty | json.JProperty[], fromLast?: boolean) {
+		let lastSelected = this.#lastSelected;
+		let set: Set<json.JProperty>;
 
-		let lastSelected: null | json.JProperty = null;
+		if (Array.isArray(value)) {
+			set = new Set(value);
+		} else if (fromLast && lastSelected) {
+			const props = getPropertiesBetween(lastSelected, value);
+			set = new Set(props);
+			set.add(lastSelected);
+		} else {
+			set = new Set();
+			set.add(value);
+		}
+
+		for (const prop of this.#selected)
+			if (!set.has(prop))
+				prop.isSelected = false;
+
+		lastSelected = null;
 
 		for (const p of set)
 			(lastSelected = p).isSelected = true;
@@ -297,50 +314,46 @@ export class ViewerModel {
 		return true;
 	}
 
-	#selectedAdd(props: json.JProperty[]) {
+	#selectedAdd(value: json.JProperty, fromLast?: boolean) {
 		let changed = 0;
-
-		const selected = [...this.#state.getValue("selected")];
 		let lastSelected = this.#lastSelected;
-		for (const prop of props) {
-			if (prop.isSelected)
-				continue;
+		const selected = [...this.#state.getValue("selected")];
 
-			this.#selected.add(prop);
-			selected.push(prop);
-			prop.isSelected = true;
+		if (fromLast && lastSelected) {
+			for (const prop of getPropertiesBetween(lastSelected, value)) {
+				if (prop.isSelected)
+					continue;
+	
+				this.#selected.add(prop);
+				selected.push(prop);
+				prop.isSelected = true;
+				changed++;
+				lastSelected = prop;
+			}
+		} else if (!value.isSelected) {
+			this.#selected.add(value);
+			selected.push(value);
+			value.isSelected = true;
 			changed++;
-			lastSelected = prop;
+			lastSelected = value;
 		}
 
 		if (changed) {
 			this.#lastSelected = lastSelected;
 			this.#state.setValues({ selected, lastSelected });
 		}
-
-		return changed;
 	}
 
-	#selectedRemove(props: json.JProperty[]) {
-		let changed = 0;
+	#selectedRemove(prop: json.JProperty): void {
+		if (!prop.isSelected)
+			return;
 
-		for (const prop of props) {
-			if (!prop.isSelected)
-				continue;
-
-			this.#selected.delete(prop);
-			prop.isSelected = false;
-			changed++;
-		}
-
-		if (changed) {
-			const selected = [...this.#selected];
-			const lastSelected = selected.at(-1) ?? null
-			this.#lastSelected = lastSelected;
-			this.#state.setValues({ selected, lastSelected });
-		}
-
-		return changed;
+		this.#selected.delete(prop);
+		prop.isSelected = false;
+		const selected = [...this.#selected];
+		const lastSelected = selected.at(-1) ?? null
+		this.#lastSelected = lastSelected;
+		this.#state.setValues({ selected, lastSelected });
 	}
 
 	#selectedToggle(prop: json.JProperty, selected?: boolean) {
@@ -350,9 +363,9 @@ export class ViewerModel {
 			selected ??= !prop.isSelected;
 
 			if (selected) {
-				this.#selectedAdd([prop]);
+				this.#selectedAdd(prop);
 			} else {
-				this.#selectedRemove([prop]);
+				this.#selectedRemove(prop);
 			}
 
 			prop.isSelected = selected;
@@ -363,3 +376,123 @@ export class ViewerModel {
 }
 
 export default ViewerModel;
+
+function * getAllParents(prop: json.JProperty) {
+	let p: null | json.JProperty = prop;
+	while (true) {
+		if ((p = p.parentProperty) == null)
+			break;
+
+		yield p;
+	}
+}
+
+/**
+ * Checks if a property follows or preceeds another. This function assumes that both properties have the same parent
+ * @param origin The beginning property
+ * @param other The property to look for
+ * @param ifTrue The value to return if the property appears after the origin
+ * @param ifFalse The value to return if the property appears before the origin
+ */
+function isFollowing<const V>(origin: json.JProperty, other: json.JProperty, ifTrue: V, ifFalse: V): V;
+function isFollowing(origin: json.JProperty, other: json.JProperty): boolean;
+function isFollowing(origin: json.JProperty, other: json.JProperty, ifTrue: any = true, ifFalse: any = false): any {
+	let p: null | json.JProperty = origin;
+	while (true) {
+		if ((p = p.next) == null)
+			return ifFalse;
+
+		if (p === other)
+			return ifTrue;
+	}
+}
+
+function getSharedParentIndex(a: json.JProperty[], b: json.JProperty[]): number {
+	let result = -1;
+
+	for (let i = 0, l = Math.min(a.length, b.length); i < l; i++) {
+		const x = a[i];
+		const y = b[i];
+
+		if (x !== y)
+			break;
+
+		result = i;
+	}
+
+	return result;
+}
+
+/**
+ * Iterate the properties between 2 given properties.
+ * @param origin
+ * @param other
+ */
+ function * getPropertiesBetween(origin: json.JProperty, other: json.JProperty) {
+	if (origin === other)
+		return;
+
+	//if the properties have the same parent, we can just yield the properties between the two and return.
+	if (origin.parent == other.parent) {
+		const key = isFollowing(origin, other, "next", "previous");
+		let p = origin;
+		do {
+			yield p = p[key]!;
+		} while (p !== other)
+
+		return;
+	}
+
+	const originParents = [...getAllParents(origin)].reverse();
+	const otherParents = [...getAllParents(other)].reverse();
+
+	let sharedParentIndex = getSharedParentIndex(originParents, otherParents);
+	if (sharedParentIndex < 0)
+		return;
+
+	originParents.push(origin);
+	otherParents.push(other);
+	sharedParentIndex++;
+
+	const originParent = originParents[sharedParentIndex];
+	const otherParent = otherParents[sharedParentIndex];
+	const [begin, moveNext] = isFollowing(originParent, otherParent, ["first", "next"], ["last", "previous"]);
+
+	//for each parent between the origin and the shared parent, yield all properties until the start / end of the container
+	for (let i = originParents.length; ; ) {
+		let p = originParents[--i];
+		yield p;
+		if (i === sharedParentIndex)
+			break;
+
+		while (true) {
+			if ((p = p[moveNext]!) == null)
+				break;
+
+			yield p;
+		}
+	}
+
+	//now do the opposite, yield all properties from the start / end of each container from the shared parent to the target property
+	let p = originParent;
+	while (true) {
+		let target = otherParents[sharedParentIndex];
+		if (p !== target) {
+			while (true) {
+				let sibling = p[moveNext];
+				if (sibling == null)
+					return;
+
+				yield (p = sibling);
+
+				if (p === target)
+					break;
+			}
+		}
+
+		if (++sharedParentIndex === otherParents.length)
+			break;
+
+		yield p = (target.value as json.JContainer)[begin]!;
+	}
+}
