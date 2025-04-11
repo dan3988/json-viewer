@@ -3,6 +3,7 @@ import { StateController } from "./state.js";
 import { EventHandlers, type IEvent } from "./evt.js";
 import { isIdentifier, toPointer } from "./util.js"
 import Linq from "@daniel.pickett/linq-js";
+import debug from "./debug.js";
 
 type Key = string | number;
 
@@ -1589,3 +1590,121 @@ function parsePath(path: string): string[] {
 
 def(json, { JTokenFilterFlags, JToken, JValue, JContainer, JObject, JArray, unwrapProxy, parsePath, escapePathPart }, true);
 export default json;
+
+const colors = {
+	type: '#9AD9FE',
+	string: '#CE9278',
+	number: '#B3CDA7',
+	boolean: '#5799D6',
+	object: '#5799D6',
+}
+
+function renderType(obj: any) {
+	return debug.text({
+		color: colors.type,
+		children: obj.constructor.name,
+	})
+}
+
+function renderJson(value: any) {
+	const color = (colors as any)[typeof value];
+	const text = JSON.stringify(value);
+	return debug.text({ color, children: text });
+}
+
+function renderHeader(obj: JToken, addPath: boolean) {
+	const text = debug.text([
+		renderType(obj),
+		'('
+	]);
+
+	if (obj.is('value')) {
+		text.append(renderJson(obj.value));
+	} else {
+		text.append(debug.text({
+			color: colors.number,
+			children: String(obj.count),
+		}));
+	}
+
+	if (addPath) {
+		const path = debug.text({
+			color: colors.object,
+			children: obj.pathText
+		});
+
+		text.append(', ', path)
+	}
+
+	return text.append(')');
+}
+
+class JPropertyRenderer extends debug.ClassRenderer<JProperty> {
+	constructor() {
+		super(JProperty);
+	}
+
+	header(obj: JProperty): debug.Component {
+		const { key, value } = obj;
+		return debug.text([
+			renderType(obj),
+			'(',
+			renderJson(key),
+			': ',
+			renderHeader(value, false),
+			')'
+		]);
+	}
+
+	hasBody(): boolean {
+		return true;
+	}
+
+	body(obj: JProperty): debug.Component {
+		const { key, value, parent, next, previous } = obj;
+		return debug.properties({ key, value, parent, next, previous });
+	};
+}
+
+class JTokenRenderer extends debug.ClassRenderer<JToken> {
+	constructor() {
+		super(JToken);
+	}
+
+	header(obj: JToken): debug.Component {
+		return renderHeader(obj, true);
+	}
+
+	hasBody(): boolean {
+		return true;
+	}
+
+	body(obj: JToken) {
+		const list = debug.list();
+
+		list.append(
+			debug.listItem([
+				'path: ', 
+				debug.object(obj.pathText),
+			]),
+			debug.listItem([
+				'property: ',
+				debug.object(obj.owner),
+			])
+		)
+
+		for (const prop of obj) {
+			list.append(
+				debug.listItem([
+					renderJson(prop.key),
+					': ',
+					debug.object(prop.value),
+				])
+			);
+		}
+
+		return list;
+	}
+}
+
+debug.register(new JPropertyRenderer(), new JTokenRenderer());
