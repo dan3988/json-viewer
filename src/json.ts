@@ -24,8 +24,14 @@ interface ExposedJsonClass<T extends json.JToken = json.JToken> {
 }
 
 interface AbstractJsonClass<T extends json.JToken = json.JToken> {
-	new(): never;
 	readonly prototype: T;
+	new(): never;
+}
+
+interface JPropertyConstructor {
+	readonly prototype: json.JProperty;
+	new<TKey extends Key, TType extends json.AddType>(key: TKey, type: TType): json.JProperty<TKey, json.JContainerAddMap[TType]>;
+	new<TKey extends Key, TValue extends json.JToken>(key: TKey, value: JsonClass<TValue>): json.JProperty<TKey, TValue>;
 }
 
 function defaultCompare(x: JPropertyController<string>, y: JPropertyController<string>) {
@@ -115,6 +121,7 @@ export declare namespace json {
 		clone(): this;
 	}
 
+	export const JProperty: JPropertyConstructor;
 	export const JToken: AbstractJsonClass<JToken>;
 	export const JValue: ExposedJsonClass<JValue>;
 	export const JContainer: AbstractJsonClass<JContainer>;
@@ -169,6 +176,8 @@ export declare namespace json {
 		"array": JArray;
 		"object": JObject;
 	}
+
+	export type AddType = keyof JContainerAddMap;
 	
 	export interface JContainer<TKey extends Key = Key, T = any> extends JToken<T> {
 		readonly type: "container";
@@ -190,7 +199,7 @@ export declare namespace json {
 	export interface JArray<T = any> extends JContainer<number, readonly T[]> {
 		readonly subtype: "array";
 
-		add<K extends keyof JContainerAddMap>(type: K, index?: number): JProperty<number, JContainerAddMap[K]>;
+		add<K extends AddType>(type: K, index?: number): JProperty<number, JContainerAddMap[K]>;
 	}
 
 	export interface JObject<T = any> extends JContainer<string, Readonly<Dict<T>>> {
@@ -198,8 +207,8 @@ export declare namespace json {
 
 		insertAfter(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
 		insertBefore(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
-		addProperty(property: JProperty<string>, previous?: null | JProperty<string>): undefined | JProperty<string>;
-		add<K extends keyof JContainerAddMap>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
+		addProperty(property: JProperty<string>): undefined | JProperty<string>;
+		add<K extends AddType>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
 		sort(reverse?: boolean): void;
 		rename(key: string, newName: string): undefined | JProperty<string>;
 		reset(values: JProperty<string>[]): void;
@@ -214,18 +223,13 @@ interface InternalJContainerAddMap {
 	"object": JObject;
 }
 
-function resolveClass<K extends keyof json.JContainerAddMap>(type: K): JsonClass<InternalJContainerAddMap[K]>
-function resolveClass(type: string): JsonClass {
-	switch (type) {
-		case "value":
-			return JValue;
-		case "array":
-			return JArray;
-		case "object":
-			return JObject;
-	}
-
-	throw new TypeError('Unknown type: "' + type + '"');
+function resolveClass<K extends keyof InternalJContainerAddMap>(type: K): JsonClass<InternalJContainerAddMap[K]>
+function resolveClass(type: keyof InternalJContainerAddMap): JsonClass {
+	const v = addMap[type];
+	if (v == null)
+		throw new TypeError(`Unknown type: "${type}"`);
+	
+	return v;
 }
 
 const enum JIteratorMode {
@@ -293,6 +297,8 @@ interface JPropertyController<TKey extends Key = Key, TValue extends JToken = JT
 	previous: null | JPropertyController<TKey>;
 	next: null | JPropertyController<TKey>;
 
+	setPrevious(prop: JPropertyController<TKey>): null | JPropertyController<TKey>;
+	setNext(prop: JPropertyController<TKey>): null | JPropertyController<TKey>;
 	removed(): void;
 	clone(): this;
 }
@@ -345,6 +351,20 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 
 		constructor(prop: JProperty<TKey, TValue>) {
 			this.#prop = prop;
+		}
+
+		setPrevious(prop: JPropertyController<TKey, JToken<any>>) {
+			const old = this.previous;
+			this.previous = prop;
+			prop.next = this;
+			return old;
+		}
+
+		setNext(prop: JPropertyController<TKey, JToken<any>>) {
+			const old = this.next;
+			this.next = prop;
+			prop.previous = this;
+			return old;
 		}
 
 		removed(): void {
@@ -451,10 +471,22 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	constructor(key: TKey, value: JsonClass<TValue>)
 	constructor(key: TKey, value: TValue, clone?: boolean)
 	constructor(key: TKey, value: JsonClass<TValue> | TValue, clone?: boolean)
-	constructor(key: TKey, value: JsonClass<TValue> | TValue, clone?: boolean) {
+	constructor(key: TKey, value: JsonClass<TValue> | TValue | json.AddType, clone?: boolean) {
+		switch (typeof value) {
+			case 'string':
+				const clazz = resolveClass(value);
+				this.#value = new clazz(this) as any;
+				break;
+			case 'function':
+				this.#value = new value(this);
+				break;
+			default:
+				this.#value = clone ? value.__cloneFor(this) : value;
+				break;
+		}
+
 		this.#controller = new JProperty.#Controller(this);
 		this.#key = key;
-		this.#value = typeof value === "function" ? new value(this) : (clone ? value.__cloneFor(this) : value);
 		this.#state = new StateController<JPropertyBag>({ isSelected: false, isExpanded: false, isHidden: false });
 		this.#parent = null;
 		this.#previous = null;
@@ -766,22 +798,19 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		return show;
 	}
 
-	#insertAfter(value: JPropertyController<TKey>, prev?: null | JPropertyController<TKey>) {
+	#insertedAfter(value: JPropertyController<TKey>, prev?: null | JPropertyController<TKey>) {
 		if (prev != null) {
-			if (prev.next) {
-				value = prev.next;
+			const next = prev.setNext(value);
+			if (next) {
+				value.setNext(next);
 			} else {
 				this.#last = value;
 			}
-			
-			prev.next = value;
-			value = prev;
 		} else if (this.#last == null) {
 			this.#first = value;
 			this.#last = value;
 		} else {
-			value.previous = this.#last;
-			this.#last.next = value;
+			value.setPrevious(this.#last);
 			this.#last = value;
 		}
 
@@ -789,22 +818,19 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		this.#changed.fire(this, "added", value.prop);
 	}
 
-	#insertBefore(value: JPropertyController<TKey>, next?: null | JPropertyController<TKey>) {
+	#insertedBefore(value: JPropertyController<TKey>, next?: null | JPropertyController<TKey>) {
 		if (next != null) {
-			if (next.previous) {
-				value.previous = next.previous;
+			const prev = next.setPrevious(value);
+			if (prev) {
+				value.setPrevious(prev);
 			} else {
 				this.#first = value;
 			}
-
-			next.previous = value;
-			value.next = next;
 		} else if (this.#first == null) {
 			this.#first = value;
 			this.#last = value;
 		} else {
-			value.next = this.#first;
-			this.#first.previous = value;
+			value.setNext(this.#first);
 			this.#first = value;
 		}
 
@@ -815,15 +841,13 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 	/** @internal */
 	#replaced(old: JPropertyController<TKey>, value: JPropertyController<TKey>) {
 		if (old.previous) {
-			value.previous = old.previous;
-			value.previous.next = value;
+			value.setPrevious(old.previous);
 		} else {
 			this.#first = value;
 		}
 
 		if (old.next) {
-			value.next = old.next;
-			value.next.previous = value;
+			value.setNext(old.next);
 		} else {
 			this.#last = value;
 		}
@@ -1026,7 +1050,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			if (old) {
 				this.#replaced(old, cont);
 			} else {
-				this.#insertAfter(cont);
+				this.#insertedAfter(cont);
 			}
 
 			props.set(cont.key, cont);
@@ -1045,6 +1069,10 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 
 			const cont = getController(property);
 			const siblingController = getController(sibling);
+			if (cont.key === siblingController.key) {
+				this.#props.set(cont.key, cont);
+				return this.#replaced(siblingController, cont);
+			}
 
 			const old = this.#props.get(cont.key);
 			if (old) {
@@ -1063,16 +1091,14 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 				}
 			}
 
-			if (siblingController.previous === null) {
-				this.#first = cont;
+			const prev = siblingController.setPrevious(cont);
+			if (prev) {
+				prev.setNext(cont);
 			} else {
-				cont.previous = siblingController.previous;
-				siblingController.previous.next = cont;
-				siblingController.previous = cont;
+				this.#first = cont;
 			}
 
-			cont.next = siblingController;
-			cont.next.previous = cont;
+			cont.setNext(siblingController);
 			cont.parent = this;
 			this.#props.set(cont.key, cont);
 
@@ -1095,6 +1121,10 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 
 			const cont = getController(property);
 			const siblingController = getController(sibling);
+			if (cont.key === siblingController.key) {
+				this.#props.set(cont.key, cont);
+				return this.#replaced(siblingController, cont);
+			}
 
 			const old = this.#props.get(cont.key);
 			if (old) {
@@ -1113,16 +1143,15 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 				}
 			}
 
-			if (siblingController.next === null) {
-				this.#last = cont;
+
+			const prev = siblingController.setNext(cont);
+			if (prev) {
+				prev.setPrevious(cont);
 			} else {
-				cont.next = siblingController.next;
-				siblingController.next.previous = cont;
-				siblingController.next = cont;
+				this.#last = cont;
 			}
 
-			cont.previous = siblingController;
-			cont.previous.next = cont;
+			cont.setPrevious(siblingController);
 			cont.parent = this;
 			this.#props.set(cont.key, cont);
 
@@ -1142,8 +1171,8 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			return old?.prop;
 		}
 
-		add<K extends keyof json.JContainerAddMap>(key: string, type: K): JProperty<string, InternalJContainerAddMap[K]>
-		add(key: string, type: keyof json.JContainerAddMap): JProperty<string> {
+		add<K extends json.AddType>(key: string, type: K): JProperty<string, InternalJContainerAddMap[K]>
+		add(key: string, type: json.AddType): JProperty<string> {
 			const clazz = resolveClass(type);
 			const cont = JProperty.create(key, clazz);
 			this.#addImpl(cont);
@@ -1309,7 +1338,7 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			const items = this.#items;
 			if (index == items.length) {
 				items.push(cont);
-				this.#insertAfter(cont);
+				this.#insertedAfter(cont);
 			} else if (index < items.length) {
 				const old = items[index];
 				items[index] = cont;
@@ -1359,15 +1388,15 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			this.#changed.fire(this, "addedRange", range);
 		}
 	
-		add<K extends keyof json.JContainerAddMap>(type: K, index?: number | undefined): JProperty<number, InternalJContainerAddMap[K]>
-		add(type: keyof json.JContainerAddMap, index?: number | undefined): JProperty<number> {
+		add<K extends json.AddType>(type: K, index?: number | undefined): JProperty<number, InternalJContainerAddMap[K]>
+		add(type: json.AddType, index?: number | undefined): JProperty<number> {
 			let cont: JPropertyController<number>;
 			const clazz = resolveClass(type);
 			const items = this.#items;
 			if (index == null) {
 				cont = JProperty.create(items.length, clazz);
 				items.push(cont);
-				this.#insertAfter(cont);
+				this.#insertedAfter(cont);
 			} else if (index < 0) {
 				throw new TypeError("Index must be greater than or equal to 0");
 			} else {
@@ -1375,17 +1404,12 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 
 				if (index < items.length) {
 					const next = items[index];
-					const { previous } = next;
 					items.splice(index, 0, cont);
 	
 					while (++index < items.length)
 						items[index].key = index;
 	
-					if (previous) {
-						this.#insertBefore(next);
-					} else {
-						this.#insertAfter(next);
-					}
+					this.#insertedBefore(cont, next);
 				} else {
 					this.#addWithGap(cont);
 				}
@@ -1395,14 +1419,13 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		}
 	
 		remove(key: Key): JProperty<number> | undefined {
-			const c = typeof key === "number" && this.#items.at(key);
-			if (c) {
-				key = +key;
+			if (typeof key === "number") {
+				const [cont] = this.#items.splice(key, 1);
 				while (key < this.#items.length)
 					this.#items[key].key = key++;
 		
-				this.#removed(c);
-				return c.prop;
+				this.#removed(cont);
+				return cont.prop;
 			}
 		}
 	
@@ -1588,7 +1611,13 @@ function parsePath(path: string): string[] {
 	}
 }
 
-def(json, { JTokenFilterFlags, JToken, JValue, JContainer, JObject, JArray, unwrapProxy, parsePath, escapePathPart }, true);
+const addMap = {
+	value: JValue,
+	object: JObject,
+	array: JArray,
+} satisfies { [P in keyof InternalJContainerAddMap]: ExposedJsonClass<InternalJContainerAddMap[P]> };
+
+def(json, { JTokenFilterFlags, JProperty, JToken, JValue, JContainer, JObject, JArray, unwrapProxy, parsePath, escapePathPart }, true);
 export default json;
 
 const colors = {

@@ -1,6 +1,6 @@
 import type { EditAction } from "../edit-stack.js";
-import type json from "../json.js";
 import type ViewerModel from "../viewer-model.js";
+import json from "../json.js";
 import Linq from "@daniel.pickett/linq-js";
 
 export namespace edits {
@@ -69,15 +69,27 @@ export namespace edits {
 		model.edits.push(...Linq(props).select(createDeleteAction));
 	}
 
-	export async function renameProperty(model: ViewerModel, obj: json.JObject, prop: json.JProperty<string>, name: string) {
-		const oldName = prop.key;
+	export function renameProperty(model: ViewerModel, obj: json.JObject, oldName: string, name: string) {
+		const prop = obj.getProperty(oldName);
+		if (!prop)
+			throw new TypeError(`Property "${oldName}" not found.`);
+		
+		const existing = obj.getProperty(name);
+		const existingSibling = existing?.next;
+
 		model.edits.push({
 			commit() {
 				obj.rename(oldName, name);
-				model.execute("scrollTo", prop);
 			},
 			undo() {
 				obj.rename(name, oldName);
+				if (existing) {
+					if (existingSibling) {
+						obj.insertBefore(existing, existingSibling);
+					} else {
+						obj.addProperty(existing);
+					}
+				}
 			}
 		});
 	}
@@ -94,33 +106,51 @@ export namespace edits {
 		});
 	}
 
-	export async function addToObject(model: ViewerModel, obj: json.JObject, mode: keyof json.JContainerAddMap, name: string) {
+	export function addToObject(model: ViewerModel, obj: json.JObject, mode: json.AddType, name: string, sibling?: json.JProperty<string>, insertBefore = false) {
+		const prop = new json.JProperty(name, mode);
+		const existing = obj.getProperty(name);
+		const existingSibling = existing?.next;
+
+		let commit: VoidFunction;
+
+		if (!sibling) {
+			commit = function() {
+				obj.addProperty(prop);
+			}
+		} else if (insertBefore) {
+			commit = function() {
+				obj.insertBefore(prop, sibling);
+			}
+		} else {
+			commit = function() {
+				obj.insertAfter(prop, sibling);
+			}
+		}
+
 		model.edits.push({
-			commit() {
-				const prop = obj.add(name, mode);
-				obj.owner.isExpanded = true;
-				model.setSelected(prop, false, true);
-			},
+			commit,
 			undo() {
-				const prop = obj.remove(name);
-				if (prop?.isSelected)
-					model.selected.remove(prop);
-			},
+				prop.remove();
+				if (existing) {
+					if (existingSibling) {
+						obj.insertBefore(existing, existingSibling);
+					} else {
+						obj.addProperty(existing);
+					}
+				}
+			}
 		});
 	}
 
-	export async function addToArray(model: ViewerModel, arr: json.JArray, mode: keyof json.JContainerAddMap) {
-		const index = arr.count;
+	export async function addToArray(model: ViewerModel, arr: json.JArray, mode: json.AddType, index?: number) {
+		const prop = new json.JProperty(index ?? arr.count, mode);
 		model.edits.push({
 			commit() {
-				const prop = arr.add(mode);
+				arr.addProperty(prop);
 				arr.owner.isExpanded = true;
-				model.setSelected(prop, false, true);
 			},
 			undo() {
-				const prop = arr.remove(index);
-				if (prop?.isSelected)
-					model.selected.remove(prop);
+				prop.remove();
 			},
 		});
 	}

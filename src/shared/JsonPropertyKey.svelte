@@ -1,35 +1,24 @@
 <script lang="ts">
-	import type ViewerModel from "../viewer-model.js";
 	import { renderKey } from "../renderer.js";
-	import json from '../json';
-	import edits from "../viewer/editor-helper.js";
 
-	export let model: ViewerModel;
-	export let prop: json.JProperty;
+	export let key: string | number;
+	export let selected = false;
 	export let editing = false;
-
-	$: ({ isSelected } = prop.state.props);
+	export let onrename: ((name: string) => void) | undefined = undefined;
+	export let oncancel: (() => void) | undefined = undefined;
+	export let onclick: ((evt: MouseEvent) => void) | undefined = undefined;
 
 	let element: HTMLElement;
 
-	function onClick(evt: MouseEvent) {
-		evt.preventDefault();
-		if (evt.shiftKey) {
-			//evt.preventDefault();
-			model.selected[evt.ctrlKey ? "add" : "reset"](prop, true);
-		} else {
-			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
-		}
-
-		window.getSelection()?.removeAllRanges();
-	}
-
 	function renderEditor(target: HTMLElement) {
 		function finish() {
-			editing = false;
-			if (prop.key !== value) {
-				edits.renameProperty(model, prop.parent as json.JObject, prop as json.JProperty<string>, value);
+			if (!editing) {
+				return;
 			}
+
+			editing = false;
+			key = value;
+			onrename?.(value);
 		}
 
 		const destroy = target.subscribe({
@@ -45,6 +34,7 @@
 			keyup(evt) {
 				if (evt.key === "Escape") {
 					editing = false;
+					oncancel?.();
 				}
 			},
 			focusout: finish,
@@ -55,7 +45,7 @@
 			}
 		});
 
-		let value = prop.key as string;
+		let value = String(key);
 		target.textContent = value;
 		target.focus();
 		const range = document.createRange();
@@ -74,11 +64,11 @@
 		element.scrollIntoView({ behavior, block: 'start' });
 	}
 </script>
-<span bind:this={element} class="root" class:editing class:selected={$isSelected} on:mousedown|preventDefault on:click={onClick}>
+<span bind:this={element} class="root" class:editing class:selected on:mousedown|preventDefault on:click={onclick}>
 	{#if editing}
 		<span class="text" role="textbox" tabindex="-1" contenteditable="true" use:renderEditor></span>
 	{:else}
-		<span class="text" use:renderKey={prop.key} on:dblclick={() => editing = true}></span>
+		<span class="text" use:renderKey={key} on:dblclick={() => editing = true}></span>
 	{/if}
 </span>
 <style lang="scss">
