@@ -1600,43 +1600,29 @@ const colors = {
 }
 
 function renderType(obj: any) {
-	return debug.text({
-		color: colors.type,
-		children: obj.constructor.name,
-	})
+	return debug.text(obj.constructor.name).color(colors.type);
 }
 
 function renderJson(value: any) {
 	const color = (colors as any)[typeof value];
 	const text = JSON.stringify(value);
-	return debug.text({ color, children: text });
+	return debug.text(text).color(color);
 }
 
 function renderHeader(obj: JToken, addPath: boolean) {
-	const text = debug.text([
-		renderType(obj),
-		'('
-	]);
+	const text = debug.text`${renderType(obj)}(`;
 
 	if (obj.is('value')) {
-		text.append(renderJson(obj.value));
+		text.add(renderJson(obj.value));
 	} else {
-		text.append(debug.text({
-			color: colors.number,
-			children: String(obj.count),
-		}));
+		text.add(debug.text(obj.count).color(colors.number));
 	}
 
 	if (addPath) {
-		const path = debug.text({
-			color: colors.object,
-			children: obj.pathText
-		});
-
-		text.append(', ', path)
+		text.add`, ${debug.text(obj.pathText).color(colors.object)}`;
 	}
 
-	return text.append(')');
+	return text.add`)`;
 }
 
 class JPropertyRenderer extends debug.ClassRenderer<JProperty> {
@@ -1646,14 +1632,7 @@ class JPropertyRenderer extends debug.ClassRenderer<JProperty> {
 
 	header(obj: JProperty): debug.Component {
 		const { key, value } = obj;
-		return debug.text([
-			renderType(obj),
-			'(',
-			renderJson(key),
-			': ',
-			renderHeader(value, false),
-			')'
-		]);
+		return debug.text`${renderType(obj)}(${renderJson(key)}: ${renderHeader(value, false)})`;
 	}
 
 	hasBody(): boolean {
@@ -1682,26 +1661,11 @@ class JTokenRenderer extends debug.ClassRenderer<JToken> {
 	body(obj: JToken) {
 		const list = debug.list();
 
-		list.append(
-			debug.listItem([
-				'path: ', 
-				debug.object(obj.pathText),
-			]),
-			debug.listItem([
-				'property: ',
-				debug.object(obj.owner),
-			])
-		)
+		list.addRow`path: ${debug.object(obj.pathText)}`;
+		list.addRow`property: ${debug.object(obj.owner)}`;
 
-		for (const prop of obj) {
-			list.append(
-				debug.listItem([
-					renderJson(prop.key),
-					': ',
-					debug.object(prop.value),
-				])
-			);
-		}
+		for (const prop of obj)
+			list.addRow`${renderJson(prop.key)}: ${debug.object(prop.value)}`;
 
 		return list;
 	}

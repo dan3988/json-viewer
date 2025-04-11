@@ -45,34 +45,38 @@ export namespace debug {
 		return new ObjectComponent(object, preview);
 	}
 
-	export function text(init: ComponentInitOrChildren) {
-		return new TextComponent(init);
+	export function text(text: ComponentChild): TextComponent;
+	export function text(text: TemplateStringsArray, ...rest: ComponentChild[]): TextComponent;
+	export function text(text: ComponentChild | TemplateStringsArray, ...rest: ComponentChild[]) {
+		return new TextComponent().add(text as any, ...rest);
 	}
 
 	export function properties(values: Dict, preview = false) {
 		const result = new ListComponent();
-		for (const [key, value] of Object.entries(values)) {
-			const item = new ListItemComponent()
-				.append(new TextComponent(key))
-				.append(new TextComponent(': '))
-				.append(new ObjectComponent(value, preview));
-
-			result.append(item);
-		}
+		for (const [key, value] of Object.entries(values))
+			result.addRow`${key}: ${object(value, preview)}`;
 
 		return result;
 	}
 
-	export function list(init?: ComponentInitOrChildren<ListComponentChild>) {
-		return new ListComponent(init);
+	export function list(...children: ComponentChild[]): ListComponent;
+	export function list(text: TemplateStringsArray, ...rest: ComponentChild[]): ListComponent;
+	export function list(...args: any) {
+		const list = new ListComponent();
+		ListComponent.prototype.addRow.apply(list, args);
+		return list;
 	}
 
-	export function listItem(init?: ComponentInitOrChildren) {
-		return new ListItemComponent(init);
+	export function column(...children: ComponentChild[]) {
+		const result = new ColumnComponent();
+		children.forEach(ContainerComponent.prototype.add, result);
+		return result;
 	}
 
-	export function panel(init?: ComponentInitOrChildren) {
-		return new SimpleComponent('div', init);
+	export function row(...children: ComponentChild[]) {
+		const result = new RowComponent();
+		children.forEach(ContainerComponent.prototype.add, result);
+		return result;
 	}
 
 	export interface Component {
@@ -100,15 +104,6 @@ export namespace debug {
 		weight?: CssGlobal | 'normal' | 'bold' | 'bolder' | 'lighter' | `${number}`;
 	}
 
-	export interface ComponentInit<C extends ComponentChild = ComponentChild> {
-		readonly css?: Dict<string>;
-		readonly color?: string;
-		readonly font?: string | Font;
-		readonly children?: string | C[]
-	}
-
-	type ComponentInitOrChildren<C extends ComponentChild = ComponentChild> = string | C[] | ComponentInit<C>;
-
 	function setIfDefined(css: Dict<string>, key: string, value: undefined | string) {
 		if (value === undefined) {
 			delete css[key];
@@ -117,65 +112,34 @@ export namespace debug {
 		}
 	}
 
-	type StyleKey = Exclude<keyof ComponentInit, 'children'>;
-
-	const initConverters = {
-		css: (css, value) => {
-			for (let [key, v] of Object.entries(value))
-				css[key] = v;
-		},
-		color: (css, value) => {
-			css.color = value;
-		},
-		font: (css, value) => {
-			if (typeof value === 'string') {
-				css.font = value;
-			} else {
-				setIfDefined(css, 'font-family', value.family);
-				setIfDefined(css, 'font-size', value.size);
-				setIfDefined(css, 'font-style', value.style);
-				setIfDefined(css, 'font-weight', value.weight);
-			}
-		},
-	} satisfies { [P in StyleKey]: (css: Dict<string>, value: NonNullable<ComponentInit[P]>) => void };
-
-	abstract class ElementComponent<C extends I, I extends ComponentChild = C> implements Component {
+	abstract class ElementComponent<C extends ComponentChild> implements Component {
 		readonly #tag;
 		readonly #children: C[] = [];
 		readonly #css: Dict<string> = {};
 
-		constructor(tag: string, init?: ComponentInitOrChildren<I>) {
+		constructor(tag: string) {
 			this.#tag = tag;
-
-			let children: undefined | string | I[];
-			if (init) {
-				if (typeof init === 'string') {
-					children = init;
-				} else if (Array.isArray(init)) {
-					children = init;
-				} else {
-					children = init.children;
-
-					for (const [key, value] of Object.entries(init))
-						if (key !== 'children' && value !== undefined)
-							initConverters[key as StyleKey](this.#css, value);
-				}
-
-				if (children != null) {
-					if (typeof children === 'string') {
-						this.#children.push(this.wrap(children as I));
-					} else {
-						for (const child of children)
-							this.#children.push(this.wrap(child));
-					}
-				}
-			}
 		}
 
-		protected abstract wrap(value: I): C;
+		protected __append(child: C) {
+			this.#children.push(child);
+			return this;
+		}
 
-		append(...children: C[]) {
-			this.#children.push(...children);
+		color(value: string) {
+			return this.css('color', value);
+		}
+
+		font(value: string | Font) {
+			if (typeof value === 'string') {
+				this.#css.font = value;
+			} else {
+				setIfDefined(this.#css, 'font-family', value.family);
+				setIfDefined(this.#css, 'font-size', value.size);
+				setIfDefined(this.#css, 'font-style', value.style);
+				setIfDefined(this.#css, 'font-weight', value.weight);
+			}
+
 			return this;
 		}
 
@@ -203,40 +167,84 @@ export namespace debug {
 		}
 	}
 
-	class SimpleComponent extends ElementComponent<ComponentChild> {
-		constructor(tag: string, init?: ComponentInitOrChildren) {
-			super(tag, init);
+	export abstract class ContainerComponent extends ElementComponent<ComponentChild> {
+		constructor(tag: string) {
+			super(tag);
 		}
-		
-		protected wrap(value: ComponentChild): ComponentChild {
-			return value;
+
+		add(text: ComponentChild): this;
+		add(text: TemplateStringsArray, ...rest: ComponentChild[]): this;
+		add(text: ComponentChild | TemplateStringsArray, ...rest: ComponentChild[]) {
+			if (Array.isArray(text)) {
+				for (let i = 0; ; i++) {
+					const str = text[i];
+					str && this.__append(str);
+
+					if (i === rest.length)
+						break;
+
+					this.__append(rest[i]);
+				}
+			} else {
+				this.__append(text as string);
+			}
+
+			return this;
 		}
 	}
 
-	export class TextComponent extends SimpleComponent {
-		constructor(init?: ComponentInitOrChildren) {
-			super('span', init);
+	export class RowComponent extends ContainerComponent {
+		constructor() {
+			super('div');
+			this.css('display', 'flex');
+			this.css('flex-direction', 'row');
 		}
 	}
 
-	export type ListComponentChild = ListItemComponent | string;
+	export class ColumnComponent extends ContainerComponent {
+		constructor() {
+			super('div');
+			this.css('display', 'flex');
+			this.css('flex-direction', 'column');
+		}
+	}
 
-	export class ListComponent extends ElementComponent<ListItemComponent, ListComponentChild> {
-		constructor(init?: ComponentInitOrChildren<ListComponentChild>) {
-			super('ol', init);
+	export class TextComponent extends ContainerComponent {
+		constructor(child?: ComponentChild) {
+			super('span');
+			child && this.__append(child);
+		}
+	}
+
+	export class ListComponent extends ElementComponent<ListItemComponent> {
+		constructor() {
+			super('ol');
 			this.css('list-style', 'none');
 			this.css('padding', '0');
 			this.css('margin', '0');
 		}
-		
-		protected wrap(value: ListComponentChild): ListItemComponent {
-			return typeof value === 'string' ? new ListItemComponent([value]) : value;
+
+		addRow(...children: ComponentChild[]): ListItemComponent;
+		addRow(text: TemplateStringsArray, ...rest: ComponentChild[]): ListItemComponent;
+		addRow(...args: any[]) {
+			let children: ComponentChild[];
+			if (Array.isArray(args[0])) {
+				const v = text.apply(undefined, args as any);
+				children = [v];
+			} else {
+				children = args;
+			}
+
+			const child = new ListItemComponent(children);
+			this.__append(child);
+			return child;
 		}
 	}
 
-	export class ListItemComponent extends SimpleComponent {
-		constructor(init?: ComponentInitOrChildren) {
-			super('li', init);
+	class ListItemComponent extends ElementComponent<ComponentChild> {
+		constructor(children: ComponentChild[]) {
+			super('li');
+			children.forEach(this.__append, this);
 		}
 	}
 
