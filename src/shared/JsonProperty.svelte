@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
+	import { WritableStoreImpl } from "../store.js";
 	import { onDestroy } from "svelte";
 	import { renderValue } from "../renderer.js";
+	import JsonContainerInsert from "./JsonContainerInsert.svelte";
 	import JsonPropertyKey from "./JsonPropertyKey.svelte";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
@@ -13,8 +15,19 @@
 
 	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
 
-	let pendingIndex = -1;
-	let pendingType: json.AddType;
+	let propertyName = new WritableStoreImpl('');
+
+	function insert(index: number, type: json.AddType) {
+		const { value } = prop;
+		if (value.is('array')) {
+			edits.addToArray(model, value, type, index);
+		} else if (value.is('object')) {
+			const before = props[index] as json.JProperty<string>;
+			const parent = prop.value as json.JObject;
+			edits.addToObject(model, parent, type, propertyName.value, before, true);
+			propertyName.value = '';
+		}
+	}
 
 	let props: json.JProperty[] = [];
 	let keyComponent: JsonPropertyKey;
@@ -43,18 +56,6 @@
 	model.command.addListener(onModelCommand);
 
 	onDestroy(() => model.command.removeListener(onModelCommand));
-
-	function addObject(name: string) {
-		const index = pendingIndex;
-		const after = props[index - 1] as json.JProperty<string>;
-		const parent = prop.value as json.JObject;
-		edits.addToObject(model, parent, pendingType, name, after);
-		pendingIndex = -1;
-	}
-
-	function cancelObject() {
-		pendingIndex = -1;
-	}
 
 	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
 		if (command === "scrollTo" && arg0 === prop) {
@@ -96,16 +97,6 @@
 		evt.preventDefault();
 		model.selected.reset(prop);
 		model.execute("context", prop, evt.clientX, evt.clientY);
-	}
-
-	function insert(index: number, type: keyof json.JContainerAddMap) {
-		const parent = prop.value;
-		if (parent.is('array')) {
-			edits.addToArray(model, parent, type, index);
-		} else if (parent.is('object')) {
-			pendingIndex = index;
-			pendingType = type;
-		}
 	}
 </script>
 <style lang="scss">
@@ -284,7 +275,6 @@
 		--inserter-visibility: hidden;
 		display: flex;
 		flex-direction: column;
-		gap: 1px;
 
 		> li:hover:not(:has(> .json-prop > .json-container > li:hover)) {
 			--inserter-visibility: visible;
@@ -359,6 +349,7 @@
 		<JsonPropertyKey bind:this={keyComponent} key={prop.key} selected={$isSelected} onclick={onPropertyClick} {onrename} />
 	</span>
 	{#if prop.value.is("container")}
+		{@const name = prop.value.is('object') ? propertyName : undefined}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
@@ -368,27 +359,16 @@
 				<span class="gutter" on:click={onGutterClicked}></span>
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
 					{#each props as prop, i (prop)}
-						{#if i === pendingIndex}
-							<li class="json-key-placeholder">
-								<JsonPropertyKey key="" editing onrename={addObject} oncancel={cancelObject} />
-							</li>
-						{/if}
+						<li>
+							<JsonContainerInsert {name} insert={insert.bind(undefined, i)} />
+						</li>
 						<li>
 							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
-							<div class="inserter">
-								<div class="inserter-buttons btn-group">
-									<span class="btn btn-base bi-braces" title="Insert Object" role="button" on:click={() => insert(i + 1, 'object')}></span>
-									<span class="btn btn-base bi-0-circle" title="Insert Array" role="button" on:click={() => insert(i + 1, 'array')}></span>
-									<span class="btn btn-base bi-hash" title="Insert Value" role="button" on:click={() => insert(i + 1, 'value')}></span>
-								</div>
-							</div>
 						</li>
 					{/each}
-					{#if props.length === pendingIndex}
-						<li class="json-key-placeholder">
-							<JsonPropertyKey key="" editing onrename={addObject} oncancel={cancelObject} />
-						</li>
-					{/if}
+					<li>
+						<JsonContainerInsert {name} insert={insert.bind(undefined, props.length)} />
+					</li>
 				</ul>
 			{/if}
 		{/if}
