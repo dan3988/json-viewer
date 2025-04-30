@@ -272,71 +272,8 @@
 	}
 
 	.json-container {
-		--inserter-visibility: hidden;
 		display: flex;
 		flex-direction: column;
-
-		> li:hover:not(:has(> .json-prop > .json-container > li:hover)) {
-			--inserter-visibility: visible;
-		}
-	}
-
-	.inserter {
-		--inserter-bg: var(--jv-tertiary-bg);
-		--inserter-color: var(--jv-tertiary-text);
-		--inserter-border-color: var(--jv-tertiary-border);
-
-		&:hover {
-			--inserter-bg: var(--jv-tertiary-hover-bg);
-			--inserter-color: var(--jv-tertiary-hover-text);
-			--inserter-border-color: var(--jv-tertiary-hover-border);
-		}
-
-		position: relative;
-		height: 1px;
-		margin-top: -1px;
-		margin-left: calc(1em + var(--bs-border-radius));
-		visibility: var(--inserter-visibility);
-		transition-property: color, background-color, border-color;
-		transition-duration: .15s;
-		transition-timing-function: ease-in-out;
-
-		&::before {
-			content: "";
-			transition: inherit;
-			position: absolute;
-			display: block;
-			inset: 0;
-			width: 10rem;
-			background-color: var(--inserter-border-color);
-		}
-
-		> .inserter-buttons {
-			transition: inherit;
-			position: absolute;
-			inset: -0.75rem -0.75rem 0 10rem;
-			height: 1.5rem;
-			width: min-content;
-			display: flex;
-
-			> .btn {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				padding: 0.25rem;
-			}
-		}
-
-		.inserter-button {
-			padding: 0;
-			width: 2rem;
-			border-radius: 50%;
-			border: 1px solid var(--inserter-border-color);
-			background-color: var(--inserter-bg);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
 	}
 </style>
 {#if prop}
