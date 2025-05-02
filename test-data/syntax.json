@@ -25,7 +25,9 @@
 	"false": false,
 	"null": null,
 	"string": "this is a string",
-	"special chars": "this is\r\na string\r\n\t\"with special chars\"",
+	"special chars": "this is\r\na string\r\n\t\"with special chars\"\n",
+	"string_object": "{ \"value\": 5 }",
+	"string_array": "[1,2,3,4,5]",
 	"nested_array": [
 		[
 			1,

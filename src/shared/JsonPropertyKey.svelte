@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { renderKey } from "../renderer.js";
+	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	export let key: string | number;
 	export let selected = false;
@@ -10,65 +11,17 @@
 
 	let element: HTMLElement;
 
-	function renderEditor(target: HTMLElement) {
-		function finish() {
-			if (!editing) {
-				return;
-			}
-
-			editing = false;
-			key = value;
-			onrename?.(value);
-		}
-
-		const destroy = target.subscribe({
-			input(evt) {
-				value = target.innerText;
-				if ((evt as InputEvent).inputType === 'insertFromPaste') {
-					target.innerHTML = value;
-				}
-			},
-			keydown(evt) {
-				evt.stopPropagation();
-			},
-			keyup(evt) {
-				if (evt.key === "Escape") {
-					editing = false;
-					oncancel?.();
-				}
-			},
-			focusout: finish,
-			beforeinput(evt) {
-				if (evt.inputType === 'insertParagraph') {
-					finish();
-				}
-			}
-		});
-
-		let value = String(key);
-		target.textContent = value;
-		target.focus();
-		const range = document.createRange();
-		const selection = window.getSelection();
-		if (selection) {
-			range.selectNodeContents(target);
-			selection.removeAllRanges();
-			selection.addRange(range);
-		}
-
-		return { destroy };
-	}
-
+	$: editable = typeof key === 'string';
 
 	export function scrollTo(behavior?: ScrollBehavior) {
 		element.scrollIntoView({ behavior, block: 'start' });
 	}
 </script>
-<span bind:this={element} class="root" class:editing class:selected on:mousedown|preventDefault on:click={onclick}>
-	{#if editing}
-		<span class="text" role="textbox" tabindex="-1" contenteditable="true" use:renderEditor></span>
+<span bind:this={element} class="root" class:editable class:editing class:selected on:mousedown|preventDefault on:click={onclick}>
+	{#if editable}
+		<JsonValueEditor value={String(key)} parse={String} autoSelect bind:editing renderer={renderKey} onchange={onrename} {oncancel} />
 	{:else}
-		<span class="text" use:renderKey={key} on:dblclick={() => editing = true}></span>
+		<span>{key}</span>
 	{/if}
 </span>
 <style lang="scss">
@@ -88,6 +41,10 @@
 			background-color: var(--jv-tertiary-bg);
 			color: var(--jv-tertiary-text);
 			border-color: var(--jv-tertiary-border);
+
+			&.editable {
+				cursor: text;
+			}
 		}
 
 		&.editing {
@@ -95,11 +52,5 @@
 			color: var(--jv-tertiary-active-text);
 			border-color: var(--jv-tertiary-active-border);
 		}
-	}
-
-	.text {
-		user-select: contain;
-		max-lines: 1;
-		outline: none;
 	}
 </style>

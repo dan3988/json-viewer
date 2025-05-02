@@ -5,6 +5,7 @@
 	import { renderValue } from "../renderer.js";
 	import JsonContainerInsert from "./JsonContainerInsert.svelte";
 	import JsonPropertyKey from "./JsonPropertyKey.svelte";
+	import JsonValue from "./JsonValue.svelte";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
 
@@ -207,7 +208,7 @@
 		}
 		
 		> .json-value {
-			grid-area: 1 / 3 / span 1 / span 1;
+			grid-area: 1 / 3 / span 1 / -1;
 		}
 
 		> .json-container {
@@ -253,24 +254,6 @@
 		}
 	}
 
-	.json-value {
-		user-select: text;
-		white-space: nowrap;
-
-		&.json-string {
-			color: var(--jv-str-fg);
-		}
-
-		&.json-number {
-			color: var(--jv-num-fg);
-		}
-
-		&.json-boolean,
-		&.json-null {
-			color: var(--jv-keywd-fg);
-		}
-	}
-
 	.json-container {
 		display: flex;
 		flex-direction: column;
@@ -310,7 +293,9 @@
 			{/if}
 		{/if}
 	{:else if prop.value.is("value")}
-		<span class="json-value json-{prop.value.subtype}" use:renderValue={prop.value.value}/>
+		<span class="json-value">
+			<JsonValue {model} {prop} />
+		</span>
 	{/if}
 </div>
 {/if}

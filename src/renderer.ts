@@ -8,6 +8,10 @@ export function renderValue(target: HTMLElement, value: any): Renderer {
 	return new JsonValueRenderer(target, value);
 }
 
+export function renderText(target: HTMLElement, value: any): Renderer {
+	return new PlainTextValueRenderer(target, value);
+}
+
 export interface Renderer<T = any> {
 	update(value: T): void;
 	destroy?(): void;
@@ -40,6 +44,12 @@ export abstract class AbstractRenderer<T> implements Renderer<T> {
 			this.#target.innerHTML = "";
 			this.#target = null;
 		}
+	}
+}
+
+export class PlainTextValueRenderer extends AbstractRenderer<any> {
+	protected onUpdate(target: HTMLElement, value: any): void {
+		target.innerText = String(value);
 	}
 }
 
