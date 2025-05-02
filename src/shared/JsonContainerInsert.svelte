@@ -26,6 +26,7 @@
 </div>
 <style lang="scss">
 	.root {
+		z-index: 1;
 		position: relative;
 		height: 1px;
 	}
