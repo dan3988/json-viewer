@@ -2,26 +2,55 @@
 	import { writable, type Writable } from "svelte/store";
 	import type json from "../json";
 
-	const locked = writable(false);
+	const current = writable(0);
+	let counter = 0;
 </script>
 <script lang="ts">
 	export let name: Writable<string> | undefined = undefined;
 	export let insert: (type: json.AddType) => void;
 
-	function focusChange(evt: FocusEvent) {
-		$locked = evt.type === 'focusin';
+	const id = ++counter;
+
+	let hovering = false;
+	let hitbox: HTMLElement;
+
+	$: shown = ($current == 0 && hovering) || ($current == id);
+
+	function onMouseEnter() {
+		hovering = true;
+	}
+
+	function onMouseLeave() {
+		hovering = false;
+	}
+
+	function onFocusIn() {
+		$current = id;
+	}
+
+	function onFocusOut() {
+		$current = 0;
 	}
 </script>
 <div class="root">
-	<div class="hitbox" class:hoverable={!$locked}>
-		<div class="content input-group border rounded">
-			{#if name}
-				<input type="text" class="form-control" placeholder="Name" on:focusin={focusChange} on:focusout={focusChange} bind:value={$name} />
-			{/if}
-			<span class="btn btn-base bi-braces" title="Insert Object" role="button" on:click={insert.bind(undefined, 'object')}></span>
-			<span class="btn btn-base bi-0-circle" title="Insert Array" role="button" on:click={insert.bind(undefined, 'array')}></span>
-			<span class="btn btn-base bi-hash" title="Insert Value" role="button" on:click={insert.bind(undefined, 'value')}></span>
-		</div>
+	<div class="hitbox"
+		bind:this={hitbox}
+		class:hoverable={!$current}
+		class:shown
+		on:mouseenter={onMouseEnter}
+		on:mouseleave={onMouseLeave}
+		on:focusin={onFocusIn}
+		on:focusout={onFocusOut}>
+		{#if shown}
+			<div class="content input-group border rounded">
+				{#if name}
+					<input type="text" class="form-control" placeholder="Name" bind:value={$name} />
+				{/if}
+				<span class="btn btn-base bi-braces" title="Insert Object" role="button" on:click={insert.bind(undefined, 'object')}></span>
+				<span class="btn btn-base bi-0-circle" title="Insert Array" role="button" on:click={insert.bind(undefined, 'array')}></span>
+				<span class="btn btn-base bi-hash" title="Insert Value" role="button" on:click={insert.bind(undefined, 'value')}></span>
+			</div>
+		{/if}
 	</div>
 </div>
 <style lang="scss">
@@ -32,7 +61,6 @@
 	}
 
 	.hitbox {
-		--content-visibility: hidden;
 		--line-color: var(--jv-tertiary-border);
 		display: flex;
 		align-items: center;
@@ -44,14 +72,8 @@
 			--line-color: var(--jv-tertiary-hover-border);
 		}
 
-		&.hoverable:hover, &:focus-within {
-			--content-visibility: visible;
-		}
-
-		&::before {
+		&.shown::before {
 			content: "";
-			visibility: var(--content-visibility);
-			//display: var(--content-display);
 			position: absolute;
 			width: 15rem;
 			left: 1rem;
