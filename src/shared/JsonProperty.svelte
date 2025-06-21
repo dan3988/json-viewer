@@ -2,9 +2,9 @@
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import { WritableStoreImpl } from "../store.js";
 	import { onDestroy } from "svelte";
-	import { renderValue } from "../renderer.js";
 	import JsonContainerInsert from "./JsonContainerInsert.svelte";
-	import JsonPropertyKey from "./JsonPropertyKey.svelte";
+	import JsonPropertyIndex from "./JsonPropertyIndex.svelte";
+	import JsonPropertyName from "./JsonPropertyName.svelte";
 	import JsonValue from "./JsonValue.svelte";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
@@ -31,7 +31,7 @@
 	}
 
 	let props: json.JProperty[] = [];
-	let keyComponent: JsonPropertyKey;
+	let keyComponent: JsonPropertyIndex | JsonPropertyName;
 
 	function update() {
 		props = [...prop.value];
@@ -260,13 +260,18 @@
 	}
 </style>
 {#if prop}
+{@const { key } = prop}
 <div
 	hidden={$isHidden}
 	data-indent={indent % maxIndentClass}
 	class="json-prop for-{prop.value.type} for-{prop.value.subtype} json-indent"
 	class:expanded={$isExpanded}>
 	<span class="json-key" on:contextmenu={onContextMenu}>
-		<JsonPropertyKey bind:this={keyComponent} key={prop.key} selected={$isSelected} onclick={onPropertyClick} {onrename} />
+		{#if typeof key === 'number'}
+			<JsonPropertyIndex bind:this={keyComponent} index={key} selected={$isSelected} onclick={onPropertyClick} />
+		{:else}
+			<JsonPropertyName bind:this={keyComponent} name={key} selected={$isSelected} onclick={onPropertyClick} {onrename} />
+		{/if}
 	</span>
 	{#if prop.value.is("container")}
 		{@const name = prop.value.is('object') ? propertyName : undefined}

@@ -44,7 +44,7 @@
 	}
 </script>
 <div class="root json-{value.subtype}" class:editing>
-	<JsonValueEditor value={value.value} {serialize} {parse} renderer={renderValue} autoSelect bind:editing onchange={update} />
+	<JsonValueEditor value={value.value} {serialize} {parse} renderer={renderValue} autoSelect checkEqual bind:editing onfinish={update} />
 </div>
 <style lang="scss">
 	@use "../core.scss" as *;

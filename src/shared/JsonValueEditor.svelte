@@ -10,8 +10,9 @@
 	export let renderer: (target: HTMLElement, value: T) => Renderer = renderText;
 	export let disabled = false;
 	export let editing = false;
-	export let onchange: undefined | ((value: T) => void) = undefined;
-	export let oncancel: undefined | VoidFunction = undefined;
+	export let onfinish: undefined | ((value: T) => void) = undefined;
+	export let checkEqual = false;
+	export let cleanup: undefined | VoidFunction = undefined;
 	export let autoSelect = false;
 
 	/**
@@ -43,8 +44,10 @@
 			const text = getText(target);
 			const result = parse(text);
 			editing = false;
-			if (onchange && originalValue !== result)
-				onchange(result);
+			if (onfinish && (!checkEqual || result !== originalValue))
+				onfinish(result);
+
+			cleanup?.()
 		}
 
 		const destroy = target.subscribe({
@@ -54,7 +57,7 @@
 			keyup(evt) {
 				if (evt.key === "Escape") {
 					editing = false;
-					oncancel?.();
+					cleanup?.();
 				}
 			},
 			keypress(evt) {
@@ -82,10 +85,13 @@
 			}
 		});
 
-		const text = serialize(originalValue).split('\n');
-		for (let i = 0; i < text.length; i++) {
-			target.appendChild(document.createTextNode(text[i]));
-			target.appendChild(document.createElement('br'));
+		const unsplit = originalValue ?? '';
+		if (unsplit) {
+			const lines = originalValue == null ? '' : serialize(originalValue).split('\n');
+			for (let i = 0; i < lines.length; i++) {
+				target.appendChild(document.createTextNode(lines[i]));
+				target.appendChild(document.createElement('br'));
+			}
 		}
 
 		target.focus();
@@ -127,5 +133,6 @@
 		outline: none;
 		white-space: pre-wrap;
 		max-height: 10rem;
+		min-width: 1rem;
 	}
 </style>
