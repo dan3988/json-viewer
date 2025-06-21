@@ -32,11 +32,9 @@
 		$current = 0;
 	}
 </script>
-<div class="root">
-	<div class="hitbox"
+<div class="root" class:shown>
+	<div class="hitbox" class:hoverable={!$current}
 		bind:this={hitbox}
-		class:hoverable={!$current}
-		class:shown
 		on:mouseenter={onMouseEnter}
 		on:mouseleave={onMouseLeave}
 		on:focusin={onFocusIn}
@@ -55,9 +53,15 @@
 </div>
 <style lang="scss">
 	.root {
+		--hitbox-content: unset;
 		z-index: 1;
 		position: relative;
 		height: 1px;
+
+		&.shown {
+			--hitbox-content: "";
+			z-index: 5;
+		}
 	}
 
 	.hitbox {
@@ -72,8 +76,8 @@
 			--line-color: var(--jv-tertiary-hover-border);
 		}
 
-		&.shown::before {
-			content: "";
+		&::before {
+			content: var(--hitbox-content);
 			position: absolute;
 			width: 15rem;
 			left: 1rem;

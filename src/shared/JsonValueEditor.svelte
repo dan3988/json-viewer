@@ -109,7 +109,7 @@
 </span>
 <style lang="scss">
 	.root {
-		flex: 1 1 0;
+		z-index: 2;
 		display: inline-flex;
 		position: relative;
 		
