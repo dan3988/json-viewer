@@ -70,7 +70,7 @@ export namespace edits {
 	}
 
 	export function renameProperty(model: ViewerModel, obj: json.JObject, oldName: string, newName: string) {
-		modifyStructure(model, obj, newName, obj => obj.rename(oldName, newName), obj => obj.rename(newName, oldName));
+		modifyStructure(model, obj, null, newName, obj => obj.rename(oldName, newName), obj => obj.rename(newName, oldName));
 	}
 
 	export function sortObject(model: ViewerModel, obj: json.JObject, desc?: boolean) {
@@ -97,7 +97,7 @@ export namespace edits {
 			commit = obj => obj.insertAfter(prop, sibling);
 		}
 
-		modifyStructure(model, obj, key, commit, () => prop.remove());
+		modifyStructure(model, obj, prop, key, commit, () => prop.remove());
 	}
 
 	export async function addToArray(model: ViewerModel, arr: json.JArray, mode: json.AddType, index?: number) {
@@ -106,6 +106,7 @@ export namespace edits {
 			commit() {
 				arr.insertProperty(prop);
 				arr.owner.isExpanded = true;
+				model.selected.reset(prop);
 			},
 			undo() {
 				prop.remove();
@@ -113,7 +114,7 @@ export namespace edits {
 		});
 	}
 
-	function modifyStructure(model: ViewerModel, obj: json.JObject, key: string, commit: (obj: json.JObject) => void, undo: (obj: json.JObject) => void) {
+	function modifyStructure(model: ViewerModel, obj: json.JObject, prop: null | json.JProperty, key: string, commit: (obj: json.JObject) => void, undo: (obj: json.JObject) => void) {
 		let existing: undefined | json.JProperty<string>;
 		let existingSibling: undefined | null | json.JProperty<string>;
 		model.edits.push({
@@ -121,6 +122,9 @@ export namespace edits {
 				existing = obj.getProperty(key);
 				existingSibling = existing?.next;
 				commit(obj);
+				if (prop) {
+					model.selected.reset(prop);
+				}
 			},
 			undo() {
 				undo(obj);
