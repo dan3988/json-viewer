@@ -77,7 +77,6 @@ export declare namespace json {
 
 	export interface JTokenTypeMap {
 		"container": JContainer;
-		"property": JProperty;
 		"value": JValue;
 	}
 	
