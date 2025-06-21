@@ -1,49 +1,27 @@
 <script lang="ts" context="module">
-	import { writable, type Writable } from "svelte/store";
 	import type json from "../json";
-
-	const current = writable(0);
-	let counter = 0;
 </script>
 <script lang="ts">
-	export let name: Writable<string> | undefined = undefined;
 	export let insert: (type: json.AddType) => void;
 
-	const id = ++counter;
-
-	let hovering = false;
+	let shown = false;
 	let hitbox: HTMLElement;
 
-	$: shown = ($current == 0 && hovering) || ($current == id);
-
 	function onMouseEnter() {
-		hovering = true;
+		shown = true;
 	}
 
 	function onMouseLeave() {
-		hovering = false;
-	}
-
-	function onFocusIn() {
-		$current = id;
-	}
-
-	function onFocusOut() {
-		$current = 0;
+		shown = false;
 	}
 </script>
 <div class="root" class:shown>
-	<div class="hitbox" class:hoverable={!$current}
+	<div class="hitbox"
 		bind:this={hitbox}
 		on:mouseenter={onMouseEnter}
-		on:mouseleave={onMouseLeave}
-		on:focusin={onFocusIn}
-		on:focusout={onFocusOut}>
+		on:mouseleave={onMouseLeave}>
 		{#if shown}
 			<div class="content input-group border rounded">
-				{#if name}
-					<input type="text" class="form-control" placeholder="Name" bind:value={$name} />
-				{/if}
 				<span class="btn btn-base bi-braces" title="Insert Object" role="button" on:click={insert.bind(undefined, 'object')}></span>
 				<span class="btn btn-base bi-0-circle" title="Insert Array" role="button" on:click={insert.bind(undefined, 'array')}></span>
 				<span class="btn btn-base bi-hash" title="Insert Value" role="button" on:click={insert.bind(undefined, 'value')}></span>
@@ -98,11 +76,6 @@
 		> * {
 			margin: -1px;
 		}
-	}
-
-	.form-control {
-		font-size: 0.8rem;
-		padding: 0 0.25rem;
 	}
 
 	.btn {

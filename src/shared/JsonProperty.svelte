@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
-	import { WritableStoreImpl } from "../store.js";
 	import { onDestroy } from "svelte";
 	import JsonContainerInsert from "./JsonContainerInsert.svelte";
 	import JsonPropertyIndex from "./JsonPropertyIndex.svelte";
@@ -16,18 +15,28 @@
 
 	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
 
-	let propertyName = new WritableStoreImpl('');
+	let pendingIndex = -1;
+	let pendingType: json.AddType;
 
-	function insert(index: number, type: json.AddType) {
-		const { value } = prop;
-		if (value.is('array')) {
-			edits.addToArray(model, value, type, index);
-		} else if (value.is('object')) {
-			const before = props[index] as json.JProperty<string>;
-			const parent = prop.value as json.JObject;
-			edits.addToObject(model, parent, type, propertyName.value, before, true);
-			propertyName.value = '';
+	function insert(index: number, type: keyof json.JContainerAddMap) {
+		const parent = prop.value;
+		if (parent.is('array')) {
+			edits.addToArray(model, parent, type, index);
+		} else if (parent.is('object')) {
+			pendingIndex = index;
+			pendingType = type;
 		}
+	}
+
+	function addObject(name: string) {
+		const index = pendingIndex;
+		const after = props[index - 1] as json.JProperty<string>;
+		const parent = prop.value as json.JObject;
+		edits.addToObject(model, parent, pendingType, name, after);
+	}
+
+	function cancelObject() {
+		pendingIndex = -1;
 	}
 
 	let props: json.JProperty[] = [];
@@ -114,7 +123,9 @@
 	}
 
 	.json-key-placeholder {
+		margin-top: 1px;
 		padding-left: 1em;
+		border: solid transparent var(--bs-border-width);
 	}
 
 	:global(.esc) {
@@ -126,9 +137,7 @@
 		display: grid;
 		grid-template-columns: 1em auto auto auto 1fr;
 		grid-template-rows: auto auto auto auto;
-		border-width: var(--bs-border-width);
-		border-color: transparent;
-		border-style: solid;
+		border: solid transparent var(--bs-border-width);
 
 		&[hidden] {
 			display: none !important;
@@ -274,7 +283,6 @@
 		{/if}
 	</span>
 	{#if prop.value.is("container")}
-		{@const name = prop.value.is('object') ? propertyName : undefined}
 		{#if prop.value.count === 0}
 			<span class="empty-container">empty</span>
 		{:else}
@@ -284,16 +292,23 @@
 				<span class="gutter" on:click={onGutterClicked}></span>
 				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
 					{#each props as prop, i (prop)}
+						{#if i === pendingIndex}
+							<li class="json-key-placeholder">
+								<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
+							</li>
+						{/if}
 						<li>
-							<JsonContainerInsert {name} insert={insert.bind(undefined, i)} />
+							<JsonContainerInsert insert={insert.bind(undefined, i)} />
 						</li>
 						<li>
 							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
 						</li>
 					{/each}
-					<li>
-						<JsonContainerInsert {name} insert={insert.bind(undefined, props.length)} />
-					</li>
+					{#if props.length === pendingIndex}
+						<li class="json-key-placeholder">
+							<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
+						</li>
+					{/if}
 				</ul>
 			{/if}
 		{/if}
