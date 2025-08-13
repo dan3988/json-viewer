@@ -97,7 +97,7 @@ function checksum(data) {
  * @returns {import("rollup").Plugin}
  */
 export async function hotreload(options = {}) {
-	const { port = 58997, baseDir = ".", prefix } = options;
+	const { port = 30467, baseDir = ".", prefix } = options;
 	const guid = crypto.randomUUID();
 	const push = await listen(port, guid);
 
