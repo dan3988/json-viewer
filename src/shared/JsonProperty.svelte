@@ -30,9 +30,14 @@
 
 	function addObject(name: string) {
 		const index = pendingIndex;
-		const after = props[index - 1] as json.JProperty<string>;
 		const parent = prop.value as json.JObject;
-		edits.addToObject(model, parent, pendingType, name, after);
+		if (index) {
+			const after = props[index - 1] as json.JProperty<string>;
+			edits.addToObject(model, parent, pendingType, name, after);
+		} else {
+			const before = props[0] as json.JProperty<string>;
+			edits.addToObject(model, parent, pendingType, name, before, true);
+		}
 	}
 
 	function cancelObject() {
@@ -132,6 +137,15 @@
 		color: var(--jv-num-fg);
 	}
 
+	.container-count {
+		color: var(--jv-num-fg);
+	}
+
+	.container-empty {
+		font-style: italic;
+		color: var(--col-shadow);
+	}
+
 	.json-prop {
 		--expander-rotate: 0deg;
 		display: grid;
@@ -160,7 +174,7 @@
 			&.expanded {
 				--expander-rotate: 90deg;
 
-				>.prop-count {
+				>.container-summary {
 					display: none;
 				}
 
@@ -194,18 +208,9 @@
 			}
 		}
 
-		> .prop-count, >.empty-container {
+		> .container-summary {
 			padding: 0 5px;
 			grid-area: 1 / 4 / span 1 / span 1;
-		}
-
-		> .prop-count {
-			color: var(--jv-num-fg);
-		}
-
-		> .empty-container {
-			font-style: italic;
-			color: var(--col-shadow);
 		}
 
 		> .expander {
@@ -266,6 +271,10 @@
 	.json-container {
 		display: flex;
 		flex-direction: column;
+
+		> .container-empty {
+			padding-left: 1rem;
+		}
 	}
 </style>
 {#if prop}
@@ -284,23 +293,34 @@
 	</span>
 	{#if prop.value.is("container")}
 		<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
-		<span class="prop-count">{prop.value.count || 'empty'}</span>
+		{#if props.length}
+			<span class="container-summary container-count">{props.length}</span>
+		{:else}
+			<span class="container-summary container-empty">empty</span>
+		{/if}
 		{#if $isExpanded}
 			<span class="gutter" on:click={onGutterClicked}></span>
 			<ul class="json-container json-{prop.value.subtype} p-0 m-0">
-				{#each props as prop, i (prop)}
-					{#if i === pendingIndex}
-						<li class="json-key-placeholder">
-							<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
+				<li>
+					<JsonContainerInsert insert={insert.bind(undefined, 0)} />
+				</li>
+				{#if props.length}
+					{#each props as prop, i (prop)}
+						{#if i === pendingIndex}
+							<li class="json-key-placeholder">
+								<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
+							</li>
+						{/if}
+						<li>
+							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
 						</li>
-					{/if}
-					<li>
-						<JsonContainerInsert insert={insert.bind(undefined, i)} />
-					</li>
-					<li>
-						<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
-					</li>
-				{/each}
+						<li>
+							<JsonContainerInsert insert={insert.bind(undefined, i + 1)} />
+						</li>
+					{/each}
+				{:else if pendingIndex < 0}
+					<li class="container-empty">empty</li>
+				{/if}
 				{#if props.length === pendingIndex}
 					<li class="json-key-placeholder">
 						<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
