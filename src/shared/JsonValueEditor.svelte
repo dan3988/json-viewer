@@ -85,13 +85,10 @@
 			}
 		});
 
-		const unsplit = originalValue ?? '';
-		if (unsplit) {
-			const lines = originalValue == null ? '' : serialize(originalValue).split('\n');
-			for (let i = 0; i < lines.length; i++) {
-				target.appendChild(document.createTextNode(lines[i]));
-				target.appendChild(document.createElement('br'));
-			}
+		const lines = serialize(originalValue).split('\n');
+		for (let i = 0; i < lines.length; i++) {
+			target.appendChild(document.createTextNode(lines[i]));
+			target.appendChild(document.createElement('br'));
 		}
 
 		target.focus();
