@@ -9,7 +9,9 @@
 			"request": "launch",
 			"webRoot": "${workspaceFolder}/out/chrome",
 			"url": "chrome://extensions/",
-			"runtimeArgs": ["--load-extension=${workspaceFolder}/out/chrome"]
+			"runtimeArgs": [
+				"--load-extension=${workspaceFolder}/out/chrome"
+			]
 		},
 		{
 			"name": "Firefox",
@@ -20,7 +22,13 @@
 			"webRoot": "${workspaceFolder}/out/firefox",
 			"profileDir": "${workspaceFolder}/.moz",
 			"keepProfileChanges": true,
-			"request": "launch"
+			"request": "launch",
+			"pathMappings": [
+				{
+					"url": "moz-extension://src",
+					"path": "${workspaceFolder}/src"
+				}
+			]
 		},
 		{
 			"name": "Tests",
