@@ -283,34 +283,30 @@
 		{/if}
 	</span>
 	{#if prop.value.is("container")}
-		{#if prop.value.count === 0}
-			<span class="empty-container">empty</span>
-		{:else}
-			<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
-			<span class="prop-count">{prop.value.count}</span>
-			{#if $isExpanded}
-				<span class="gutter" on:click={onGutterClicked}></span>
-				<ul class="json-container json-{prop.value.subtype} p-0 m-0">
-					{#each props as prop, i (prop)}
-						{#if i === pendingIndex}
-							<li class="json-key-placeholder">
-								<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
-							</li>
-						{/if}
-						<li>
-							<JsonContainerInsert insert={insert.bind(undefined, i)} />
-						</li>
-						<li>
-							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
-						</li>
-					{/each}
-					{#if props.length === pendingIndex}
+		<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
+		<span class="prop-count">{prop.value.count || 'empty'}</span>
+		{#if $isExpanded}
+			<span class="gutter" on:click={onGutterClicked}></span>
+			<ul class="json-container json-{prop.value.subtype} p-0 m-0">
+				{#each props as prop, i (prop)}
+					{#if i === pendingIndex}
 						<li class="json-key-placeholder">
 							<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
 						</li>
 					{/if}
-				</ul>
-			{/if}
+					<li>
+						<JsonContainerInsert insert={insert.bind(undefined, i)} />
+					</li>
+					<li>
+						<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
+					</li>
+				{/each}
+				{#if props.length === pendingIndex}
+					<li class="json-key-placeholder">
+						<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
+					</li>
+				{/if}
+			</ul>
 		{/if}
 	{:else if prop.value.is("value")}
 		<span class="json-value">
