@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import { onDestroy } from "svelte";
-	import JsonContainerInsert from "./JsonContainerInsert.svelte";
+	import JsonActions, { type InsertChildMode, type InsertSiblingMode } from "./JsonActions.svelte";
 	import JsonPropertyIndex from "./JsonPropertyIndex.svelte";
 	import JsonPropertyName from "./JsonPropertyName.svelte";
 	import JsonValue from "./JsonValue.svelte";
@@ -12,17 +12,39 @@
 	export let prop: json.JProperty;
 	export let indent = -1;
 	export let maxIndentClass: number;
+	export let remove: (() => void) | undefined = undefined;
+	export let insertSibling: ((type: json.AddType, mode: InsertSiblingMode) => void) | undefined = undefined;
 
+	$: ({ selected } = model.state.props)
 	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
+
+	$: isActive = $selected.length == 1 && $selected[0] == prop;
+
+	let editingValue = false;
+	let editingName = false;
 
 	let pendingIndex = -1;
 	let pendingType: json.AddType;
 
-	function insert(index: number, type: keyof json.JContainerAddMap) {
+	function _insertChild(type: json.AddType, mode: InsertChildMode) {
+		prop.isExpanded = true;
 		const parent = prop.value;
 		if (parent.is('array')) {
-			edits.addToArray(model, parent, type, index);
+			const index = mode == 'last' ? parent.count : 0;
+			edits.addToArray(model, parent, 'value', index);
 		} else if (parent.is('object')) {
+			pendingIndex = +(mode === 'last' && parent.count);
+			pendingType = 'value';
+		}
+	}
+
+	function _insertSibling(index: number, type: json.AddType, mode: InsertSiblingMode) {
+		model.selected.clear();
+		const container = prop.value;
+		index += mode === 'after' ? 1 : 0;
+		if (container.is('array')) {
+			edits.addToArray(model, container, type, index);
+		} else if (container.is('object')) {
 			pendingIndex = index;
 			pendingType = type;
 		}
@@ -52,6 +74,16 @@
 	}
 
 	$: onrename = ((prop) => {
+		const { parent } = prop;
+		if (parent?.is('object')) {
+			return (name: string) => {
+				edits.renameProperty(model, parent, prop.key as string, name);
+				model.execute('scrollTo', prop);
+			}
+		}
+	})(prop);
+
+	$: renameProp = ((prop) => {
 		const { parent } = prop;
 		if (parent?.is('object')) {
 			return (name: string) => {
@@ -125,6 +157,18 @@
 			color: var(--bs-body-color);
 			content: ":";
 		}
+	}
+
+	.json-key-container {
+		position: relative;
+	}
+
+	.json-actions {
+		z-index: 5;
+		position: absolute;
+		top: 100%;
+		left: 100%;
+		translate: -50%;
 	}
 
 	.json-key-placeholder {
@@ -278,20 +322,36 @@
 	}
 </style>
 {#if prop}
-{@const { key } = prop}
+{@const { key, value } = prop}
 <div
 	hidden={$isHidden}
 	data-indent={indent % maxIndentClass}
-	class="json-prop for-{prop.value.type} for-{prop.value.subtype} json-indent"
+	class="json-prop for-{value.type} for-{value.subtype} json-indent"
 	class:expanded={$isExpanded}>
 	<span class="json-key" on:contextmenu={onContextMenu}>
-		{#if typeof key === 'number'}
-			<JsonPropertyIndex bind:this={keyComponent} index={key} selected={$isSelected} onclick={onPropertyClick} />
-		{:else}
-			<JsonPropertyName bind:this={keyComponent} name={key} selected={$isSelected} onclick={onPropertyClick} {onrename} />
-		{/if}
+		<span class="json-key-container">
+			{#if isActive && !(editingName || editingValue)}
+				<div class="json-actions">
+					<JsonActions
+						{model}
+						{prop}
+						edit={value.is('value') && (() => editingValue = true)}
+						rename={renameProp && (() => editingName = true)}
+						{remove}
+						sort={value.is('object') && ((desc) => edits.sortObject(model, value, desc))}
+						insertChild={value.is('container') && _insertChild}
+						{insertSibling}
+					/>
+				</div>
+			{/if}
+			{#if typeof key === 'number'}
+				<JsonPropertyIndex bind:this={keyComponent} index={key} selected={$isSelected} onclick={onPropertyClick} />
+			{:else}
+				<JsonPropertyName bind:this={keyComponent} name={key} selected={$isSelected} onclick={onPropertyClick} {onrename} bind:editing={editingName} />
+			{/if}
+		</span>
 	</span>
-	{#if prop.value.is("container")}
+	{#if value.is("container")}
 		<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
 		{#if props.length}
 			<span class="container-summary container-count">{props.length}</span>
@@ -300,10 +360,7 @@
 		{/if}
 		{#if $isExpanded}
 			<span class="gutter" on:click={onGutterClicked}></span>
-			<ul class="json-container json-{prop.value.subtype} p-0 m-0">
-				<li>
-					<JsonContainerInsert insert={insert.bind(undefined, 0)} />
-				</li>
+			<ul class="json-container json-{value.subtype} p-0 m-0">
 				{#if props.length}
 					{#each props as prop, i (prop)}
 						{#if i === pendingIndex}
@@ -312,10 +369,11 @@
 							</li>
 						{/if}
 						<li>
-							<svelte:self {model} {prop} {maxIndentClass} indent={indent + 1} />
-						</li>
-						<li>
-							<JsonContainerInsert insert={insert.bind(undefined, i + 1)} />
+							<svelte:self {model} {prop} {maxIndentClass}
+								remove={() => edits.deleteProp(model, prop)}
+								indent={indent + 1}
+								insertSibling={_insertSibling.bind(undefined, i)}
+							/>
 						</li>
 					{/each}
 				{:else if pendingIndex < 0}
@@ -328,9 +386,9 @@
 				{/if}
 			</ul>
 		{/if}
-	{:else if prop.value.is("value")}
+	{:else if value.is("value")}
 		<span class="json-value">
-			<JsonValue {model} {prop} />
+			<JsonValue {model} {prop} bind:editing={editingValue} />
 		</span>
 	{/if}
 </div>

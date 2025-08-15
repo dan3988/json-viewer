@@ -73,3 +73,5 @@ declare module "jsonpath-plus" {
 		pointer: string
 	}
 }
+
+type BootstrapIconKey = keyof typeof import("bootstrap-icons/font/bootstrap-icons.json");

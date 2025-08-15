@@ -34,8 +34,7 @@
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
-
-	let editing = false;
+	export let editing = false;
 
 	$: value = prop.value as json.JValue;
 
