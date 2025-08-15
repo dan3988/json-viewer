@@ -135,16 +135,6 @@
 
 		window.getSelection()?.removeAllRanges();
 	}
-
-
-	function onContextMenu(evt: MouseEvent) {
-		if (evt.shiftKey)
-			return;
-
-		evt.preventDefault();
-		model.selected.reset(prop);
-		model.execute("context", prop, evt.clientX, evt.clientY);
-	}
 </script>
 <style lang="scss">
 	@use "src/core.scss" as *;
@@ -328,7 +318,7 @@
 	data-indent={indent % maxIndentClass}
 	class="json-prop for-{value.type} for-{value.subtype} json-indent"
 	class:expanded={$isExpanded}>
-	<span class="json-key" on:contextmenu={onContextMenu}>
+	<span class="json-key">
 		<span class="json-key-container">
 			{#if isActive && !(editingName || editingValue)}
 				<div class="json-actions">

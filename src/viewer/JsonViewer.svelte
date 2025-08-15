@@ -15,8 +15,6 @@
 	import JsonProperty from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import MenuView, { MenuAlign } from "./MenuView.svelte";
-	import ContextMenu, { type Coords, type MenuItem, menuBuilder } from "./ContextMenu.svelte";
-	import PopupInputText from "../shared/PopupInputText.svelte";
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import PopupPanel from "../shared/PopupPanel.svelte";
 	import RequestInfo from "./RequestInfo.svelte";
@@ -26,7 +24,6 @@
 	import { commands } from "../commands";
 	import json from "../json.js";
 	import ThemeTracker from "../theme-tracker.js";
-	import edits from "./editor-helper";
 	import Linq from "@daniel.pickett/linq-js";
 	import fs from "../fs";
 	import schemes from "../schemes.js";
@@ -52,8 +49,6 @@
 	$: maxIndentClass = currentScheme.indents.length;
 
 	let bindings: KeyBindingListener;
-
-	let contextMenu: [Coords, MenuItem[]] | undefined;
 	let prop: HTMLElement;
 
 	let jpathOpen = false;
@@ -77,15 +72,6 @@
 		});
 	}
 
-	function copyKey(property: json.JProperty) {
-		return navigator.clipboard.writeText(String(property.key));
-	}
-
-	function copyValue(value: json.JToken<any>, minify?: boolean) {
-		const text = model.formatValue(value, minify);
-		return navigator.clipboard.writeText(text);
-	}
-
 	type PopupConstructor<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult> = new(props: ComponentConstructorOptions<ComponentProps<TComp>>) => SvelteComponent<ComponentProps<TComp>, PopupCustomEvents<TResult>>;
 
 	function showPopup<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult>(comp: PopupConstructor<TComp, TResult>, props: ComponentProps<TComp>): Promise<TResult>
@@ -107,19 +93,8 @@
 		});
 	}
 
-	type TextPopupOptions = ComponentProps<PopupInputText>;
-
-	function promptText(value: string = "", title: string = "", props?: Except<TextPopupOptions, "value" | "title">) {
-		return showPopup(PopupInputText, { value, title, ...props });
-	}
-
 	function onModelCommand(evt: ViewerCommandEvent) {
 		switch (evt.command) {
-			case "context": {
-				const [prop, x, y] = evt.args;
-				openContextMenu(prop, x, y);
-				break;
-			}
 			case "focusSearch":
 				filterInput.focus();
 				break;
@@ -135,121 +110,6 @@
 		const suggestedName = pathName.slice(i + 1);
 		const data = model.root.value.toString(model.formatIndent);
 		await fs.saveFile(data, suggestedName, 'json');
-	}
-
-	function clearProp(value: json.JContainer) {
-		edits.clearProp(model, value);
-	}
-
-	function editProp(prop: json.JProperty) {
-		const text = model.formatValue(prop.value);
-		const opts: TextPopupOptions = {
-			title: "Edit JSON",
-			value: text,
-			multiLine: true,
-			height: 80,
-			width: 80
-		};
-
-		return showPopup(PopupInputText, opts, text => {
-			let parsed: any;
-			try {
-				parsed = JSON.parse(text);
-			} catch (err) {
-				alert(err);
-				return false;
-			}
-
-			const newProp = json(parsed);
-			edits.replace(model, prop, newProp);
-			return true;
-		});
-	}
-
-	function deleteProp(prop: json.JProperty, selectNext?: boolean) {
-		edits.deleteProp(model, prop, selectNext);
-	}
-
-	async function renameProperty(obj: json.JObject, prop: json.JProperty<string>) {
-		const result = await promptText(prop.key, "Property Name", { width: 33.33 });
-		if (result && result !== prop.key)
-			edits.renameProperty(model, obj, prop, result);
-	}
-
-	function sortObject(obj: json.JObject, desc?: boolean) {
-		edits.sortObject(model, obj, desc);
-	}
-
-	async function addToObject(obj: json.JObject, mode: keyof json.JContainerAddMap) {
-		const key = await promptText("", "Property Name");
-		key && edits.addToObject(model, obj, mode, key);
-	}
-
-	async function addToArray(arr: json.JArray, mode: keyof json.JContainerAddMap) {
-		edits.addToArray(model, arr, mode);
-	}
-
-	function openContextMenu(selected: json.JProperty, x: number, y: number) {
-		const builder = menuBuilder();
-		if (selected.value.is("container")) {
-			const { value } = selected;
-			if (selected.isExpanded) {
-				builder
-					.item("Collapse", () => selected.setExpanded(false, true))
-					.item("Expand All", () => selected.setExpanded(true, true));
-			} else {
-				builder
-					.item("Expand", () => selected.setExpanded(true))
-					.item("Expand All", () => selected.setExpanded(true, true));
-			}
-
-			builder
-				.menu("Modify", builder => {
-					builder
-						.item("Clear", () => clearProp(value))
-						.item("Edit", () => editProp(selected))
-						.item("Delete", () => deleteProp(selected, true));
-
-					if (selected.parent?.is("object")) {
-						const { parent } = selected;
-						builder.item("Rename", () => renameProperty(parent, selected as any))
-					}
-
-					if (value.is("object")) {
-						builder.menu("Sort")
-							.item("A-Z", () => sortObject(value))
-							.item("Z-A", () => sortObject(value, true));
-
-						builder.menu("Add")
-							.item("Object", () => addToObject(value, "object"))
-							.item("Array", () => addToObject(value, "array"))
-							.item("Value", () => addToObject(value, "value"))
-					} else if (value.is("array")) {
-						builder.menu("Add")
-							.item("Object", () => addToArray(value, "object"))
-							.item("Array", () => addToArray(value, "array"))
-							.item("Value", () => addToArray(value, "value"))
-					}
-				})
-				.item("Copy Key", () => copyKey(selected))
-				.menu("Copy Value")
-					.item("Formatted", () => copyValue(selected.value))
-					.item("Minified", () => copyValue(selected.value, true))
-					.end();
-		} else {
-			builder
-				.item("Copy Key", () => copyKey(selected))
-				.item("Copy Value", () => copyValue(selected.value))
-				.item("Edit", () => editProp(selected))
-				.item("Delete", () => deleteProp(selected, true));
-
-			if (selected.parent?.is("object")) {
-				const { parent } = selected;
-				builder.item("Rename", () => renameProperty(parent, selected as any))
-			}
-		}
-
-		contextMenu = [[x, y], builder.build()];
 	}
 
 	function keyMappings(target: HTMLElement) {
@@ -369,15 +229,11 @@
 <svelte:window on:beforeunload={onUnload} />
 <svelte:head>
 	{#each css as href}
-	<link rel="stylesheet" {href} />
+		<link rel="stylesheet" {href} />
 	{/each}
 </svelte:head>
 <SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
 <div class="root bg-body p-1 scheme" data-editor-bg={background}>
-	{#if contextMenu}
-		{@const [pos, items] = contextMenu}
-		<ContextMenu {pos} {items} on:closed={() => contextMenu = undefined}/>
-	{/if}
 	<div class="w-bar pb-1 gap-1">
 		<div class="btn-group">
 			<button type="button" class="btn btn-base bi bi-floppy" title="Save" on:click={saveAs} />
