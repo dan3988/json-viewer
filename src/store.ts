@@ -39,7 +39,9 @@ export abstract class Store<T> implements IStore<T> {
 		}
 	}
 
-	static controller<T>(initialValue: T, comparer: Comparer<T> = strictEquals) {
+	static controller<T>(): StoreController<T | undefined>;
+	static controller<T>(initialValue: T, comparer?: Comparer<T>): StoreController<T>;
+	static controller(initialValue?: any, comparer: Comparer<any> = strictEquals) {
 		return new StoreController(initialValue, comparer);
 	}
 

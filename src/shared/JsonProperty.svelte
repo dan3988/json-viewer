@@ -83,16 +83,6 @@
 		}
 	})(prop);
 
-	$: renameProp = ((prop) => {
-		const { parent } = prop;
-		if (parent?.is('object')) {
-			return (name: string) => {
-				edits.renameProperty(model, parent, prop.key as string, name);
-				model.execute('scrollTo', prop);
-			}
-		}
-	})(prop);
-
 	if (prop.value.is("container")) {
 		const container = prop.value;
 		update();
@@ -326,7 +316,7 @@
 						{model}
 						{prop}
 						edit={value.is('value') && (() => editingValue = true)}
-						rename={renameProp && (() => editingName = true)}
+						rename={onrename && (() => editingName = true)}
 						{remove}
 						sort={value.is('object') && ((desc) => edits.sortObject(model, value, desc))}
 						insertChild={value.is('container') && _insertChild}
