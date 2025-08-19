@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
+	import type ViewerModel from "../viewer-model.js";
 	import { onDestroy } from "svelte";
+	import Border from "./Border.svelte";
 	import JsonActions, { type InsertChildMode, type InsertSiblingMode } from "./JsonActions.svelte";
-	import JsonPropertyIndex from "./JsonPropertyIndex.svelte";
-	import JsonPropertyName from "./JsonPropertyName.svelte";
+	import JsonPropertyKey from "./JsonPropertyKey.svelte";
+	import JsonValueEditor from "./JsonValueEditor.svelte";
 	import JsonValue from "./JsonValue.svelte";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
@@ -16,7 +17,7 @@
 	export let insertSibling: ((type: json.AddType, mode: InsertSiblingMode) => void) | undefined = undefined;
 
 	$: ({ selected } = model.state.props)
-	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
+	$: ({ isExpanded, isHidden } = prop.state.props);
 
 	$: isActive = $selected.length == 1 && $selected[0] == prop;
 
@@ -67,7 +68,6 @@
 	}
 
 	let props: json.JProperty[] = [];
-	let keyComponent: JsonPropertyIndex | JsonPropertyName;
 
 	function update() {
 		props = [...prop.value];
@@ -90,16 +90,6 @@
 		onDestroy(() => container.changed.removeListener(update));
 	}
 
-	model.command.addListener(onModelCommand);
-
-	onDestroy(() => model.command.removeListener(onModelCommand));
-
-	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
-		if (command === "scrollTo" && arg0 === prop) {
-			keyComponent.scrollTo();
-		}
-	}
-
 	function onExpanderClicked() {
 		if (prop.isExpanded) {
 			prop.isExpanded = false;
@@ -110,20 +100,7 @@
 	}
 
 	function onGutterClicked() {
-		model.selected.reset(prop);
-		keyComponent.scrollTo('smooth');
-	}
-
-	function onPropertyClick(evt: MouseEvent) {
-		evt.preventDefault();
-		if (evt.shiftKey) {
-			//evt.preventDefault();
-			model.selected[evt.ctrlKey ? "add" : "reset"](prop, true);
-		} else {
-			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
-		}
-
-		window.getSelection()?.removeAllRanges();
+		model.setSelected(prop, false, true);
 	}
 </script>
 <style lang="scss">
@@ -152,7 +129,6 @@
 	}
 
 	.json-key-placeholder {
-		margin-top: 1px;
 		padding-left: 1em;
 		border: solid transparent var(--bs-border-width);
 	}
@@ -324,11 +300,7 @@
 					/>
 				</div>
 			{/if}
-			{#if typeof key === 'number'}
-				<JsonPropertyIndex bind:this={keyComponent} index={key} selected={$isSelected} onclick={onPropertyClick} />
-			{:else}
-				<JsonPropertyName bind:this={keyComponent} name={key} selected={$isSelected} onclick={onPropertyClick} {onrename} bind:editing={editingName} />
-			{/if}
+			<JsonPropertyKey {prop} {model} {onrename} bind:editing={editingName} />
 		</span>
 	</span>
 	{#if value.is("container")}
@@ -345,7 +317,9 @@
 					{#each props as prop, i (prop)}
 						{#if i === pendingIndex}
 							<li class="json-key-placeholder">
-								<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
+								<Border editing>
+									<JsonValueEditor value="" parse={String} editing onfinish={addObject} cleanup={cancelObject} />
+								</Border>
 							</li>
 						{/if}
 						<li>
@@ -361,7 +335,9 @@
 				{/if}
 				{#if props.length === pendingIndex}
 					<li class="json-key-placeholder">
-						<JsonPropertyName editing onrename={addObject} cleanup={cancelObject} />
+						<Border editing>
+							<JsonValueEditor value="" parse={String} editing onfinish={addObject} cleanup={cancelObject} />
+						</Border>
 					</li>
 				{/if}
 			</ul>
