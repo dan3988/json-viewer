@@ -6,11 +6,16 @@
 
 	let element: HTMLElement;
 
+	function onClick(this: HTMLElement, evt: MouseEvent) {
+		this.focus();
+		onclick?.(evt);
+	}
+
 	export function scrollTo(behavior?: ScrollBehavior) {
 		element.scrollIntoView({ behavior, block: 'start' });
 	}
 </script>
-<span bind:this={element} class="root" class:editable class:editing class:selected on:mousedown|preventDefault on:click={onclick}>
+<span bind:this={element} tabindex="0" class="root" class:editable class:editing class:selected on:mousedown|preventDefault on:click={onClick}>
 	<slot />
 </span>
 <style lang="scss">
@@ -19,6 +24,7 @@
 	.root {
 		scroll-margin-top: $pad-med;
 		cursor: pointer;
+		outline: none;
 		white-space: nowrap;
 		user-select: text;
 		color: var(--jv-key-fg);
