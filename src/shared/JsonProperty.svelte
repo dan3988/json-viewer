@@ -74,16 +74,6 @@
 		props = [...prop.value];
 	}
 
-	$: onrename = ((prop) => {
-		const { parent } = prop;
-		if (parent?.is('object')) {
-			return (name: string) => {
-				edits.renameProperty(model, parent, prop.key as string, name);
-				model.execute('scrollTo', prop);
-			}
-		}
-	})(prop);
-
 	if (prop.value.is("container")) {
 		const container = prop.value;
 		update();
@@ -293,7 +283,7 @@
 						{model}
 						{prop}
 						edit={value.is('value') && (() => editingValue = true)}
-						rename={onrename && (() => editingName = true)}
+						rename={value.parent?.is('object') && (() => editingName = true)}
 						{remove}
 						sort={value.is('object') && ((desc) => edits.sortObject(model, value, desc))}
 						insertChild={value.is('container') && _insertChild}
@@ -301,7 +291,7 @@
 					/>
 				</div>
 			{/if}
-			<JsonPropertyKey {prop} {model} {onrename} bind:editing={editingName} />
+			<JsonPropertyKey {prop} {model} bind:editing={editingName} />
 		</span>
 	</span>
 	{#if value.is("container")}
