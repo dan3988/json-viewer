@@ -29,8 +29,14 @@ interface ExtendedEventTarget<Events = Dict<Event>> extends EventTarget {
 	 * @param handlers A dictionary of event names and their handlers
 	 * @returns A function used to unsubscribe from all events
 	 */
-	subscribe(handlers: { [P in keyof Events]?: (this: this, evt: Events[P]) => any }): Action;
+	subscribe(handlers: EventSubscriptions<this, Events>): Action;
 }
+
+type PresetEventModifier = 'preventDefault' | 'stopPropagation' | 'stopImmediatePropagation';
+
+type EventHandler<T = any, E = any> = (this: T, evt: E) => any;
+type EventSubscription<T, E> = EventHandler<T, E> | PresetEventModifier;
+type EventSubscriptions<T, Events = Dict<Event>> = { [P in keyof Events]?: EventSubscription<T, Events[P]> };
 
 interface Document extends ExtendedEventTarget<DocumentEventMap> {
 }
@@ -43,6 +49,11 @@ interface HTMLElement extends ExtendedEventTarget<HTMLElementEventMap> {
 
 {
 	const optOnce = { once: true };
+	const presets: Record<PresetEventModifier, EventHandler<EventTarget, Event>> = {
+		preventDefault: (e) => e.preventDefault(),
+		stopPropagation: (e) => e.stopPropagation(),
+		stopImmediatePropagation: (e) => e.stopImmediatePropagation(),
+	};
 
 	const on: ExtendedEventTarget["on"] = function(this: ExtendedEventTarget, type, handler) {
 		this.addEventListener(type, handler);
@@ -59,16 +70,19 @@ interface HTMLElement extends ExtendedEventTarget<HTMLElementEventMap> {
 		return this;
 	}
 
-	const subscribe: ExtendedEventTarget["subscribe"] = function(this: EventTarget, arg0: any, arg1?: any) {
+	const subscribe: ExtendedEventTarget["subscribe"] = function(this: EventTarget, arg0: string | EventSubscriptions<any, any>, arg1?: any) {
 		if (typeof arg0 === "string") {
 			this.addEventListener(arg0, arg1);
 			return EventTarget.prototype.removeEventListener.bind(this, arg0, arg1);
 		} else {
 			const controller = new AbortController();
-			const { signal } = controller;
+			const options = { signal: controller.signal };
 			for (const key in arg0) {
-				const handler = arg0[key];
-				this.addEventListener(key, handler, { signal });
+				const arg = arg0[key];
+				if (arg) {
+					const handler = typeof arg === 'string' ? presets[arg] : arg;
+					this.addEventListener(key, handler, options);
+				}
 			}
 
 			return AbortController.prototype.abort.bind(controller);

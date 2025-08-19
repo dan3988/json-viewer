@@ -96,9 +96,7 @@
 		update(arg);
 
 		const unsub = target.subscribe({
-			mousedown(evt) {
-				evt.preventDefault()
-			},
+			mousedown: 'preventDefault',
 			click() {
 				const { suggestion, index } = arg;
 				dispatch("click", { suggestion, index });

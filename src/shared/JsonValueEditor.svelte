@@ -64,9 +64,9 @@
 		}
 
 		const destroy = target.subscribe({
-			keydown(evt) {
-				evt.stopPropagation();
-			},
+			mousedown: 'stopPropagation',
+			click: 'stopPropagation',
+			keydown: 'stopPropagation',
 			keyup(evt) {
 				if (evt.key === "Escape") {
 					editing = false;
@@ -78,12 +78,6 @@
 					evt.preventDefault();
 					finish();
 				}
-			},
-			mousedown(evt) {
-				evt.stopPropagation();
-			},
-			click(evt) {
-				evt.stopPropagation();
 			},
 			focusout: finish,
 			beforeinput(evt) {
