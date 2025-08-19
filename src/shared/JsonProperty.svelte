@@ -118,7 +118,6 @@
 
 	.json-key-placeholder {
 		padding-left: 1em;
-		border: solid transparent var(--bs-border-width);
 	}
 
 	:global(.esc) {
@@ -139,7 +138,6 @@
 		display: grid;
 		grid-template-columns: 1em auto auto auto 1fr;
 		grid-template-rows: auto auto auto auto;
-		border: solid transparent var(--bs-border-width);
 
 		&[hidden] {
 			display: none !important;
@@ -258,6 +256,7 @@
 
 	.json-container {
 		display: flex;
+		gap: 1px;
 		flex-direction: column;
 
 		> .container-empty {

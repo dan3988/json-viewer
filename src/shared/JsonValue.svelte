@@ -75,7 +75,6 @@
 			color: var(--jv-tertiary-active-text);
 			border-radius: var(--bs-border-radius);
 			border: 1px solid var(--jv-tertiary-active-border);
-			margin: -1px;
 		}
 	}
 </style>
