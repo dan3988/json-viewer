@@ -11,12 +11,16 @@
 		onclick?.(evt);
 	}
 
+	function focus() {
+		element.focus();
+	}
+
 	export function scrollTo(behavior?: ScrollBehavior) {
 		element.scrollIntoView({ behavior, block: 'start' });
 	}
 </script>
 <span bind:this={element} tabindex="0" class="root" class:editable class:editing class:selected on:mousedown|preventDefault on:click={onClick}>
-	<slot />
+	<slot {focus} />
 </span>
 <style lang="scss">
 	@use "src/core.scss" as *;

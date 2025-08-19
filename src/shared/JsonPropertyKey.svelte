@@ -54,12 +54,12 @@
 	}
 </script>
 <Border bind:this={border} editable {editing} selected={$isSelected} onclick={onClick}>
-	<div class="root">
+	<div class="root" slot="default" let:focus>
 		<span class="key-text">
 			{#if typeof key === 'number'}
 				{key}
 			{:else}
-				<JsonValueEditor value={key} parse={String} checkEqual autoSelect bind:editing renderer={renderKey} onfinish={onrename} />
+				<JsonValueEditor value={key} parse={String} checkEqual autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
 			{/if}
 		</span>
 		<slot />

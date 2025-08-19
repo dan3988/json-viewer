@@ -12,6 +12,7 @@
 	export let editing = false;
 	export let onfinish: ((value: T) => void) | Falsy = undefined;
 	export let oncancel: VoidFunction | Falsy = undefined;
+	export let onclose: VoidFunction | Falsy = undefined;
 	export let onediting: VoidFunction | Falsy = undefined;
 	export let checkEqual = false;
 	export let autoSelect = false;
@@ -61,6 +62,8 @@
 			} else {
 				oncancel && oncancel();
 			}
+
+			onclose && onclose();
 		}
 
 		const destroy = target.subscribe({
@@ -71,6 +74,7 @@
 				if (evt.key === "Escape") {
 					editing = false;
 					oncancel && oncancel();
+					onclose && onclose();
 				}
 			},
 			keypress(evt) {
