@@ -28,6 +28,7 @@
 	let pendingType: json.AddType;
 
 	function _insertChild(type: json.AddType, mode: InsertChildMode) {
+		model.selected.clear();
 		prop.isExpanded = true;
 		const parent = prop.value;
 		if (parent.is('array')) {
@@ -35,7 +36,7 @@
 			edits.addToArray(model, parent, 'value', index);
 		} else if (parent.is('object')) {
 			pendingIndex = +(mode === 'last' && parent.count);
-			pendingType = 'value';
+			pendingType = type;
 		}
 	}
 
