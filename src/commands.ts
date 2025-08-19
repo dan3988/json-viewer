@@ -1,7 +1,8 @@
+import type ViewerModel from "./viewer-model.js";
+import type json from "./json.js";
 import { KeyBinding, KeyBindingScope, type KeyCode, type ModifierKeys } from "./keyboard.js";
 import edits from "./viewer/editor-helper.js";
 import Linq from "@daniel.pickett/linq-js";
-import type ViewerModel from "./viewer-model.js";
 
 type KeyBindingInit = [scope: KeyBindingScope, key: KeyCode, modif?: ModifierKeys];
 
@@ -112,6 +113,14 @@ const commandHandlers: Record<string, CommandInvoker> = {
 
 		return true;
 	},
+	selectionRename(model) {
+		const selected = model.selected.last;
+		const parent = selected?.parent?.is('object');
+		if (parent)
+			model.execute('rename', selected as json.JProperty<string>);
+
+		return true;
+	},
 	search(model) {
 		model.execute("focusSearch");
 		return true;
@@ -148,6 +157,7 @@ const _commands = Object.freeze([
 	new CommandImpl("selectionPrev", "Go to previous sibling property", [KeyBindingScope.Editor, "ArrowUp"]),
 	new CommandImpl("selectionDown", "Go to child container", [KeyBindingScope.Editor, "ArrowRight"]),
 	new CommandImpl("selectionUp", "Go to parent container", [KeyBindingScope.Editor, "ArrowLeft"]),
+	new CommandImpl("selectionRename", "Rename current property", [KeyBindingScope.Editor, "KeyR"]),
 	new CommandImpl("editUndo", "Undo last change", [KeyBindingScope.Window, "KeyZ", { ctrlKey: true }]),
 	new CommandImpl("editRedo", "Redo last change", [KeyBindingScope.Window, "KeyY", { ctrlKey: true }], [KeyBindingScope.Window, "KeyZ", { ctrlKey: true, shiftKey: true }]),
 	new CommandImpl("fileSave", "Save file", [KeyBindingScope.Window, "KeyS", { ctrlKey: true }]),

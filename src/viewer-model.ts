@@ -32,6 +32,7 @@ export interface ViewerCommands {
 	focusSearch: [];
 	saveAs: [];
 	scrollTo: [token: json.JProperty];
+	rename: [token: json.JProperty<string>];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;

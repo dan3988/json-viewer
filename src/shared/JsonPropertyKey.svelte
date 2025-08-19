@@ -29,8 +29,15 @@
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
 	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
-		if (command === "scrollTo" && arg0 === prop) {
-			border.scrollTo();
+		if (arg0 === prop) {
+			switch (command) {
+				case "scrollTo":
+					border.scrollTo();
+					break;
+				case "rename":
+					editing = true;
+					break;
+			}
 		}
 	}
 
