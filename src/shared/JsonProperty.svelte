@@ -24,9 +24,6 @@
 	let editingValue = false;
 	let editingName = false;
 
-	let pendingIndex = -1;
-	let pendingType: json.AddType;
-
 	function _insertChild(type: json.AddType, mode: InsertChildMode) {
 		model.selected.clear();
 		prop.isExpanded = true;
@@ -35,40 +32,45 @@
 			const index = mode == 'last' ? parent.count : 0;
 			edits.addToArray(model, parent, 'value', index);
 		} else if (parent.is('object')) {
-			pendingIndex = +(mode === 'last' && parent.count);
-			pendingType = type;
+			const [index, sibling, insertBefore] =
+				mode === "last"
+					? [parent.count, parent.last, false]
+					: [0, parent.first, true];
+
+			const commit: CommitObject = addObject.bind(undefined, parent, sibling, insertBefore, type);
+			props.splice(index, 0, commit);
+			props = props;
 		}
 	}
 
 	function _insertSibling(index: number, type: json.AddType, mode: InsertSiblingMode) {
 		model.selected.clear();
 		const container = prop.value;
-		index += mode === 'after' ? 1 : 0;
+		const targetIndex = index + +(mode === 'after');
 		if (container.is('array')) {
-			edits.addToArray(model, container, type, index);
+			edits.addToArray(model, container, type, targetIndex);
 		} else if (container.is('object')) {
-			pendingIndex = index;
-			pendingType = type;
+			const sibling = props[index] as json.JProperty<string>;
+			const commit: CommitObject = addObject.bind(undefined, container, sibling, mode === 'before', type);
+			props.splice(targetIndex, 0, commit);
+			props = props;
 		}
 	}
 
-	function addObject(name: string) {
-		const index = pendingIndex;
-		const parent = prop.value as json.JObject;
-		if (index) {
-			const after = props[index - 1] as json.JProperty<string>;
-			edits.addToObject(model, parent, pendingType, name, after);
-		} else {
-			const before = props[0] as json.JProperty<string>;
-			edits.addToObject(model, parent, pendingType, name, before, true);
-		}
+	function addObject(parent: json.JObject, sibling: null | json.JProperty<string>, insertBefore: boolean, type: json.AddType, name: string) {
+		edits.addToObject(model, parent, type, name, sibling ?? undefined, insertBefore);
 	}
 
-	function cancelObject() {
-		pendingIndex = -1;
+	function removePendingEdit(index: number) {
+		props.splice(index, 1);
+		props = props;
 	}
 
-	let props: json.JProperty[] = [];
+	type CommitObject = (name: string) => void;
+
+	let props: (json.JProperty | CommitObject)[] = [];
+
+	$: console.log(props);
 
 	function update() {
 		props = [...prop.value];
@@ -304,32 +306,26 @@
 		{#if $isExpanded}
 			<span class="gutter" on:click={onGutterClicked}></span>
 			<ul class="json-container json-{value.subtype} p-0 m-0">
-				{#if props.length}
+				{#if props.length === 0}
+					<li class="container-empty">empty</li>
+				{:else}
 					{#each props as prop, i (prop)}
-						{#if i === pendingIndex}
+						{#if typeof prop === 'function'}
 							<li class="json-key-placeholder">
 								<Border editing>
-									<JsonValueEditor value="" parse={String} editing onfinish={addObject} cleanup={cancelObject} />
+									<JsonValueEditor value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
 								</Border>
 							</li>
+						{:else}
+							<li>
+								<svelte:self {model} {prop} {maxIndentClass}
+									remove={() => edits.deleteProp(model, prop)}
+									indent={indent + 1}
+									insertSibling={_insertSibling.bind(undefined, i)}
+								/>
+							</li>
 						{/if}
-						<li>
-							<svelte:self {model} {prop} {maxIndentClass}
-								remove={() => edits.deleteProp(model, prop)}
-								indent={indent + 1}
-								insertSibling={_insertSibling.bind(undefined, i)}
-							/>
-						</li>
 					{/each}
-				{:else if pendingIndex < 0}
-					<li class="container-empty">empty</li>
-				{/if}
-				{#if props.length === pendingIndex}
-					<li class="json-key-placeholder">
-						<Border editing>
-							<JsonValueEditor value="" parse={String} editing onfinish={addObject} cleanup={cancelObject} />
-						</Border>
-					</li>
 				{/if}
 			</ul>
 		{/if}

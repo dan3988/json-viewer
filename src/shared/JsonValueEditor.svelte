@@ -11,8 +11,8 @@
 	export let disabled = false;
 	export let editing = false;
 	export let onfinish: undefined | ((value: T) => void) = undefined;
+	export let oncancel: undefined | VoidFunction = undefined;
 	export let checkEqual = false;
-	export let cleanup: undefined | VoidFunction = undefined;
 	export let autoSelect = false;
 
 	/**
@@ -44,10 +44,11 @@
 			const text = getText(target);
 			const result = parse(text);
 			editing = false;
-			if (onfinish && (!checkEqual || result !== originalValue))
-				onfinish(result);
-
-			cleanup?.()
+			if (!checkEqual || result !== originalValue) {
+				onfinish?.(result);
+			} else {
+				oncancel?.();
+			}
 		}
 
 		const destroy = target.subscribe({
@@ -57,7 +58,7 @@
 			keyup(evt) {
 				if (evt.key === "Escape") {
 					editing = false;
-					cleanup?.();
+					oncancel?.();
 				}
 			},
 			keypress(evt) {
