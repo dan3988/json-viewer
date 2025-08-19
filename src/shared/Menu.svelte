@@ -158,13 +158,11 @@
 
 	MenuController.setContext(controller);
 
-	const delay = 250;
-
 	let activePrimary: MenuItemController | null = null;
 	let activeSub: MenuItemController | null = null;
 	let expanded: IMenuListController | null = null;
-	let enterTimeout = new Timeout(delay);
-	let leaveTimeout = new Timeout(delay);
+	let enterTimeout = new Timeout(250);
+	let leaveTimeout = new Timeout(500);
 
 	function onClick(entry: MenuItemController) {
 		if (entry.type === 'action') {
@@ -175,14 +173,22 @@
 
 	function onMouseLeave(entry: MenuItemController) {
 		if (!enterTimeout.cancel() && activePrimary === entry) {
-			expanded = null;
-			activePrimary = null;
-			activeSub = null;
+			leaveTimeout.schedule(() => {
+				expanded = null;
+				activePrimary = null;
+				activeSub = null;
+			})
 		}
 	}
 
 	function onMouseEnter(entry: MenuItemController) {
+		if (leaveTimeout.cancel() && expanded === entry) {
+			return;
+		}
+
+		expanded = null;
 		activePrimary = entry;
+		activeSub = null;
 
 		if (entry.type === 'list') {
 			const list = entry;
@@ -194,29 +200,22 @@
 		activeSub = entry;
 	}
 </script>
-<div class="menu-root border bg-body-tertiary rounded">
+<div class="menu-root bg-body-tertiary border rounded">
 	<span class="title">{(activeSub ?? activePrimary)?.title ?? title}</span>
-	<ul>
+	<ul class="menu-list">
 		{#each $entries as entry}
 			{@const { icon } = entry}
 			{@const role = entry.type === 'action' ? 'button' : 'menu'}
-			<li
-				class="btn {icon && `bi-${icon}`}"
-				{role}
-				on:click={() => onClick(entry)}
-				on:mouseenter={() => onMouseEnter(entry)}
-				on:mouseleave={() => onMouseLeave(entry)}>
+			<li on:mouseenter={() => onMouseEnter(entry)} on:mouseleave={() => onMouseLeave(entry)}>
+				<span class="btn {icon && `bi-${icon}`}" class:open={expanded === entry} {role} on:click={() => onClick(entry)} />
 				{#if expanded == entry}
 					<div class="floating-menu">
-						<ul class="bg-body-tertiary border rounded">
+						<ul class="menu-list bg-body-tertiary border rounded">
 							{#each expanded.children as entry}
 								{@const { icon } = entry}
-								<li
-									class="btn {icon && `bi-${icon}`}"
-									role="menuitem"
-									on:click={() => onClick(entry)}
-									on:mouseenter={() => onNestedMouseEnter(entry)}
-								/>
+								<li on:mouseenter={() => onNestedMouseEnter(entry)}>
+									<span class="btn {icon && `bi-${icon}`}" role="menuitem" on:click={() => onClick(entry)} />
+								</li>
 							{/each}
 						</ul>
 					</div>
@@ -235,36 +234,40 @@
 	//	font-weight: 500;
 	}
 
-	.menu-root {
-		ul {
+	.menu-list {
+		display: flex;
+		flex-direction: row;
+		padding: $pad-med;
+		gap: $pad-med;
+
+		> li {
+			position: relative;
 			display: flex;
 			flex-direction: row;
-
-			> li {
-				position: relative;
-				display: flex;
-				flex-direction: row;
-				gap: $pad-med;
-				align-items: center;
-			}
+			align-items: center;
 		}
 	}
 
 	.floating-menu {
 		position: absolute;
-		left: 0;
+		left: calc((var(--bs-border-width) + $pad-med) * -1);
 		top: 100%;
 		padding-top: $pad-med * 2;
 	}
 
 	.btn {
 		border: none;
-		margin: $pad-med;
 		--bs-btn-hover-bg: var(--jv-tertiary-hover-bg);
 		--bs-btn-active-bg: var(--jv-tertiary-active-bg);
 		--bs-btn-disabled-bg: var(--jv-tertiary-disabled-bg);
 		--bs-btn-hover-color: var(--jv-tertiary-hover-text);
 		--bs-btn-active-color: var(--jv-tertiary-active-text);
 		--bs-btn-disabled-color: var(--jv-tertiary-disabled-text);
+
+		&.open:not(:hover) {
+			color: var(--bs-btn-active-color);
+			background-color: var(--bs-btn-active-bg);
+			border-color: var(--bs-btn-active-border-color);
+		}
 	}
 </style>
