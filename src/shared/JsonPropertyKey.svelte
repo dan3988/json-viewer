@@ -7,10 +7,11 @@
 	import Border from "./Border.svelte";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
-	export let prop: json.JProperty;
 	export let model: ViewerModel;
-	export let editing = false;
+	export let prop: json.JProperty;
+	export let editing: boolean;
 
+	$: ({ key, state: { props: { isSelected } } } = prop);
 	$: onrename = ((prop) => {
 		const { parent } = prop;
 		if (parent?.is('object')) {
@@ -20,8 +21,6 @@
 			}
 		}
 	})(prop);
-
-	$: ({ key, state: { props: { isSelected } } } = prop);
 
 	let border: Border;
 
@@ -35,7 +34,7 @@
 		}
 	}
 
-	function onPropertyClick(evt: MouseEvent) {
+	function onClick(evt: MouseEvent) {
 		evt.preventDefault();
 		if (evt.shiftKey) {
 			//evt.preventDefault();
@@ -47,10 +46,25 @@
 		window.getSelection()?.removeAllRanges();
 	}
 </script>
-<Border bind:this={border} editable {editing} selected={$isSelected} onclick={onPropertyClick}>
-	{#if typeof key === 'number'}
-		{key}
-	{:else}
-		<JsonValueEditor value={key} parse={String} checkEqual autoSelect bind:editing renderer={renderKey} onfinish={onrename} />
-	{/if}
+<Border bind:this={border} editable {editing} selected={$isSelected} onclick={onClick}>
+	<div class="root">
+		<span class="key-text">
+			{#if typeof key === 'number'}
+				{key}
+			{:else}
+				<JsonValueEditor value={key} parse={String} checkEqual autoSelect bind:editing renderer={renderKey} onfinish={onrename} />
+			{/if}
+		</span>
+		<slot />
+	</div>
 </Border>
+<style lang="scss">
+	@use "src/core.scss" as *;
+
+	.root {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: $pad-small;
+	}
+</style>

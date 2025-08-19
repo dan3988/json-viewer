@@ -1,6 +1,6 @@
 <script lang="ts" context="module">
 	type Callback<A extends any[]> = (...args: A) => void;
-	type CallbackArg<A extends any[] = []> = Callback<A> | '' | 0 | false | null | undefined;
+	type CallbackArg<A extends any[] = []> = Callback<A> | Falsy;
 
 	export type InsertSiblingMode = 'before' | 'after';
 	export type InsertChildMode = 'first' | 'last';
@@ -42,7 +42,9 @@
 	{#if expanded}
 		<div class="menu-wrapper">
 			<Menu title="Menu" close={() => expanded = false}>
-				<MenuAction title="Expand (Recursive)" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
+				{#if prop.value.is('container')}
+					<MenuAction title="Expand (Recursive)" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
+				{/if}
 				<MenuSub title="Copy" icon="clipboard-fill">
 					{#if typeof prop.key === 'string'}
 						<MenuAction title="Copy Key" icon="key-fill" action={copyKey} />
@@ -86,13 +88,12 @@
 	{/if}
 </div>
 <style lang="scss">
+	@use "src/core.scss" as *;
+
 	.root {
 		--expander-icon: "\F64D";
 		--line-color: var(--jv-tertiary-border);
 
-		position: relative;
-		margin-bottom: -1px;
-		height: 1px;
 		z-index: 5;
 
 		&.expanded {
@@ -104,7 +105,9 @@
 		--bs-btn-padding-x: 0.1rem;
 		--bs-btn-padding-y: 0.1rem;
 
-		font-size: 0.75rem;
+		font-size: 0.7rem;
+		border: none;
+		border-radius: calc(var(--bs-border-radius) - $pad-small);
 
 		&::before {
 			content: var(--expander-icon);
@@ -114,8 +117,9 @@
 	.menu-wrapper {
 		font-family: var(--bs-body-font-family);
 		position: absolute;
-		margin-left: 2px;
-		left: 100%;
+		margin-top: calc(var(--bs-border-width) * -1);
+		margin-left: calc(var(--bs-border-width) + ($pad-small * 2));
 		top: 0;
+		left: 100%;
 	}
 </style>

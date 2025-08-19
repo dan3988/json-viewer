@@ -24,6 +24,11 @@
 	let editingValue = false;
 	let editingName = false;
 
+	function startEditing() {
+		model.selected.reset(prop);
+		editingValue = true;
+	}
+
 	function _insertChild(type: json.AddType, mode: InsertChildMode) {
 		model.selected.clear();
 		prop.isExpanded = true;
@@ -70,8 +75,6 @@
 
 	let props: (json.JProperty | CommitObject)[] = [];
 
-	$: console.log(props);
-
 	function update() {
 		props = [...prop.value];
 	}
@@ -111,14 +114,6 @@
 
 	.json-key-container {
 		position: relative;
-	}
-
-	.json-actions {
-		z-index: 5;
-		position: absolute;
-		top: 100%;
-		left: 100%;
-		translate: -50%;
 	}
 
 	.json-key-placeholder {
@@ -279,21 +274,20 @@
 	class:expanded={$isExpanded}>
 	<span class="json-key">
 		<span class="json-key-container">
-			{#if isActive && !(editingName || editingValue)}
-				<div class="json-actions">
+			<JsonPropertyKey {model} {prop} bind:editing={editingName}>
+				{#if isActive && !(editingName || editingValue)}
 					<JsonActions
 						{model}
 						{prop}
-						edit={value.is('value') && (() => editingValue = true)}
-						rename={value.parent?.is('object') && (() => editingName = true)}
+						edit={value.is('value') && startEditing}
+						rename={typeof key === 'string' && (() => editingName = true)}
 						{remove}
 						sort={value.is('object') && ((desc) => edits.sortObject(model, value, desc))}
 						insertChild={value.is('container') && _insertChild}
 						{insertSibling}
 					/>
-				</div>
-			{/if}
-			<JsonPropertyKey {prop} {model} bind:editing={editingName} />
+				{/if}
+			</JsonPropertyKey>
 		</span>
 	</span>
 	{#if value.is("container")}
@@ -331,7 +325,7 @@
 		{/if}
 	{:else if value.is("value")}
 		<span class="json-value">
-			<JsonValue {model} {prop} bind:editing={editingValue} />
+			<JsonValue {model} {prop} onediting={startEditing} bind:editing={editingValue} />
 		</span>
 	{/if}
 </div>

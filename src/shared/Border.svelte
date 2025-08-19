@@ -22,15 +22,18 @@
 	@use "src/core.scss" as *;
 
 	.root {
+		display: inline-flex;
+		padding: 0 $pad-small;
+		gap: $pad-small;
 		scroll-margin-top: $pad-med;
+		align-items: center;
 		cursor: pointer;
 		outline: none;
 		white-space: nowrap;
 		user-select: text;
 		color: var(--jv-key-fg);
-		padding: 2px;
 		border-radius: var(--bs-border-radius);
-		border: 1px solid transparent;
+		border: var(--bs-border-width) solid transparent;
 
 		&.selected {
 			background-color: var(--jv-tertiary-bg);

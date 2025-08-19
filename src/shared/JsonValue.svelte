@@ -35,6 +35,7 @@
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
 	export let editing = false;
+	export let onediting: VoidFunction | Falsy = undefined;
 
 	$: value = prop.value as json.JValue;
 
@@ -43,7 +44,7 @@
 	}
 </script>
 <div class="root json-{value.subtype}" class:editing>
-	<JsonValueEditor value={value.value} {serialize} {parse} renderer={renderValue} autoSelect checkEqual bind:editing onfinish={update} />
+	<JsonValueEditor value={value.value} {serialize} {parse} renderer={renderValue} {onediting} autoSelect checkEqual bind:editing onfinish={update} />
 </div>
 <style lang="scss">
 	@use "../core.scss" as *;

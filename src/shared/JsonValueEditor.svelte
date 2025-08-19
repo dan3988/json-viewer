@@ -10,8 +10,9 @@
 	export let renderer: (target: HTMLElement, value: T) => Renderer = renderText;
 	export let disabled = false;
 	export let editing = false;
-	export let onfinish: undefined | ((value: T) => void) = undefined;
-	export let oncancel: undefined | VoidFunction = undefined;
+	export let onfinish: ((value: T) => void) | Falsy = undefined;
+	export let oncancel: VoidFunction | Falsy = undefined;
+	export let onediting: VoidFunction | Falsy = undefined;
 	export let checkEqual = false;
 	export let autoSelect = false;
 
@@ -35,6 +36,17 @@
 		return parts.join('');
 	}
 
+	function focus(target: HTMLElement) {
+		target.focus();
+		const range = document.createRange();
+		let selection: null | Selection;
+		if (autoSelect && (selection = window.getSelection())) {
+			range.selectNodeContents(target);
+			selection.removeAllRanges();
+			selection.addRange(range);
+		}
+	}
+
 	function renderEditor(target: HTMLElement, originalValue: T) {
 		function finish() {
 			if (!editing) {
@@ -45,9 +57,9 @@
 			const result = parse(text);
 			editing = false;
 			if (!checkEqual || result !== originalValue) {
-				onfinish?.(result);
+				onfinish && onfinish(result);
 			} else {
-				oncancel?.();
+				oncancel && oncancel();
 			}
 		}
 
@@ -58,7 +70,7 @@
 			keyup(evt) {
 				if (evt.key === "Escape") {
 					editing = false;
-					oncancel?.();
+					oncancel && oncancel();
 				}
 			},
 			keypress(evt) {
@@ -66,6 +78,12 @@
 					evt.preventDefault();
 					finish();
 				}
+			},
+			mousedown(evt) {
+				evt.stopPropagation();
+			},
+			click(evt) {
+				evt.stopPropagation();
 			},
 			focusout: finish,
 			beforeinput(evt) {
@@ -92,15 +110,8 @@
 			target.appendChild(document.createElement('br'));
 		}
 
-		target.focus();
-		const range = document.createRange();
-		let selection: null | Selection;
-		if (autoSelect && (selection = window.getSelection())) {
-			range.selectNodeContents(target);
-			selection.removeAllRanges();
-			selection.addRange(range);
-		}
-
+		setTimeout(() => focus(target), 0);
+		onediting && onediting();
 		return { destroy };
 	}
 </script>
