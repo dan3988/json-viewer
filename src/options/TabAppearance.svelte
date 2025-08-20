@@ -99,10 +99,8 @@
 				{/if}
 			</button>
 		</div>
-		<div class="flex-fill">
-			<div class="scheme-editor" class:blur={!isCustomScheme}>
-				<ColorSchemeEditor scheme={schemeEditor} remove={removeScheme} />
-			</div>
+		<div class="flex-fill scheme-editor" class:blur={!isCustomScheme}>
+			<ColorSchemeEditor scheme={schemeEditor} remove={removeScheme} />
 		</div>
 	</div>
 	<div class="preview-wrapper border rounded">
@@ -141,10 +139,14 @@
 		overflow-x: hidden;
 	}
 
-	.scheme-editor.blur {
-		opacity: 0.5;
-		pointer-events: none;
-		user-select: none;
+	.scheme-editor {
+		overflow-y: auto;
+
+		&.blur {
+			opacity: 0.5;
+			pointer-events: none;
+			user-select: none;
+		}
 	}
 
 	.options {
