@@ -22,11 +22,13 @@
 	$: ({ changed, props: { darkMode, schemeDark, schemeLight, menuAlign, background, customSchemes } } = model);
 	$: [presets, scheme] = $tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight];
 	$: customSchemeList = schemes.getCustomEntries($customSchemes, $tracker);
+	$: isCustomScheme = $scheme in $customSchemes;
 
 	function copyScheme() {
+		const suffix = isCustomScheme ? 'Copy' : 'Custom';
 		const copy = structuredClone(schemeEditor.scheme.value);
 		const id = crypto.randomUUID().replaceAll('-', '');
-		copy.name = copy.name + " (Copy)";
+		copy.name = `${copy.name} (${suffix})`;
 		customSchemes.set({ ...customSchemes.value, [id]: copy as any });
 		schemeEditor = new CustomScheme(copy);
 		scheme.set(id);
@@ -89,10 +91,16 @@
 					</optgroup>
 				{/if}
 			</select>
-			<button class="btn btn-base" on:click={copyScheme}>Copy</button>
+			<button class="btn btn-base copy-button" on:click={copyScheme}>
+				{#if isCustomScheme}
+					Copy
+				{:else}
+					Customize
+				{/if}
+			</button>
 		</div>
 		<div class="flex-fill">
-			<div class="scheme-editor" class:blur={!($scheme in $customSchemes)}>
+			<div class="scheme-editor" class:blur={!isCustomScheme}>
 				<ColorSchemeEditor scheme={schemeEditor} remove={removeScheme} />
 			</div>
 		</div>
@@ -169,5 +177,9 @@
 
 	.input-group-text {
 		flex: 0 0 9.5rem;
+	}
+
+	.copy-button {
+		width: 7.5rem;
 	}
 </style>
