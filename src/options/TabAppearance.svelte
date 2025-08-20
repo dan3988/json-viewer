@@ -148,6 +148,8 @@
 	}
 
 	.preview-wrapper {
+		font-family: monospace;
+		font-size: 12px;
 		overflow: hidden;
 		flex: var(--preview-flex);
 		position: relative;
