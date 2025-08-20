@@ -27,6 +27,7 @@
 	import Linq from "@daniel.pickett/linq-js";
 	import fs from "../fs";
 	import schemes from "../schemes.js";
+	import Indent from "../indent";
 
 	export let model: ViewerModel;
 	export let menuAlign: string;
@@ -46,7 +47,7 @@
 	$: model.filter(filter, filterMode);
 	$: scheme = $tracker ? schemeDark : schemeLight;
 	$: currentScheme = customSchemes[scheme] ?? schemes.presets[scheme];
-	$: maxIndentClass = currentScheme.indents.length;
+	$: rootIndent = new Indent(currentScheme.indents.length);
 
 	let bindings: KeyBindingListener;
 	let prop: HTMLElement;
@@ -272,7 +273,7 @@
 				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
-						<JsonProperty {model} prop={model.root} indent={0} {maxIndentClass} />
+						<JsonProperty {model} prop={model.root} indent={rootIndent} />
 					</div>
 				</div>
 			</div>

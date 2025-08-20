@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type Indent from "../indent.js";
 	import type ViewerModel from "../viewer-model.js";
 	import { onDestroy } from "svelte";
 	import Border from "./Border.svelte";
@@ -11,8 +12,7 @@
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
-	export let indent = -1;
-	export let maxIndentClass: number;
+	export let indent: Indent;
 	export let remove: (() => void) | undefined = undefined;
 	export let insertSibling: ((type: json.AddType, mode: InsertSiblingMode) => void) | undefined = undefined;
 
@@ -268,7 +268,7 @@
 {@const { key, value } = prop}
 <div
 	hidden={$isHidden}
-	data-indent={indent % maxIndentClass}
+	data-indent={indent.indent}
 	class="json-prop for-{value.type} for-{value.subtype} json-indent"
 	class:expanded={$isExpanded}>
 	<span class="json-key">
@@ -311,9 +311,9 @@
 							</li>
 						{:else}
 							<li>
-								<svelte:self {model} {prop} {maxIndentClass}
+								<svelte:self {model} {prop}
 									remove={() => edits.deleteProp(model, prop)}
-									indent={indent + 1}
+									indent={indent.next}
 									insertSibling={_insertSibling.bind(undefined, i)}
 								/>
 							</li>
