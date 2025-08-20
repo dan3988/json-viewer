@@ -9,6 +9,7 @@
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
+	export let readonly = false;
 	export let editing: boolean;
 
 	$: ({ key, state: { props: { isSelected } } } = prop);
@@ -59,7 +60,7 @@
 			{#if typeof key === 'number'}
 				{key}
 			{:else}
-				<JsonValueEditor value={key} parse={String} checkEqual autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
+				<JsonValueEditor value={key} parse={String} {readonly} checkEqual autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
 			{/if}
 		</span>
 		<slot />

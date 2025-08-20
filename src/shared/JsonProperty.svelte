@@ -13,6 +13,7 @@
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
 	export let indent: Indent;
+	export let readonly = false;
 	export let remove: (() => void) | undefined = undefined;
 	export let insertSibling: ((type: json.AddType, mode: InsertSiblingMode) => void) | undefined = undefined;
 
@@ -273,8 +274,8 @@
 	class:expanded={$isExpanded}>
 	<span class="json-key">
 		<span class="json-key-container">
-			<JsonPropertyKey {model} {prop} bind:editing={editingName}>
-				{#if isActive && !(editingName || editingValue)}
+			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
+				{#if !readonly && isActive && !(editingName || editingValue)}
 					<JsonActions
 						{model}
 						{prop}
@@ -311,7 +312,7 @@
 							</li>
 						{:else}
 							<li>
-								<svelte:self {model} {prop}
+								<svelte:self {model} {prop} {readonly}
 									remove={() => edits.deleteProp(model, prop)}
 									indent={indent.next}
 									insertSibling={_insertSibling.bind(undefined, i)}
@@ -324,7 +325,7 @@
 		{/if}
 	{:else if value.is("value")}
 		<span class="json-value">
-			<JsonValue {model} {prop} onediting={startEditing} bind:editing={editingValue} />
+			<JsonValue {model} {prop} {readonly} onediting={startEditing} bind:editing={editingValue} />
 		</span>
 	{/if}
 </div>

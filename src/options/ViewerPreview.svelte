@@ -13,4 +13,4 @@
 	const model = new ViewerModel(prop);
 	prop.setExpanded(true, true);
 </script>
-<JsonProperty {indent} {model} {prop}></JsonProperty>
+<JsonProperty {indent} {model} {prop} readonly />

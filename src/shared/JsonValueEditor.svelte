@@ -8,7 +8,7 @@
 	export let parse: (text: string) => T;
 	export let serialize: (value: T) => string = String;
 	export let renderer: (target: HTMLElement, value: T) => Renderer = renderText;
-	export let disabled = false;
+	export let readonly = false;
 	export let editing = false;
 	export let onfinish: ((value: T) => void) | Falsy = undefined;
 	export let oncancel: VoidFunction | Falsy = undefined;
@@ -117,7 +117,7 @@
 	{#if editing}
 		<div class="editor" role="textbox" tabindex="-1" contenteditable="plaintext-only" use:renderEditor={value} />
 	{:else}
-		<span class="preview" use:renderer={value} on:dblclick={() => editing = !disabled}></span>
+		<span class="preview" use:renderer={value} on:dblclick={() => editing = !readonly}></span>
 	{/if}
 </span>
 <style lang="scss">
