@@ -40,7 +40,7 @@
 		let nextScheme = $tracker ? 'default_dark' : 'default_light';
 		if (customSchemeList.length > 1) {
 			const index =  customSchemeList.findIndex(({ id }) => id === scheme.value);
-			[nextScheme] = customSchemeList[index == 0 ? 1 : index - 1].id;
+			nextScheme = customSchemeList[index == 0 ? 1 : index - 1].id;
 		}
 
 		scheme.set(nextScheme);
