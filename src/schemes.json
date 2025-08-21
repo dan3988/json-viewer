@@ -546,12 +546,17 @@
 		"str": "#2AA29A",
 		"num": "#D33682",
 		"background": "#002E38",
-		"text": "#839395",
+		"text": "#C2D3D6",
 		"tertiary": {
 			"background": {
 				"def": "#003F52",
 				"act": "#006685",
 				"hov": "#008DB8"
+			},
+			"text": {
+				"def": "#C2D3D6",
+				"act": "#E0E9EB",
+				"hov": "#FFFFFF"
 			},
 			"border": {
 				"def": "#006880",
