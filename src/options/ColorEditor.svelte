@@ -32,7 +32,7 @@
 	}
 
 	input[type="color"] {
-		flex: 0 0 3rem !important;
+		flex: var(--color-editor-color-flex, 0 0 3rem);
 
 		&.empty::-webkit-color-swatch {
 			display: none;
@@ -44,6 +44,9 @@
 	}
 
 	input[type="text"] {
-		flex: 0 0 6rem !important;
+		padding: 0.25rem;
+		font-size: 0.9rem;
+		text-align: center;
+		flex: var(--color-editor-text-flex, 1 1 0);
 	}
 </style>
