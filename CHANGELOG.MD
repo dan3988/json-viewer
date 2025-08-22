@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3]
+- Fixed error when deleting a custom scheme in the settings page
+- UI improvements to color scheme editor
+
 ## [1.0.2]
 
 - Added color scheme customisation
