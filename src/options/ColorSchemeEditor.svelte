@@ -9,9 +9,9 @@
 
 	$: ({ name, key, keyword, str, num, text, background, indents, primary, tertiary } = scheme);
 
-	function addIndent(value = Color.rgb(0, 0, 0)) {
+	function addIndent() {
 		scheme.indents.update(v => {
-			v.push(value);
+			v.push(scheme.indents.value.at(-1) ?? Color.rgb(0, 0, 0));
 			return v;
 		});
 	}
@@ -23,9 +23,9 @@
 		});
 	}
 
-	function removeIndent(index: number) {
+	function removeIndent() {
 		scheme.indents.update(v => {
-			v.splice(index, 1);
+			v.pop();
 			return v;
 		});
 	}
@@ -68,31 +68,25 @@
 	<div class="border rounded p-1">
 		<ColorSetEditor title="Tertiary" value={tertiary} previewClass="btn-base" />
 	</div>
-	<div class="border rounded p-1 d-flex flex-column gap-1">
-		<div class="indents-header">
-			<span class="h5 text-center">Indents</span>
-			<button class="btn btn-faded p-1" class:disabled={$indents.length >= 10} on:click={() => addIndent()}>
-				<i class="bi-plus-lg"></i>
-			</button>
-		</div>
-		<ul class="indents-list gap-1 m-0 p-0">
-			{#each $indents as value, i}
-				<li class="input-group">
-					<span class="input-group-text">#{i + 1}</span>
-					<ColorEditor {value} onchange={v => setIndent(i, v)} />
-					<button disabled={$indents.length === 1} class="btn btn-base bi-trash-fill" on:click={() => removeIndent(i)} title="Delete" />
-				</li>
-			{/each}
-		</ul>
+	<div class="input-group indents-title">
+		<span class="input-group-text">Indents</span>
+		<button class="btn btn-base bi-plus-lg" title="Add Indent" on:click={() => addIndent()}></button>
+		<input class="form-control" readonly value={$indents.length} />
+		<button class="btn btn-base bi-dash-lg" title="Remove Indent" on:click={() => removeIndent()}></button>
 	</div>
+	<ul class="indents-list btn-group">
+		{#each $indents as value, i}
+			<li class="indent-color btn btn-base" style:background={value.toString()}>
+				<input type="color" value={value.hex()} on:input={(e) => setIndent(i, Color(e.currentTarget.value))} />
+			</li>
+		{/each}
+	</ul>
 </div>
 <style lang="scss">
-	.main-colors,
-	.indents-list {
-		--color-editor-text-flex: 0 0 5rem;
-	}
+	@use '../core.scss' as *;
 
 	.main-colors {
+		--color-editor-text-flex: 0 0 5rem;
 		display: grid;
 		gap: inherit;
 		grid-auto-flow: row;
@@ -104,23 +98,32 @@
 		flex: 1 1 0;
 	}
 
-	.indents-header {
-		display: grid;
-		grid-template-columns: 2rem 1fr 2rem;
-
-		&::before {
-			content: "";
-		}
+	.indents-title > input {
+		flex: 0 0 5rem;
 	}
 
 	.indents-list {
-		display: grid;
-		grid-template-rows: repeat(5, 1fr);
-		grid-template-columns: 1fr 1fr;
-		//height: calc((2.25rem * 5) + (var(--bs-border-width) * 10) + (var(--padding) * 4));
+		display: flex;
+		height: 6rem;
+		flex-direction: row;
 	}
 
-	.h5 {
-		margin: .25rem 0;
+	.indent-color {
+		--btn-visibility: hidden;
+		--btn-visibility: visible;
+		flex: 1 1 0;
+		position: relative;
+
+		&:hover {
+			--btn-visibility: visible;
+		}
+
+		> input {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			opacity: 0;
+		}
 	}
 </style>
