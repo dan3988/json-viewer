@@ -113,7 +113,7 @@
 	</div>
 </div>
 <style lang="scss">
-	$breakpoint: 960px;
+	$breakpoint: 720px;
 
 	@media only screen and (max-width: $breakpoint) {
 		.root {
@@ -126,7 +126,7 @@
 
 	@media only screen and (min-width: $breakpoint) {
 		.root {
-			--start-flex: 0 0 500px;
+			--start-flex: 0 0 min(50%, 500px);
 			--preview-flex: 1 1 0px;
 			flex-direction: row;
 			overflow-y: hidden;
