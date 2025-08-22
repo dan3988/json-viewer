@@ -119,7 +119,6 @@
 		.root {
 			--start-flex: 0 0 auto;
 			--preview-flex: 0 0 30rem;
-			--scrollbar-padding: 0;
 			flex-direction: column;
 			overflow-y: scroll;
 		}
@@ -129,7 +128,6 @@
 		.root {
 			--start-flex: 0 0 500px;
 			--preview-flex: 1 1 0px;
-			--scrollbar-padding: var(--padding);
 			flex-direction: row;
 			overflow-y: hidden;
 		}
@@ -145,7 +143,6 @@
 
 	.scheme-editor-wrapper {
 		overflow-y: auto;
-		padding-right: var(--scrollbar-padding);
 	}
 
 	.scheme-editor.blur {
