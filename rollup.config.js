@@ -129,7 +129,15 @@ function loader(args) {
 						// enable run-time checks when not in production
 						dev: !dist,
 						// use the filename instead of contents to generate the css class names otherwise hot-reload won't work
-						cssHash: ({ hash, filename }) => "svelte-" + hash(filename)
+						cssHash: ({ hash, filename }) => {
+							const parts = ['svelte', hash(filename)];
+							if (!dist) {
+								const { name } = path.parse(filename);
+								parts.push(name);
+							}
+
+							return parts.join('-');
+						}
 					},
 					onwarn(warning, handler) {
 						!ignore.has(warning.code) && handler(warning);
