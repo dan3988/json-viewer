@@ -10,7 +10,7 @@
 			"webRoot": "${workspaceFolder}/out/chrome",
 			"url": "chrome://extensions/",
 			"runtimeArgs": [
-				"--load-extension=${workspaceFolder}/out/chrome"
+				"--hide-crash-restore-bubble --load-extension=${workspaceFolder}/out/chrome"
 			]
 		},
 		{
