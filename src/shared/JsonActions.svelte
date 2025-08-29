@@ -8,7 +8,9 @@
 <script lang="ts">
 	import type json from "../json";
 	import type ViewerModel from "../viewer-model";
-	import Menu from "./menu/menu";
+	import { scale } from "svelte/transition";
+	import Button from "../components/button";
+	import Icon from "../components/Icon.svelte";
 
 	let expanded = false;
 
@@ -38,50 +40,66 @@
 <div class="root" class:expanded>
 	<button class="expander btn btn-base bi" on:click={() => expanded = !expanded}></button>
 	{#if expanded}
-		<div class="menu-wrapper">
-			<Menu title="Menu" close={() => expanded = false}>
+		<div class="menu-root border rounded bg-body-tertiary" transition:scale={{ duration: 250 }}>
+			<Button.Style style="faded">
 				{#if prop.value.is('container')}
-					<Menu.Action title="Expand (Recursive)" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
+					<Button text="Expand All" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
 				{/if}
-				<Menu.List title="Copy" icon="clipboard-fill">
+				<div class="menu-row menu-choice">
+					<span class="row-text">
+						<Icon icon="clipboard-fill" />
+						Copy
+					</span>
 					{#if typeof prop.key === 'string'}
-						<Menu.Action title="Copy Key" icon="key-fill" action={copyKey} />
+						<Button title="Copy Key" icon="key-fill" action={copyKey} />
 					{/if}
-					<Menu.Action title="Copy JSON" icon="braces" action={copyValue} />
+					<Button title="Copy JSON" icon="braces" action={copyValue} />
 					{#if prop.value.is('container')}
-						<Menu.Action title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
+						<Button title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
 					{:else if prop.value.is('string')}
-						<Menu.Action title="Copy Text" icon="fonts" action={copyText} />
+						<Button title="Copy Text" icon="fonts" action={copyText} />
 					{/if}
-				</Menu.List>
+				</div>
 				{#if rename}
-					<Menu.Action title="Rename" icon="input-cursor-text" action={rename} />
+					<Button text="Rename" icon="input-cursor-text" action={rename} />
 				{/if}
 				{#if remove}
-					<Menu.Action title="Delete" icon="trash-fill" action={remove} />
+					<Button text="Delete" icon="trash-fill" action={remove} />
 				{/if}
 				{#if edit}
-					<Menu.Action title="Edit Value" icon="pencil-fill" action={edit} />
+					<Button text="Edit Value" icon="pencil-fill" action={edit} />
 				{/if}
 				{#if sort}
-					<Menu.List title="Sort" icon="funnel-fill">
-						<Menu.Action title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
-						<Menu.Action title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
-					</Menu.List>
+					<div class="menu-row menu-choice">
+						<span class="row-text">
+							<Icon icon="sort-down" />
+							Sort
+						</span>
+						<Button title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
+						<Button title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
+					</div>
 				{/if}
-				{#if insertSibling || insertChild}
-					<Menu.List title="Insert" icon="plus-lg">
-						{#if insertChild}
-							<Menu.Action title="Insert First" icon="align-top" action={() => insertChild('value', 'first')} />
-							<Menu.Action title="Insert Last" icon="align-bottom" action={() => insertChild('value', 'last')} />
-						{/if}
-						{#if insertSibling}
-							<Menu.Action title="Insert Before" icon="arrow-bar-up" action={() => insertSibling('value', 'before')} />
-							<Menu.Action title="Insert After" icon="arrow-bar-down" action={() => insertSibling('value', 'after')} />
-						{/if}
-					</Menu.List>
+				{#if insertChild}
+					<div class="menu-row menu-choice">
+						<span class="row-text">
+							<Icon icon="plus-square" />
+							Insert Child
+						</span>
+						<Button title="Insert First" icon="align-top" action={() => insertChild('value', 'first')} />
+						<Button title="Insert Last" icon="align-bottom" action={() => insertChild('value', 'last')} />
+					</div>
 				{/if}
-			</Menu>
+				{#if insertSibling}
+					<div class="menu-row menu-choice">
+						<span class="row-text">
+							<Icon icon="plus-circle" />
+							Insert Sibling
+						</span>
+						<Button title="Insert Before" icon="arrow-bar-up" action={() => insertSibling('value', 'before')} />
+						<Button title="Insert After" icon="arrow-bar-down" action={() => insertSibling('value', 'after')} />
+					</div>
+				{/if}
+			</Button.Style>
 		</div>
 	{/if}
 </div>
@@ -112,12 +130,52 @@
 		}
 	}
 
-	.menu-wrapper {
+	.menu-root,
+	.menu-row,
+	.row-text {
+		display: flex;
+
+		> :global(.btn) {
+			--bs-btn-padding-x: #{$pad-med};
+			--bs-btn-padding-y: #{$pad-med};
+			font-size: inherit;
+		}
+	}
+
+	.menu-choice > :global(.btn) {
+		--bs-btn-padding-x: calc(#{$pad-med} + 0.25rem);
+	}
+
+	.menu-root {
+		transform-origin: top left;
+		--bs-bg-opacity: 0.5;
+		font-size: 0.85rem;
+		padding: $pad-small;
+		flex-direction: column;
+		backdrop-filter: blur(5px);
 		font-family: var(--bs-body-font-family);
 		position: absolute;
 		margin-top: calc(var(--bs-border-width) * -1);
 		margin-left: calc(var(--bs-border-width) + ($pad-small * 2));
 		top: 0;
 		left: 100%;
+	}
+
+	.menu-row {
+		flex-direction: row;
+
+		> :global(*) {
+			flex: 0 0 auto;
+		}
+	}
+
+	.row-text {
+		color: rgba(var(--bs-tertiary-color-rgb), 0.75);
+		gap: .5rem;
+		padding: $pad-med;
+		border: 1px solid transparent;
+		flex: 1 1 0;
+		align-items: center;
+		font-weight: 400;
 	}
 </style>

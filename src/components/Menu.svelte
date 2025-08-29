@@ -1,6 +1,6 @@
 <script lang="ts" context="module">
 	import { getContext, setContext } from "svelte";
-	import Store, { StoreController } from "../../store";
+	import Store, { StoreController } from "../store";
 
 	const key = Symbol('Menu.MenuController');
 
@@ -226,7 +226,7 @@
 	<slot />
 </div>
 <style lang="scss">
-	@use "../../core.scss" as *;
+	@use "../core.scss" as *;
 
 	.title {
 		padding: $pad-med;

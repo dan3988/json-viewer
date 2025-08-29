@@ -76,4 +76,4 @@ declare module "jsonpath-plus" {
 	}
 }
 
-type BootstrapIconKey = keyof typeof import("bootstrap-icons/font/bootstrap-icons.json");
+declare type BootstrapIconKey = keyof typeof import("bootstrap-icons/font/bootstrap-icons.json");
