@@ -5,7 +5,7 @@
 	export let style: 'base' | 'primary' | 'faded' | undefined = undefined;
 	export let icon: BootstrapIconKey | '' = '';
 	export let title: boolean | string = true;
-	export let action: VoidFunction | undefined = undefined;
+	export let action: VoidFunction | Falsy = undefined;
 	export let text: string | undefined = undefined;
 
 	const theme = ButtonTheme.current;
@@ -13,7 +13,7 @@
 	$: tooltip = (typeof title === 'boolean' ? title ? text : undefined : title) ?? '';
 	$: clazz = style ?? $theme.style;
 </script>
-<button class="btn btn-{clazz} d-flex gap-2" title={tooltip} aria-label={tooltip} on:click={action}>
+<button class="btn btn-{clazz} d-flex gap-2" class:disabled={!action} title={tooltip} aria-label={tooltip} on:click={action || undefined}>
 	{#if icon}
 		<Icon {icon} />
 	{/if}
