@@ -8,9 +8,7 @@
 <script lang="ts">
 	import type json from "../json";
 	import type ViewerModel from "../viewer-model";
-	import Menu from "./Menu.svelte";
-	import MenuAction from "./MenuAction.svelte";
-	import MenuSub from "./MenuList.svelte";
+	import Menu from "./menu/menu";
 
 	let expanded = false;
 
@@ -43,45 +41,45 @@
 		<div class="menu-wrapper">
 			<Menu title="Menu" close={() => expanded = false}>
 				{#if prop.value.is('container')}
-					<MenuAction title="Expand (Recursive)" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
+					<Menu.Action title="Expand (Recursive)" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
 				{/if}
-				<MenuSub title="Copy" icon="clipboard-fill">
+				<Menu.List title="Copy" icon="clipboard-fill">
 					{#if typeof prop.key === 'string'}
-						<MenuAction title="Copy Key" icon="key-fill" action={copyKey} />
+						<Menu.Action title="Copy Key" icon="key-fill" action={copyKey} />
 					{/if}
-					<MenuAction title="Copy JSON" icon="braces" action={copyValue} />
+					<Menu.Action title="Copy JSON" icon="braces" action={copyValue} />
 					{#if prop.value.is('container')}
-						<MenuAction title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
+						<Menu.Action title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
 					{:else if prop.value.is('string')}
-						<MenuAction title="Copy Text" icon="fonts" action={copyText} />
+						<Menu.Action title="Copy Text" icon="fonts" action={copyText} />
 					{/if}
-				</MenuSub>
+				</Menu.List>
 				{#if rename}
-					<MenuAction title="Rename" icon="input-cursor-text" action={rename} />
+					<Menu.Action title="Rename" icon="input-cursor-text" action={rename} />
 				{/if}
 				{#if remove}
-					<MenuAction title="Delete" icon="trash-fill" action={remove} />
+					<Menu.Action title="Delete" icon="trash-fill" action={remove} />
 				{/if}
 				{#if edit}
-					<MenuAction title="Edit Value" icon="pencil-fill" action={edit} />
+					<Menu.Action title="Edit Value" icon="pencil-fill" action={edit} />
 				{/if}
 				{#if sort}
-					<MenuSub title="Sort" icon="funnel-fill">
-						<MenuAction title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
-						<MenuAction title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
-					</MenuSub>
+					<Menu.List title="Sort" icon="funnel-fill">
+						<Menu.Action title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
+						<Menu.Action title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
+					</Menu.List>
 				{/if}
 				{#if insertSibling || insertChild}
-					<MenuSub title="Insert" icon="plus-lg">
+					<Menu.List title="Insert" icon="plus-lg">
 						{#if insertChild}
-							<MenuAction title="Insert First" icon="align-top" action={() => insertChild('value', 'first')} />
-							<MenuAction title="Insert Last" icon="align-bottom" action={() => insertChild('value', 'last')} />
+							<Menu.Action title="Insert First" icon="align-top" action={() => insertChild('value', 'first')} />
+							<Menu.Action title="Insert Last" icon="align-bottom" action={() => insertChild('value', 'last')} />
 						{/if}
 						{#if insertSibling}
-							<MenuAction title="Insert Before" icon="arrow-bar-up" action={() => insertSibling('value', 'before')} />
-							<MenuAction title="Insert After" icon="arrow-bar-down" action={() => insertSibling('value', 'after')} />
+							<Menu.Action title="Insert Before" icon="arrow-bar-up" action={() => insertSibling('value', 'before')} />
+							<Menu.Action title="Insert After" icon="arrow-bar-down" action={() => insertSibling('value', 'after')} />
 						{/if}
-					</MenuSub>
+					</Menu.List>
 				{/if}
 			</Menu>
 		</div>
