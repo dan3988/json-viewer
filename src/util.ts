@@ -1,5 +1,7 @@
 const jsIdentifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
+export const noop: (...args: any[]) => void = Function.prototype as any;
+
 export function isIdentifier(text: string) {
 	return jsIdentifier.test(text);
 }

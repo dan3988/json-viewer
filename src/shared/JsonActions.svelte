@@ -1,9 +1,6 @@
 <script lang="ts" context="module">
 	type Callback<A extends any[]> = (...args: A) => void;
 	type CallbackArg<A extends any[] = []> = Callback<A> | Falsy;
-
-	export type InsertSiblingMode = 'before' | 'after';
-	export type InsertChildMode = 'first' | 'last';
 </script>
 <script lang="ts">
 	import type json from "../json";
@@ -20,8 +17,6 @@
 	export let edit: CallbackArg = undefined;
 	export let remove: CallbackArg = undefined;
 	export let sort: CallbackArg<[desc: boolean]> = undefined;
-	export let insertSibling: CallbackArg<[type: json.AddType, mode: InsertSiblingMode]> | undefined = undefined;
-	export let insertChild: CallbackArg<[type: json.AddType, mode: InsertChildMode]> | undefined = undefined;
 
 	function copyKey() {
 		return navigator.clipboard.writeText(String(prop.key));
@@ -77,26 +72,6 @@
 						</span>
 						<Button title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
 						<Button title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
-					</div>
-				{/if}
-				{#if insertChild}
-					<div class="menu-row menu-choice">
-						<span class="row-text">
-							<Icon icon="plus-square" />
-							Insert Child
-						</span>
-						<Button title="Insert First" icon="align-top" action={() => insertChild('value', 'first')} />
-						<Button title="Insert Last" icon="align-bottom" action={() => insertChild('value', 'last')} />
-					</div>
-				{/if}
-				{#if insertSibling}
-					<div class="menu-row menu-choice">
-						<span class="row-text">
-							<Icon icon="plus-circle" />
-							Insert Sibling
-						</span>
-						<Button title="Insert Before" icon="arrow-bar-up" action={() => insertSibling('value', 'before')} />
-						<Button title="Insert After" icon="arrow-bar-down" action={() => insertSibling('value', 'after')} />
 					</div>
 				{/if}
 			</Button.Style>

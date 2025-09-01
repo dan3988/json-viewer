@@ -12,12 +12,13 @@
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import type { PopupCustomEvents } from "../types";
 	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
-	import Button from "../components/Button.svelte";
+	import Button from "../components/button";
 	import JsonProperty from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import MenuView, { MenuAlign } from "./MenuView.svelte";
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import PopupPanel from "../shared/PopupPanel.svelte";
+	import { InserterManager } from "../shared/JsonInsert.svelte";
 	import RequestInfo from "./RequestInfo.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
 	import { onDestroy, onMount } from "svelte";
@@ -39,6 +40,7 @@
 	export let darkMode: null | boolean;
 
 	const tracker = new ThemeTracker(darkMode);
+	const inserterManager = new InserterManager();
 
 	model.command.addListener(onModelCommand);
 
@@ -274,7 +276,7 @@
 				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
-						<JsonProperty {model} prop={model.root} indent={rootIndent} />
+						<JsonProperty {inserterManager} {model} prop={model.root} indent={rootIndent} />
 					</div>
 				</div>
 			</div>

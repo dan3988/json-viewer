@@ -1,0 +1,244 @@
+<script lang="ts" context="module">
+	import { noop } from "../util";
+
+	export class InserterManager {
+		readonly #handlers = new Map<Element, InserterRegistration>();
+		#boundMouseMove: (evt: MouseEvent) => void;
+		#active: InserterRegistration | null = null;
+		#locked = false;
+
+		constructor() {
+			this.#boundMouseMove = this.#onMouseMove.bind(this);
+		}
+
+		#updateActive(reg: InserterRegistration | null) {
+			const active = this.#active;
+			if (active === reg) {
+				return;
+			}
+
+			this.#active = reg;
+			active?.setActive?.(false);
+			reg?.setActive?.(true);
+		}
+
+		#onMouseMove(evt: MouseEvent) {
+			if (this.#locked) {
+				return;
+			}
+
+			const elements = document.elementsFromPoint(evt.clientX, evt.clientY);
+			for (const element of elements) {
+				const reg = this.#handlers.get(element);
+				if (reg) {
+					this.#updateActive(reg);
+					return;
+				}
+			}
+
+			this.#updateActive(null);
+		}
+
+		#renderHitbox(reg: InserterRegistration, target: HTMLElement) {
+			const mousemove = this.#boundMouseMove;
+			const handlers = this.#handlers;
+			if (!handlers.size) {
+				window.addEventListener('mousemove', mousemove);
+			}
+
+			function destroy() {
+				handlers.delete(target);
+				if (!handlers.size) {
+					window.removeEventListener('mousemove', mousemove);
+				}
+			}
+
+			handlers.set(target, reg);
+
+			return { destroy };
+		}
+
+		register(): InserterRegistration {
+			return new InserterManager.#InserterRegistration(this);
+		}
+
+		static readonly #InserterRegistration = class InserterRegistration implements InserterRegistration {
+			readonly #owner: InserterManager;
+
+			setActive: (this: void, active: boolean) => void = noop;
+
+			constructor(owner: InserterManager) {
+				this.#owner = owner;
+				this.hitbox = this.hitbox.bind(this);
+				this.destroy = this.destroy.bind(this);
+			}
+
+			hitbox(target: HTMLElement) {
+				return this.#owner.#renderHitbox(this, target);
+			}
+
+			lock() {
+				this.#owner.#updateActive(this);
+				this.#owner.#locked = true;
+			}
+
+			unlock(): void {
+				if (this.#owner.#locked && this.#owner.#active === this) {
+					this.#owner.#updateActive(null);
+					this.#owner.#locked = false;
+				}
+			}
+
+			destroy(): void {
+				
+			}
+		}
+	}
+
+	export interface InserterRegistration {
+		setActive: Opt<(this: void, active: boolean) => void>;
+
+		hitbox(this: void, target: HTMLElement): { destroy(): void };
+		lock(): void;
+		unlock(): void;
+	}
+</script>
+<script lang="ts">
+	import type json from "../json";
+	import Button from "../components/button";
+	import { scale } from "svelte/transition";
+	import { onDestroy } from "svelte";
+
+	export let manager: InserterManager;
+	export let insert: (type: json.AddType) => void;
+
+	let reg: InserterRegistration | null = null;
+
+	function updateRegistration() {
+		reg && (reg.setActive = null);
+		reg = manager.register();
+		reg.setActive = setActive;
+	}
+
+	onDestroy(() => {
+		if (reg) {
+			reg.setActive = null;
+			reg.unlock();
+			reg = null;
+		}
+	});
+
+	let active = false;
+	let open = false;
+
+	function setActive(value: boolean) {
+		active = value;
+	}
+
+	$: manager, updateRegistration();
+	$: hitbox = reg?.hitbox ?? noop;
+
+	let focusTarget: HTMLElement;
+
+	function doInsert(type: json.AddType) {
+		open = false;
+		reg?.unlock();
+		focusTarget.blur();
+		insert(type);
+	}
+
+	function onFocusOut(evt: FocusEvent) {
+		if (!focusTarget.contains(evt.relatedTarget as Node | null)) {
+			open = false;
+			reg?.unlock();
+		}
+	}
+
+	function expand() {
+		open = true;
+		focusTarget.focus();
+		reg?.lock();
+	}
+</script>
+<div class="root" class:active>
+	<div class="hitbox" use:hitbox></div>
+	<div class="separator"></div>
+	<div class="expander" tabindex="0" on:focusout={onFocusOut} bind:this={focusTarget}>
+		<Button icon="plus-lg" title="Insert" action={expand}></Button>
+		{#if open}
+			<div class="menu-wrapper" transition:scale={{ duration: 250 }}>
+				<Button.Style style="base">
+					<div class="menu-root btn-group">
+						<Button title="Object" icon="braces" action={() => doInsert('object')} />
+						<Button title="Array" icon="list" action={() => doInsert('array')} />
+						<Button title="Value" icon="fonts" action={() => doInsert('value')} />
+					</div>
+				</Button.Style>
+			</div>
+		{/if}
+	</div>
+</div>
+<style lang="scss">
+	@use "src/core.scss" as *;
+
+	$width: 10rem;
+	$left: 1rem;
+
+	.root {
+		opacity: 0;
+
+		&.active {
+			opacity: 1;
+		}
+	}
+
+	.hitbox {
+		z-index: -1;
+		position: absolute;
+		inset: -0.6rem 0;
+	}
+
+	.separator {
+		position: absolute;
+		top: calc(50% - 1px);
+		height: 1px;
+		left: $left;
+		width: $width;
+		background-color: var(--jv-tertiary-border);
+	}
+
+	.expander {
+		z-index: 3;
+		position: absolute;
+		left: $width + $left;
+		top: 50%;
+		translate: -50% -50%;
+
+		> :global(.btn) {
+			--bs-btn-padding-x: 2px;
+			--bs-btn-padding-y: 2px;
+			--bs-btn-font-size: 0.6rem;
+			//aspect-ratio: 1;
+		}
+	}
+
+	.menu-wrapper {
+		font-size: 1rem;
+		position: absolute;
+		top: 50%;
+		left: 0;
+		transform-origin: center left;
+		translate: 0 -50%;
+	}
+
+	.menu-root {
+		position: relative;
+		z-index: 3;
+
+		:global(.btn) {
+			--bs-btn-padding-x: #{$pad-med};
+			--bs-btn-padding-y: #{$pad-med};
+			font-size: inherit;
+		}
+	}
+</style>

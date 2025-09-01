@@ -3,24 +3,28 @@
 	import type ViewerModel from "../viewer-model.js";
 	import { onDestroy } from "svelte";
 	import Border from "./Border.svelte";
-	import JsonActions, { type InsertChildMode, type InsertSiblingMode } from "./JsonActions.svelte";
+	import JsonActions from "./JsonActions.svelte";
 	import JsonPropertyKey from "./JsonPropertyKey.svelte";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 	import JsonValue from "./JsonValue.svelte";
+	import JsonInsert, { type InserterManager } from "./JsonInsert.svelte";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
 
+	type InsertSiblingMode = 'before' | 'after';
+
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
+	export let inserterManager: InserterManager;
 	export let indent: Indent;
 	export let readonly = false;
 	export let remove: (() => void) | undefined = undefined;
-	export let insertSibling: ((type: json.AddType, mode: InsertSiblingMode) => void) | undefined = undefined;
 
 	$: ({ selected } = model.state.props)
 	$: ({ isExpanded, isHidden } = prop.state.props);
 
 	$: isActive = $selected.length == 1 && $selected[0] == prop;
+	$: canEdit = !readonly && !(editingName || editingValue);
 
 	let editingValue = false;
 	let editingName = false;
@@ -30,26 +34,7 @@
 		editingValue = true;
 	}
 
-	function _insertChild(type: json.AddType, mode: InsertChildMode) {
-		model.selected.clear();
-		prop.isExpanded = true;
-		const parent = prop.value;
-		if (parent.is('array')) {
-			const index = mode == 'last' ? parent.count : 0;
-			edits.addToArray(model, parent, 'value', index);
-		} else if (parent.is('object')) {
-			const [index, sibling, insertBefore] =
-				mode === "last"
-					? [parent.count, parent.last, false]
-					: [0, parent.first, true];
-
-			const commit: CommitObject = addObject.bind(undefined, parent, sibling, insertBefore, type);
-			props.splice(index, 0, commit);
-			props = props;
-		}
-	}
-
-	function _insertSibling(index: number, type: json.AddType, mode: InsertSiblingMode) {
+	function insertSibling(index: number, type: json.AddType, mode: InsertSiblingMode) {
 		model.selected.clear();
 		const container = prop.value;
 		const targetIndex = index + +(mode === 'after');
@@ -115,6 +100,7 @@
 
 	.json-key-container {
 		position: relative;
+		z-index: 4;
 	}
 
 	.json-key-placeholder {
@@ -223,7 +209,7 @@
 		font-size: x-small;
 		rotate: var(--expander-rotate);
 		transition: rotate .15s ease-in-out;
-
+		z-index: 5;
 
 		&:hover {
 			color: rgb(var(--jv-body-text-rgb));
@@ -257,11 +243,15 @@
 
 	.json-container {
 		display: flex;
-		gap: 1px;
 		flex-direction: column;
 
 		> .container-empty {
 			padding-left: 1rem;
+		}
+
+		.container-gap {
+			position: relative;
+			height: 1px;
 		}
 	}
 </style>
@@ -275,7 +265,7 @@
 	<span class="json-key">
 		<span class="json-key-container">
 			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
-				{#if !readonly && isActive && !(editingName || editingValue)}
+				{#if canEdit && isActive}
 					<JsonActions
 						{model}
 						{prop}
@@ -283,8 +273,6 @@
 						rename={typeof key === 'string' && (() => editingName = true)}
 						{remove}
 						sort={value.is('object') && ((desc) => edits.sortObject(model, value, desc))}
-						insertChild={value.is('container') && _insertChild}
-						{insertSibling}
 					/>
 				{/if}
 			</JsonPropertyKey>
@@ -300,6 +288,11 @@
 		{#if $isExpanded}
 			<span class="gutter" on:click={onGutterClicked}></span>
 			<ul class="json-container json-{value.subtype} p-0 m-0">
+				<li class="container-gap">
+					{#if canEdit}
+						<JsonInsert manager={inserterManager} insert={(type) => insertSibling(0, type, 'before')} />
+					{/if}
+				</li>
 				{#if props.length === 0}
 					<li class="container-empty">empty</li>
 				{:else}
@@ -312,13 +305,17 @@
 							</li>
 						{:else}
 							<li>
-								<svelte:self {model} {prop} {readonly}
+								<svelte:self {model} {prop} {readonly} {inserterManager}
 									remove={() => edits.deleteProp(model, prop)}
 									indent={indent.next}
-									insertSibling={_insertSibling.bind(undefined, i)}
 								/>
 							</li>
 						{/if}
+						<li class="container-gap">
+							{#if canEdit}
+								<JsonInsert manager={inserterManager} insert={(type) => insertSibling(i, type, 'after')} />
+							{/if}
+						</li>
 					{/each}
 				{/if}
 			</ul>
