@@ -4,8 +4,3 @@
 <i class="bi bi-{icon}">
 	<slot />
 </i>
-<style>
-	i::before {
-		line-height: 0;
-	}
-</style>

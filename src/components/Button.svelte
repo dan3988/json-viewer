@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ButtonTheme } from "./ButtonStyle.svelte";
+	import { ButtonTheme } from "./button";
 	import Icon from "./Icon.svelte";
 
 	export let style: 'base' | 'primary' | 'faded' | undefined = undefined;
