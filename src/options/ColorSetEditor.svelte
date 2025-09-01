@@ -10,8 +10,6 @@
 	$: ({ def: bgDef, hov: bgHov, act: bgAct  } = background);
 	$: ({ def: txtDef, hov: txtHov, act: txtAct, active: txtEnabled } = text);
 	$: ({ def: bdDef, hov: bdHov, act: bdAct, active: bdEnabled } = border);
-
-	$: console.log({ $bdEnabled, $txtEnabled });
 </script>
 <div class="root gap-1">
 	<span class="title">{title}</span>

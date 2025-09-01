@@ -9,7 +9,6 @@ export class Indent {
 	}
 
 	constructor(readonly limit: number, readonly depth: number = 0) {
-		console.log(`Indent(${limit}, ${depth})`);
 	}
 }
 
