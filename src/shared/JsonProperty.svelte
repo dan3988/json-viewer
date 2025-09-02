@@ -257,7 +257,7 @@
 		margin: 0;
 		margin-top: calc(var(--bs-border-width) * -1);
 
-		> .json-prop-entry,
+		> .json-container-item,
 		> .json-key-placeholder {
 			margin: calc(var(--bs-border-width) * -1);
 		}
@@ -266,7 +266,7 @@
 			padding-left: 1rem;
 		}
 
-		.container-gap {
+		.json-container-gap {
 			position: relative;
 			height: 1px;
 		}
@@ -305,7 +305,7 @@
 		{#if $isExpanded}
 			<span class="gutter" on:click={onGutterClicked}></span>
 			<ul class="json-container json-{value.subtype} p-0">
-				<li class="container-gap">
+				<li class="json-container-gap">
 					{#if canEdit}
 						<JsonInsert manager={inserterManager} insert={(type) => insertSibling(0, type, 'before')} />
 					{/if}
@@ -321,14 +321,14 @@
 								</Border>
 							</li>
 						{:else}
-							<li class="json-prop-entry">
+							<li class="json-container-item">
 								<svelte:self {model} {prop} {readonly} {inserterManager}
 									remove={() => edits.deleteProp(model, prop)}
 									indent={indent.next}
 								/>
 							</li>
 						{/if}
-						<li class="container-gap">
+						<li class="json-container-gap">
 							{#if canEdit}
 								<JsonInsert manager={inserterManager} insert={(type) => insertSibling(i, type, 'after')} />
 							{/if}
