@@ -11,6 +11,15 @@
 			this.#boundMouseMove = this.#onMouseMove.bind(this);
 		}
 
+		lock() {
+			this.#updateActive(null);
+			this.#locked = true;
+		}
+
+		unlock() {
+			this.#locked = false;
+		}
+
 		#updateActive(reg: InserterRegistration | null) {
 			const active = this.#active;
 			if (active === reg) {

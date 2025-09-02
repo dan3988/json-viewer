@@ -29,6 +29,17 @@
 	let editingValue = false;
 	let editingName = false;
 
+	let locked = false;
+
+	$: setLocked(!canEdit);
+
+	function setLocked(value: boolean) {
+		if (locked !== value) {
+			locked = value;
+			inserterManager[value ? 'lock' : 'unlock']();
+		}
+	}
+
 	function startEditing() {
 		model.selected.reset(prop);
 		editingValue = true;
