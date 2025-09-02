@@ -31,11 +31,35 @@
 		const text = model.formatValue(prop.value);
 		return navigator.clipboard.writeText(text);
 	}
+
+	function focusHelper(target: HTMLElement) {
+		function onFocusOut(evt: FocusEvent) {
+			if (!target.contains(evt.relatedTarget as Node | null)) {
+				expanded = false;
+			}
+		}
+
+		let timeout = window.setTimeout(() => {
+			timeout = 0;
+			target.focus();
+			target.addEventListener('focusout', onFocusOut);
+		});
+
+		return {
+			destroy() {
+				if (timeout) {
+					window.clearTimeout(timeout);
+				} else {
+					target.removeEventListener('focusout', onFocusOut);
+				}
+			}
+		}
+	}
 </script>
 <div class="root" class:expanded>
-	<button class="expander btn btn-base bi" on:click={() => expanded = !expanded}></button>
+	<button class="expander btn btn-base bi" on:click={() => expanded = true}></button>
 	{#if expanded}
-		<div class="menu-root border rounded bg-body-tertiary" transition:scale={{ duration: 250 }}>
+		<div class="menu-root border rounded bg-body-tertiary" tabindex="0" use:focusHelper transition:scale={{ duration: 250 }}>
 			<Button.Style style="faded">
 				{#if prop.value.is('container')}
 					<Button text="Expand All" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
@@ -122,6 +146,7 @@
 	}
 
 	.menu-root {
+		outline: none;
 		transform-origin: top left;
 		--bs-bg-opacity: 0.5;
 		font-size: 0.85rem;
