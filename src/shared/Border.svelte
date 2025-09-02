@@ -16,7 +16,7 @@
 	}
 
 	export function scrollTo(behavior?: ScrollBehavior) {
-		element.scrollIntoView({ behavior, block: 'start' });
+		element.scrollIntoView({ behavior, block: 'nearest' });
 	}
 </script>
 <span bind:this={element} tabindex="0" class="root" class:editable class:editing class:selected on:mousedown|preventDefault on:click={onClick}>
@@ -29,7 +29,7 @@
 		display: inline-flex;
 		padding: 0 $pad-small;
 		gap: $pad-small;
-		scroll-margin-top: $pad-med;
+		scroll-margin: $pad-med 0;
 		align-items: center;
 		cursor: pointer;
 		outline: none;
