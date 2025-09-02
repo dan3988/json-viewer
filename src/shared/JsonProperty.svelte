@@ -100,7 +100,6 @@
 
 	.json-key-container {
 		position: relative;
-		z-index: 4;
 	}
 
 	.json-key-placeholder {
