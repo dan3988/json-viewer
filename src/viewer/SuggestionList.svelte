@@ -66,7 +66,7 @@
 
 	function renderListItem(target: HTMLElement, arg: RenderArg) {
 		function update(a: RenderArg) {
-			let { suggestion } = arg = a;
+			let { suggestion, filter } = arg = a;
 			if (!filter) {
 				target.innerText = suggestion;
 				return;
