@@ -73,6 +73,7 @@
 
 	function onFocusOut() {
 		update($prop);
+		destroyAutoComplete();
 		dispatcher("cancelled");
 	}
 
@@ -81,7 +82,7 @@
 	}
 
 	function onAutoCompleteFinish(value?: string) {
-		acHelper = undefined;
+		destroyAutoComplete();
 
 		if (value == null)
 			return;

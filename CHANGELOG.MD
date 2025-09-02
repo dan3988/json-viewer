@@ -2,6 +2,8 @@
 
 ## [1.0.3]
 - Fixed error when deleting a custom scheme in the settings page
+- Fixed auto-complete list not rendering properly when typing uppercase text
+- Fixed auto-complete filter not clearing when un-focusing
 - UI improvements to color scheme editor
 
 ## [1.0.2]

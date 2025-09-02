@@ -70,10 +70,10 @@
 	</div>
 	<div class="input-group indents-title">
 		<span class="input-group-text">Indents</span>
-		<button class="btn btn-base bi-plus-lg" title="Add Indent" on:click={() => addIndent()}></button>
+		<button class="btn btn-base bi-dash-lg" class:disabled={$indents.length <= 1} title="Remove Indent" on:click={() => removeIndent()}></button>
 		<input class="form-control" readonly value={$indents.length} />
-		<button class="btn btn-base bi-dash-lg" title="Remove Indent" on:click={() => removeIndent()}></button>
-	</div>
+		<button class="btn btn-base bi-plus-lg" class:disabled={$indents.length >= 10} title="Add Indent" on:click={() => addIndent()}></button>
+		</div>
 	<ul class="indents-list btn-group">
 		{#each $indents as value, i}
 			<li class="indent-color btn btn-base" style:background={value.toString()}>
@@ -99,7 +99,8 @@
 	}
 
 	.indents-title > input {
-		flex: 0 0 5rem;
+		flex: 0 0 3rem;
+		text-align: center;
 	}
 
 	.indents-list {
