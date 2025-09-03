@@ -44,20 +44,8 @@
 			}
 		}
 	}
-
-	function onClick(evt: MouseEvent) {
-		evt.preventDefault();
-		if (evt.shiftKey) {
-			//evt.preventDefault();
-			model.selected[evt.ctrlKey ? "add" : "reset"](prop, true);
-		} else {
-			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
-		}
-
-		window.getSelection()?.removeAllRanges();
-	}
 </script>
-<div bind:this={element} class="root" class:selected={$isSelected} on:click={onClick}>
+<div bind:this={element} class="root" class:selected={$isSelected}>
 	<span class="key-text">
 		{#if typeof key === 'number'}
 			{key}

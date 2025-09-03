@@ -39,6 +39,19 @@
 		}
 	}
 
+	function onClick(evt: MouseEvent) {
+		evt.preventDefault();
+		evt.stopPropagation();
+		if (evt.shiftKey) {
+			//evt.preventDefault();
+			model.selected[evt.ctrlKey ? "add" : "reset"](prop, true);
+		} else {
+			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
+		}
+
+		window.getSelection()?.removeAllRanges();
+	}
+
 	function startEditing() {
 		model.selected.reset(prop);
 		editingValue = true;
@@ -223,7 +236,7 @@
 		> .gutter {
 			grid-area: 2 / 1 / span 1 / span 1;
 		}
-		
+
 		> .json-value {
 			grid-area: 1 / 3 / span 1 / -1;
 		}
@@ -305,7 +318,8 @@
 	hidden={$isHidden}
 	data-indent={indent.indent}
 	class="json-prop for-{value.type} for-{value.subtype} json-indent"
-	class:expanded={$isExpanded}>
+	class:expanded={$isExpanded}
+	on:click={onClick}>
 	<span class="json-key" class:json-selected={$isSelected}>
 		<span class="json-key-container">
 			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
@@ -330,8 +344,9 @@
 			<span class="container-summary container-empty">empty</span>
 		{/if}
 		{#if $isExpanded}
-			<span class="gutter" on:click={onGutterClicked}></span>
-			<ul class="json-container json-{value.subtype} p-0">
+			<span class="gutter" on:click|stopPropagation={onGutterClicked}></span>
+			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+			<ul class="json-container json-{value.subtype} p-0" on:click|stopPropagation>
 				<li class="json-container-gap">
 					{#if canEdit}
 						<JsonInsert manager={inserterManager} insert={(type) => insertSibling(0, type, 'before')} />
