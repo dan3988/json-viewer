@@ -57,6 +57,12 @@ interface ChildrenChangedEvents<TKey extends Key = any> {
 
 type ChildrenChangedArgs<TKey extends Key = Key> = { [P in keyof ChildrenChangedEvents]: [type: P, ...args: ChildrenChangedEvents<TKey>[P]] }[keyof ChildrenChangedEvents]
 
+interface ValueChangedEvents {
+	changed: [oldValue: any];
+}
+
+type ValueChangedArgs = { [P in keyof ValueChangedEvents]: [type: P, ...args: ValueChangedEvents[P]] }[keyof ValueChangedEvents]
+
 enum JTokenFilterFlags {
 	None,
 	Keys = 1,
@@ -159,6 +165,7 @@ export declare namespace json {
 	export interface JValue<T extends JValueType = JValueType> extends JToken<T> {
 		readonly type: "value";
 		readonly subtype: "string" | "number" | "boolean" | "null";
+		readonly changed: IEvent<this, ValueChangedArgs>;
 		value: T;
 
 		get(): undefined;
@@ -636,8 +643,13 @@ abstract class JToken<T = any> implements json.JToken<T> {
 }
 
 class JValue extends JToken implements json.JValue {
+	readonly #changed = new EventHandlers<any, ValueChangedArgs>();
 	#value: json.JValueType;
 	#subtype: "string" | "number" | "boolean" | "null";
+
+	get changed() {
+		return this.#changed.event;
+	}
 
 	get count() {
 		return 0;
@@ -660,7 +672,8 @@ class JValue extends JToken implements json.JValue {
 	}
 
 	set value(value) {
-		if (this.#value !== value) {
+		const oldValue = this.#value;
+		if (oldValue !== value) {
 			if (value === null) {
 				this.#value = null;
 				this.#subtype = "null";
@@ -673,6 +686,8 @@ class JValue extends JToken implements json.JValue {
 					throw new TypeError('JValue.value cannot be of type "' + t + '"');
 				}
 			}
+
+			this.#changed.fire(this, 'changed', oldValue)
 		}
 	}
 
@@ -745,7 +760,7 @@ let JObject: JObjectConstructor;
 let JArray: JArrayConstructor;
 
 abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> implements json.JContainer<TKey, T> {
-	readonly #changed: EventHandlers<any, ChildrenChangedArgs>;
+	readonly #changed = new EventHandlers<any, ChildrenChangedArgs>();
 	#first: null | JPropertyController<TKey>;
 	#last: null | JPropertyController<TKey>;
 
@@ -773,7 +788,6 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 		super(owner);
 		this.#first = null;
 		this.#last = null;
-		this.#changed = new EventHandlers();
 	}
 
 	get(key: Key): JToken | undefined {

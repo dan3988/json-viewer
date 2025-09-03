@@ -20,6 +20,14 @@ export namespace edits {
 		})
 	}
 
+	export function setValue(model: ViewerModel, token: json.JValue, newValue: json.JValueType) {
+		const oldValue = token.value;
+		model.edits.push({
+			commit: () => token.value = newValue,
+			undo: () => token.value = oldValue,
+		});
+	}
+
 	export function replace(model: ViewerModel, prop: json.JProperty, newProp: json.JProperty) {
 		model.edits.push({
 			commit: () => prop.replace(newProp.value),

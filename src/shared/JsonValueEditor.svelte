@@ -112,17 +112,25 @@
 		onediting && onediting();
 		return { destroy };
 	}
+
+	function onCheckboxInput(this: HTMLInputElement) {
+		onfinish && (onfinish(this.checked as any));
+	}
 </script>
-<span class="root">
+<span class="root gap-1" on:dblclick={() => editing = !readonly}>
 	{#if editing}
 		<div class="editor" role="textbox" tabindex="-1" contenteditable="plaintext-only" use:renderEditor={value} />
 	{:else}
-		<span class="preview" use:renderer={value} on:dblclick={() => editing = !readonly}></span>
+		{#if typeof value === 'boolean'}
+			<input type="checkbox" class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
+		{/if}
+		<span class="preview" use:renderer={value}></span>
 	{/if}
 </span>
 <style lang="scss">
 	.root {
 		flex: 1 1 0;
+		align-items: center;
 		z-index: 2;
 		display: inline-flex;
 		position: relative;
@@ -130,6 +138,16 @@
 		> span {
 			flex: 1 1 0;
 		}
+	}
+
+	.bool-editor {
+		--checkbox-bg-color: var(--jv-keywd-fg);
+		--checkbox-border-color: var(--jv-keywd-fg);
+		--checkbox-shadow-color: var(--jv-keywd-fg);
+		--focus-shadow-color: rgba(var(--jv-keywd-fg-rgb), 0.5);
+		height: 1.2em;
+		width: 1.2em;
+		margin: 0;
 	}
 
 	.editor {

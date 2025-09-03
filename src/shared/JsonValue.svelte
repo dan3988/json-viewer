@@ -38,14 +38,29 @@
 	export let editing = false;
 	export let onediting: VoidFunction | Falsy = undefined;
 
-	$: value = prop.value as json.JValue;
+	let token: json.JValue;
+	let value: any;
+	let subtype: "string" | "number" | "boolean" | "null";
 
-	function update(value: any) {
-		edits.replace(model, prop, json(value));
+	$: setValue(prop.value as any);
+
+	function setValue(v: json.JValue) {
+		token?.changed.removeListener(onChanged);
+		token = v;
+		token.changed.addListener(onChanged);
+		onChanged();
+	}
+
+	function onChanged() {
+		({ value, subtype } = token);
+	}
+
+	function update(newValue: any) {
+		edits.setValue(model, token, newValue);
 	}
 </script>
-<div class="root json-{value.subtype}" class:editing>
-	<JsonValueEditor value={value.value} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} bind:editing onfinish={update} />
+<div class="root json-{subtype}" class:editing>
+	<JsonValueEditor {value} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} bind:editing onfinish={update} />
 </div>
 <style lang="scss">
 	@use "../core.scss" as *;
