@@ -49,6 +49,10 @@
 	@use "../core.scss" as *;
 
 	.root {
+		--list-overflow: auto;
+		--list-visibility: visible;
+		--editor-visibility: hidden;
+		position: relative;
 		display: grid;
 		grid-template-rows: 1fr;
 		grid-template-columns: 1fr;
@@ -57,9 +61,10 @@
 			--bs-border-color: transparent;
 		}
 
-		&.editing > .list,
-		&:not(.editing) > .editor {
-			visibility: hidden;
+		&.editing {
+			--list-overflow: hidden;
+			--list-visibility: hidden;
+			--editor-visibility: visible;
 		}
 
 		> * {
@@ -67,7 +72,17 @@
 		}
 	}
 
+	.editor {
+		position: absolute;
+		inset: 0;
+		visibility: var(--editor-visibility);
+		// overflow-y: visible;
+		// overflow-x: hidden;
+	}
+
 	.list {
+		visibility: var(--list-visibility);
+		overflow-x: var(--list-overflow);
 		display: none;
 		cursor: text;
 		grid-area: 1 / 1 / span 1 / span 1;

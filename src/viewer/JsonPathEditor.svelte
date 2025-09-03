@@ -6,7 +6,6 @@
 		cancelled: void;
 	}
 </script>
-
 <script lang="ts">
 	import type { ViewerModel } from "../viewer-model";
 	import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
@@ -197,6 +196,8 @@
 	.path-text {
 		outline: none;
 		display: block;
+		overflow: hidden;
+		white-space: nowrap;
 	}
 
 	.root {
@@ -220,7 +221,7 @@
 		class="path-text"
 		tabindex="-1"
 		role="textbox"
-		contenteditable="true"
+		contenteditable="plaintext-only"
 		on:input={onInput}
 		on:focusin={onFocusIn}
 		on:focusout={onFocusOut}
