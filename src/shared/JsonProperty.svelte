@@ -2,7 +2,6 @@
 	import type Indent from "../indent.js";
 	import type ViewerModel from "../viewer-model.js";
 	import { onDestroy } from "svelte";
-	import Border from "./Border.svelte";
 	import JsonActions from "./JsonActions.svelte";
 	import JsonPropertyKey from "./JsonPropertyKey.svelte";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
@@ -21,7 +20,7 @@
 	export let remove: (() => void) | undefined = undefined;
 
 	$: ({ selected } = model.state.props)
-	$: ({ isExpanded, isHidden } = prop.state.props);
+	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
 
 	$: isActive = $selected.length == 1 && $selected[0] == prop;
 	$: canEdit = !readonly && !(editingName || editingValue);
@@ -111,6 +110,19 @@
 		}
 	}
 
+	.json-selected::before {
+		content: "";
+		background-color: var(--jv-tertiary-bg);
+		z-index: -1;
+		pointer-events: none;
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 1.5em;
+		display: flex;
+		flex-direction: column;
+	}
+
 	.json-key-container {
 		position: relative;
 	}
@@ -133,10 +145,16 @@
 	}
 
 	.json-prop {
+		--selection-visibility: hidden;
 		--expander-rotate: 0deg;
+		flex: 1 1 0px;
 		display: grid;
 		grid-template-columns: 1em auto auto auto 1fr;
 		grid-template-rows: auto auto auto auto;
+
+		&.selected {
+			--selection-visibility: visible;
+		}
 
 		&[hidden] {
 			display: none !important;
@@ -257,12 +275,6 @@
 		display: flex;
 		flex-direction: column;
 		margin: 0;
-		margin-top: calc(var(--bs-border-width) * -1);
-
-		> .json-container-item,
-		> .json-key-placeholder {
-			margin: calc(var(--bs-border-width) * -1);
-		}
 
 		> .container-empty {
 			padding-left: 1rem;
@@ -270,8 +282,21 @@
 
 		.json-container-gap {
 			position: relative;
-			height: 1px;
+			height: 0;
 		}
+	}
+
+	.selection-bg {
+		visibility: var(--selection-visibility);
+		background-color: var(--jv-tertiary-bg);
+		z-index: -1;
+		pointer-events: none;
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 1.5em;
+		display: flex;
+		flex-direction: column;
 	}
 </style>
 {#if prop}
@@ -281,7 +306,7 @@
 	data-indent={indent.indent}
 	class="json-prop for-{value.type} for-{value.subtype} json-indent"
 	class:expanded={$isExpanded}>
-	<span class="json-key">
+	<span class="json-key" class:json-selected={$isSelected}>
 		<span class="json-key-container">
 			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
 				{#if canEdit && isActive}
@@ -317,10 +342,8 @@
 				{:else}
 					{#each props as prop, i (prop)}
 						{#if typeof prop === 'function'}
-							<li class="json-key-placeholder">
-								<Border editing>
-									<JsonValueEditor value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
-								</Border>
+							<li class="json-key-placeholder json-selected">
+								<JsonValueEditor value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
 							</li>
 						{:else}
 							<li class="json-container-item">

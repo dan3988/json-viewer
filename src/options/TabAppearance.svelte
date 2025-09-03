@@ -106,10 +106,7 @@
 		</div>
 	</div>
 	<div class="preview-wrapper border rounded">
-		<div class="editor-bg"></div>
-		<div class="preview overflow-auto p-1">
-			<ViewerPreview {maxIndentClass} />
-		</div>
+		<ViewerPreview {maxIndentClass} />
 	</div>
 </div>
 <style lang="scss">
@@ -167,16 +164,6 @@
 		position: relative;
 		display: flex;
 		flex-direction: column;
-	}
-
-	.preview {
-		z-index: 1;
-	}
-
-	.editor-bg {
-		position: absolute;
-		pointer-events: none;
-		inset: 0;
 	}
 
 	.input-group-text {

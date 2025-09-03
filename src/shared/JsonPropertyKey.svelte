@@ -4,7 +4,6 @@
 	import edits from "../viewer/editor-helper.js";
 	import { onDestroy } from "svelte";
 	import { renderKey } from "../renderer";
-	import Border from "./Border.svelte";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	export let model: ViewerModel;
@@ -23,17 +22,21 @@
 		}
 	})(prop);
 
-	let border: Border;
+	let element: HTMLElement;
 
 	model.command.addListener(onModelCommand);
 
 	onDestroy(() => model.command.removeListener(onModelCommand));
 
+	function focus() {
+		element.focus();
+	}
+
 	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
 		if (arg0 === prop) {
 			switch (command) {
 				case "scrollTo":
-					border.scrollTo();
+					element.scrollIntoView({ block: 'nearest' });
 					break;
 				case "rename":
 					editing = true;
@@ -54,25 +57,31 @@
 		window.getSelection()?.removeAllRanges();
 	}
 </script>
-<Border bind:this={border} editable {editing} selected={$isSelected} onclick={onClick}>
-	<div class="root" slot="default" let:focus>
-		<span class="key-text">
-			{#if typeof key === 'number'}
-				{key}
-			{:else}
-				<JsonValueEditor value={key} parse={String} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
-			{/if}
-		</span>
-		<slot />
-	</div>
-</Border>
+<div bind:this={element} class="root" class:selected={$isSelected} on:click={onClick}>
+	<span class="key-text">
+		{#if typeof key === 'number'}
+			{key}
+		{:else}
+			<JsonValueEditor value={key} parse={String} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
+		{/if}
+	</span>
+	<slot />
+</div>
 <style lang="scss">
 	@use "src/core.scss" as *;
 
 	.root {
+		color: var(--jv-key-fg);
 		position: relative;
-		display: flex;
+		display: inline-flex;
 		align-items: center;
+		user-select: text;
+		white-space: nowrap;
 		gap: $pad-small;
+		cursor: pointer;
+
+		&.selected {
+			cursor: text;
+		}
 	}
 </style>

@@ -186,10 +186,6 @@
 			grid-area: main;
 		}
 
-		> .prop-scroll {
-			padding: $pad-small;
-		}
-
 		&:focus-visible {
 			outline: none;
 			backdrop-filter: var(--flt-bright-hv);
@@ -218,6 +214,15 @@
 
 	.prop-scroll {
 		z-index: 1;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.prop-panel {
+		min-width: 100%;
+		width: max-content;
+		position: relative;
+		padding: $pad-small;
 	}
 
 	.editor-bg {
@@ -287,7 +292,9 @@
 				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
-						<JsonProperty {inserterManager} {model} prop={model.root} indent={rootIndent} />
+						<div class="prop-panel">
+							<JsonProperty {inserterManager} {model} prop={model.root} indent={rootIndent} />
+						</div>
 					</div>
 				</div>
 			</div>

@@ -15,4 +15,27 @@
 	const model = new ViewerModel(prop);
 	prop.setExpanded(true, true);
 </script>
-<JsonProperty {indent} {inserterManager} {model} {prop} readonly />
+<div class="editor-bg"></div>
+<div class="root overflow-auto">
+	<div class="panel">
+		<JsonProperty {indent} {inserterManager} {model} {prop} readonly />
+	</div>
+</div>
+<style lang="scss">
+	@use 'src/core.scss' as *;
+
+	.root {
+		z-index: 1;
+	}
+
+	.panel {
+		position: relative;
+		padding: $pad-small;
+	}
+
+	.editor-bg {
+		position: absolute;
+		pointer-events: none;
+		inset: 0;
+	}
+</style>

@@ -55,7 +55,6 @@
 		user-select: text;
 		white-space: nowrap;
 		cursor: text;
-		border: 1px solid transparent;
 
 		&.json-string {
 			color: var(--jv-str-fg);
@@ -73,10 +72,6 @@
 		&.editing {
 			padding: 0 $pad-med;
 			z-index: 1;
-			background-color: var(--jv-tertiary-active-bg);
-			color: var(--jv-tertiary-active-text);
-			border-radius: var(--bs-border-radius);
-			border-color: var(--jv-tertiary-active-border);
 		}
 	}
 </style>
