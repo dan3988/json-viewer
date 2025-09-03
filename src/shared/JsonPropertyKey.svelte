@@ -60,7 +60,7 @@
 			{#if typeof key === 'number'}
 				{key}
 			{:else}
-				<JsonValueEditor value={key} parse={String} {readonly} checkEqual autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
+				<JsonValueEditor value={key} parse={String} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
 			{/if}
 		</span>
 		<slot />

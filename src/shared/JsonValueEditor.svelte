@@ -14,7 +14,7 @@
 	export let oncancel: VoidFunction | Falsy = undefined;
 	export let onclose: VoidFunction | Falsy = undefined;
 	export let onediting: VoidFunction | Falsy = undefined;
-	export let checkEqual = false;
+	export let allowUnchanged = false;
 	export let autoSelect = false;
 
 	/**
@@ -57,7 +57,7 @@
 			const text = getText(target);
 			const result = parse(text);
 			editing = false;
-			if (!checkEqual || result !== originalValue) {
+			if (allowUnchanged || result !== originalValue) {
 				onfinish && onfinish(result);
 			} else {
 				oncancel && oncancel();
