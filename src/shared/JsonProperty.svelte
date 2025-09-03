@@ -102,6 +102,8 @@
 	.json-key {
 		grid-area: 1 / 2 / span 1 / span 1;
 		padding-right: 5px;
+		display: flex;
+		align-items: center;
 
 		&:after {
 			color: var(--bs-body-color);
