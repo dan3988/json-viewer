@@ -137,6 +137,17 @@
 		}
 	}
 
+	let cssLoaded = 0;
+
+	function onStyleLoaded() {
+		if (++cssLoaded === css.length) {
+			const selected = model.selected.last;
+			if (selected) {
+				model.execute("scrollTo", selected);
+			}
+		}
+	}
+
 	onMount(() => prop.focus());
 	onDestroy(() => {
 		model.command.removeListener(onModelCommand);
@@ -233,7 +244,7 @@
 <svelte:window on:beforeunload={onUnload} />
 <svelte:head>
 	{#each css as href}
-		<link rel="stylesheet" {href} />
+		<link rel="stylesheet" {href} on:load={onStyleLoaded} />
 	{/each}
 </svelte:head>
 <SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
