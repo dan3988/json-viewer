@@ -206,8 +206,8 @@
 				content: "]"
 			}
 
-			> .json-container > :global(li > .json-prop > .json-key) {
-				color: var(--jv-num-fg);
+			> .json-container {
+				--jv-key-fg: var(--jv-num-fg);
 			}
 		}
 
