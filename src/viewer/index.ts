@@ -10,7 +10,7 @@ function setGlobal(key: string, value: any) {
 	window.postMessage({ type: "globalSet", key, value });
 }
 
-function run() {
+async function run() {
 	try {
 		const lib = typeof JSON5 === "undefined" ? JSON : JSON5;
 		const pre = document.querySelector("body > pre") as null | HTMLPreElement;
@@ -130,7 +130,7 @@ function run() {
 				const decoded = path.split("|").map(decodePath);
 				goTo(decoded);
 			});
-		
+
 		window.addEventListener("popstate", function(ev) {
 			suppressPush(() => {
 				if (ev.state == null) {
@@ -141,7 +141,7 @@ function run() {
 			});
 		})
 
-		loadAsync();
+		await loadAsync();
 	} catch (e) {
 		console.error("JSON Viewer failed to load: ", e);
 		const msg = e instanceof Error ? `${e.name}: ${e.message}` : e;
@@ -149,5 +149,6 @@ function run() {
 	}
 }
 
-//the return value will be used by chrome.scripting.executeScript
 run();
+//the return value will be used by chrome.scripting.executeScript
+undefined;
