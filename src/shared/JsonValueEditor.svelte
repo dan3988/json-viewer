@@ -135,8 +135,8 @@
 		{#if typeof value === 'number'}
 			<div class="btn-grop d-flex number-steps" on:click|stopPropagation on:dblclick|stopPropagation>
 				<Button.Theme style="faded">
-					<Button icon="dash" title="Decrement" action={decrement} />
-					<Button icon="plus" title="Increment" action={increment} />
+					<Button icon="dash" title="Decrement" repeat action={decrement} />
+					<Button icon="plus" title="Increment" repeat action={increment} />
 				</Button.Theme>
 			</div>
 		{/if}
