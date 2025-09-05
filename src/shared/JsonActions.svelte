@@ -60,7 +60,7 @@
 	<button class="expander btn btn-base bi" on:click={() => expanded = true}></button>
 	{#if expanded}
 		<div class="menu-root border rounded bg-body-tertiary" tabindex="0" use:focusHelper transition:scale={{ duration: 250 }}>
-			<Button.Style style="faded">
+			<Button.Theme style="faded">
 				{#if prop.value.is('container')}
 					<Button text="Expand All" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
 				{/if}
@@ -72,7 +72,7 @@
 					{#if typeof prop.key === 'string'}
 						<Button title="Copy Key" icon="key-fill" action={copyKey} />
 					{/if}
-					<Button title="Copy JSON" icon="braces" action={copyValue} />
+					<Button title="Copy JSON" icon="braces" action={() => copyValue()} />
 					{#if prop.value.is('container')}
 						<Button title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
 					{:else if prop.value.is('string')}
@@ -98,7 +98,7 @@
 						<Button title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
 					</div>
 				{/if}
-			</Button.Style>
+			</Button.Theme>
 		</div>
 	{/if}
 </div>

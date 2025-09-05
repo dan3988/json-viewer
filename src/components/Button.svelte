@@ -1,21 +1,30 @@
 <script lang="ts">
-	import { ButtonTheme } from "./button";
+	import Button from "./button";
 	import Icon from "./Icon.svelte";
 
-	export let style: 'base' | 'primary' | 'faded' | undefined = undefined;
-	export let icon: BootstrapIconKey | '' = '';
+	export let style: Button.Style | undefined = undefined;
+	export let icon: BootstrapIconKey | "" = "";
 	export let title: boolean | string = true;
-	export let action: VoidFunction | Falsy = undefined;
+	export let action: EventHandler<void, MouseEvent> | Falsy = undefined;
 	export let text: string | undefined = undefined;
 
-	const theme = ButtonTheme.current;
+	const theme = Button.ThemeData.current;
 
-	$: tooltip = (typeof title === 'boolean' ? title ? text : undefined : title) ?? '';
+	function onClick(evt: MouseEvent) {
+		action && action(evt);
+	}
+
+	$: tooltip = (typeof title === "boolean" ? (title ? text : undefined) : title) ?? "";
 	$: clazz = style ?? $theme.style;
 </script>
-<button class="btn btn-{clazz} d-flex gap-2" class:disabled={!action} title={tooltip} aria-label={tooltip} on:click={action || undefined}>
+<button
+	class="btn btn-{clazz} d-flex gap-2"
+	class:disabled={!action}
+	title={tooltip}
+	aria-label={tooltip}
+	on:click={onClick}>
 	{#if icon}
 		<Icon {icon} />
 	{/if}
-	<slot>{text ?? ''}</slot>
+	<slot>{text ?? ""}</slot>
 </button>

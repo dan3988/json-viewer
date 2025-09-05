@@ -1,32 +1,35 @@
 import { getContext, setContext } from "svelte";
 import Store, { StoreController } from "../store";
 import ButtonComponent from "./Button.svelte";
-import ButtonStyleComponent from "./ButtonStyle.svelte";
+import ButtonTheme from "./ButtonTheme.svelte";
 
 const themeKey = Symbol('ButtonStyle');
 
-export class ButtonTheme {
-	static readonly #default = new ButtonTheme('base');
-	static readonly #defaultStore = Store.const(this.#default);
-
-	static createContext(): StoreController<ButtonTheme> {
-		const store = Store.controller<ButtonTheme>(undefined!);
-		setContext(themeKey, store);
-		return store;
-	}
-
-	static get current(): Store<ButtonTheme> {
-		return getContext(themeKey) ?? ButtonTheme.#defaultStore;
-	}
-
-	constructor(readonly style: ButtonStyle) {
-	}
+export class Button extends ButtonComponent {
 }
 
-export type ButtonStyle =  'base' | 'primary' | 'faded';
+export namespace Button {
+	export type Style =  'base' | 'primary' | 'faded';
 
-export class Button extends ButtonComponent {
-	static readonly Style = ButtonStyleComponent;
+	export const Theme = ButtonTheme;
+
+	export class ThemeData {
+		static readonly #default = new this('base');
+		static readonly #defaultStore = Store.const(this.#default);
+
+		static createContext(): StoreController<ThemeData> {
+			const store = Store.controller<ThemeData>(undefined!);
+			setContext(themeKey, store);
+			return store;
+		}
+
+		static get current(): Store<ButtonTheme> {
+			return getContext(themeKey) ?? this.#defaultStore;
+		}
+
+		constructor(readonly style: Style) {
+		}
+	}
 }
 
 export default Button;
