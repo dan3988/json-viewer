@@ -1,5 +1,6 @@
 <script lang="ts">
 	import "../dom-extensions";
+	import Button from "../components/button";
 	import { renderText, type Renderer } from "../renderer";
 
 	type T = $$Generic<any>;
@@ -17,10 +18,6 @@
 	export let allowUnchanged = false;
 	export let autoSelect = false;
 
-	/**
-	 * If a span is empty 
-	 * @param value
-	 */
 	function getText(target: HTMLElement) {
 		const parts = [];
 		for (const child of target.childNodes) {
@@ -114,7 +111,17 @@
 	}
 
 	function onCheckboxInput(this: HTMLInputElement) {
-		onfinish && (onfinish(this.checked as any));
+		onfinish && onfinish(this.checked as any);
+	}
+
+	function increment(evt: MouseEvent) {
+		const mod = evt.ctrlKey ? 10 : 1;
+		onfinish && onfinish((+value + mod) as any);
+	}
+
+	function decrement(evt: MouseEvent) {
+		const mod = evt.ctrlKey ? 10 : 1;
+		onfinish && onfinish((+value - mod) as any);
 	}
 </script>
 <span class="root gap-1" on:dblclick={() => editing = !readonly}>
@@ -125,18 +132,38 @@
 			<input type="checkbox" class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
 		{/if}
 		<span class="preview" use:renderer={value}></span>
+		{#if typeof value === 'number'}
+			<div class="btn-grop d-flex number-steps" on:click|stopPropagation on:dblclick|stopPropagation>
+				<Button.Theme style="faded">
+					<Button icon="dash" title="Decrement" action={decrement} />
+					<Button icon="plus" title="Increment" action={increment} />
+				</Button.Theme>
+			</div>
+		{/if}
 	{/if}
 </span>
 <style lang="scss">
 	.root {
+		--hover-visibility: collapse;
 		flex: 1 1 0;
 		align-items: center;
 		z-index: 2;
 		display: inline-flex;
 		position: relative;
+
+		&:hover {
+		--hover-visibility: visible;
+		}
+	}
+
+	.number-steps {
+		visibility: var(--hover-visibility);
 		
-		> span {
-			flex: 1 1 0;
+		> :global(.btn) {
+			--bs-btn-padding-x: 0;
+			--bs-btn-padding-y: 0;
+			--bs-btn-font-size: 1.25em;
+			//padding-bottom: 1px;
 		}
 	}
 
