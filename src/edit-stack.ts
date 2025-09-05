@@ -38,8 +38,15 @@ class EditActionGroup implements EditAction {
 export class EditStack implements EditStackProps {
 	readonly #state: StateController<EditStackProps>;
 	readonly #actions: EditAction[];
-	#count: number;
+	#count = 0;
+	#counter = 0;
 
+	/** Increments when an action is pushed or undone. */
+	get counter() {
+		return this.#counter;
+	}
+
+	/** Number of actions that can be undone. */
 	get count() {
 		return this.#count;
 	}
@@ -58,7 +65,6 @@ export class EditStack implements EditStackProps {
 
 	constructor() {
 		this.#actions = [];
-		this.#count = 0;
 		this.#state = new StateController<EditStackProps>({ canRedo: false, canUndo: false, count: 0 });
 	}
 
@@ -67,8 +73,9 @@ export class EditStack implements EditStackProps {
 		if (count === 0)
 			return false;
 
-		this.#count = --count;
-		this.#actions[count].revert();
+		this.#actions[--count].revert();
+		this.#counter++;
+		this.#count = count;
 		this.#state.setValues({ count, canUndo: !!count, canRedo: true });
 		return true;
 	}
@@ -78,18 +85,24 @@ export class EditStack implements EditStackProps {
 		if (count >= this.#actions.length)
 			return false;
 
-		this.#actions[count++].commit();
-		this.#count = count;
+		this.#actions[count].commit();
+		this.#count = ++count;
 		this.#state.setValues({ count, canUndo: true, canRedo: count < this.#actions.length });
 		return true;
 	}
 
+	/**
+	 * Push an action on the stack, clearing any undone actions
+	 * @param actions 
+	 * @returns The value of `counter`
+	 */
 	push(action: EditAction): number {
 		let count = this.#count;
+		action.commit();
 		this.#actions.splice(count, Infinity, action);
+		const id = ++this.#counter;
 		this.#count = ++count;
 		this.#state.setValues({ count, canUndo: true, canRedo: false });
-		action.commit();
-		return count;
+		return id;
 	}
 }

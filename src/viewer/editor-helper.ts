@@ -21,15 +21,17 @@ export namespace edits {
 	}
 
 	export function setValue(token: json.JValue, newValue: json.JValueType): EditAction {
-		const oldValue = token.value;
+		let oldValue: any;
 		return new EditAction(commit, revert);
 
 		function commit() {
+			oldValue = token.value;
 			token.value = newValue;
 		}
 
 		function revert() {
 			token.value = oldValue;
+			oldValue = undefined;
 		}
 	}
 

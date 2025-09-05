@@ -11,7 +11,7 @@
 	export let renderer: (target: HTMLElement, value: T) => Renderer = renderText;
 	export let readonly = false;
 	export let editing = false;
-	export let onfinish: ((value: T) => void) | Falsy = undefined;
+	export let onfinish: ((value: T, group: boolean) => void) | Falsy = undefined;
 	export let oncancel: VoidFunction | Falsy = undefined;
 	export let onclose: VoidFunction | Falsy = undefined;
 	export let onediting: VoidFunction | Falsy = undefined;
@@ -55,7 +55,7 @@
 			const result = parse(text);
 			editing = false;
 			if (allowUnchanged || result !== originalValue) {
-				onfinish && onfinish(result);
+				onfinish && onfinish(result, false);
 			} else {
 				oncancel && oncancel();
 			}
@@ -111,17 +111,17 @@
 	}
 
 	function onCheckboxInput(this: HTMLInputElement) {
-		onfinish && onfinish(this.checked as any);
+		onfinish && onfinish(this.checked as any, false);
 	}
 
 	function increment(evt: MouseEvent) {
 		const mod = evt.ctrlKey ? 10 : 1;
-		onfinish && onfinish((+value + mod) as any);
+		onfinish && onfinish((+value + mod) as any, true);
 	}
 
 	function decrement(evt: MouseEvent) {
 		const mod = evt.ctrlKey ? 10 : 1;
-		onfinish && onfinish((+value - mod) as any);
+		onfinish && onfinish((+value - mod) as any, true);
 	}
 </script>
 <span class="root gap-1" on:dblclick={() => editing = !readonly}>

@@ -44,6 +44,8 @@
 
 	$: setValue(prop.value as any);
 
+	let lastId = 0;
+
 	function setValue(v: json.JValue) {
 		token?.changed.removeListener(onChanged);
 		token = v;
@@ -55,8 +57,13 @@
 		({ value, subtype } = token);
 	}
 
-	function update(newValue: any) {
-		model.edits.push(edits.setValue(token, newValue));
+	function update(newValue: any, group: boolean) {
+		const edit = edits.setValue(token, newValue);
+		if (group && lastId == model.edits.counter) {
+			model.edits.undo();
+		}
+
+		lastId = model.edits.push(edit);
 	}
 </script>
 <div class="root json-{subtype}" class:editing>
