@@ -6,14 +6,38 @@ export interface EditStackProps {
 	readonly count: number;
 }
 
-export interface EditAction {
-	commit(): void;
-	undo(): void;
+export class EditAction {
+	static group(actions: Iterable<EditAction>) {
+		return new EditActionGroup([...actions]);
+	}
+
+	constructor(readonly commit: VoidFunction, readonly revert: VoidFunction) {
+	}
+}
+
+class EditActionGroup implements EditAction {
+	readonly #actions: EditAction[];
+
+	constructor(actions: Iterable<EditAction>) {
+		this.#actions = Array.from(actions);
+	}
+
+	commit() {
+		for (const action of this.#actions) {
+			action.commit();
+		}
+	}
+
+	revert() {
+		for (const action of this.#actions) {
+			action.revert();
+		}
+	}
 }
 
 export class EditStack implements EditStackProps {
 	readonly #state: StateController<EditStackProps>;
-	readonly #actions: EditAction[][];
+	readonly #actions: EditAction[];
 	#count: number;
 
 	get count() {
@@ -44,7 +68,7 @@ export class EditStack implements EditStackProps {
 			return false;
 
 		this.#count = --count;
-		this.#actions[count].forEach(v => v.undo());
+		this.#actions[count].revert();
 		this.#state.setValues({ count, canUndo: !!count, canRedo: true });
 		return true;
 	}
@@ -54,18 +78,18 @@ export class EditStack implements EditStackProps {
 		if (count >= this.#actions.length)
 			return false;
 
-		this.#actions[count++].forEach(v => v.commit());
+		this.#actions[count++].commit();
 		this.#count = count;
 		this.#state.setValues({ count, canUndo: true, canRedo: count < this.#actions.length });
 		return true;
 	}
 
-	push(...actions: EditAction[]): number {
+	push(action: EditAction): number {
 		let count = this.#count;
-		this.#actions.splice(count, Infinity, actions);
+		this.#actions.splice(count, Infinity, action);
 		this.#count = ++count;
 		this.#state.setValues({ count, canUndo: true, canRedo: false });
-		actions.forEach(v => v.commit());
+		action.commit();
 		return count;
 	}
 }

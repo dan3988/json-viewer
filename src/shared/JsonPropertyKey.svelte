@@ -16,7 +16,7 @@
 		const { parent } = prop;
 		if (parent?.is('object')) {
 			return (name: string) => {
-				edits.renameProperty(model, parent, prop.key as string, name);
+				model.edits.push(edits.rename(parent, prop.key as string, name));
 				model.execute('scrollTo', prop);
 			}
 		}

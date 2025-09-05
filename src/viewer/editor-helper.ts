@@ -1,99 +1,114 @@
-import type { EditAction } from "../edit-stack.js";
-import type ViewerModel from "../viewer-model.js";
+import { EditAction } from "../edit-stack.js";
 import json from "../json.js";
 import Linq from "@daniel.pickett/linq-js";
 
 export namespace edits {
-	export function clearProp(model: ViewerModel, value: json.JContainer) {
+	export function clearProp(value: json.JContainer): EditAction {
 		const props = [...value];
-		model.edits.push({
-			commit() {
+		return new EditAction(commit, revert);
+
+		function commit() {
 				value.clear();
 				value.owner.isExpanded = false;
-			},
-			undo() {
+		}
+
+		function revert() {
 				for (const prop of props)
 					value.setProperty(prop);
 
 				value.owner.isExpanded = true;
-			}
-		})
+		}
 	}
 
-	export function setValue(model: ViewerModel, token: json.JValue, newValue: json.JValueType) {
+	export function setValue(token: json.JValue, newValue: json.JValueType): EditAction {
 		const oldValue = token.value;
-		model.edits.push({
-			commit: () => token.value = newValue,
-			undo: () => token.value = oldValue,
-		});
+		return new EditAction(commit, revert);
+
+		function commit() {
+			token.value = newValue;
+		}
+
+		function revert() {
+			token.value = oldValue;
+		}
 	}
 
-	export function replace(model: ViewerModel, prop: json.JProperty, newProp: json.JProperty) {
-		model.edits.push({
-			commit: () => prop.replace(newProp.value),
-			undo: () => newProp.replace(prop.value)
-		});
+	export function replace(prop: json.JProperty, newProp: json.JProperty): EditAction {
+		return new EditAction(commit, revert);
+
+		function commit() {
+			prop.replace(newProp.value);
+		}
+
+		function revert() {
+			newProp.replace(prop.value);
+		}
 	}
 
-	function createDeleteAction(prop: json.JProperty): EditAction {
+	function createDeleteRevert(prop: json.JProperty) {
 		const { parent } = prop;
-		let undo: Action;
 		if (parent!.is("object")) {
 			const p = prop as json.JProperty<string>;
 			const obj = parent;
 			if (p.previous === null) {
-				undo = () => obj.first === null ? obj.setProperty(p) : obj.insertBefore(p, obj.first);
+				return () => obj.first === null ? obj.setProperty(p) : obj.insertBefore(p, obj.first);
 			} else {
 				const prev = p.previous;
-				undo = () => obj.insertAfter(p, prev);
+				return () => obj.insertAfter(p, prev);
 			}
 		} else {
-			undo = () => (parent as json.JContainer).setProperty(prop);
+			return () => (parent as json.JContainer).setProperty(prop);
+		}
+	}
+
+	export function remove(prop: json.JProperty): EditAction;
+	export function remove(props: Iterable<json.JProperty>): EditAction;
+	export function remove(arg: json.JProperty | Iterable<json.JProperty>): EditAction {
+		let props: (readonly [prop: json.JProperty, remove: VoidFunction])[];
+
+		if (Symbol.iterator in arg) {
+			props = Linq(arg)
+				.select(v => [v, createDeleteRevert(v)] as const)
+				.toArray();
+		} else {
+			props = [
+				[arg, createDeleteRevert(arg)],
+			];
 		}
 
-		return {
-			undo,
-			commit() {
+		return new EditAction(commit, revert);
+
+		function commit() {
+			for (const [prop] of props) {
 				prop.remove();
 			}
-		};
-	}
+		}
 
-	export function deleteProp(model: ViewerModel, prop: json.JProperty, selectNext?: boolean) {
-		const { parent, next, previous } = prop;
-		if (parent == null)
-			return;
-		
-		const action = createDeleteAction(prop);
-		model.edits.push(action);
-		if (parent && parent.first == null)
-			parent.owner.isExpanded = false;
-
-		const p  = (next ?? previous);
-		selectNext && p && model.setSelected(p, false, true);
-	}
-
-	export function deleteProps(model: ViewerModel, props: Iterable<json.JProperty>) {
-		model.edits.push(...Linq(props).select(createDeleteAction));
-	}
-
-	export function renameProperty(model: ViewerModel, obj: json.JObject, oldName: string, newName: string) {
-		modifyStructure(model, obj, null, newName, obj => obj.rename(oldName, newName), obj => obj.rename(newName, oldName));
-	}
-
-	export function sortObject(model: ViewerModel, obj: json.JObject, desc?: boolean) {
-		const old = [...obj];
-		model.edits.push({
-			commit() {
-				obj.sort(desc);
-			},
-			undo() {
-				obj.reset(old);
+		function revert() {
+			for (const [, revert] of props) {
+				revert();
 			}
-		});
+		}
 	}
 
-	export function addToObject(model: ViewerModel, obj: json.JObject, mode: json.AddType, key: string, sibling?: json.JProperty<string>, insertBefore = false) {
+	export function rename(parent: json.JObject, oldName: string, newName: string): EditAction {
+		return modifyStructure(parent, newName, obj => obj.rename(oldName, newName), obj => obj.rename(newName, oldName));
+	}
+
+	export function sort(obj: json.JObject, desc?: boolean): EditAction {
+		const old = [...obj];
+		return new EditAction(commit, revert);
+
+		function commit() {
+			obj.sort(desc);
+		}
+
+		function revert() {
+			obj.reset(old);
+		}
+	}
+
+	export function objectAdd(parent: json.JObject, mode: json.AddType, key: string, sibling?: json.JProperty<string>, insertBefore = false): EditAction {
 		const prop = new json.JProperty(key, mode);
 		let commit: (obj: json.JObject) => void;
 
@@ -105,46 +120,44 @@ export namespace edits {
 			commit = obj => obj.insertAfter(prop, sibling);
 		}
 
-		modifyStructure(model, obj, prop, key, commit, () => prop.remove());
+		return modifyStructure(parent, key, commit, () => prop.remove());
 	}
 
-	export async function addToArray(model: ViewerModel, arr: json.JArray, mode: json.AddType, index?: number) {
-		const prop = new json.JProperty(index ?? arr.count, mode);
-		model.edits.push({
-			commit() {
-				arr.insertProperty(prop);
-				arr.owner.isExpanded = true;
-				model.selected.reset(prop);
-			},
-			undo() {
-				prop.remove();
-			},
-		});
+	export function arrayAdd(parent: json.JArray, mode: json.AddType, index?: number) {
+		const prop = new json.JProperty(index ?? parent.count, mode);
+		return new EditAction(commit, revert);
+
+		function commit() {
+			parent.insertProperty(prop);
+			parent.owner.isExpanded = true;
+		}
+
+		function revert() {
+			prop.remove();
+		}
 	}
 
-	function modifyStructure(model: ViewerModel, obj: json.JObject, prop: null | json.JProperty, key: string, commit: (obj: json.JObject) => void, undo: (obj: json.JObject) => void) {
+	function modifyStructure(parent: json.JObject, key: string, run: (obj: json.JObject) => void, remove: (obj: json.JObject) => void): EditAction {
 		let existing: undefined | json.JProperty<string>;
 		let existingSibling: undefined | null | json.JProperty<string>;
-		model.edits.push({
-			commit() {
-				existing = obj.getProperty(key);
-				existingSibling = existing?.next;
-				commit(obj);
-				if (prop) {
-					model.selected.reset(prop);
-				}
-			},
-			undo() {
-				undo(obj);
-				if (existing) {
-					if (existingSibling) {
-						obj.insertBefore(existing, existingSibling);
-					} else {
-						obj.setProperty(existing);
-					}
+		return new EditAction(commit, revert);
+
+		function commit() {
+			existing = parent.getProperty(key);
+			existingSibling = existing?.next;
+			run(parent);
+		}
+
+		function revert() {
+			remove(parent);
+			if (existing) {
+				if (existingSibling) {
+					parent.insertBefore(existing, existingSibling);
+				} else {
+					parent.setProperty(existing);
 				}
 			}
-		})
+		}
 	}
 }
 

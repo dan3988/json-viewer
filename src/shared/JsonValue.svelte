@@ -56,7 +56,7 @@
 	}
 
 	function update(newValue: any) {
-		edits.setValue(model, token, newValue);
+		model.edits.push(edits.setValue(token, newValue));
 	}
 </script>
 <div class="root json-{subtype}" class:editing>

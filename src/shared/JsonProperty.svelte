@@ -62,7 +62,7 @@
 		const container = prop.value;
 		const targetIndex = index + +(mode === 'after');
 		if (container.is('array')) {
-			edits.addToArray(model, container, type, targetIndex);
+			model.edits.push(edits.arrayAdd(container, type, targetIndex));
 		} else if (container.is('object')) {
 			const sibling = props[index] as json.JProperty<string>;
 			const commit: CommitObject = addObject.bind(undefined, container, sibling, mode === 'before', type);
@@ -72,7 +72,7 @@
 	}
 
 	function addObject(parent: json.JObject, sibling: null | json.JProperty<string>, insertBefore: boolean, type: json.AddType, name: string) {
-		edits.addToObject(model, parent, type, name, sibling ?? undefined, insertBefore);
+		model.edits.push(edits.objectAdd(parent, type, name, sibling ?? undefined, insertBefore));
 	}
 
 	function removePendingEdit(index: number) {
@@ -330,7 +330,7 @@
 						edit={value.is('value') && startEditing}
 						rename={typeof key === 'string' && (() => editingName = true)}
 						{remove}
-						sort={value.is('object') && ((desc) => edits.sortObject(model, value, desc))}
+						sort={value.is('object') && ((desc) => model.edits.push(edits.sort(value, desc)))}
 					/>
 				{/if}
 			</JsonPropertyKey>
@@ -363,7 +363,7 @@
 						{:else}
 							<li class="json-container-item">
 								<svelte:self {model} {prop} {readonly} {inserterManager}
-									remove={() => edits.deleteProp(model, prop)}
+									remove={() => model.edits.push(edits.remove(prop))}
 									indent={indent.next}
 								/>
 							</li>

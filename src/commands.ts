@@ -49,12 +49,7 @@ const commandHandlers: Record<string, CommandInvoker> = {
 		return true;
 	},
 	selectionDelete(model) {
-		if (model.selected.size === 1) {
-			edits.deleteProp(model, model.selected.last!, true);
-		} else {
-			edits.deleteProps(model, model.selected);
-			model.selected.clear();
-		}
+		model.edits.push(edits.remove(model.selected));
 	},
 	async selectionCopy(model) {
 		const selection = window.getSelection();
