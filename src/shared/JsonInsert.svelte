@@ -173,16 +173,14 @@
 	<div class="hitbox" use:hitbox></div>
 	<div class="separator"></div>
 	<div class="expander" tabindex="0" on:focusout={onFocusOut} bind:this={focusTarget}>
-		<Button icon="plus-lg" title="Insert" action={expand}></Button>
+		<Button icon="plus" title="Insert" action={expand}></Button>
 		{#if open}
 			<div class="menu-wrapper" transition:scale={{ duration: 250 }}>
-				<Button.Style style="base">
-					<div class="menu-root btn-group">
-						<Button title="Object" icon="braces" action={() => doInsert('object')} />
-						<Button title="Array" icon="list" action={() => doInsert('array')} />
-						<Button title="Value" icon="fonts" action={() => doInsert('value')} />
-					</div>
-				</Button.Style>
+				<div class="menu-root btn-group">
+					<Button title="Object" icon="braces" action={() => doInsert('object')} />
+					<Button title="Array" icon="list" action={() => doInsert('array')} />
+					<Button title="Value" icon="fonts" action={() => doInsert('value')} />
+				</div>
 			</div>
 		{/if}
 	</div>
@@ -224,15 +222,14 @@
 		translate: -50% -50%;
 
 		> :global(.btn) {
-			--bs-btn-padding-x: 2px;
-			--bs-btn-padding-y: 2px;
-			--bs-btn-font-size: 0.6rem;
-			//aspect-ratio: 1;
+			--bs-btn-padding-x: 0;
+			--bs-btn-padding-y: 0;
+			--bs-btn-font-size: 1.25em;
 		}
 	}
 
 	.menu-wrapper {
-		font-size: 1rem;
+		font-size: 1.25em;
 		position: absolute;
 		top: 50%;
 		left: 0;
