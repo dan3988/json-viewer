@@ -27,6 +27,7 @@
 </script>
 <script lang="ts">
 	import type { ViewerModel } from "../viewer-model.js";
+	import type { EditAction } from "../edit-stack.js";
 	import { renderValue } from "../renderer.js";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
@@ -58,12 +59,19 @@
 	}
 
 	function update(newValue: any, group: boolean) {
-		const edit = edits.setValue(token, newValue);
+		let edit: EditAction;
+
+		if (typeof newValue === 'object') {
+			edit = edits.replace(prop, json(newValue));
+		} else {
+			edit = edits.setValue(token, newValue);
+		}
+
 		if (group && lastId == model.edits.counter) {
 			model.edits.undo();
 		}
 
-		lastId = model.edits.push(edit);
+		lastId = model.edits.push(edit)
 	}
 </script>
 <div class="root json-{subtype}" class:editing>
