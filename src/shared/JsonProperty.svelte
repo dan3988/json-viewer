@@ -374,9 +374,7 @@
 			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 			<ul class="json-container json-{value.subtype} p-0" on:click|stopPropagation>
 				<li class="json-container-gap">
-					{#if canEdit}
-						<JsonInsert manager={inserterManager} insert={(type) => insertSibling(0, type, 'before')} />
-					{/if}
+					<JsonInsert manager={inserterManager} insert={(type) => insertSibling(0, type, 'before')} />
 				</li>
 				{#if props.length === 0}
 					<li class="container-empty">empty</li>
@@ -395,9 +393,7 @@
 							</li>
 						{/if}
 						<li class="json-container-gap">
-							{#if canEdit}
-								<JsonInsert manager={inserterManager} insert={(type) => insertSibling(i, type, 'after')} />
-							{/if}
+							<JsonInsert manager={inserterManager} insert={(type) => insertSibling(i, type, 'after')} />
 						</li>
 					{/each}
 				{/if}
