@@ -135,6 +135,7 @@ The build will output the extension to `./out/<browser>`.
 - [x] Undo / redo edits
 - [x] Allow multiple properties to be selected
 - [x] Show HTTP headers
+- [x] Inline value editing
+- [x] Improve object/array manipulation
 - [ ] Allow modified JSON to be used in POST/PUT requests
-- [ ] Inline value editing
-- [ ] Improve object/array manipulation
+- [ ] Upgrade to svelte 5
