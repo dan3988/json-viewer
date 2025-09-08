@@ -19,12 +19,10 @@
 	export let readonly = false;
 	export let remove: (() => void) | undefined = undefined;
 
-	$: ({ selected } = model.state.props)
 	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
-
-	$: isActive = $selected.length == 1 && $selected[0] == prop;
-	$: canEdit = !readonly && !(editingName || editingValue);
-
+	
+	$: canEdit = !readonly && !(editingName || editingValue || menuOpen);
+	
 	let editingValue = false;
 	let editingName = false;
 
@@ -107,6 +105,27 @@
 	function onGutterClicked() {
 		model.setSelected(prop, false, true);
 	}
+
+	let menuFocus: HTMLElement;
+	let menuOpen = false;
+
+	function onMenuFocusLost(evt: FocusEvent) {
+		if (!menuFocus.contains(evt.relatedTarget as Node | null)) {
+			menuOpen = false;
+		}
+	}
+
+	function openMenu(evt: MouseEvent) {
+		if (!evt.shiftKey) {
+			evt.preventDefault();
+
+			if (!menuOpen) {
+				model.selected.reset(prop);
+				menuOpen = true;
+				menuFocus.focus();
+			}
+		}
+	}
 </script>
 <style lang="scss">
 	@use "src/core.scss" as *;
@@ -138,10 +157,15 @@
 
 	.json-key-container {
 		position: relative;
+		outline: none;
 	}
 
 	.json-key-placeholder {
 		padding-left: 1em;
+	}
+
+	.json-actions-root {
+		z-index: 5;
 	}
 
 	:global(.esc) {
@@ -320,19 +344,21 @@
 	class="json-prop for-{value.type} for-{value.subtype} json-indent"
 	class:expanded={$isExpanded}
 	on:click={onClick}>
-	<span class="json-key" class:json-selected={$isSelected}>
-		<span class="json-key-container">
+	<span class="json-key" class:json-selected={$isSelected} on:contextmenu={openMenu}>
+		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
 			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
-				{#if canEdit && isActive}
-					<JsonActions
-						{model}
-						{prop}
-						edit={value.is('value') && startEditing}
-						rename={typeof key === 'string' && (() => editingName = true)}
-						{remove}
-						sort={value.is('object') && ((desc) => model.edits.push(edits.sort(value, desc)))}
-					/>
-				{/if}
+				<div class="json-actions-root">
+					{#if menuOpen}
+						<JsonActions
+							{model}
+							{prop}
+							edit={value.is('value') && startEditing}
+							rename={typeof key === 'string' && (() => editingName = true)}
+							{remove}
+							sort={value.is('object') && ((desc) => model.edits.push(edits.sort(value, desc)))}
+						/>
+					{/if}
+				</div>
 			</JsonPropertyKey>
 		</span>
 	</span>

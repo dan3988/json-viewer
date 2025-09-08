@@ -121,7 +121,7 @@
 		bindings = new KeyBindingListener(model, target, Linq(commands).selectMany(v => v.defaultBindings));
 	}
 
-	function clearFilter(this: HTMLElement) {
+	function clearFilter() {
 		filter = "";
 		filterInput.focus();
 	}

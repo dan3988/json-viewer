@@ -9,8 +9,6 @@
 	import Button from "../components/button";
 	import Icon from "../components/Icon.svelte";
 
-	let expanded = false;
-
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
 	export let rename: CallbackArg = undefined;
@@ -31,103 +29,50 @@
 		const text = model.formatValue(prop.value);
 		return navigator.clipboard.writeText(text);
 	}
-
-	function focusHelper(target: HTMLElement) {
-		function onFocusOut(evt: FocusEvent) {
-			if (!target.contains(evt.relatedTarget as Node | null)) {
-				expanded = false;
-			}
-		}
-
-		let timeout = window.setTimeout(() => {
-			timeout = 0;
-			target.focus();
-			target.addEventListener('focusout', onFocusOut);
-		});
-
-		return {
-			destroy() {
-				if (timeout) {
-					window.clearTimeout(timeout);
-				} else {
-					target.removeEventListener('focusout', onFocusOut);
-				}
-			}
-		}
-	}
 </script>
-<div class="root" class:expanded>
-	<button class="expander btn btn-base bi" on:click={() => expanded = true}></button>
-	{#if expanded}
-		<div class="menu-root border rounded bg-body-tertiary" tabindex="0" use:focusHelper transition:scale={{ duration: 250 }}>
-			<Button.Theme style="faded">
-				{#if prop.value.is('container')}
-					<Button text="Expand All" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
-				{/if}
-				<div class="menu-row menu-choice">
-					<span class="row-text">
-						<Icon icon="clipboard-fill" />
-						Copy
-					</span>
-					{#if typeof prop.key === 'string'}
-						<Button title="Copy Key" icon="key-fill" action={copyKey} />
-					{/if}
-					<Button title="Copy JSON" icon="braces" action={() => copyValue()} />
-					{#if prop.value.is('container')}
-						<Button title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
-					{:else if prop.value.is('string')}
-						<Button title="Copy Text" icon="fonts" action={copyText} />
-					{/if}
-				</div>
-				{#if rename}
-					<Button text="Rename" icon="input-cursor-text" action={rename} />
-				{/if}
-				{#if remove}
-					<Button text="Delete" icon="trash-fill" action={remove} />
-				{/if}
-				{#if edit}
-					<Button text="Edit Value" icon="pencil-fill" action={edit} />
-				{/if}
-				{#if sort}
-					<div class="menu-row menu-choice">
-						<span class="row-text">
-							<Icon icon="sort-down" />
-							Sort
-						</span>
-						<Button title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
-						<Button title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
-					</div>
-				{/if}
-			</Button.Theme>
+<div class="menu-root border rounded bg-body-tertiary" transition:scale={{ duration: 150 }}>
+	<Button.Theme style="faded">
+		{#if prop.value.is('container')}
+			<Button text="Expand All" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
+		{/if}
+		<div class="menu-row menu-choice">
+			<span class="row-text">
+				<Icon icon="clipboard-fill" />
+				Copy
+			</span>
+			{#if typeof prop.key === 'string'}
+				<Button title="Copy Key" icon="key-fill" action={copyKey} />
+			{/if}
+			<Button title="Copy JSON" icon="braces" action={() => copyValue()} />
+			{#if prop.value.is('container')}
+				<Button title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
+			{:else if prop.value.is('string')}
+				<Button title="Copy Text" icon="fonts" action={copyText} />
+			{/if}
 		</div>
-	{/if}
+		{#if rename}
+			<Button text="Rename" icon="input-cursor-text" action={rename} />
+		{/if}
+		{#if remove}
+			<Button text="Delete" icon="trash-fill" action={remove} />
+		{/if}
+		{#if edit}
+			<Button text="Edit Value" icon="pencil-fill" action={edit} />
+		{/if}
+		{#if sort}
+			<div class="menu-row menu-choice">
+				<span class="row-text">
+					<Icon icon="sort-down" />
+					Sort
+				</span>
+				<Button title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
+				<Button title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
+			</div>
+		{/if}
+	</Button.Theme>
 </div>
 <style lang="scss">
 	@use "src/core.scss" as *;
-
-	.root {
-		--expander-icon: "\F64D";
-		--line-color: var(--jv-tertiary-border);
-
-		z-index: 5;
-
-		&.expanded {
-			--expander-icon: "\F63B";
-		}
-	}
-
-	.expander {
-		--bs-btn-padding-x: 0.1rem;
-		--bs-btn-padding-y: 0.1rem;
-
-		font-size: 0.7rem;
-		border: none;
-		border-radius: calc(var(--bs-border-radius) - $pad-small);
-
-		&::before {
-			content: var(--expander-icon);
-		}
-	}
 
 	.menu-root,
 	.menu-row,
