@@ -15,6 +15,14 @@
 	export let edit: CallbackArg = undefined;
 	export let remove: CallbackArg = undefined;
 	export let sort: CallbackArg<[desc: boolean]> = undefined;
+	export let close: VoidFunction;
+
+	function wrap<A extends any[]>(fn: (...args: A) => void, ...args: A): VoidFunction {
+		return () => {
+			close();
+			fn.apply(undefined, args);
+		}
+	}
 
 	function copyKey() {
 		return navigator.clipboard.writeText(String(prop.key));
@@ -33,7 +41,7 @@
 <div class="menu-root border rounded bg-body-tertiary" transition:scale={{ duration: 150 }}>
 	<Button.Theme style="faded">
 		{#if prop.value.is('container')}
-			<Button text="Expand All" icon="node-plus-fill" action={() => prop.setExpanded(true, true)} />
+			<Button text="Expand All" icon="node-plus-fill" action={wrap(() => prop.setExpanded(true, true))} />
 		{/if}
 		<div class="menu-row menu-choice">
 			<span class="row-text">
@@ -41,23 +49,23 @@
 				Copy
 			</span>
 			{#if typeof prop.key === 'string'}
-				<Button title="Copy Key" icon="key-fill" action={copyKey} />
+				<Button title="Copy Key" icon="key-fill" action={wrap(copyKey)} />
 			{/if}
-			<Button title="Copy JSON" icon="braces" action={() => copyValue()} />
+			<Button title="Copy JSON" icon="braces" action={wrap(copyValue)} />
 			{#if prop.value.is('container')}
-				<Button title="Copy JSON (Formatted)" icon="braces-asterisk" action={() => copyValue(true)} />
+				<Button title="Copy JSON (Formatted)" icon="braces-asterisk" action={wrap(copyValue, true)} />
 			{:else if prop.value.is('string')}
-				<Button title="Copy Text" icon="fonts" action={copyText} />
+				<Button title="Copy Text" icon="fonts" action={wrap(copyText)} />
 			{/if}
 		</div>
 		{#if rename}
-			<Button text="Rename" icon="input-cursor-text" action={rename} />
+			<Button text="Rename" icon="input-cursor-text" action={wrap(rename)} />
 		{/if}
 		{#if remove}
-			<Button text="Delete" icon="trash-fill" action={remove} />
+			<Button text="Delete" icon="trash-fill" action={wrap(remove)} />
 		{/if}
 		{#if edit}
-			<Button text="Edit Value" icon="pencil-fill" action={edit} />
+			<Button text="Edit Value" icon="pencil-fill" action={wrap(edit)} />
 		{/if}
 		{#if sort}
 			<div class="menu-row menu-choice">

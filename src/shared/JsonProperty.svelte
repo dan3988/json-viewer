@@ -350,6 +350,7 @@
 				<div class="json-actions-root">
 					{#if menuOpen}
 						<JsonActions
+							close={() => menuOpen = false}
 							{model}
 							{prop}
 							edit={value.is('value') && startEditing}
