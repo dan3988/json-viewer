@@ -243,10 +243,6 @@
 			&:after {
 				content: "]"
 			}
-
-			> .json-container {
-				--jv-key-fg: var(--jv-num-fg);
-			}
 		}
 
 		> .container-summary {

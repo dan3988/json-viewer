@@ -11,6 +11,7 @@
 	export let readonly = false;
 	export let editing: boolean;
 
+	$: isNumber = typeof key === 'number';
 	$: ({ key, state: { props: { isSelected } } } = prop);
 	$: onrename = ((prop) => {
 		const { parent } = prop;
@@ -45,7 +46,7 @@
 		}
 	}
 </script>
-<div bind:this={element} class="root" class:selected={$isSelected}>
+<div bind:this={element} class="root" class:number={isNumber} class:selected={$isSelected}>
 	<span class="key-text">
 		{#if typeof key === 'number'}
 			{key}
@@ -67,6 +68,10 @@
 		white-space: nowrap;
 		gap: $pad-small;
 		cursor: pointer;
+
+		&.number {
+		color: var(--jv-num-fg);
+		}
 
 		&.selected {
 			cursor: text;
