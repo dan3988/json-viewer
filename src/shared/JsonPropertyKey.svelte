@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type json from "../json";
 	import type { ViewerModel, ViewerCommandEvent } from "../viewer-model";
+	import type { InserterManager } from "./JsonInsert.svelte";
 	import edits from "../viewer/editor-helper.js";
 	import { onDestroy } from "svelte";
 	import { renderKey } from "../renderer";
@@ -8,6 +9,7 @@
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
+	export let inserterManager: InserterManager;
 	export let readonly = false;
 	export let editing: boolean;
 
@@ -50,7 +52,7 @@
 		{#if typeof key === 'number'}
 			{key}
 		{:else}
-			<JsonValueEditor value={key} parse={String} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
+			<JsonValueEditor value={key} parse={String} {readonly} {inserterManager} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
 		{/if}
 	</span>
 	<slot />

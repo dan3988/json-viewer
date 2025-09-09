@@ -2,6 +2,7 @@
 	import { noop } from "../util";
 
 	export class InserterManager {
+		readonly #blockers = new Set<Element>();
 		readonly #handlers = new Map<Element, InserterRegistration>();
 		#boundMouseMove: (evt: MouseEvent) => void;
 		#active: InserterRegistration | null = null;
@@ -9,6 +10,13 @@
 
 		constructor() {
 			this.#boundMouseMove = this.#onMouseMove.bind(this);
+		}
+
+		blocker(target: HTMLElement) {
+			const blockers = this.#blockers;
+			const destroy = Set.prototype.delete.bind(blockers, target);
+			blockers.add(target);
+			return { destroy };
 		}
 
 		lock() {
@@ -38,11 +46,12 @@
 
 			const elements = document.elementsFromPoint(evt.clientX, evt.clientY);
 			for (const element of elements) {
+				if (this.#blockers.has(element))
+					break;
+
 				const reg = this.#handlers.get(element);
-				if (reg) {
-					this.#updateActive(reg);
-					return;
-				}
+				if (reg)
+					return this.#updateActive(reg);
 			}
 
 			this.#updateActive(null);
@@ -71,7 +80,7 @@
 			return new InserterManager.#InserterRegistration(this);
 		}
 
-		static readonly #InserterRegistration = class InserterRegistration implements InserterRegistration {
+		static readonly #InserterRegistration = class implements InserterRegistration {
 			readonly #owner: InserterManager;
 
 			setActive: (this: void, active: boolean) => void = noop;
@@ -79,7 +88,6 @@
 			constructor(owner: InserterManager) {
 				this.#owner = owner;
 				this.hitbox = this.hitbox.bind(this);
-				this.destroy = this.destroy.bind(this);
 			}
 
 			hitbox(target: HTMLElement) {
@@ -96,10 +104,6 @@
 					this.#owner.#updateActive(null);
 					this.#owner.#locked = false;
 				}
-			}
-
-			destroy(): void {
-				
 			}
 		}
 	}

@@ -35,6 +35,7 @@
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
+	export let inserterManager: InserterManager;
 	export let readonly = false;
 	export let editing = false;
 	export let onediting: VoidFunction | Falsy = undefined;
@@ -75,7 +76,7 @@
 	}
 </script>
 <div class="root json-{subtype}" class:editing>
-	<JsonValueEditor {value} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} bind:editing onfinish={update} />
+	<JsonValueEditor {value} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} {inserterManager} bind:editing onfinish={update} />
 </div>
 <style lang="scss">
 	@use "../core.scss" as *;

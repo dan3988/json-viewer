@@ -346,7 +346,7 @@
 	on:click={onClick}>
 	<span class="json-key" class:json-selected={$isSelected} on:contextmenu={openMenu}>
 		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
-			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
+			<JsonPropertyKey {model} {prop} {readonly} {inserterManager} bind:editing={editingName}>
 				<div class="json-actions-root">
 					{#if menuOpen}
 						<JsonActions
@@ -383,7 +383,7 @@
 					{#each props as prop, i (prop)}
 						{#if typeof prop === 'function'}
 							<li class="json-key-placeholder json-selected">
-								<JsonValueEditor value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
+								<JsonValueEditor {inserterManager} value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
 							</li>
 						{:else}
 							<li class="json-container-item">
@@ -402,7 +402,7 @@
 		{/if}
 	{:else if value.is("value")}
 		<span class="json-value">
-			<JsonValue {model} {prop} {readonly} onediting={startEditing} bind:editing={editingValue} />
+			<JsonValue {model} {prop} {readonly} {inserterManager} onediting={startEditing} bind:editing={editingValue} />
 		</span>
 	{/if}
 </div>
