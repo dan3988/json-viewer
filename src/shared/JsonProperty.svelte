@@ -6,7 +6,7 @@
 	import JsonPropertyKey from "./JsonPropertyKey.svelte";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 	import JsonValue from "./JsonValue.svelte";
-	import JsonInsert, { type InserterManager } from "./JsonInsert.svelte";
+	import JsonInsert, { InserterManager } from "./JsonInsert.svelte";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
 
@@ -14,10 +14,11 @@
 
 	export let model: ViewerModel;
 	export let prop: json.JProperty;
-	export let inserterManager: InserterManager;
 	export let indent: Indent;
 	export let readonly = false;
 	export let remove: (() => void) | undefined = undefined;
+
+	const inserterManager = InserterManager.current;
 
 	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
 	
@@ -346,7 +347,7 @@
 	on:click={onClick}>
 	<span class="json-key" class:json-selected={$isSelected} on:contextmenu={openMenu}>
 		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
-			<JsonPropertyKey {model} {prop} {readonly} {inserterManager} bind:editing={editingName}>
+			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
 				<div class="json-actions-root">
 					{#if menuOpen}
 						<JsonActions
@@ -375,7 +376,7 @@
 			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 			<ul class="json-container json-{value.subtype} p-0" on:click|stopPropagation>
 				<li class="json-container-gap">
-					<JsonInsert manager={inserterManager} insert={(type) => insertSibling(0, type, 'before')} />
+					<JsonInsert insert={(type) => insertSibling(0, type, 'before')} />
 				</li>
 				{#if props.length === 0}
 					<li class="container-empty">empty</li>
@@ -383,18 +384,18 @@
 					{#each props as prop, i (prop)}
 						{#if typeof prop === 'function'}
 							<li class="json-key-placeholder json-selected">
-								<JsonValueEditor {inserterManager} value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
+								<JsonValueEditor value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
 							</li>
 						{:else}
 							<li class="json-container-item">
-								<svelte:self {model} {prop} {readonly} {inserterManager}
+								<svelte:self {model} {prop} {readonly}
 									remove={() => model.edits.push(edits.remove(prop))}
 									indent={indent.next}
 								/>
 							</li>
 						{/if}
 						<li class="json-container-gap">
-							<JsonInsert manager={inserterManager} insert={(type) => insertSibling(i, type, 'after')} />
+							<JsonInsert insert={(type) => insertSibling(i, type, 'after')} />
 						</li>
 					{/each}
 				{/if}
@@ -402,7 +403,7 @@
 		{/if}
 	{:else if value.is("value")}
 		<span class="json-value">
-			<JsonValue {model} {prop} {readonly} {inserterManager} onediting={startEditing} bind:editing={editingValue} />
+			<JsonValue {model} {prop} {readonly} onediting={startEditing} bind:editing={editingValue} />
 		</span>
 	{/if}
 </div>

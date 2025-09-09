@@ -8,8 +8,9 @@
 	export let maxIndentClass: number;
 
 	$: indent = new Indent(maxIndentClass);
-	
-	const inserterManager = new InserterManager();
+
+	InserterManager.createScope();
+
 	const manifest = chrome.runtime.getManifest();
 	const prop = json(manifest);
 	const model = new ViewerModel(prop);
@@ -18,7 +19,7 @@
 <div class="editor-bg"></div>
 <div class="root overflow-auto">
 	<div class="panel">
-		<JsonProperty {indent} {inserterManager} {model} {prop} readonly />
+		<JsonProperty {indent} {model} {prop} readonly />
 	</div>
 </div>
 <style lang="scss">

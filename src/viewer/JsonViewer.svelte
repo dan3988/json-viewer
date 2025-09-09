@@ -40,7 +40,8 @@
 	export let darkMode: null | boolean;
 
 	const tracker = new ThemeTracker(darkMode);
-	const inserterManager = new InserterManager();
+
+	InserterManager.createScope();
 
 	model.command.addListener(onModelCommand);
 
@@ -293,7 +294,7 @@
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
 						<div class="prop-panel">
-							<JsonProperty {inserterManager} {model} prop={model.root} indent={rootIndent} />
+							<JsonProperty {model} prop={model.root} indent={rootIndent} />
 						</div>
 					</div>
 				</div>

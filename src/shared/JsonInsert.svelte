@@ -1,7 +1,24 @@
 <script lang="ts" context="module">
 	import { noop } from "../util";
+	import * as svelte from "svelte";
+
+	const key = Symbol('JsonInsert.InserterManager');
 
 	export class InserterManager {
+		static createScope() {
+			const instance = new InserterManager();
+			svelte.setContext(key, instance);
+			return instance;
+		}
+
+		static get current(): InserterManager {
+			const value: InserterManager | undefined = svelte.getContext(key);
+			if (!value)
+				throw new TypeError('No InserterManager in context');
+
+			return value;
+		}
+
 		readonly #blockers = new Set<Element>();
 		readonly #handlers = new Map<Element, InserterRegistration>();
 		#boundMouseMove: (evt: MouseEvent) => void;
@@ -10,6 +27,7 @@
 
 		constructor() {
 			this.#boundMouseMove = this.#onMouseMove.bind(this);
+			this.blocker = this.blocker.bind(this);
 		}
 
 		blocker(target: HTMLElement) {
@@ -120,25 +138,17 @@
 	import type json from "../json";
 	import Button from "../components/button";
 	import { scale } from "svelte/transition";
-	import { onDestroy } from "svelte";
 
-	export let manager: InserterManager;
 	export let insert: (type: json.AddType) => void;
 
-	let reg: InserterRegistration | null = null;
+	const manager = InserterManager.current;
+	const reg = manager.register();
 
-	function updateRegistration() {
-		reg && (reg.setActive = null);
-		reg = manager.register();
-		reg.setActive = setActive;
-	}
+	reg.setActive = setActive;
 
-	onDestroy(() => {
-		if (reg) {
-			reg.setActive = null;
-			reg.unlock();
-			reg = null;
-		}
+	svelte.onDestroy(() => {
+		reg.setActive = null;
+		reg.unlock();
 	});
 
 	let active = false;
@@ -147,9 +157,6 @@
 	function setActive(value: boolean) {
 		active = value;
 	}
-
-	$: manager, updateRegistration();
-	$: hitbox = reg?.hitbox ?? noop;
 
 	let focusTarget: HTMLElement;
 
@@ -174,7 +181,7 @@
 	}
 </script>
 <div class="root" class:active>
-	<div class="hitbox" use:hitbox></div>
+	<div class="hitbox" use:reg.hitbox></div>
 	<div class="separator"></div>
 	<div class="expander" tabindex="0" on:focusout={onFocusOut} bind:this={focusTarget}>
 		<Button icon="plus" title="Insert" action={expand}></Button>

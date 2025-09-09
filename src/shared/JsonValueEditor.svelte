@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { InserterManager } from "./JsonInsert.svelte";
 	import "../dom-extensions";
 	import Button from "../components/button";
+	import { InserterManager } from "./JsonInsert.svelte";
 	import { renderText, type Renderer } from "../renderer";
 
 	type T = $$Generic<any>;
@@ -10,7 +10,6 @@
 	export let parse: (text: string) => T;
 	export let serialize: (value: T) => string = String;
 	export let renderer: (target: HTMLElement, value: T) => Renderer = renderText;
-	export let inserterManager: InserterManager;
 	export let readonly = false;
 	export let editing = false;
 	export let onfinish: ((value: T, group: boolean) => void) | Falsy = undefined;
@@ -19,6 +18,8 @@
 	export let onediting: VoidFunction | Falsy = undefined;
 	export let allowUnchanged = false;
 	export let autoSelect = false;
+
+	const { blocker } = InserterManager.current;
 
 	function getText(target: HTMLElement) {
 		const parts = [];
@@ -131,11 +132,11 @@
 		<div class="editor" role="textbox" tabindex="-1" contenteditable="plaintext-only" use:renderEditor={value} />
 	{:else}
 		{#if typeof value === 'boolean'}
-			<input type="checkbox" use:inserterManager.blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
+			<input type="checkbox" use:blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
 		{/if}
 		<span class="preview" use:renderer={value}></span>
 		{#if typeof value === 'number'}
-			<div class="btn-grop d-flex number-steps" use:inserterManager.blocker on:click|stopPropagation on:dblclick|stopPropagation>
+			<div class="btn-grop d-flex number-steps" use:blocker on:click|stopPropagation on:dblclick|stopPropagation>
 				<Button.Theme style="faded">
 					<Button icon="dash" title="Decrement" repeat action={decrement} />
 					<Button icon="plus" title="Increment" repeat action={increment} />
