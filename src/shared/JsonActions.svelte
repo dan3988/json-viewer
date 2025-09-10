@@ -95,14 +95,14 @@
 	}
 
 	.menu-choice > :global(.btn) {
-		--bs-btn-padding-x: calc(#{$pad-med} + 0.25rem);
+		--bs-btn-padding-x: calc(#{$pad-med} + 0.25em);
 	}
 
 	.menu-root {
 		outline: none;
 		transform-origin: top left;
 		--bs-bg-opacity: 0.5;
-		font-size: 0.85rem;
+		font-size: 0.85em;
 		padding: $pad-small;
 		flex-direction: column;
 		backdrop-filter: blur(5px);
@@ -124,7 +124,7 @@
 
 	.row-text {
 		color: rgba(var(--bs-tertiary-color-rgb), 0.75);
-		gap: .5rem;
+		gap: .5em;
 		padding: $pad-med;
 		border: 1px solid transparent;
 		flex: 1 1 0;

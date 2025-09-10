@@ -270,7 +270,7 @@
 	.expander {
 		cursor: pointer;
 		color: rgba(var(--jv-body-text-rgb), 0.5);
-		font-size: x-small;
+		font-size: 0.75em;
 		rotate: var(--expander-rotate);
 		transition: rotate .15s ease-in-out;
 		z-index: 5;
@@ -311,7 +311,7 @@
 		margin: 0;
 
 		> .container-empty {
-			padding-left: 1rem;
+			padding-left: 1em;
 		}
 
 		.json-container-gap {

@@ -199,8 +199,8 @@
 <style lang="scss">
 	@use "src/core.scss" as *;
 
-	$width: 10rem;
-	$left: 1rem;
+	$width: 10em;
+	$left: 1em;
 
 	.root {
 		opacity: 0;
@@ -213,7 +213,7 @@
 	.hitbox {
 		z-index: -1;
 		position: absolute;
-		inset: -0.6rem 0;
+		inset: -0.6em 0;
 	}
 
 	.separator {

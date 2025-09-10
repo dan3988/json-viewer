@@ -243,7 +243,7 @@
 		width: max-content;
 
 		> select {
-			flex: 0 0 7rem !important;
+			flex: 0 0 7em !important;
 		}
 	}
 </style>
