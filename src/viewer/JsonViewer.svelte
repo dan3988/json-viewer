@@ -37,6 +37,8 @@
 	export let schemeDark: string;
 	export let schemeLight: string;
 	export let background: string;
+	export let fontSize: number;
+	export let fontFamily: string;
 	export let darkMode: null | boolean;
 
 	const tracker = new ThemeTracker(darkMode);
@@ -169,12 +171,6 @@
 		overflow: hidden;
 	}
 
-	.w-prop,
-	.w-path {
-		font-family: monospace;
-		font-size: 12px;
-	}
-
 	.w-prop {
 		display: grid;
 		grid-template-areas: "main";
@@ -253,7 +249,7 @@
 		<link rel="stylesheet" {href} on:load={onStyleLoaded} />
 	{/each}
 </svelte:head>
-<SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
+<SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} {fontSize} {fontFamily} />
 <div class="root bg-body p-1 scheme" data-editor-bg={background}>
 	<div class="w-bar pb-1 gap-1">
 		<div class="btn-group">
@@ -290,7 +286,7 @@
 				<JsonMenu {model} />
 			</div>
 			<div class="slot">
-				<div class="w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
+				<div class="jv-font w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
 						<div class="prop-panel">
@@ -301,7 +297,7 @@
 			</div>
 		</MenuView>
 	</div>
-	<div class="w-path pt-1">
+	<div class="jv-font w-path pt-1">
 		<JsonPathViewer {model}/>
 	</div>
 	{#if popup}

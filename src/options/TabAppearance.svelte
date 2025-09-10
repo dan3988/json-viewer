@@ -19,7 +19,21 @@
 	export let maxIndentClass: number;
 	export let schemeEditor: CustomScheme;
 
-	$: ({ changed, props: { darkMode, schemeDark, schemeLight, menuAlign, background, customSchemes } } = model);
+	
+	$: ({
+		changed,
+		props: {
+			darkMode,
+			schemeDark,
+			schemeLight,
+			menuAlign,
+			background,
+			customSchemes,
+			fontSize,
+			fontFamily,
+		},
+	} = model);
+
 	$: [presets, scheme] = $tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight];
 	$: customSchemeList = schemes.getCustomEntries($customSchemes, $tracker);
 	$: isCustomScheme = $scheme in $customSchemes;
@@ -60,6 +74,17 @@
 			<Radio converter={v => v[0]} items={radioTheme} bind:value={$darkMode}>
 				<label slot="label" let:id let:item={[_, text]} for={id} class="flex-fill btn btn-base">{text}</label>
 			</Radio>
+		</div>
+		<div class="input-group grp-font">
+			<span class="input-group-text">Font</span>
+			<select class="form-select" bind:value={$fontFamily}>
+				<option value="monospace">Monospace</option>
+				<option>Courier New</option>
+				<option>IBM Plex Mono</option>
+				<option>JetBrains Mono</option>
+			</select>
+			<span class="input-group-text font-size-label">Size</span>
+			<input type="number" class="form-control font-size" min="2" max="96" bind:value={$fontSize} />
 		</div>
 		<div class="input-group grp-json-bg">
 			<span class="input-group-text">Background</span>
@@ -105,7 +130,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="preview-wrapper border rounded">
+	<div class="jv-font preview-wrapper border rounded">
 		<ViewerPreview {maxIndentClass} />
 	</div>
 </div>
@@ -157,8 +182,6 @@
 	}
 
 	.preview-wrapper {
-		font-family: monospace;
-		font-size: 12px;
 		overflow: hidden;
 		flex: var(--preview-flex);
 		position: relative;
@@ -172,5 +195,13 @@
 
 	.copy-button {
 		width: 7.5rem;
+	}
+
+	.font-size-label {
+		flex: 0 0 auto;
+	}
+
+	.font-size {
+		flex: 0 0 5em;
 	}
 </style>

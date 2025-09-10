@@ -5,6 +5,16 @@
 	@return red($hex) + "," + green($hex) + "," + blue($hex);
 }
 
+@font-face {
+	font-family: "IBM Plex Mono";
+	src: url("chrome-extension://__MSG_@@extension_id__/res/fonts/IBMPlexMono-Regular.woff2");
+}
+
+@font-face {
+	font-family: "JetBrains Mono";
+	src: url("chrome-extension://__MSG_@@extension_id__/res/fonts/JetBrainsMono-Regular.woff2");
+}
+
 :root {
 	--bs-border-radius: 0.25rem;
 	--col-match-fg: #000;

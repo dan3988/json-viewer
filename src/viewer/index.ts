@@ -73,7 +73,7 @@ async function run() {
 			const prefs = await preferences.lite.manager.watch();
 			const mapped = prefs
 				.bind()
-				.map(['menuAlign', 'customSchemes', 'darkMode', 'schemeDark', 'schemeLight', 'background'])
+				.map(['menuAlign', 'customSchemes', 'darkMode', 'schemeDark', 'schemeLight', 'background', 'fontSize', 'fontFamily'])
 				.build();
 
 			function updateIndent() {

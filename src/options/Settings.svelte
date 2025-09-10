@@ -32,7 +32,19 @@
 
 	let schemeEditor: CustomScheme;
 
-	$: ({ changed, props: { darkMode, schemeDark, schemeLight, background, customSchemes } } = model);
+	$: ({
+		changed,
+		props: {
+			darkMode,
+			schemeDark,
+			schemeLight,
+			background,
+			customSchemes,
+			fontSize,
+			fontFamily,
+		},
+	} = model);
+
 	$: tracker.preferDark = $darkMode;
 	$: scheme = $tracker ? $schemeDark : $schemeLight;
 	$: updateSchemeEditor(scheme);
@@ -153,7 +165,7 @@
 	}
 </style>
 <svelte:window on:beforeunload={onUnload} />
-<SchemeStyleSheet scheme={$currentScheme} darkMode={$tracker} />
+<SchemeStyleSheet scheme={$currentScheme} darkMode={$tracker} fontSize={$fontSize} fontFamily={$fontFamily} />
 <div class="root bg-body overflow-hidden d-flex flex-column scheme" data-editor-bg={$background}>
 	<div class="header bg-body-tertiary border-bottom gap-2">
 		<img src="/res/icon128.png" alt="icon" />

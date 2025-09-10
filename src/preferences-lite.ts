@@ -57,7 +57,9 @@ export namespace preferences {
 			p.core.Preference.enum("menuAlign", p.core.types.string, ["r", "l"], "r"),
 			p.core.Preference.string("background", ""),
 			p.core.Preference.boolean("useWebRequest", false),
-			p.core.Preference.dictionary("customSchemes", colorSchemeType)
+			p.core.Preference.dictionary("customSchemes", colorSchemeType),
+			p.core.Preference.number("fontSize", 9),
+			p.core.Preference.string("fontFamily", 'monospace'),
 		] as const;
 
 		export const manager = new p.core.PreferencesManager(values);

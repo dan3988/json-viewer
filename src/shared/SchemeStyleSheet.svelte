@@ -3,12 +3,20 @@
 
 	export let scheme: schemes.ColorScheme;
 	export let darkMode: boolean;
+	export let fontSize: number;
+	export let fontFamily: string;
 
-	let element: undefined | HTMLStyleElement;
+	let schemeStyle: undefined | HTMLStyleElement;
+	let fontStyle: undefined | HTMLStyleElement;
 
-	$: element && (element.textContent = schemes.compileCss(scheme));
+	$: schemeStyle && (schemeStyle.textContent = schemes.compileCss(scheme));
+
+	$: fontCss = `.jv-font {font-size:${fontSize}pt;font-family:${fontFamily},monospace}`;
+	$: fontStyle && (fontStyle.textContent = fontCss);
+
 	$: document.documentElement.dataset.bsTheme = darkMode ? 'dark' : 'light';
 </script>
 <svelte:head>
-	<style bind:this={element}></style>
+	<style bind:this={schemeStyle}></style>
+	<style bind:this={fontStyle}></style>
 </svelte:head>
