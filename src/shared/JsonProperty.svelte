@@ -117,7 +117,7 @@
 	}
 
 	function openMenu(evt: MouseEvent) {
-		if (!evt.shiftKey) {
+		if (!(evt.shiftKey || readonly)) {
 			evt.preventDefault();
 
 			if (!menuOpen) {

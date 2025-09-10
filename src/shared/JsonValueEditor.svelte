@@ -114,7 +114,7 @@
 	}
 
 	function onCheckboxInput(this: HTMLInputElement) {
-		onfinish && onfinish(this.checked as any, false);
+		readonly || (onfinish && onfinish(this.checked as any, false));
 	}
 
 	function increment(evt: MouseEvent) {
@@ -132,10 +132,10 @@
 		<div class="editor" role="textbox" tabindex="-1" contenteditable="plaintext-only" use:renderEditor={value} />
 	{:else}
 		{#if typeof value === 'boolean'}
-			<input type="checkbox" use:blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
+			<input type="checkbox" {readonly} use:blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
 		{/if}
 		<span class="preview" use:renderer={value}></span>
-		{#if typeof value === 'number'}
+		{#if typeof value === 'number' && !readonly}
 			<div class="btn-grop d-flex number-steps" use:blocker on:click|stopPropagation on:dblclick|stopPropagation>
 				<Button.Theme style="faded">
 					<Button icon="dash" title="Decrement" repeat action={decrement} />
@@ -178,6 +178,10 @@
 		height: 1.2em;
 		width: 1.2em;
 		margin: 0;
+
+		&:read-only {
+			pointer-events: none;
+		}
 	}
 
 	.editor {
