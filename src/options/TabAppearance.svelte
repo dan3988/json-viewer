@@ -120,7 +120,7 @@
 				{#if isCustomScheme}
 					Copy
 				{:else}
-					Customize
+					Edit
 				{/if}
 			</button>
 		</div>
@@ -194,7 +194,7 @@
 	}
 
 	.copy-button {
-		width: 7.5rem;
+		width: 5rem;
 	}
 
 	.font-size-label {
