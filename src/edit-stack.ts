@@ -1,4 +1,6 @@
 import { StateController } from "./state.js";
+import { EventHandlers } from "./evt.js";
+import json from "./json.js";
 
 export interface EditStackProps {
 	readonly canUndo: boolean;
@@ -6,16 +8,44 @@ export interface EditStackProps {
 	readonly count: number;
 }
 
+export interface EditActionInit {
+	commitTarget?: null | json.JProperty,
+	revertTarget?: null | json.JProperty
+}
+
 export class EditAction {
 	static group(actions: Iterable<EditAction>) {
 		return new EditActionGroup([...actions]);
 	}
 
-	constructor(readonly commit: VoidFunction, readonly revert: VoidFunction) {
+	readonly commitTarget: null | json.JProperty;
+	readonly revertTarget: null | json.JProperty;
+
+	constructor(readonly commit: VoidFunction, readonly revert: VoidFunction, target?: json.JProperty | EditActionInit) {
+		if (target) {
+			if (target instanceof json.JProperty) {
+				this.commitTarget = target;
+				this.revertTarget = target;
+			} else {
+				this.commitTarget = target.commitTarget ?? null;
+				this.revertTarget = target.revertTarget ?? null;
+			}
+		} else {
+			this.commitTarget = null;
+			this.revertTarget = null;
+		}
 	}
 }
 
 class EditActionGroup implements EditAction {
+	get commitTarget() {
+		return null;
+	}
+
+	get revertTarget() {
+		return null;
+	}
+
 	readonly #actions: EditAction[];
 
 	constructor(actions: Iterable<EditAction>) {
@@ -38,6 +68,8 @@ class EditActionGroup implements EditAction {
 export class EditStack implements EditStackProps {
 	readonly #state: StateController<EditStackProps>;
 	readonly #actions: EditAction[];
+	readonly #onCommit = new EventHandlers<this, [action: EditAction]>();
+	readonly #onRevert = new EventHandlers<this, [action: EditAction]>();
 	#count = 0;
 	#counter = 0;
 
@@ -53,6 +85,14 @@ export class EditStack implements EditStackProps {
 
 	get state() {
 		return this.#state.state;
+	}
+
+	get onCommit() {
+		return this.#onCommit.event;
+	}
+
+	get onRevert() {
+		return this.#onRevert.event;
 	}
 
 	get canUndo() {
@@ -73,10 +113,12 @@ export class EditStack implements EditStackProps {
 		if (count === 0)
 			return false;
 
-		this.#actions[--count].revert();
+		const action = this.#actions[--count];
+		action.revert();
 		this.#counter++;
 		this.#count = count;
 		this.#state.setValues({ count, canUndo: !!count, canRedo: true });
+		this.#onRevert.fire(this, action);
 		return true;
 	}
 
@@ -85,9 +127,11 @@ export class EditStack implements EditStackProps {
 		if (count >= this.#actions.length)
 			return false;
 
-		this.#actions[count].commit();
+		const action = this.#actions[count];
+		action.commit();
 		this.#count = ++count;
 		this.#state.setValues({ count, canUndo: true, canRedo: count < this.#actions.length });
+		this.#onCommit.fire(this, action);
 		return true;
 	}
 
@@ -103,6 +147,7 @@ export class EditStack implements EditStackProps {
 		const id = ++this.#counter;
 		this.#count = ++count;
 		this.#state.setValues({ count, canUndo: true, canRedo: false });
+		this.#onCommit.fire(this, action);
 		return id;
 	}
 }

@@ -1,5 +1,5 @@
 import type { DocumentRequestInfo } from "./types.js";
-import { EditStack } from "./edit-stack.js";
+import { EditAction, EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
 import { StateController } from "./state.js";
 import json from "./json.js";
@@ -175,6 +175,16 @@ export class ViewerModel {
 		this.#lastSelected = null;
 		this.#selectedList = new ViewerModel.#SelectedList(this);
 		this.#edits = new EditStack();
+		this.#edits.onCommit.addListener(this.#onCommit.bind(this));
+		this.#edits.onRevert.addListener(this.#onRevert.bind(this));
+	}
+
+	#onCommit({ commitTarget: t }: EditAction) {
+		t && this.setSelected(t, false, true);
+	}
+
+	#onRevert({ revertTarget: t }: EditAction) {
+		t && this.setSelected(t, false, true);
 	}
 
 	execute<K extends keyof ViewerCommands>(command: K, ...args: ViewerCommands[K]) {

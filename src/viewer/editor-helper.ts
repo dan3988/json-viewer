@@ -5,7 +5,7 @@ import Linq from "@daniel.pickett/linq-js";
 export namespace edits {
 	export function clearProp(value: json.JContainer): EditAction {
 		const props = [...value];
-		return new EditAction(commit, revert);
+		return new EditAction(commit, revert, value.owner);
 
 		function commit() {
 				value.clear();
@@ -22,7 +22,7 @@ export namespace edits {
 
 	export function setValue(token: json.JValue, newValue: json.JValueType): EditAction {
 		let oldValue: any;
-		return new EditAction(commit, revert);
+		return new EditAction(commit, revert, token.owner);
 
 		function commit() {
 			oldValue = token.value;
@@ -36,7 +36,10 @@ export namespace edits {
 	}
 
 	export function replace(prop: json.JProperty, newProp: json.JProperty): EditAction {
-		return new EditAction(commit, revert);
+		return new EditAction(commit, revert, {
+			commitTarget: newProp,
+			revertTarget: prop,
+		});
 
 		function commit() {
 			prop.replace(newProp.value);
@@ -66,29 +69,35 @@ export namespace edits {
 	export function remove(prop: json.JProperty): EditAction;
 	export function remove(props: Iterable<json.JProperty>): EditAction;
 	export function remove(arg: json.JProperty | Iterable<json.JProperty>): EditAction {
-		let props: (readonly [prop: json.JProperty, remove: VoidFunction])[];
-
 		if (Symbol.iterator in arg) {
-			props = Linq(arg)
+			const props = Linq(arg)
 				.select(v => [v, createDeleteRevert(v)] as const)
 				.toArray();
-		} else {
-			props = [
-				[arg, createDeleteRevert(arg)],
-			];
-		}
 
-		return new EditAction(commit, revert);
-
-		function commit() {
-			for (const [prop] of props) {
-				prop.remove();
+			function commit() {
+				for (const [prop] of props) {
+					prop.remove();
+				}
 			}
-		}
 
-		function revert() {
-			for (const [, revert] of props) {
-				revert();
+			function revert() {
+				for (const [, revert] of props) {
+					revert();
+				}
+			}
+
+			return new EditAction(commit, revert);
+		} else {
+			const prop = arg;
+			const revert = createDeleteRevert(prop);
+
+			return new EditAction(commit, revert, {
+				commitTarget: prop.parent?.owner,
+				revertTarget: prop,
+			});
+
+			function commit() {
+				prop.remove();
 			}
 		}
 	}
@@ -106,8 +115,9 @@ export namespace edits {
 	}
 
 	export function rename(parent: json.JObject, oldName: string, newName: string): EditAction {
+		const target = parent.getProperty(oldName);
 		const reset = resetExisting(parent, newName);
-		return new EditAction(commit, revert);
+		return new EditAction(commit, revert, target);
 
 		function commit() {
 			parent.rename(oldName, newName);
@@ -121,7 +131,7 @@ export namespace edits {
 
 	export function sort(obj: json.JObject, desc?: boolean): EditAction {
 		const old = [...obj];
-		return new EditAction(commit, revert);
+		return new EditAction(commit, revert, obj.owner);
 
 		function commit() {
 			obj.sort(desc);
@@ -143,7 +153,10 @@ export namespace edits {
 			commit = json.JObject.prototype.insertBefore.bind(parent, prop, sibling);
 		}
 
-		return new EditAction(commit, revert);
+		return new EditAction(commit, revert, {
+			commitTarget: prop,
+			revertTarget: sibling ?? parent.last
+		});
 
 		function revert() {
 			prop.remove();
@@ -153,7 +166,10 @@ export namespace edits {
 
 	export function arrayAdd(parent: json.JArray, mode: json.AddType, index?: number) {
 		const prop = new json.JProperty(index ?? parent.count, mode);
-		return new EditAction(commit, revert);
+		return new EditAction(commit, revert, {
+			commitTarget: prop,
+			revertTarget: parent.getProperty(prop.key),
+		});
 
 		function commit() {
 			parent.insertProperty(prop);
