@@ -93,8 +93,30 @@ export namespace edits {
 		}
 	}
 
+	function resetExisting(parent: json.JObject, key: string) {
+		const existing = parent.getProperty(key);
+		const existingSibling = existing?.next;
+		if (existing) {
+			if (existingSibling) {
+				return json.JObject.prototype.insertBefore.bind(parent, existing, existingSibling);
+			} else {
+				return json.JObject.prototype.setProperty.bind(parent, existing);
+			}
+		}
+	}
+
 	export function rename(parent: json.JObject, oldName: string, newName: string): EditAction {
-		return modifyStructure(parent, newName, obj => obj.rename(oldName, newName), obj => obj.rename(newName, oldName));
+		const reset = resetExisting(parent, newName);
+		return new EditAction(commit, revert);
+
+		function commit() {
+			parent.rename(oldName, newName);
+		}
+
+		function revert() {
+			parent.rename(newName, oldName);
+			reset?.();
+		}
 	}
 
 	export function sort(obj: json.JObject, desc?: boolean): EditAction {
@@ -110,19 +132,23 @@ export namespace edits {
 		}
 	}
 
-	export function objectAdd(parent: json.JObject, mode: json.AddType, key: string, sibling?: json.JProperty<string>, insertBefore = false): EditAction {
+	export function objectAdd(parent: json.JObject, mode: json.AddType, key: string, sibling?: null | json.JProperty<string>): EditAction {
 		const prop = new json.JProperty(key, mode);
-		let commit: (obj: json.JObject) => void;
+		const reset = resetExisting(parent, key);
+		let commit: () => void;
 
 		if (!sibling) {
-			commit = obj => obj.setProperty(prop);
-		} else if (insertBefore) {
-			commit = obj => obj.insertBefore(prop, sibling);
+			commit = json.JObject.prototype.insertAfter.bind(parent, prop);
 		} else {
-			commit = obj => obj.insertAfter(prop, sibling);
+			commit = json.JObject.prototype.insertBefore.bind(parent, prop, sibling);
 		}
 
-		return modifyStructure(parent, key, commit, () => prop.remove());
+		return new EditAction(commit, revert);
+
+		function revert() {
+			prop.remove();
+			reset?.();
+		}
 	}
 
 	export function arrayAdd(parent: json.JArray, mode: json.AddType, index?: number) {
@@ -136,29 +162,6 @@ export namespace edits {
 
 		function revert() {
 			prop.remove();
-		}
-	}
-
-	function modifyStructure(parent: json.JObject, key: string, run: (obj: json.JObject) => void, remove: (obj: json.JObject) => void): EditAction {
-		let existing: undefined | json.JProperty<string>;
-		let existingSibling: undefined | null | json.JProperty<string>;
-		return new EditAction(commit, revert);
-
-		function commit() {
-			existing = parent.getProperty(key);
-			existingSibling = existing?.next;
-			run(parent);
-		}
-
-		function revert() {
-			remove(parent);
-			if (existing) {
-				if (existingSibling) {
-					parent.insertBefore(existing, existingSibling);
-				} else {
-					parent.setProperty(existing);
-				}
-			}
 		}
 	}
 }

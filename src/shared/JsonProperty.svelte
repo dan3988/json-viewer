@@ -56,22 +56,21 @@
 		editingValue = true;
 	}
 
-	function insertSibling(index: number, type: json.AddType, mode: InsertSiblingMode) {
+	function insert(index: number, type: json.AddType) {
 		model.selected.clear();
 		const container = prop.value;
-		const targetIndex = index + +(mode === 'after');
 		if (container.is('array')) {
-			model.edits.push(edits.arrayAdd(container, type, targetIndex));
+			model.edits.push(edits.arrayAdd(container, type, index));
 		} else if (container.is('object')) {
 			const sibling = props[index] as json.JProperty<string>;
-			const commit: CommitObject = addObject.bind(undefined, container, sibling, mode === 'before', type);
-			props.splice(targetIndex, 0, commit);
+			const commit: CommitObject = addObject.bind(undefined, container, sibling, type);
+			props.splice(index, 0, commit);
 			props = props;
 		}
 	}
 
-	function addObject(parent: json.JObject, sibling: null | json.JProperty<string>, insertBefore: boolean, type: json.AddType, name: string) {
-		model.edits.push(edits.objectAdd(parent, type, name, sibling ?? undefined, insertBefore));
+	function addObject(parent: json.JObject, sibling: null | json.JProperty<string>, type: json.AddType, name: string) {
+		model.edits.push(edits.objectAdd(parent, type, name, sibling));
 	}
 
 	function removePendingEdit(index: number) {
@@ -371,13 +370,13 @@
 			<span class="gutter" on:click|stopPropagation={onGutterClicked}></span>
 			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 			<ul class="json-container json-{value.subtype} p-0" on:click|stopPropagation>
-				<li class="json-container-gap">
-					<JsonInsert insert={(type) => insertSibling(0, type, 'before')} />
-				</li>
 				{#if props.length === 0}
 					<li class="container-empty">empty</li>
 				{:else}
 					{#each props as prop, i (prop)}
+						<li class="json-container-gap">
+							<JsonInsert insert={(type) => insert(i, type)} />
+						</li>
 						{#if typeof prop === 'function'}
 							<li class="json-key-placeholder json-selected">
 								<JsonValueEditor value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
@@ -390,10 +389,10 @@
 								/>
 							</li>
 						{/if}
-						<li class="json-container-gap">
-							<JsonInsert insert={(type) => insertSibling(i, type, 'after')} />
-						</li>
 					{/each}
+					<li class="json-container-gap">
+						<JsonInsert insert={(type) => insert(props.length, type)} />
+					</li>
 				{/if}
 			</ul>
 		{/if}

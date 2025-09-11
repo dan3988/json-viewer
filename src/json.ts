@@ -212,8 +212,8 @@ export declare namespace json {
 	export interface JObject<T = any> extends JContainer<string, Readonly<Dict<T>>> {
 		readonly subtype: "object";
 
-		insertAfter(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
-		insertBefore(property: json.JProperty<string>, sibling: json.JProperty<string>): void;
+		insertAfter(property: json.JProperty<string>, sibling?: null | json.JProperty<string>): void;
+		insertBefore(property: json.JProperty<string>, sibling?: null | json.JProperty<string>): void;
 		setProperty(property: JProperty<string>): undefined | JProperty<string>;
 		add<K extends AddType>(key: string, type: K): JProperty<string, JContainerAddMap[K]>;
 		sort(reverse?: boolean): void;
@@ -1071,18 +1071,27 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			return old;
 		}
 
-		insertBefore(property: json.JProperty<string>, sibling: json.JProperty<string>) {
-			if (sibling === property)
-				throw new TypeError("Property cannot be a sibling of itself.");
+		insertBefore(property: json.JProperty<string>, sibling?: null | json.JProperty<string>) {
+			let siblingController: JPropertyController<string>;
+			if (sibling) {
+				if (sibling === property)
+					throw new TypeError("Property cannot be a sibling of itself.");
 
-			if (sibling.parent !== this)
-				throw new TypeError("Sibling poperty must be a child of this object.");
+				if (sibling.parent !== this)
+					throw new TypeError("Sibling poperty must be a child of this object.");
+
+				siblingController = getController(sibling);
+			} else if (this.#first) {
+				siblingController = this.#first;
+			} else {
+				this.setProperty(property);
+				return;
+			}
 
 			if (property.parent != null)
 				property = property.clone();
 
 			const cont = getController(property);
-			const siblingController = getController(sibling);
 			if (cont.key === siblingController.key) {
 				this.#props.set(cont.key, cont);
 				return this.#replaced(siblingController, cont);
@@ -1123,18 +1132,27 @@ abstract class JContainer<TKey extends Key = Key, T = any> extends JToken<T> imp
 			}
 		}
 
-		insertAfter(property: json.JProperty<string>, sibling: json.JProperty<string>) {
-			if (sibling === property)
-				throw new TypeError("Property cannot be a sibling of itself.");
+		insertAfter(property: json.JProperty<string>, sibling?: null | json.JProperty<string>) {
+			let siblingController: JPropertyController<string>;
+			if (sibling) {
+				if (sibling === property)
+					throw new TypeError("Property cannot be a sibling of itself.");
 
-			if (sibling.parent !== this)
-				throw new TypeError("Sibling poperty must be a child of this object.");
+				if (sibling.parent !== this)
+					throw new TypeError("Sibling poperty must be a child of this object.");
+
+				siblingController = getController(sibling);
+			} else if (this.#last) {
+				siblingController = this.#last;
+			} else {
+				this.setProperty(property);
+				return;
+			}
 
 			if (property.parent != null)
 				property = property.clone();
 
 			const cont = getController(property);
-			const siblingController = getController(sibling);
 			if (cont.key === siblingController.key) {
 				this.#props.set(cont.key, cont);
 				return this.#replaced(siblingController, cont);
