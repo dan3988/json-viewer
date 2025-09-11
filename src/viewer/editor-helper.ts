@@ -1,6 +1,7 @@
 import { EditAction } from "../edit-stack.js";
 import json from "../json.js";
 import Linq from "@daniel.pickett/linq-js";
+import { noop } from "../util.js";
 
 export namespace edits {
 	export function clearProp(value: json.JContainer): EditAction {
@@ -50,7 +51,7 @@ export namespace edits {
 		}
 	}
 
-	function createDeleteRevert(prop: json.JProperty) {
+	function createDeleteRevert(prop: json.JProperty): VoidFunction {
 		const { parent } = prop;
 		if (parent!.is("object")) {
 			const p = prop as json.JProperty<string>;
@@ -58,11 +59,12 @@ export namespace edits {
 			if (p.previous === null) {
 				return () => obj.first === null ? obj.setProperty(p) : obj.insertBefore(p, obj.first);
 			} else {
-				const prev = p.previous;
-				return () => obj.insertAfter(p, prev);
+				return json.JObject.prototype.insertAfter.bind(obj, p, p.previous);
 			}
+		} else if (parent!.is('array')) {
+			return json.JArray.prototype.insertProperty.bind(parent, prop as json.JProperty<number>);
 		} else {
-			return () => (parent as json.JContainer).setProperty(prop);
+			return noop;
 		}
 	}
 
