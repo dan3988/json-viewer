@@ -23,7 +23,7 @@
 		readonly #handlers = new Map<Element, InserterRegistration>();
 		#boundMouseMove: (evt: MouseEvent) => void;
 		#active: InserterRegistration | null = null;
-		#locked = false;
+		#lockCount = 0;
 
 		constructor() {
 			this.#boundMouseMove = this.#onMouseMove.bind(this);
@@ -38,12 +38,13 @@
 		}
 
 		lock() {
-			this.#updateActive(null);
-			this.#locked = true;
+			if (++this.#lockCount === 1) {
+				this.#updateActive(null);
+			}
 		}
 
 		unlock() {
-			this.#locked = false;
+			this.#lockCount--;
 		}
 
 		#updateActive(reg: InserterRegistration | null) {
@@ -58,7 +59,7 @@
 		}
 
 		#onMouseMove(evt: MouseEvent) {
-			if (this.#locked) {
+			if (this.#lockCount) {
 				return;
 			}
 
@@ -100,6 +101,7 @@
 
 		static readonly #InserterRegistration = class implements InserterRegistration {
 			readonly #owner: InserterManager;
+			#locked = false;
 
 			setActive: (this: void, active: boolean) => void = noop;
 
@@ -113,14 +115,20 @@
 			}
 
 			lock() {
+				this.#locked = true;
 				this.#owner.#updateActive(this);
-				this.#owner.#locked = true;
+				this.#owner.#lockCount++;
 			}
 
-			unlock(): void {
-				if (this.#owner.#locked && this.#owner.#active === this) {
-					this.#owner.#updateActive(null);
-					this.#owner.#locked = false;
+			unlock(evt?: MouseEvent): void {
+				if (this.#locked) {
+					this.#locked = false;
+					const open = !(--this.#owner.#lockCount);
+					if (evt && open) {
+						this.#owner.#onMouseMove(evt);
+					} else {
+						this.#owner.#updateActive(null);
+					}
 				}
 			}
 		}
@@ -131,13 +139,13 @@
 
 		hitbox(this: void, target: HTMLElement): { destroy(): void };
 		lock(): void;
-		unlock(): void;
+		unlock(evt?: MouseEvent): void;
 	}
 </script>
 <script lang="ts">
 	import type json from "../json";
 	import Button from "../components/button";
-	import { scale } from "svelte/transition";
+    import { slide } from "svelte/transition";
 
 	export let insert: (type: json.AddType) => void;
 
@@ -169,9 +177,13 @@
 
 	function onFocusOut(evt: FocusEvent) {
 		if (!focusTarget.contains(evt.relatedTarget as Node | null)) {
-			open = false;
-			reg?.unlock();
+			collapse();
 		}
+	}
+
+	function collapse(evt?: MouseEvent) {
+		open = false;
+		reg?.unlock(evt);
 	}
 
 	function expand() {
@@ -180,13 +192,14 @@
 		reg?.lock();
 	}
 </script>
-<div class="root" class:active>
+<div class="root" class:active class:open>
 	<div class="hitbox" use:reg.hitbox></div>
 	<div class="separator"></div>
 	<div class="expander" tabindex="0" on:focusout={onFocusOut} bind:this={focusTarget}>
-		<Button icon="plus" title="Insert" action={expand}></Button>
+		<Button icon="plus-lg" title="Insert" action={open ? collapse : expand}></Button>
 		{#if open}
-			<div class="menu-wrapper" transition:scale={{ duration: 250 }}>
+			<!-- <div class="menu-wrapper" transition:slide={{ axis: 'x', duration: 250 }}> -->
+			<div class="menu-wrapper" transition:slide={{ axis: 'x', duration: 150 }}>
 				<div class="menu-root btn-group">
 					<Button title="Object" icon="braces" action={() => doInsert('object')} />
 					<Button title="Array" icon="list" action={() => doInsert('array')} />
@@ -204,6 +217,11 @@
 
 	.root {
 		opacity: 0;
+		--btn-scale: 0.6;
+
+		&.open {
+			--btn-scale: 1;
+		}
 
 		&.active {
 			opacity: 1;
@@ -225,37 +243,34 @@
 		background-color: var(--jv-tertiary-border);
 	}
 
+	.expander, .menu-root {
+		> :global(.btn) {
+			--bs-btn-padding-x: #{$pad-med};
+			--bs-btn-padding-y: #{$pad-med};
+			font-size: inherit;
+		}
+	}
+
 	.expander {
+		display: flex;
+		gap: #{$pad-med};
 		z-index: 3;
 		position: absolute;
 		left: $width + $left;
 		top: 50%;
-		translate: -50% -50%;
-
-		> :global(.btn) {
-			--bs-btn-padding-x: 0;
-			--bs-btn-padding-y: 0;
-			--bs-btn-font-size: 1.25em;
-		}
+		translate: 0 -50%;
+		transition: scale .15s ease-in-out;
+		scale: var(--btn-scale, 1);
+		transform-origin: left center;
 	}
 
 	.menu-wrapper {
-		font-size: 1.25em;
-		position: absolute;
-		top: 50%;
 		left: 0;
 		transform-origin: center left;
-		translate: 0 -50%;
 	}
 
 	.menu-root {
 		position: relative;
 		z-index: 3;
-
-		:global(.btn) {
-			--bs-btn-padding-x: #{$pad-med};
-			--bs-btn-padding-y: #{$pad-med};
-			font-size: inherit;
-		}
 	}
 </style>
