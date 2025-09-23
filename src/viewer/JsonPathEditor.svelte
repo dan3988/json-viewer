@@ -12,6 +12,7 @@
 	import { writable } from "svelte/store";
 	import dom from "./dom-helper";
 	import AutocompleteHelper from "./autocomplete-helper";
+	import JsonPath from "../json-path";
 
 	export let model: ViewerModel;
 
@@ -41,7 +42,7 @@
 	}
 
 	function update(prop: json.JProperty) {
-		target && (target.innerText = prop.pathText);
+		target && (target.innerText = prop.path.toString());
 	}
 
 	function getIndexes(range: Range): [number, number] {
@@ -92,7 +93,7 @@
 
 		const range = selection.getRangeAt(0);
 		const [start] = splitSelection(range);
-		target.innerText = start + "/" + json.escapePathPart(value);
+		target.innerText = start + "/" + JsonPath.escape(value);
 		ignoreSelectionEvents = 2;
 		dom.setCaret(selection, target, 0, true);
 	}

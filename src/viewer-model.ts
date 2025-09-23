@@ -4,6 +4,7 @@ import { EventHandlers } from "./evt.js";
 import { StateController } from "./state.js";
 import json from "./json.js";
 import Linq from "@daniel.pickett/linq-js";
+import JsonPath from "./json-path.js";
 
 export interface SelectedPropertyList extends Iterable<json.JProperty> {
 	readonly size: number;
@@ -46,6 +47,8 @@ function serializeForCopy(token: json.JToken, indent: undefined | string, escape
 		return JSON.stringify(token, undefined, indent);
 	}
 }
+
+type PathInit = string | JsonPath | readonly JsonPath.Segment[];
 
 export class ViewerModel {
 	static readonly #SelectedList = class implements SelectedPropertyList {
@@ -226,19 +229,25 @@ export class ViewerModel {
 		this.#root.filter(text, flags, append);
 	}
 
-	resolve(path: string | readonly (number | string)[]): json.JProperty | undefined {
-		if (typeof path === "string")
-			path = json.parsePath(path);
+	resolve(path: PathInit): json.JProperty | undefined {
+		let segments: readonly JsonPath.Segment[];
+		if (typeof path === 'string') {
+			({ segments } = JsonPath.parse(path));
+		} else if ('length' in path) {
+			segments = path;
+		} else {
+			({ segments } = path);
+		}
 
 		let i = 0;
 		let baseProp: json.JProperty;
-		if (path[0] !== "$") {
+		if (segments[0] !== "$") {
 			const selected = this.#state.getValue("selected").at(-1);
 			if (selected == null)
 				return;
 
 			baseProp = selected;
-		} else if (path.length === 1) {
+		} else if (segments.length === 1) {
 			return this.#root;
 		} else {
 			i++;
@@ -246,19 +255,19 @@ export class ViewerModel {
 		}
 	
 		for (let curr = baseProp; curr.value.is("container"); ) {
-			const key = path[i];
+			const key = segments[i];
 			const child = curr.value.getProperty(key);
 			if (child == null)
 				break;
 
-			if (++i === path.length)
+			if (++i === segments.length)
 				return child;
 
 			curr = child;
 		}
 	}
 
-	select(path: string | readonly (number | string)[]) {
+	select(path: PathInit) {
 		const prop = this.resolve(path);
 		if (prop == null)
 			return false;

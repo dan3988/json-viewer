@@ -1,9 +1,9 @@
 import ArrayLikeProxy, { type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy.js";
 import { StateController } from "./state.js";
 import { EventHandlers, type IEvent } from "./evt.js";
-import { isIdentifier, toPointer } from "./util.js"
 import Linq from "@daniel.pickett/linq-js";
 import debug from "./debug.js";
+import JsonPath from "./json-path.js";
 
 type Key = string | number;
 
@@ -75,8 +75,6 @@ let getController: <K extends Key>(prop: json.JProperty<K>) => JPropertyControll
 const unproxy = Symbol("unproxy");
 
 export declare namespace json {
-	export function escapePathPart(part: string): string;
-	export function parsePath(path: string): string[];
 	export function unwrapProxy(value: object): undefined | JContainer;
 
 	export type JValueType = string | number | boolean | null;
@@ -109,9 +107,7 @@ export declare namespace json {
 		readonly parentProperty: null | JProperty;
 		readonly previous: null | JProperty<TKey>;
 		readonly next: null | JProperty<TKey>;
-		readonly path: readonly Key[];
-		readonly pathText: string;
-		readonly pointer: string;
+		readonly path: JsonPath;
 		readonly state: StateController<JPropertyBag>;
 
 		readonly isHidden: boolean;
@@ -138,9 +134,7 @@ export declare namespace json {
 		readonly subtype: keyof JTokenSubTypeMap;
 		readonly proxy: T;
 		readonly parent: null | JContainer;
-		readonly path: readonly Key[];
-		readonly pathText: string;
-		readonly pointer: string;
+		readonly path: JsonPath;
 		readonly owner: JProperty;
 
 		is<K extends keyof JTokenTypeMap>(type: K): this is JTokenTypeMap[K];
@@ -400,6 +394,7 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	readonly #value: TValue;
 	readonly #state: StateController<JPropertyBag>;
 
+	#path?: JsonPath;
 	#parent: null | JContainer<TKey>;
 	#previous: null | JProperty<TKey>;
 	#next: null | JProperty<TKey>;
@@ -429,26 +424,17 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	}
 
 	get path() {
-		const p: Key[] = [];
-		this.#buildPath(p);
-		return p;
-	}
+		if (!this.#parent) {
+			return JsonPath.root;
+		}
 
-	get pathText() {
-		const path = this.path;
-		for (let i = 0 ; i < path.length; i++)
-			path[i] = escapePathPart(path[i]);
+		if (this.#path == null) {
+			const p: Key[] = [];
+			this.#buildPath(p);
+			this.#path = new JsonPath(p);
+		}
 
-		return path.join("/");
-	}
-
-	get pointer() {
-		const path = this.path;
-		for (let i = 0 ; i < path.length; i++)
-			path[i] = toPointer(path[i]);
-
-		path.unshift("");
-		return path.join("/");
+		return this.#path;
 	}
 
 	get state() {
@@ -508,6 +494,7 @@ class JProperty<TKey extends Key = Key, TValue extends JToken = JToken> implemen
 	}
 
 	#removed() {
+		this.#path = undefined;
 		this.#parent = null;
 		this.#previous = null;
 		this.#next = null;
@@ -590,15 +577,7 @@ abstract class JToken<T = any> implements json.JToken<T> {
 	}
 
 	get path() {
-		return this.#owner ? this.#owner.path : [];
-	}
-
-	get pathText() {
-		return this.#owner ? this.#owner.pathText : "$";
-	}
-
-	get pointer() {
-		return this.#owner ? this.#owner.pointer : "/";
+		return this.#owner.path;
 	}
 
 	abstract get count(): number;
@@ -1625,60 +1604,13 @@ function isArrayKey(value: string | number) {
 	return Number.isInteger(value);
 }
 
-function escapePathPart(value: string | number): string {
-	const str = String(value);
-	if (isArrayKey(value) || isIdentifier(str))
-		return str;
-
-	return JSON5.stringify(str, { quote: "'" });
-}
-
-function parsePath(path: string): string[] {
-	let i = path.indexOf("/");
-	if (i === 0) {
-		if (path.startsWith("'"))
-			path = JSON5.parse(path);
-
-		return [path];
-	}
-
-	const results: string[] = [];
-
-	let start = 0;
-	while (true) {
-		let part: string;
-		let end: boolean;
-		//let part = path.substring(start, i);
-		if (path.charAt(start) === "'") {
-			const regex = /'(?!\\)/g;
-			regex.lastIndex = start + 1;
-			const results = regex.exec(path);
-			if (results == null)
-				throw new TypeError("Unclosed quoted path segment: " + path.substring(start));
-
-			part = path.substring(start, i = results.index + 1);
-			part = JSON5.parse(part);
-			end = i === path.length;
-		} else {
-			end = (i = path.indexOf("/", start)) < 0;
-			part = path.substring(start, end ? undefined : i);
-		}
-
-		results.push(part);
-		if (end)
-			return results;
-
-		start = i + 1;
-	}
-}
-
 const addMap = {
 	value: JValue,
 	object: JObject,
 	array: JArray,
 } satisfies { [P in keyof InternalJContainerAddMap]: ExposedJsonClass<InternalJContainerAddMap[P]> };
 
-def(json, { JTokenFilterFlags, JProperty, JToken, JValue, JContainer, JObject, JArray, unwrapProxy, parsePath, escapePathPart }, true);
+def(json, { JTokenFilterFlags, JProperty, JToken, JValue, JContainer, JObject, JArray, unwrapProxy }, true);
 export default json;
 
 const colors = {
@@ -1709,7 +1641,7 @@ function renderHeader(obj: JToken, addPath: boolean) {
 	}
 
 	if (addPath) {
-		text.add`, ${debug.text(obj.pathText).color(colors.object)}`;
+		text.add`, ${debug.text(`${obj.path}`).color(colors.object)}`;
 	}
 
 	return text.add`)`;
@@ -1751,7 +1683,7 @@ class JTokenRenderer extends debug.ClassRenderer<JToken> {
 	body(obj: JToken) {
 		const list = debug.list();
 
-		list.addRow`path: ${debug.object(obj.pathText)}`;
+		list.addRow`path: ${debug.text(`${obj.path}`)}`;
 		list.addRow`property: ${debug.object(obj.owner)}`;
 
 		for (const prop of obj)

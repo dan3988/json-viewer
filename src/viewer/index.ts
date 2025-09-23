@@ -63,7 +63,7 @@ async function run() {
 
 		function pushHistory(v: readonly json.JProperty[]) {
 			if (v.length && !popping) {
-				const paths = v.map(v => v.path);
+				const paths = v.map(v => v.path.segments);
 				const hash = paths.map(encodePath).join("|")
 				history.pushState(paths, "", "#" + hash);
 			}

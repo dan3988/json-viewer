@@ -156,7 +156,7 @@
 	<ul class="jpath-results list-group list-group-flush overflow-y-scroll overflow-x-hidden border rounded">
 		{#each jpathResults as item}
 			<li tabindex="0" role="button" class="list-group-item list-group-item-action " on:keypress={e => jpathItemEvent(item, e)} on:click={e => jpathItemEvent(item, e)}>
-				<div class="text-truncate">{item.pathText}</div>
+				<div class="text-truncate">{item.path}</div>
 			</li>
 		{/each}
 	</ul>
