@@ -2,28 +2,28 @@ import type { DocumentRequestInfo } from "./types.js";
 import { EditAction, EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
 import { StateController } from "./state.js";
-import json from "./json.js";
 import Linq from "@daniel.pickett/linq-js";
+import json from "./json.js";
 import JsonPath from "./json-path.js";
 
-export interface SelectedPropertyList extends Iterable<json.JProperty> {
+export interface SelectedPropertyList extends Iterable<json.Node> {
 	readonly size: number;
-	readonly last: null | json.JProperty;
-	has(value: json.JProperty): boolean;
-	reset(values: json.JProperty[]): void;
-	reset(value: json.JProperty, fromLast?: boolean): void;
-	add(value: json.JProperty, fromLast?: boolean): void;
-	remove(value: json.JProperty): void;
-	toggle(value: json.JProperty, selected?: boolean): boolean;
+	readonly last: null | json.Node;
+	has(value: json.Node): boolean;
+	reset(values: json.Node[]): void;
+	reset(value: json.Node, fromLast?: boolean): void;
+	add(value: json.Node, fromLast?: boolean): void;
+	remove(value: json.Node): void;
+	toggle(value: json.Node, selected?: boolean): boolean;
 	clear(): void;
-	forEach(callback: (v: json.JProperty) => void): void;
+	forEach(callback: (v: json.Node) => void): void;
 }
 
 interface ChangeProps {
-	selected: readonly json.JProperty[];
-	lastSelected: null | json.JProperty;
+	selected: readonly json.Node[];
+	lastSelected: null | json.Node;
 	filterText: string;
-	filterFlags: json.JTokenFilterFlags;
+	filterFlags: json.FilterFlags;
 	requestInfo: undefined | null | DocumentRequestInfo
 	useWebRequest: boolean;
 	formatIndent: string;
@@ -32,19 +32,19 @@ interface ChangeProps {
 export interface ViewerCommands {
 	focusSearch: [];
 	saveAs: [];
-	scrollTo: [token: json.JProperty];
-	rename: [token: json.JProperty<string>];
+	scrollTo: [node: json.Node];
+	rename: [node: json.Node];
 }
 
 export type ViewerCommandHandler<T = ViewerModel> = Fn<[evt: ViewerCommandEvent], void, T>;
 
 export type ViewerCommandEvent = { [P in keyof ViewerCommands]: { command: P, args: ViewerCommands[P] } }[keyof ViewerCommands];
 
-function serializeForCopy(token: json.JToken, indent: undefined | string, escapeValues?: boolean) {
-	if (!escapeValues && token.is("value")) {
-		return String(token.value);
+function serializeForCopy(node: json.Node, indent: undefined | string, escapeValues?: boolean) {
+	if (!escapeValues && node.isValue()) {
+		return String(node.value);
 	} else {
-		return JSON.stringify(token, undefined, indent);
+		return JSON.stringify(node, undefined, indent);
 	}
 }
 
@@ -66,25 +66,25 @@ export class ViewerModel {
 			this.#owner = owner;
 		}
 
-		reset(values: json.JProperty[]): void;
-		reset(value: json.JProperty, fromLast?: boolean): void;
-		reset(value: json.JProperty | json.JProperty[], fromLast?: boolean): void {
+		reset(values: json.Node[]): void;
+		reset(value: json.Node, fromLast?: boolean): void;
+		reset(value: json.Node | json.Node[], fromLast?: boolean): void {
 			this.#owner.#selectedReset(value as any, fromLast);
 		}
 
-		has(value: json.JProperty): boolean {
+		has(value: json.Node): boolean {
 			return this.#owner.#selected.has(value);
 		}
 	
-		add(value: json.JProperty, fromLast?: boolean): void {
+		add(value: json.Node, fromLast?: boolean): void {
 			return this.#owner.#selectedAdd(value, fromLast);
 		}
 	
-		remove(value: json.JProperty): void {
+		remove(value: json.Node): void {
 			return this.#owner.#selectedRemove(value);
 		}
 	
-		toggle(value: json.JProperty, selected?: boolean): boolean {
+		toggle(value: json.Node, selected?: boolean): boolean {
 			return this.#owner.#selectedToggle(value, selected);
 		}
 	
@@ -92,7 +92,7 @@ export class ViewerModel {
 			this.#owner.#selectedClear();
 		}
 
-		forEach(callback: (v: json.JProperty) => void) {
+		forEach(callback: (v: json.Node) => void) {
 			this.#owner.#selected.forEach(v => callback.call(this, v));
 		}
 
@@ -101,11 +101,11 @@ export class ViewerModel {
 		}
 	}
 
-	readonly #root: json.JProperty;
+	readonly #root: json.Node;
 	readonly #state: StateController<ChangeProps>;
 	readonly #command: EventHandlers<this, [evt: ViewerCommandEvent]>;
-	#selected: Set<json.JProperty>;
-	#lastSelected: null | json.JProperty;
+	#selected: Set<json.Node>;
+	#lastSelected: null | json.Node;
 	readonly #selectedList: SelectedPropertyList;
 	readonly #edits: EditStack;
 
@@ -161,12 +161,12 @@ export class ViewerModel {
 		return this.#edits;
 	}
 
-	constructor(root: json.JProperty) {
+	constructor(root: json.Node) {
 		this.#root = root;
 		this.#state = new StateController<ChangeProps>({
 			selected: [],
 			lastSelected: null,
-			filterFlags: json.JTokenFilterFlags.Both,
+			filterFlags: json.FilterFlags.Both,
 			filterText: "",
 			requestInfo: undefined,
 			useWebRequest: false,
@@ -196,20 +196,20 @@ export class ViewerModel {
 			handlers.fire(this, <any>{ command, args });
 	}
 
-	formatValue(token: json.JToken, minify?: boolean, escapeValues?: boolean) {
+	formatValue(node: json.Node, minify?: boolean, escapeValues?: boolean) {
 		const indent = minify ? undefined : this.formatIndent;
-		return serializeForCopy(token, indent, escapeValues);
+		return serializeForCopy(node, indent, escapeValues);
 	}
 	
-	formatValues(values: Iterable<json.JProperty>, minify?: boolean) {
+	formatValues(values: Iterable<json.Node>, minify?: boolean) {
 		const indent = minify ? undefined : this.formatIndent;
 		return Linq(values)
-			.select(p => serializeForCopy(p.value, indent, true))
+			.select(p => serializeForCopy(p, indent, true))
 			.joinText(minify ? "," : ",\r\n");
 	}
 	
 
-	filter(text: string, flags?: json.JTokenFilterFlags) {
+	filter(text: string, flags?: json.FilterFlags) {
 		text = text.toLowerCase();
 		const oldText = this.#state.getValue("filterText");
 		const oldFlags = this.#state.getValue("filterFlags");
@@ -229,7 +229,7 @@ export class ViewerModel {
 		this.#root.filter(text, flags, append);
 	}
 
-	resolve(path: PathInit): json.JProperty | undefined {
+	resolve(path: PathInit): json.Node | undefined {
 		let segments: readonly JsonPath.Segment[];
 		if (typeof path === 'string') {
 			({ segments } = JsonPath.parse(path));
@@ -240,7 +240,7 @@ export class ViewerModel {
 		}
 
 		let i = 0;
-		let baseProp: json.JProperty;
+		let baseProp: json.Node;
 		if (segments[0] !== "$") {
 			const selected = this.#state.getValue("selected").at(-1);
 			if (selected == null)
@@ -254,9 +254,9 @@ export class ViewerModel {
 			baseProp = this.#root;
 		}
 	
-		for (let curr = baseProp; curr.value.is("container"); ) {
+		for (let curr = baseProp; curr.isContainer(); ) {
 			const key = segments[i];
-			const child = curr.value.getProperty(key);
+			const child = curr.get(key);
 			if (child == null)
 				break;
 
@@ -267,38 +267,39 @@ export class ViewerModel {
 		}
 	}
 
-	select(path: PathInit) {
-		const prop = this.resolve(path);
-		if (prop == null)
+	select(path: string | readonly (number | string)[]) {
+		const node = this.resolve(path);
+		if (node == null)
 			return false;
 
-		return this.#selectedAdd(prop);
+		return this.#selectedAdd(node);
 	}
 
-	#onSelected(selected: json.JProperty, expand: boolean, scrollTo: boolean) {
+	#onSelected(selected: json.Node, expand: boolean, scrollTo: boolean) {
 		if (expand)
-			for (let p: null | json.JToken = selected.parent; p != null; p = p.parent)
-				p.owner.isExpanded = true;
+			for (let p: null | json.Node = selected; p != null; p = p.parent)
+				if (p.isContainer())
+					p.isExpanded = true;
 
 		if (scrollTo)
 			this.execute("scrollTo", selected);
 	}
 
-	setSelected(selected: json.JProperty, expand: boolean, scrollTo: boolean) {
+	setSelected(selected: json.Node, expand: boolean, scrollTo: boolean) {
 		this.#selectedReset(selected);
 		this.#onSelected(selected, expand ?? false, scrollTo ?? false);
 	}
 
-	#selectedReset(values: json.JProperty[]): void;
-	#selectedReset(value: json.JProperty, fromLast?: boolean): void;
-	#selectedReset(value: json.JProperty | json.JProperty[], fromLast?: boolean) {
+	#selectedReset(values: json.Node[]): void;
+	#selectedReset(value: json.Node, fromLast?: boolean): void;
+	#selectedReset(value: json.Node | json.Node[], fromLast?: boolean) {
 		let lastSelected = this.#lastSelected;
-		let set: Set<json.JProperty>;
+		let set: Set<json.Node>;
 
 		if (Array.isArray(value)) {
 			set = new Set(value);
 		} else if (fromLast && lastSelected) {
-			const props = getPropertiesBetween(lastSelected, value);
+			const props = getNodesBetween(lastSelected, value);
 			set = new Set(props);
 			set.add(lastSelected);
 		} else {
@@ -306,9 +307,9 @@ export class ViewerModel {
 			set.add(value);
 		}
 
-		for (const prop of this.#selected)
-			if (!set.has(prop))
-				prop.isSelected = false;
+		for (const node of this.#selected)
+			if (!set.has(node))
+				node.isSelected = false;
 
 		lastSelected = null;
 
@@ -333,21 +334,21 @@ export class ViewerModel {
 		return true;
 	}
 
-	#selectedAdd(value: json.JProperty, fromLast?: boolean) {
+	#selectedAdd(value: json.Node, fromLast?: boolean) {
 		let changed = 0;
 		let lastSelected = this.#lastSelected;
 		const selected = [...this.#state.getValue("selected")];
 
 		if (fromLast && lastSelected) {
-			for (const prop of getPropertiesBetween(lastSelected, value)) {
-				if (prop.isSelected)
+			for (const node of getNodesBetween(lastSelected, value)) {
+				if (node.isSelected)
 					continue;
 	
-				this.#selected.add(prop);
-				selected.push(prop);
-				prop.isSelected = true;
+				this.#selected.add(node);
+				selected.push(node);
+				node.isSelected = true;
 				changed++;
-				lastSelected = prop;
+				lastSelected = node;
 			}
 		} else if (!value.isSelected) {
 			this.#selected.add(value);
@@ -363,31 +364,31 @@ export class ViewerModel {
 		}
 	}
 
-	#selectedRemove(prop: json.JProperty): void {
-		if (!prop.isSelected)
+	#selectedRemove(node: json.Node): void {
+		if (!node.isSelected)
 			return;
 
-		this.#selected.delete(prop);
-		prop.isSelected = false;
+		this.#selected.delete(node);
+		node.isSelected = false;
 		const selected = [...this.#selected];
 		const lastSelected = selected.at(-1) ?? null
 		this.#lastSelected = lastSelected;
 		this.#state.setValues({ selected, lastSelected });
 	}
 
-	#selectedToggle(prop: json.JProperty, selected?: boolean) {
-		selected ??= !prop.isSelected;
+	#selectedToggle(node: json.Node, selected?: boolean) {
+		selected ??= !node.isSelected;
 
-		if (selected == null || selected != prop.isSelected) {
-			selected ??= !prop.isSelected;
+		if (selected == null || selected != node.isSelected) {
+			selected ??= !node.isSelected;
 
 			if (selected) {
-				this.#selectedAdd(prop);
+				this.#selectedAdd(node);
 			} else {
-				this.#selectedRemove(prop);
+				this.#selectedRemove(node);
 			}
 
-			prop.isSelected = selected;
+			node.isSelected = selected;
 		}
 
 		return selected;
@@ -396,10 +397,10 @@ export class ViewerModel {
 
 export default ViewerModel;
 
-function * getAllParents(prop: json.JProperty) {
-	let p: null | json.JProperty = prop;
+function * getAllParents(node: json.Node) {
+	let p: null | json.Node = node;
 	while (true) {
-		if ((p = p.parentProperty) == null)
+		if ((p = p.parent) == null)
 			break;
 
 		yield p;
@@ -413,10 +414,10 @@ function * getAllParents(prop: json.JProperty) {
  * @param ifTrue The value to return if the property appears after the origin
  * @param ifFalse The value to return if the property appears before the origin
  */
-function isFollowing<const V>(origin: json.JProperty, other: json.JProperty, ifTrue: V, ifFalse: V): V;
-function isFollowing(origin: json.JProperty, other: json.JProperty): boolean;
-function isFollowing(origin: json.JProperty, other: json.JProperty, ifTrue: any = true, ifFalse: any = false): any {
-	let p: null | json.JProperty = origin;
+function isFollowing<const V>(origin: json.Node, other: json.Node, ifTrue: V, ifFalse: V): V;
+function isFollowing(origin: json.Node, other: json.Node): boolean;
+function isFollowing(origin: json.Node, other: json.Node, ifTrue: any = true, ifFalse: any = false): any {
+	let p: null | json.Node = origin;
 	while (true) {
 		if ((p = p.next) == null)
 			return ifFalse;
@@ -426,7 +427,7 @@ function isFollowing(origin: json.JProperty, other: json.JProperty, ifTrue: any 
 	}
 }
 
-function getSharedParentIndex(a: json.JProperty[], b: json.JProperty[]): number {
+function getSharedParentIndex(a: json.Node[], b: json.Node[]): number {
 	let result = -1;
 
 	for (let i = 0, l = Math.min(a.length, b.length); i < l; i++) {
@@ -447,7 +448,7 @@ function getSharedParentIndex(a: json.JProperty[], b: json.JProperty[]): number 
  * @param origin
  * @param other
  */
- function * getPropertiesBetween(origin: json.JProperty, other: json.JProperty) {
+ function * getNodesBetween(origin: json.Node, other: json.Node) {
 	if (origin === other)
 		return;
 
@@ -512,6 +513,6 @@ function getSharedParentIndex(a: json.JProperty[], b: json.JProperty[]): number 
 		if (++sharedParentIndex === otherParents.length)
 			break;
 
-		yield p = (target.value as json.JContainer)[begin]!;
+		yield p = target[begin]!;
 	}
 }

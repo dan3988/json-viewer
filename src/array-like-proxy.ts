@@ -1,9 +1,11 @@
+export type ArrayProxyGetters<Target> = Record<symbol | string, (self: Target) => any>;
+
 export interface ReadOnlyArrayLikeProxyHandler<Target extends object, Element> {
 	getIterator(self: Target): () => Iterator<Element>;
 	getLength(self: Target): number;
 	getAt(self: Target, index: number): Element;
 
-	overrideGet?(self: Target, key: PropertyKey): void | [] | [result: any];
+	getters?: ArrayProxyGetters<Target>;
 }
 
 export interface MutableArrayLikeProxyHandler<Target extends object, Element> extends ReadOnlyArrayLikeProxyHandler<Target, Element> {
@@ -17,8 +19,7 @@ interface RealArrayLikeProxyHandler<Target extends object = any, Element = any> 
 	getAt(self: Target, index: number): Element;
 	setLength?(self: Target, length: number): boolean;
 	setAt?(self: Target, index: number, value: Element): boolean;
-
-	overrideGet?(self: Target, key: PropertyKey): void | [] | [result: any];
+	getters?: ArrayProxyGetters<Target>;
 }
 
 interface HasLength {
@@ -58,14 +59,14 @@ class HandlerImpl<Target extends object, Element> implements ProxyHandler<Wrappe
 	readonly #handler: RealArrayLikeProxyHandler<Target, Element>;
 
 	constructor(handler: RealArrayLikeProxyHandler<Target, Element>) {
-		const { getAt, setAt, setLength, overrideGet } = handler;
+		const { getAt, setAt, setLength, getters } = handler;
 		this.#handler = {
 			getAt,
 			getLength: handler.getLength ?? getter.bind("length"),
 			getIterator: handler.getIterator ?? getter.bind(Symbol.iterator),
 			setAt,
 			setLength,
-			overrideGet
+			getters: getters && { ...getters }
 		};
 	}
 
@@ -114,10 +115,10 @@ class HandlerImpl<Target extends object, Element> implements ProxyHandler<Wrappe
 
 	get({ self }: Wrapper<Target>, p: string | symbol) {
 		const handler = this.#handler;
-		if (handler.overrideGet) {
-			const value = handler.overrideGet(self, p);
-			if (Array.isArray(value))
-				return value[0];
+		if (handler.getters) {
+			const value = handler.getters[p];
+			if (value)
+				return value(self);
 		}
 
 		if (p === "length")
@@ -218,13 +219,13 @@ class HandlerImpl<Target extends object, Element> implements ProxyHandler<Wrappe
 	}
 }
 
-interface ReadOnlyArrayLike<T> {
+export interface ReadOnlyArrayLike<T> {
 	readonly length: number;
 	readonly [index: number]: T;
 	[Symbol.iterator](): Iterator<T>;
 }
 
-interface MutableArrayLike<T> extends ReadOnlyArrayLike<T> {
+export interface MutableArrayLike<T> extends ReadOnlyArrayLike<T> {
 	length: number;
 	[index: number]: T;
 }

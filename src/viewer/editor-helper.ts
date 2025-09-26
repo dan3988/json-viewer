@@ -4,120 +4,111 @@ import Linq from "@daniel.pickett/linq-js";
 import { noop } from "../util.js";
 
 export namespace edits {
-	export function clearProp(value: json.JContainer): EditAction {
-		const props = [...value];
-		return new EditAction(commit, revert, value.owner);
+	export function clearProp(node: json.Container): EditAction {
+		const empty = new (node.isObject() ? json.Object : json.Array);
+		return new EditAction(commit, revert, node);
 
 		function commit() {
-				value.clear();
-				value.owner.isExpanded = false;
+			node.replace(empty);
 		}
 
 		function revert() {
-				for (const prop of props)
-					value.setProperty(prop);
-
-				value.owner.isExpanded = true;
+			empty.replace(node);
 		}
 	}
 
-	export function setValue(token: json.JValue, newValue: json.JValueType): EditAction {
+	export function setValue(node: json.Value, newValue: json.ValueType): EditAction {
 		let oldValue: any;
-		return new EditAction(commit, revert, token.owner);
+		return new EditAction(commit, revert, node);
 
 		function commit() {
-			oldValue = token.value;
-			token.value = newValue;
+			oldValue = node.value;
+			node.value = newValue;
 		}
 
 		function revert() {
-			token.value = oldValue;
+			node.value = oldValue;
 			oldValue = undefined;
 		}
 	}
 
-	export function replace(prop: json.JProperty, newProp: json.JProperty): EditAction {
+	export function replace(node: json.Node, newProp: json.Node): EditAction {
 		return new EditAction(commit, revert, {
 			commitTarget: newProp,
-			revertTarget: prop,
+			revertTarget: node,
 		});
 
 		function commit() {
-			prop.replace(newProp.value);
+			node.replace(newProp);
 		}
 
 		function revert() {
-			newProp.replace(prop.value);
+			newProp.replace(node);
 		}
 	}
 
-	function createDeleteRevert(prop: json.JProperty): VoidFunction {
-		const { parent } = prop;
-		if (parent!.is("object")) {
-			const p = prop as json.JProperty<string>;
+	function createDeleteRevert(node: json.Node): VoidFunction {
+		const { parent } = node;
+		if (parent!.isObject()) {
+			const key = node.key as string;
 			const obj = parent;
-			if (p.previous === null) {
-				return () => obj.first === null ? obj.setProperty(p) : obj.insertBefore(p, obj.first);
+			if (node.next) {
+				return json.Object.prototype.insertBefore.bind(obj, key, node, node.next);
 			} else {
-				return json.JObject.prototype.insertAfter.bind(obj, p, p.previous);
+				return json.Object.prototype.insertAfter.bind(obj, key, node, node.previous);
 			}
-		} else if (parent!.is('array')) {
-			return json.JArray.prototype.insertProperty.bind(parent, prop as json.JProperty<number>);
+		} else if (parent!.isArray()) {
+			const key = node.key as number;
+			return json.Array.prototype.add.bind(parent, node, key);
 		} else {
 			return noop;
 		}
 	}
 
-	export function remove(prop: json.JProperty): EditAction;
-	export function remove(props: Iterable<json.JProperty>): EditAction;
-	export function remove(arg: json.JProperty | Iterable<json.JProperty>): EditAction {
-		if (Symbol.iterator in arg) {
-			const props = Linq(arg)
-				.select(v => [v, createDeleteRevert(v)] as const)
-				.toArray();
+	export function remove(node: json.Node): EditAction;
+	export function remove(nodes: Iterable<json.Node>): EditAction;
+	export function remove(arg: json.Node | Iterable<json.Node>): EditAction {
+		if (arg instanceof json.Node)
+			arg = Linq.repeat(arg, 1);
 
-			function commit() {
-				for (const [prop] of props) {
-					prop.remove();
-				}
-			}
+		const nodes = Linq(arg)
+			.select(v => [v, createDeleteRevert(v)] as const)
+			.toArray();
 
-			function revert() {
-				for (const [, revert] of props) {
-					revert();
-				}
-			}
+		const [last] = nodes.at(-1) ?? [];
 
-			return new EditAction(commit, revert);
-		} else {
-			const prop = arg;
-			const revert = createDeleteRevert(prop);
-
-			return new EditAction(commit, revert, {
-				commitTarget: prop.parent?.owner,
-				revertTarget: prop,
-			});
-
-			function commit() {
-				prop.remove();
+		function commit() {
+			for (const [node] of nodes) {
+				node.remove();
 			}
 		}
+
+		function revert() {
+			for (const [, revert] of nodes) {
+				revert();
+			}
+		}
+
+		return new EditAction(commit, revert, {
+			commitTarget: last && (last.previous ?? last.next ?? last.parent),
+			revertTarget: last,
+		});
 	}
 
-	function resetExisting(parent: json.JObject, key: string) {
-		const existing = parent.getProperty(key);
+	function resetExisting(parent: json.Object, key: string) {
+		const existing = parent.get(key);
 		const existingSibling = existing?.next;
 		if (existing) {
 			if (existingSibling) {
-				return json.JObject.prototype.insertBefore.bind(parent, existing, existingSibling);
+				return json.Object.prototype.insertBefore.bind(parent, key, existing, existingSibling);
 			} else {
-				return json.JObject.prototype.setProperty.bind(parent, existing);
+				return json.Object.prototype.set.bind(parent, key, existing);
 			}
 		}
 	}
 
-	export function rename(parent: json.JObject, oldName: string, newName: string): EditAction {
-		const target = parent.getProperty(oldName);
+	export function rename(parent: json.Object, oldName: string, newName: string): EditAction {
+		const target = parent.get(oldName);
 		const reset = resetExisting(parent, newName);
 		return new EditAction(commit, revert, target);
 
@@ -131,55 +122,66 @@ export namespace edits {
 		}
 	}
 
-	export function sort(obj: json.JObject, desc?: boolean): EditAction {
-		const old = [...obj];
-		return new EditAction(commit, revert, obj.owner);
+	function sortAsc(x: string, y: string) {
+		return x.localeCompare(y);
+	}
+
+	function sortDesc(x: string, y: string) {
+		return y.localeCompare(x);
+	}
+
+	export function sort(obj: json.Object, desc?: boolean): EditAction {
+		const compare = desc ? sortDesc : sortAsc;
+		const keys = [...obj.getKeys()];
+		return new EditAction(commit, revert, obj);
 
 		function commit() {
-			obj.sort(desc);
+			obj.sort(compare);
 		}
 
 		function revert() {
-			obj.reset(old);
+			obj.sort((x, y) => keys.indexOf(x) - keys.indexOf(y));
 		}
 	}
 
-	export function objectAdd(parent: json.JObject, mode: json.AddType, key: string, sibling?: null | json.JProperty<string>): EditAction {
-		const prop = new json.JProperty(key, mode);
+	export function objectAdd(parent: json.Object, key: string, value: any, sibling?: null | json.Node): EditAction {
+		const node = json(value);
 		const reset = resetExisting(parent, key);
 		let commit: () => void;
 
 		if (!sibling) {
-			commit = json.JObject.prototype.insertAfter.bind(parent, prop);
+			commit = json.Object.prototype.insertAfter.bind(parent, key, node);
 		} else {
-			commit = json.JObject.prototype.insertBefore.bind(parent, prop, sibling);
+			commit = json.Object.prototype.insertBefore.bind(parent, key, node, sibling);
 		}
 
 		return new EditAction(commit, revert, {
-			commitTarget: prop,
+			commitTarget: node,
 			revertTarget: sibling ?? parent.last
 		});
 
 		function revert() {
-			prop.remove();
+			node.remove();
 			reset?.();
 		}
 	}
 
-	export function arrayAdd(parent: json.JArray, mode: json.AddType, index?: number) {
-		const prop = new json.JProperty(index ?? parent.count, mode);
+	export function arrayAdd(parent: json.Array, value: any, index?: number) {
+		//const node = new json.Node(index ?? parent.count, mode);
+		index ??= parent.count;
+		const node = json(value);
 		return new EditAction(commit, revert, {
-			commitTarget: prop,
-			revertTarget: parent.getProperty(prop.key),
+			commitTarget: node,
+			revertTarget: parent.get(index ? index - 1 : 0),
 		});
 
 		function commit() {
-			parent.insertProperty(prop);
-			parent.owner.isExpanded = true;
+			parent.add(node, index);
+			parent.isExpanded = true;
 		}
 
 		function revert() {
-			prop.remove();
+			node.remove();
 		}
 	}
 }

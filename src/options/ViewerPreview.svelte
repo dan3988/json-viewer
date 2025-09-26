@@ -12,14 +12,14 @@
 	InserterManager.createScope();
 
 	const manifest = chrome.runtime.getManifest();
-	const prop = json(manifest);
-	const model = new ViewerModel(prop);
-	prop.setExpanded(true, true);
+	const node = json(manifest);
+	const model = new ViewerModel(node);
+	node.setExpanded(true, true);
 </script>
 <div class="editor-bg"></div>
 <div class="root overflow-auto">
 	<div class="panel">
-		<JsonProperty {indent} {model} {prop} readonly />
+		<JsonProperty {indent} {model} {node} readonly />
 	</div>
 </div>
 <style lang="scss">

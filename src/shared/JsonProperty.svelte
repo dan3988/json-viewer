@@ -10,18 +10,17 @@
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
 
-	type InsertSiblingMode = 'before' | 'after';
-
 	export let model: ViewerModel;
-	export let prop: json.JProperty;
+	export let node: json.Node;
 	export let indent: Indent;
 	export let readonly = false;
 	export let remove: (() => void) | undefined = undefined;
 
 	const inserterManager = InserterManager.current;
 
-	$: ({ isExpanded, isHidden, isSelected } = prop.state.props);
-	
+	$: ({ isExpandedStore, isHiddenStore, isSelectedStore } = node);
+	$: hidden = $isHiddenStore;
+	$: expanded = $isExpandedStore;
 	$: canEdit = !readonly && !(editingName || editingValue || menuOpen);
 	
 	let editingValue = false;
@@ -43,67 +42,65 @@
 		evt.stopPropagation();
 		if (evt.shiftKey) {
 			//evt.preventDefault();
-			model.selected[evt.ctrlKey ? "add" : "reset"](prop, true);
+			model.selected[evt.ctrlKey ? "add" : "reset"](node, true);
 		} else {
-			model.selected[evt.ctrlKey ? "toggle" : "reset"](prop);
+			model.selected[evt.ctrlKey ? "toggle" : "reset"](node);
 		}
 
 		window.getSelection()?.removeAllRanges();
 	}
 
 	function startEditing() {
-		model.selected.reset(prop);
+		model.selected.reset(node);
 		editingValue = true;
 	}
 
-	function insert(index: number, type: json.AddType) {
+	function insert(index: number, value: any) {
 		model.selected.clear();
-		const container = prop.value;
-		if (container.is('array')) {
-			model.edits.push(edits.arrayAdd(container, type, index));
-		} else if (container.is('object')) {
-			const sibling = props[index] as json.JProperty<string>;
-			const commit: CommitObject = addObject.bind(undefined, container, sibling, type);
-			props.splice(index, 0, commit);
-			props = props;
+		if (node.isArray()) {
+			model.edits.push(edits.arrayAdd(node, value, index));
+		} else if (node.isObject()) {
+			const sibling = children[index] as json.Node;
+			const commit: CommitObject = addObject.bind(undefined, node, sibling, value);
+			children.splice(index, 0, commit);
+			children = children;
 		}
 	}
 
-	function addObject(parent: json.JObject, sibling: null | json.JProperty<string>, type: json.AddType, name: string) {
-		model.edits.push(edits.objectAdd(parent, type, name, sibling));
+	function addObject(parent: json.Object, sibling: null | json.Node, value: any, name: string) {
+		model.edits.push(edits.objectAdd(parent, name, value, sibling));
 	}
 
 	function removePendingEdit(index: number) {
-		props.splice(index, 1);
-		props = props;
+		children.splice(index, 1);
+		children = children;
 	}
 
 	type CommitObject = (name: string) => void;
 
-	let props: (json.JProperty | CommitObject)[] = [];
+	let children: (json.Node | CommitObject)[] = [];
 
 	function update() {
-		props = [...prop.value];
+		children = [...node];
 	}
 
-	if (prop.value.is("container")) {
-		const container = prop.value;
+	if (node.isContainer()) {
 		update();
-		container.changed.addListener(update);
-		onDestroy(() => container.changed.removeListener(update));
+		node.onChanged.addListener(update);
+		onDestroy(() => node.onChanged.removeListener(update));
 	}
 
 	function onExpanderClicked() {
-		if (prop.isExpanded) {
-			prop.isExpanded = false;
-			model.selected.reset(prop);
+		if (node.isExpanded) {
+			node.isExpanded = false;
+			model.selected.reset(node);
 		} else {
-			prop.isExpanded = true;
+			node.isExpanded = true;
 		}
 	}
 
 	function onGutterClicked() {
-		model.setSelected(prop, false, true);
+		model.setSelected(node, false, true);
 	}
 
 	let menuFocus: HTMLElement;
@@ -120,7 +117,7 @@
 			evt.preventDefault();
 
 			if (!menuOpen) {
-				model.selected.reset(prop);
+				model.selected.reset(node);
 				menuOpen = true;
 				menuFocus.focus();
 			}
@@ -332,74 +329,71 @@
 		flex-direction: column;
 	}
 </style>
-{#if prop}
-{@const { key, value } = prop}
 <div
-	hidden={$isHidden}
+	{hidden}
 	data-indent={indent.indent}
-	class="json-prop for-{value.type} for-{value.subtype} json-indent"
-	class:expanded={$isExpanded}
+	class="json-prop for-{node.type} for-{node.subtype} json-indent"
+	class:expanded
 	on:click={onClick}>
-	<span class="json-key" class:json-selected={$isSelected} on:contextmenu={openMenu}>
+	<span class="json-key" class:json-selected={$isSelectedStore} on:contextmenu={openMenu}>
 		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
-			<JsonPropertyKey {model} {prop} {readonly} bind:editing={editingName}>
+			<JsonPropertyKey {model} {node} {readonly} bind:editing={editingName}>
 				<div class="json-actions-root">
 					{#if menuOpen}
 						<JsonActions
 							close={() => menuOpen = false}
 							{model}
-							{prop}
-							edit={value.is('value') && startEditing}
-							rename={typeof key === 'string' && (() => editingName = true)}
+							{node}
+							edit={node.isValue() && startEditing}
+							rename={node.parent?.isObject() && (() => editingName = true)}
 							{remove}
-							sort={value.is('object') && ((desc) => model.edits.push(edits.sort(value, desc)))}
+							sort={node.isObject() && ((desc) => model.edits.push(edits.sort(node, desc)))}
 						/>
 					{/if}
 				</div>
 			</JsonPropertyKey>
 		</span>
 	</span>
-	{#if value.is("container")}
-		<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={($isExpanded ? "Collapse" : "Expand") + " " + JSON.stringify(prop.key)}></span>
-		{#if props.length}
-			<span class="container-summary container-count">{props.length}</span>
+	{#if node.isContainer()}
+		<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={(expanded ? "Collapse" : "Expand")}></span>
+		{#if children.length}
+			<span class="container-summary container-count">{children.length}</span>
 		{:else}
 			<span class="container-summary container-empty">empty</span>
 		{/if}
-		{#if $isExpanded}
+		{#if expanded}
 			<span class="gutter" on:click|stopPropagation={onGutterClicked}></span>
 			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-			<ul class="json-container json-{value.subtype} p-0" on:click|stopPropagation>
-				{#if props.length === 0}
+			<ul class="json-container json-{node.subtype} p-0" on:click|stopPropagation>
+				{#if children.length === 0}
 					<li class="container-empty">empty</li>
 				{:else}
-					{#each props as prop, i (prop)}
+					{#each children as node, i (node)}
 						<li class="json-container-gap">
 							<JsonInsert insert={(type) => insert(i, type)} />
 						</li>
-						{#if typeof prop === 'function'}
+						{#if typeof node === 'function'}
 							<li class="json-key-placeholder json-selected">
-								<JsonValueEditor value="" parse={String} editing onfinish={prop} oncancel={() => removePendingEdit(i)} />
+								<JsonValueEditor value="" parse={String} editing onfinish={node} oncancel={() => removePendingEdit(i)} />
 							</li>
 						{:else}
 							<li class="json-container-item">
-								<svelte:self {model} {prop} {readonly}
-									remove={() => model.edits.push(edits.remove(prop))}
+								<svelte:self {model} {node} {readonly}
+									remove={() => model.edits.push(edits.remove(node))}
 									indent={indent.next}
 								/>
 							</li>
 						{/if}
 					{/each}
 					<li class="json-container-gap">
-						<JsonInsert insert={(type) => insert(props.length, type)} />
+						<JsonInsert insert={(type) => insert(children.length, type)} />
 					</li>
 				{/if}
 			</ul>
 		{/if}
-	{:else if value.is("value")}
+	{:else if node.isValue()}
 		<span class="json-value">
-			<JsonValue {model} {prop} {readonly} onediting={startEditing} bind:editing={editingValue} />
+			<JsonValue {model} {node} {readonly} onediting={startEditing} bind:editing={editingValue} />
 		</span>
 	{/if}
 </div>
-{/if}

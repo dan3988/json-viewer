@@ -24,7 +24,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import { KeyBindingListener } from "../keyboard";
 	import { commands } from "../commands";
-	import json from "../json.js";
+	import json from "../json";
 	import ThemeTracker from "../theme-tracker.js";
 	import Linq from "@daniel.pickett/linq-js";
 	import fs from "../fs";
@@ -62,7 +62,7 @@
 
 	let filterInput: HTMLInputElement;
 	let filter = "";
-	let filterMode = json.JTokenFilterFlags.Both;
+	let filterMode = json.FilterFlags.Both;
 
 	type PopupInfo<C extends SvelteComponent<any, PopupCustomEvents<R>> = any, R = any> = [clazz: PopupConstructor<C, R>, props: ComponentProps<C>, completion: (result: CustomEvent<R | void> ) => void];
 
@@ -115,7 +115,7 @@
 		const pathName = window.location.pathname;
 		const i = pathName.lastIndexOf("/");
 		const suggestedName = pathName.slice(i + 1);
-		const data = model.root.value.toString(model.formatIndent);
+		const data = model.root.toString(model.formatIndent);
 		await fs.saveFile(data, suggestedName, 'json');
 	}
 
@@ -267,9 +267,9 @@
 			<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
 			<Button title="Clear" icon="x-lg" action={clearFilter} />
 			<select class="filter-type form-select flex-fit" bind:value={filterMode}>
-				<option value={json.JTokenFilterFlags.Both}>All</option>
-				<option value={json.JTokenFilterFlags.Keys}>Keys</option>
-				<option value={json.JTokenFilterFlags.Values}>Values</option>
+				<option value={json.FilterFlags.Both}>All</option>
+				<option value={json.FilterFlags.Keys}>Keys</option>
+				<option value={json.FilterFlags.Values}>Values</option>
 			</select>
 		</div>
 		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
@@ -290,7 +290,7 @@
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
 						<div class="prop-panel">
-							<JsonProperty {model} prop={model.root} indent={rootIndent} />
+							<JsonProperty {model} node={model.root} indent={rootIndent} />
 						</div>
 					</div>
 				</div>

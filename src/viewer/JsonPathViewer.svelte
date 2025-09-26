@@ -1,15 +1,15 @@
 <script lang="ts" context="module">
 	import type json from "../json";
 
-	function expandPath(model: ViewerModel, value: undefined | null | json.JProperty): readonly json.JProperty[] {
+	function expandPath(model: ViewerModel, value: undefined | null | json.Node): readonly json.Node[] {
 		if (value == null)
 			return [model.root];
 
-		const parts: json.JProperty[] = [];
-		let prop: undefined | json.JProperty = value;
+		const parts: json.Node[] = [];
+		let node: null | json.Node = value;
 		do {
-			parts.push(prop);
-		} while ((prop = prop.parent?.owner) != null);
+			parts.push(node);
+		} while ((node = node.parent) != null);
 
 		return parts.reverse();
 	}
@@ -113,12 +113,13 @@
 </style>
 <div class="root border rounded p-1" class:editing>
 	<ul class="list" role="textbox" on:click={beginEditing}>
-		{#each path as prop}
+		{#each path as node}
+		{@const key = node.key ? toPointer(node.key) : '$'}
 			<li>
-				{#if prop.parent != null}
+				{#if node.parent != null}
 					<span>/</span>
 				{/if}
-				<span class="content rounded" on:click|stopPropagation={() => model.setSelected(prop, true, true)}>{toPointer(prop.key)}</span>
+				<span class="content rounded" on:click|stopPropagation={() => model.setSelected(node, true, true)}>{key}</span>
 			</li>
 		{/each}
 	</ul>

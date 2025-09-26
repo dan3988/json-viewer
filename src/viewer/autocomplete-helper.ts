@@ -7,7 +7,7 @@ export default class AutocompleteHelper {
 	readonly #target: HTMLElement;
 	readonly #setter: (value?: string) => void;
 	#list: SuggestionList;
-	#prop: null | json.JToken;
+	#node: null | json.Node;
 
 	get target() {
 		return this.#target;
@@ -18,7 +18,7 @@ export default class AutocompleteHelper {
 		this.#setter = setter;
 		this.#list = new SuggestionList({ target });
 		this.#list.$on("click", this.#onClick.bind(this));
-		this.#prop = null;
+		this.#node = null;
 	}
 
 	handleKeyPress(evt: KeyboardEvent): boolean {
@@ -41,14 +41,14 @@ export default class AutocompleteHelper {
 		return false;
 	}
 
-	update(prop: json.JToken, filter: string, changeProp?: boolean) {
+	update(node: json.Node, filter: string, changeProp?: boolean) {
 		const props: Partial<ComponentProps<SuggestionList>> = { filter };
-		if (this.#prop !== prop) {
+		if (this.#node !== node) {
 			if (!changeProp)
 				return false;
 
-			this.#prop = prop;
-			props.source = Linq(prop).select("key").select(String).toArray();
+			this.#node = node;
+			props.source = Linq(node).select("key").select(String).toArray();
 		}
 
 		this.#list.$set(props);
@@ -82,7 +82,7 @@ export default class AutocompleteHelper {
 	}
 
 	destroy() {
-		this.#prop = null;
+		this.#node = null;
 		this.#list.$destroy();
 	}
 }

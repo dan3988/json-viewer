@@ -9,8 +9,8 @@ export interface EditStackProps {
 }
 
 export interface EditActionInit {
-	commitTarget?: null | json.JProperty,
-	revertTarget?: null | json.JProperty
+	commitTarget?: null | json.Node,
+	revertTarget?: null | json.Node
 }
 
 export class EditAction {
@@ -18,12 +18,12 @@ export class EditAction {
 		return new EditActionGroup([...actions]);
 	}
 
-	readonly commitTarget: null | json.JProperty;
-	readonly revertTarget: null | json.JProperty;
+	readonly commitTarget: null | json.Node;
+	readonly revertTarget: null | json.Node;
 
-	constructor(readonly commit: VoidFunction, readonly revert: VoidFunction, target?: json.JProperty | EditActionInit) {
+	constructor(readonly commit: VoidFunction, readonly revert: VoidFunction, target?: null | json.Node | EditActionInit) {
 		if (target) {
-			if (target instanceof json.JProperty) {
+			if (target instanceof json.Node) {
 				this.commitTarget = target;
 				this.revertTarget = target;
 			} else {

@@ -11,7 +11,7 @@
 	}
 
 	let jpath: HTMLInputElement;
-	let jpathResults: json.JProperty[] = [];
+	let jpathResults: json.Node[] = [];
 
 	function setExpanded(expanded: boolean) {
 		model.root.setExpanded(expanded, true);
@@ -26,12 +26,12 @@
 		this.setCustomValidity("");
 	}
 
-	function unwrapValue({ parent, parentProperty }: JSONPathAllResult): json.JProperty {
+	function unwrapValue({ parent, parentProperty }: JSONPathAllResult): json.Node {
 		if (parent == null)
 			return model.root;
 
-		const container = json.unwrapProxy(parent)!;
-		return container.getProperty(parentProperty!)!;
+		const container = json.unproxy(parent)!;
+		return container.get(parentProperty!)!;
 	}
 
 	function evaluateJpath() {
@@ -42,7 +42,7 @@
 		}
 
 		try {
-			const values = JSONPath({ json: model.root.value.proxy, path, resultType: "all" });
+			const values = JSONPath({ json: model.root.value, path, resultType: "all" });
 			for (let i = 0; i < values.length; i++)
 				values[i] = unwrapValue(values[i]);
 
@@ -61,51 +61,51 @@
 		jpath.focus();
 	}
 
-	function jpathItemEvent(token: json.JProperty, evt: MouseEvent | KeyboardEvent) {
+	function jpathItemEvent(node: json.Node, evt: MouseEvent | KeyboardEvent) {
 		if (evt.type === "click" || (evt.type === "keypress" && (evt as KeyboardEvent).code === "Space")) {
 			evt.preventDefault();
-			model.setSelected(token, true, true);
+			model.setSelected(node, true, true);
 		}
 	}
 
 	/**
 	 * Returns a list of jpath results, excluding any children of mathing containers
 	 */
-	function collapseResults(): Iterable<json.JProperty> {
+	function collapseResults(): Iterable<json.Node> {
 		//this function assumes that matching parent containers appear before any matching children in the results array, which is the current behaviour of jsonpath-plus
-		const results = new Set<json.JProperty>();
+		const results = new Set<json.Node>();
 
-		function parentMapped(prop: json.JProperty) {
+		function parentMapped(node: json.Node) {
 			while (true) {
-				if (results.has(prop))
+				if (results.has(node))
 					return true;
 
-				if (prop.parent == null)
+				if (node.parent == null)
 					return false;
 
-				prop = prop.parent.owner;
+				node = node.parent;
 			}
 		}
 
-		for (const token of jpathResults)
-			if (!parentMapped(token))
-				results.add(token);
+		for (const node of jpathResults)
+			if (!parentMapped(node))
+				results.add(node);
 
 		return results.values();
 	}
 
 	function jpathResultsDelete() {
-		edits.deleteProps(model, collapseResults());
+		model.edits.push(edits.remove(collapseResults()));
 		jpathResults = [];
 	}
 
 	function jpathResultsExpand() {
 		for (const result of jpathResults) {
-			let prop: null | json.JProperty = result;
+			let node: null | json.Node = result;
 			do {
-				prop.setExpanded(true);
-				prop = prop.parentProperty
-			} while (prop != null);
+				node.setExpanded(true);
+				node = node.parent;
+			} while (node != null);
 		}
 	}
 </script>

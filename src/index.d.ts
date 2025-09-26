@@ -16,6 +16,9 @@ declare type Expand<T> = { [P in keyof T]: T[P] };
 declare type Except<T, P extends keyof T> = { [K in keyof T as K extends P ? never : K]: T[K] };
 
 declare type Dict<T = any> = Record<string, T>;
+
+declare type ReadOnlyDict<T = any> = Readonly<Dict<T>>;
+
 declare type OneOrMany<T> = T | T[];
 
 declare var JSON5: typeof import("json5");

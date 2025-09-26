@@ -32,37 +32,36 @@
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	export let model: ViewerModel;
-	export let prop: json.JProperty;
+	export let node: json.Value;
 	export let readonly = false;
 	export let editing = false;
 	export let onediting: VoidFunction | Falsy = undefined;
 
-	let token: json.JValue;
 	let value: any;
 	let subtype: "string" | "number" | "boolean" | "null";
 
-	$: setValue(prop.value as any);
+	$: setValue(node);
 
 	let lastId = 0;
 
-	function setValue(v: json.JValue) {
-		token?.changed.removeListener(onChanged);
-		token = v;
-		token.changed.addListener(onChanged);
+	function setValue(v: json.Value) {
+		node?.onChanged.removeListener(onChanged);
+		node = v;
+		node.onChanged.addListener(onChanged);
 		onChanged();
 	}
 
 	function onChanged() {
-		({ value, subtype } = token);
+		({ value, subtype } = node);
 	}
 
 	function update(newValue: any, group: boolean) {
 		let edit: EditAction;
 
 		if (typeof newValue === 'object') {
-			edit = edits.replace(prop, json(newValue));
+			edit = edits.replace(node, json(newValue));
 		} else {
-			edit = edits.setValue(token, newValue);
+			edit = edits.setValue(node, newValue);
 		}
 
 		if (group && lastId == model.edits.counter) {

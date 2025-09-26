@@ -2,7 +2,7 @@
 	import json from "../json";
 
 	export interface EventMap {
-		finished: json.JProperty | null;
+		finished: json.Node | null;
 		cancelled: void;
 	}
 </script>
@@ -27,10 +27,10 @@
 	let x: number;
 	let ignoreSelectionEvents = 0;
 
-	const prop = writable<json.JProperty>();
-	$: $prop = $selected ?? model.root;
-	onDestroy(prop.subscribe(update));
-	onMount(() => update($prop));
+	const node = writable<json.Node>();
+	$: $node = $selected ?? model.root;
+	onDestroy(node.subscribe(update));
+	onMount(() => update($node));
 
 	export function focus() {
 		tick().then(() => dom.setCaret(target, 0, true));
@@ -38,11 +38,11 @@
 
 	function unfocus() {
 		getSelection()?.removeAllRanges();
-		update($prop);
+		update($node);
 	}
 
-	function update(prop: json.JProperty) {
-		target && (target.innerText = prop.path.toString());
+	function update(node: json.Node) {
+		target && (target.innerText = node.path.toString());
 	}
 
 	function getIndexes(range: Range): [number, number] {
@@ -72,7 +72,7 @@
 	}
 
 	function onFocusOut() {
-		update($prop);
+		update($node);
 		destroyAutoComplete();
 		dispatcher("cancelled");
 	}
@@ -138,7 +138,7 @@
 		const filter = parsePathSection(mid);
 
 		acHelper ??= new AutocompleteHelper(acWrapper, onAutoCompleteFinish);
-		acHelper.update(previous.value, filter, true);
+		acHelper.update(previous, filter, true);
 		const { x: rangeX } = range.getBoundingClientRect();
 		const { x: targetX } = target.getBoundingClientRect();
 		x = rangeX - targetX;

@@ -3,8 +3,10 @@ import "../dom-extensions";
 import preferences from "../preferences-lite";
 import createComponent from "../component-tracker";
 import JsonViewer from "./JsonViewer.svelte";
-import json from "../json"
 import { ViewerModel } from "../viewer-model";
+import json from "../json";
+
+console.time('JSON Viewer Load');
 
 function setGlobal(key: string, value: any) {
 	window.postMessage({ type: "globalSet", key, value });
@@ -23,7 +25,9 @@ async function run() {
 
 		const root = json(doc);
 		const model = new ViewerModel(root);
-		root.isExpanded = true;
+		if (root.isContainer()) {
+			root.isExpanded = true;
+		}
 
 		(window as any).model = model;
 
@@ -61,7 +65,7 @@ async function run() {
 			return parts;
 		}
 
-		function pushHistory(v: readonly json.JProperty[]) {
+		function pushHistory(v: readonly json.Node[]) {
 			if (v.length && !popping) {
 				const paths = v.map(v => v.path.segments);
 				const hash = paths.map(encodePath).join("|")
@@ -100,25 +104,25 @@ async function run() {
 			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}
 
-		function expandParents(p: json.JProperty) {
-			while (p.parentProperty) {
-				p.parentProperty.isExpanded = true;
-				p = p.parentProperty;
+		function expandParents(p: json.Node) {
+			while (p.parent) {
+				p = p.parent;
+				p.isExpanded = true;
 			}
 		}
 
 		function goTo(state: (number | string)[][]) {
-			const values: json.JProperty[] = [];
-			let prop: undefined | json.JProperty;
+			const values: json.Node[] = [];
+			let node: undefined | json.Node;
 			for (const path of state) {
-				prop = model.resolve(path);
-				if (prop) {
-					expandParents(prop);
-					values.push(prop);
+				node = model.resolve(path);
+				if (node) {
+					expandParents(node);
+					values.push(node);
 				}
 			}
 
-			prop && model.execute("scrollTo", prop);
+			node && model.execute("scrollTo", node);
 
 			model.selected.reset(values);
 		}
@@ -146,6 +150,8 @@ async function run() {
 		console.error("JSON Viewer failed to load: ", e);
 		const msg = e instanceof Error ? `${e.name}: ${e.message}` : e;
 		alert("JSON Viewer: " + msg);
+	} finally {
+		console.timeEnd('JSON Viewer Load');
 	}
 }
 

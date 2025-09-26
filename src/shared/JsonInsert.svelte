@@ -143,11 +143,10 @@
 	}
 </script>
 <script lang="ts">
-	import type json from "../json";
 	import Button from "../components/button";
-    import { slide } from "svelte/transition";
+	import { slide } from "svelte/transition";
 
-	export let insert: (type: json.AddType) => void;
+	export let insert: (value: any) => void;
 
 	const manager = InserterManager.current;
 	const reg = manager.register();
@@ -168,11 +167,11 @@
 
 	let focusTarget: HTMLElement;
 
-	function doInsert(type: json.AddType) {
+	function doInsert(value: any) {
 		open = false;
 		reg?.unlock();
 		focusTarget.blur();
-		insert(type);
+		insert(value);
 	}
 
 	function onFocusOut(evt: FocusEvent) {
@@ -198,12 +197,11 @@
 	<div class="expander" tabindex="0" on:focusout={onFocusOut} bind:this={focusTarget}>
 		<Button icon="plus-lg" title="Insert" action={open ? collapse : expand}></Button>
 		{#if open}
-			<!-- <div class="menu-wrapper" transition:slide={{ axis: 'x', duration: 250 }}> -->
 			<div class="menu-wrapper" transition:slide={{ axis: 'x', duration: 150 }}>
 				<div class="menu-root btn-group">
-					<Button title="Object" icon="braces" action={() => doInsert('object')} />
-					<Button title="Array" icon="list" action={() => doInsert('array')} />
-					<Button title="Value" icon="fonts" action={() => doInsert('value')} />
+					<Button title="Object" icon="braces" action={() => doInsert({})} />
+					<Button title="Array" icon="list" action={() => doInsert([])} />
+					<Button title="Value" icon="fonts" action={() => doInsert(null)} />
 				</div>
 			</div>
 		{/if}

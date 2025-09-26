@@ -10,7 +10,7 @@
 	import Icon from "../components/Icon.svelte";
 
 	export let model: ViewerModel;
-	export let prop: json.JProperty;
+	export let node: json.Node;
 	export let rename: CallbackArg = undefined;
 	export let edit: CallbackArg = undefined;
 	export let remove: CallbackArg = undefined;
@@ -25,36 +25,36 @@
 	}
 
 	function copyKey() {
-		return navigator.clipboard.writeText(String(prop.key));
+		return navigator.clipboard.writeText(String(node.key ?? ''));
 	}
 
 	function copyValue(format?: boolean) {
-		const text = model.formatValue(prop.value, !format, true);
+		const text = model.formatValue(node, !format, true);
 		return navigator.clipboard.writeText(text);
 	}
 
 	function copyText() {
-		const text = model.formatValue(prop.value);
+		const text = model.formatValue(node);
 		return navigator.clipboard.writeText(text);
 	}
 </script>
 <div class="menu-root border rounded bg-body-tertiary" transition:scale={{ duration: 150 }}>
 	<Button.Theme style="faded">
-		{#if prop.value.is('container')}
-			<Button text="Expand All" icon="node-plus-fill" action={wrap(() => prop.setExpanded(true, true))} />
+		{#if node.isContainer()}
+			<Button text="Expand All" icon="node-plus-fill" action={wrap(() => node.setExpanded(true, true))} />
 		{/if}
 		<div class="menu-row menu-choice">
 			<span class="row-text">
 				<Icon icon="clipboard-fill" />
 				Copy
 			</span>
-			{#if typeof prop.key === 'string'}
+			{#if typeof node.key === 'string'}
 				<Button title="Copy Key" icon="key-fill" action={wrap(copyKey)} />
 			{/if}
 			<Button title="Copy JSON" icon="braces" action={wrap(copyValue)} />
-			{#if prop.value.is('container')}
+			{#if node.isContainer()}
 				<Button title="Copy JSON (Formatted)" icon="braces-asterisk" action={wrap(copyValue, true)} />
-			{:else if prop.value.is('string')}
+			{:else if node.subtype === 'string'}
 				<Button title="Copy Text" icon="fonts" action={wrap(copyText)} />
 			{/if}
 		</div>

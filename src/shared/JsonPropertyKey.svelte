@@ -1,27 +1,29 @@
 <script lang="ts">
-	import type json from "../json";
 	import type { ViewerModel, ViewerCommandEvent } from "../viewer-model";
+	import type json from "../json";
 	import edits from "../viewer/editor-helper.js";
 	import { onDestroy } from "svelte";
 	import { renderKey } from "../renderer";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	export let model: ViewerModel;
-	export let prop: json.JProperty;
+	export let node: json.Node;
 	export let readonly = false;
 	export let editing: boolean;
 
 	$: isNumber = typeof key === 'number';
-	$: ({ key, state: { props: { isSelected } } } = prop);
-	$: onrename = ((prop) => {
-		const { parent } = prop;
-		if (parent?.is('object')) {
+	$: ({ isSelectedStore } = node);
+	$: key = node.key ?? '$';
+	$: selected = $isSelectedStore;
+	$: onrename = ((node) => {
+		const { parent } = node;
+		if (parent?.isObject()) {
 			return (name: string) => {
-				model.edits.push(edits.rename(parent, prop.key as string, name));
-				model.execute('scrollTo', prop);
+				model.edits.push(edits.rename(parent, node.key as string, name));
+				model.execute('scrollTo', node);
 			}
 		}
-	})(prop);
+	})(node);
 
 	let element: HTMLElement;
 
@@ -34,7 +36,7 @@
 	}
 
 	function onModelCommand({ command, args: [arg0] }: ViewerCommandEvent) {
-		if (arg0 === prop) {
+		if (arg0 === node) {
 			switch (command) {
 				case "scrollTo":
 					element.scrollIntoView({ block: 'nearest' });
@@ -46,7 +48,7 @@
 		}
 	}
 </script>
-<div bind:this={element} class="root" class:number={isNumber} class:selected={$isSelected}>
+<div bind:this={element} class="root" class:number={isNumber} class:selected>
 	<span class="key-text">
 		{#if typeof key === 'number'}
 			{key}

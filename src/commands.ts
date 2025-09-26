@@ -1,5 +1,4 @@
 import type ViewerModel from "./viewer-model.js";
-import type json from "./json.js";
 import { KeyBinding, KeyBindingScope, type KeyCode, type ModifierKeys } from "./keyboard.js";
 import edits from "./viewer/editor-helper.js";
 import Linq from "@daniel.pickett/linq-js";
@@ -64,7 +63,7 @@ const commandHandlers: Record<string, CommandInvoker> = {
 		} else if (values.size > 1) {
 			text = model.formatValues(values);
 		} else {
-			text = model.formatValue(values.last!.value);
+			text = model.formatValue(values.last!);
 		}
 
 		await navigator.clipboard.writeText(text);
@@ -95,24 +94,24 @@ const commandHandlers: Record<string, CommandInvoker> = {
 	},
 	selectionDown(model) {
 		const selected = model.selected.last;
-		if (selected && selected.value.is("container") && selected.value.first != null) {
+		if (selected && selected.isContainer() && selected.first != null) {
 			selected.isExpanded = true;
-			model.setSelected(selected.value.first, false, true);
+			model.setSelected(selected.first, false, true);
 			return true;
 		}
 	},
 	selectionUp(model) {
 		const selected = model.selected.last;
 		if (selected && selected.parent)
-			model.setSelected(selected.parent.owner, true, true);
+			model.setSelected(selected.parent, true, true);
 
 		return true;
 	},
 	selectionRename(model) {
 		const selected = model.selected.last;
-		const parent = selected?.parent?.is('object');
+		const parent = selected?.parent?.isObject();
 		if (parent)
-			model.execute('rename', selected as json.JProperty<string>);
+			model.execute('rename', selected!);
 
 		return true;
 	},
