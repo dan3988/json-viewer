@@ -3,6 +3,7 @@ import Linq from "@daniel.pickett/linq-js";
 import JsonPath from "./json-path";
 import Store from "./store";
 import ArrayLikeProxy, { type ReadOnlyArrayLike, type ReadOnlyArrayLikeProxyHandler } from "./array-like-proxy";
+import debug from "./debug";
 
 let id = 0;
 
@@ -1054,3 +1055,62 @@ export namespace json {
 }
 
 export default json;
+
+const colors = {
+	type: '#9AD9FE',
+	string: '#CE9278',
+	number: '#B3CDA7',
+	boolean: '#5799D6',
+	object: '#5799D6',
+}
+
+function renderType(obj: any) {
+	return debug.text(obj.constructor.name).color(colors.type);
+}
+
+function renderJson(value: any) {
+	const color = (colors as any)[typeof value];
+	const text = JSON.stringify(value);
+	return debug.text(text).color(color);
+}
+
+class NodeRenderer extends debug.ClassRenderer<Node> {
+	constructor() {
+		super(Node);
+	}
+
+	header(obj: Node): debug.Component {
+		const text = debug.text`${renderType(obj)}(`;
+
+		if (obj.isValue()) {
+			text.add(renderJson(obj.value));
+		} else {
+			text.add(debug.text(obj.count).color(colors.number));
+		}
+
+		return text.add`)`;
+	}
+
+	hasBody(): boolean {
+		return true;
+	}
+
+	body(obj: Node): debug.Component {
+		const list = debug.list();
+
+		const meta = Object.create(null);
+		meta.path = obj.path.toString();
+
+		for (const key of ['key', 'parent', 'next', 'previous'] as const)
+			meta[key] = obj[key];
+
+		list.addRow`meta: ${debug.object(meta)}`;
+
+		for (const child of obj)
+			list.addRow`${renderJson(child.key)}: ${debug.object(child)}`;
+
+		return list;
+	}
+}
+
+debug.register(new NodeRenderer);
