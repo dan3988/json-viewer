@@ -21,8 +21,8 @@
 
 	export let model: ViewerModel;
 
-	$: ({ lastSelected: selected } = model.state.props);
-	$: path = expandPath(model, $selected);
+	$: set = model.selected;
+	$: path = expandPath(model, $set.last);
 
 	let editing = false;
 	let editor: JsonPathEditor;

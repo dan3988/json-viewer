@@ -34,7 +34,6 @@ export function json(value: any): Node {
 abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 	readonly id = ++id;
 	readonly #isHidden = Store.controller(false);
-	readonly #isSelected = Store.controller(false);
 	readonly #isExpanded = Store.controller(false);
 	
 	get isHiddenStore() {
@@ -43,18 +42,6 @@ abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 
 	get isHidden() {
 		return this.#isHidden.value;
-	}
-
-	get isSelectedStore() {
-		return this.#isSelected.store;
-	}
-
-	get isSelected() {
-		return this.#isSelected.value;
-	}
-
-	set isSelected(value) {
-		this.#isSelected.value = value;
 	}
 
 	get isExpandedStore() {
@@ -944,7 +931,7 @@ export namespace json {
 
 	export const Node: NodeConstructor = nodeClass;
 
-	export interface Node<C extends Key = Key, V = any> extends Iterable<Node> {
+	export interface Node<C extends Key = Key> extends Iterable<Node> {
 		readonly id: number;
 		readonly key: Key | null;
 		readonly path: JsonPath;
@@ -963,9 +950,6 @@ export namespace json {
 
 		readonly isExpandedStore: Store<boolean>;
 		isExpanded: boolean;
-
-		readonly isSelectedStore: Store<boolean>;
-		isSelected: boolean;
 
 		toggleExpanded(): boolean;
 		setExpanded(expanded: boolean, recursive?: boolean): void;

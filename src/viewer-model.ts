@@ -1,3 +1,4 @@
+import type { Invalidator, Readable, Subscriber, Unsubscriber } from "svelte/store";
 import type { DocumentRequestInfo } from "./types.js";
 import { EditAction, EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
@@ -5,11 +6,10 @@ import { StateController } from "./state.js";
 import Linq from "@daniel.pickett/linq-js";
 import json from "./json.js";
 import JsonPath from "./json-path.js";
+import { StoreListeners } from "./store.js";
 
-export interface SelectedPropertyList extends Iterable<json.Node> {
-	readonly size: number;
+export interface SelectedNodeList extends Iterable<json.Node>, ReadonlySetLike<json.Node>, Readable<SelectedNodeList> {
 	readonly last: null | json.Node;
-	has(value: json.Node): boolean;
 	reset(values: json.Node[]): void;
 	reset(value: json.Node, fromLast?: boolean): void;
 	add(value: json.Node, fromLast?: boolean): void;
@@ -17,11 +17,10 @@ export interface SelectedPropertyList extends Iterable<json.Node> {
 	toggle(value: json.Node, selected?: boolean): boolean;
 	clear(): void;
 	forEach(callback: (v: json.Node) => void): void;
+	map<V>(mapper: (node: json.Node) => V): V[];
 }
 
 interface ChangeProps {
-	selected: readonly json.Node[];
-	lastSelected: null | json.Node;
 	filterText: string;
 	filterFlags: json.FilterFlags;
 	requestInfo: undefined | null | DocumentRequestInfo
@@ -51,62 +50,10 @@ function serializeForCopy(node: json.Node, indent: undefined | string, escapeVal
 type PathInit = string | JsonPath | readonly JsonPath.Segment[];
 
 export class ViewerModel {
-	static readonly #SelectedList = class implements SelectedPropertyList {
-		#owner: ViewerModel;
-
-		get size() {
-			return this.#owner.#selected.size;
-		}
-
-		get last() {
-			return this.#owner.#lastSelected;
-		}
-
-		constructor(owner: ViewerModel) {
-			this.#owner = owner;
-		}
-
-		reset(values: json.Node[]): void;
-		reset(value: json.Node, fromLast?: boolean): void;
-		reset(value: json.Node | json.Node[], fromLast?: boolean): void {
-			this.#owner.#selectedReset(value as any, fromLast);
-		}
-
-		has(value: json.Node): boolean {
-			return this.#owner.#selected.has(value);
-		}
-	
-		add(value: json.Node, fromLast?: boolean): void {
-			return this.#owner.#selectedAdd(value, fromLast);
-		}
-	
-		remove(value: json.Node): void {
-			return this.#owner.#selectedRemove(value);
-		}
-	
-		toggle(value: json.Node, selected?: boolean): boolean {
-			return this.#owner.#selectedToggle(value, selected);
-		}
-	
-		clear(): void {
-			this.#owner.#selectedClear();
-		}
-
-		forEach(callback: (v: json.Node) => void) {
-			this.#owner.#selected.forEach(v => callback.call(this, v));
-		}
-
-		[Symbol.iterator]() {
-			return this.#owner.#selected[Symbol.iterator]();
-		}
-	}
-
 	readonly #root: json.Node;
 	readonly #state: StateController<ChangeProps>;
 	readonly #command: EventHandlers<this, [evt: ViewerCommandEvent]>;
-	#selected: Set<json.Node>;
-	#lastSelected: null | json.Node;
-	readonly #selectedList: SelectedPropertyList;
+	readonly #selected = new _SelectedNodeList;
 	readonly #edits: EditStack;
 
 	get root() {
@@ -114,7 +61,7 @@ export class ViewerModel {
 	}
 
 	get selected() {
-		return this.#selectedList;
+		return this.#selected;
 	}
 
 	get state() {
@@ -164,8 +111,6 @@ export class ViewerModel {
 	constructor(root: json.Node) {
 		this.#root = root;
 		this.#state = new StateController<ChangeProps>({
-			selected: [],
-			lastSelected: null,
 			filterFlags: json.FilterFlags.Both,
 			filterText: "",
 			requestInfo: undefined,
@@ -174,9 +119,6 @@ export class ViewerModel {
 		});
 
 		this.#command = new EventHandlers();
-		this.#selected = new Set();
-		this.#lastSelected = null;
-		this.#selectedList = new ViewerModel.#SelectedList(this);
 		this.#edits = new EditStack();
 		this.#edits.onCommit.addListener(this.#onCommit.bind(this));
 		this.#edits.onRevert.addListener(this.#onRevert.bind(this));
@@ -242,7 +184,7 @@ export class ViewerModel {
 		let i = 0;
 		let baseProp: json.Node;
 		if (segments[0] !== "$") {
-			const selected = this.#state.getValue("selected").at(-1);
+			const selected = this.#selected.last;
 			if (selected == null)
 				return;
 
@@ -272,7 +214,7 @@ export class ViewerModel {
 		if (node == null)
 			return false;
 
-		return this.#selectedAdd(node);
+		this.#selected.add(node);
 	}
 
 	#onSelected(selected: json.Node, expand: boolean, scrollTo: boolean) {
@@ -286,116 +228,141 @@ export class ViewerModel {
 	}
 
 	setSelected(selected: json.Node, expand: boolean, scrollTo: boolean) {
-		this.#selectedReset(selected);
+		this.#selected.reset(selected);
 		this.#onSelected(selected, expand ?? false, scrollTo ?? false);
 	}
+}
 
-	#selectedReset(values: json.Node[]): void;
-	#selectedReset(value: json.Node, fromLast?: boolean): void;
-	#selectedReset(value: json.Node | json.Node[], fromLast?: boolean) {
-		let lastSelected = this.#lastSelected;
-		let set: Set<json.Node>;
+export default ViewerModel;
+
+class _SelectedNodeList implements SelectedNodeList {
+	readonly #listeners = new StoreListeners<SelectedNodeList>;
+	#list: json.Node[] = [];
+	#set = new Set<json.Node>;
+
+	get size() {
+		return this.#set.size;
+	}
+
+	get last() {
+		return this.#list.at(-1) ?? null;
+	}
+
+	constructor() {
+	}
+
+	subscribe(run: Subscriber<SelectedNodeList>, invalidate?: Invalidator<SelectedNodeList> | undefined): Unsubscriber {
+		const unsub = this.#listeners.listen(run, invalidate);
+		run(this);
+		return unsub;
+	}
+
+	[Symbol.iterator]() {
+		return this.#set[Symbol.iterator]();
+	}
+
+	keys() {
+		return this.#set[Symbol.iterator]();
+	}
+
+	has(value: json.Node): boolean {
+		return this.#set.has(value);
+	}
+
+	map<V>(mapper: (node: json.Node) => V): V[] {
+		return this.#list.map(mapper);
+	}
+
+	forEach(callback: (v: json.Node) => void) {
+		this.#list.forEach(callback, this);
+	}
+
+	clear(): void {
+		if (this.#set.size) {
+			this.#set.clear();
+			this.#list.length = 0;
+			this.#listeners.fire(this);
+		}
+	}
+
+	reset(values: json.Node[]): void;
+	reset(value: json.Node, fromLast?: boolean): void;
+	reset(value: json.Node | json.Node[], fromLast?: boolean): void {
+		let list = this.#list;
+		let selected: Set<json.Node>;
 
 		if (Array.isArray(value)) {
-			set = new Set(value);
-		} else if (fromLast && lastSelected) {
-			const props = getNodesBetween(lastSelected, value);
-			set = new Set(props);
-			set.add(lastSelected);
+			list = [...value];
+			selected = new Set(value);
+		} else if (fromLast && list.length) {
+			const last = list.at(-1)!;
+			const props = getNodesBetween(last, value).toArray();
+			list = props;
+			list.push(last);
+			selected = new Set(props);
+			selected.add(last);
 		} else {
-			set = new Set();
-			set.add(value);
+			list = [value];
+			selected = new Set();
+			selected.add(value);
 		}
 
-		for (const node of this.#selected)
-			if (!set.has(node))
-				node.isSelected = false;
-
-		lastSelected = null;
-
-		for (const p of set)
-			(lastSelected = p).isSelected = true;
-
-		this.#selected = set;
-		this.#lastSelected = lastSelected;
-		this.#state.setValues({ selected: [...set], lastSelected });
+		this.#set = selected;
+		this.#list = list;
+		this.#listeners.fire(this);
 	}
 
-	#selectedClear() {
-		if (this.#selected.size === 0)
-			return false;
-
-		for (const selected of this.#selected)
-			selected.isSelected = false;
-
-		this.#selected.clear();
-		this.#lastSelected = null;
-		this.#state.setValues({ selected: [], lastSelected: null });
-		return true;
-	}
-
-	#selectedAdd(value: json.Node, fromLast?: boolean) {
+	add(value: json.Node, fromLast?: boolean) {
 		let changed = 0;
-		let lastSelected = this.#lastSelected;
-		const selected = [...this.#state.getValue("selected")];
+		let set = this.#set;
+		let list = this.#list;
 
-		if (fromLast && lastSelected) {
-			for (const node of getNodesBetween(lastSelected, value)) {
-				if (node.isSelected)
+		if (fromLast && list.length) {
+			const last = list.at(-1)!;
+			for (const node of getNodesBetween(last, value)) {
+				if (set.has(node))
 					continue;
-	
-				this.#selected.add(node);
-				selected.push(node);
-				node.isSelected = true;
+
+				set.add(node);
+				list.push(node);
 				changed++;
-				lastSelected = node;
 			}
-		} else if (!value.isSelected) {
-			this.#selected.add(value);
-			selected.push(value);
-			value.isSelected = true;
+		} else if (!set.has(value)) {
+			set.add(value);
+			list.push(value);
 			changed++;
-			lastSelected = value;
 		}
 
-		if (changed) {
-			this.#lastSelected = lastSelected;
-			this.#state.setValues({ selected, lastSelected });
-		}
+		if (changed)
+			this.#listeners.fire(this);
 	}
 
-	#selectedRemove(node: json.Node): void {
-		if (!node.isSelected)
+	remove(node: json.Node): void {
+		if (!this.#set.delete(node))
 			return;
 
-		this.#selected.delete(node);
-		node.isSelected = false;
-		const selected = [...this.#selected];
-		const lastSelected = selected.at(-1) ?? null
-		this.#lastSelected = lastSelected;
-		this.#state.setValues({ selected, lastSelected });
+		const i = this.#list.indexOf(node);
+		if (i >= 0)
+			this.#list.splice(i, 1);
+
+		this.#listeners.fire(this);
 	}
 
-	#selectedToggle(node: json.Node, selected?: boolean) {
-		selected ??= !node.isSelected;
-
-		if (selected == null || selected != node.isSelected) {
-			selected ??= !node.isSelected;
+	toggle(node: json.Node, selected?: boolean) {
+		const currentlySelected = this.#set.has(node);
+		if (selected == null || selected != currentlySelected) {
+			selected ??= !currentlySelected;
 
 			if (selected) {
-				this.#selectedAdd(node);
+				this.add(node);
 			} else {
-				this.#selectedRemove(node);
+				this.remove(node);
 			}
-
-			node.isSelected = selected;
 		}
 
 		return selected;
 	}
 }
-
-export default ViewerModel;
 
 function * getAllParents(node: json.Node) {
 	let p: null | json.Node = node;

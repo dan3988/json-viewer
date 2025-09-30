@@ -18,7 +18,10 @@
 
 	const inserterManager = InserterManager.current;
 
-	$: ({ isExpandedStore, isHiddenStore, isSelectedStore } = node);
+	$: selectedNodes = model.selected;
+	$: selected = $selectedNodes.has(node);
+
+	$: ({ isExpandedStore, isHiddenStore } = node);
 	$: hidden = $isHiddenStore;
 	$: expanded = $isExpandedStore;
 	$: canEdit = !readonly && !(editingName || editingValue || menuOpen);
@@ -335,9 +338,9 @@
 	class="json-prop for-{node.type} for-{node.subtype} json-indent"
 	class:expanded
 	on:click={onClick}>
-	<span class="json-key" class:json-selected={$isSelectedStore} on:contextmenu={openMenu}>
+	<span class="json-key" class:json-selected={selected} on:contextmenu={openMenu}>
 		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
-			<JsonPropertyKey {model} {node} {readonly} bind:editing={editingName}>
+			<JsonPropertyKey {model} {node} {readonly} {selected} bind:editing={editingName}>
 				<div class="json-actions-root">
 					{#if menuOpen}
 						<JsonActions

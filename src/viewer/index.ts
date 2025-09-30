@@ -3,7 +3,7 @@ import "../dom-extensions";
 import preferences from "../preferences-lite";
 import createComponent from "../component-tracker";
 import JsonViewer from "./JsonViewer.svelte";
-import { ViewerModel } from "../viewer-model";
+import { ViewerModel, type SelectedNodeList } from "../viewer-model";
 import json from "../json";
 
 console.time('JSON Viewer Load');
@@ -65,8 +65,8 @@ async function run() {
 			return parts;
 		}
 
-		function pushHistory(v: readonly json.Node[]) {
-			if (v.length && !popping) {
+		function pushHistory(v: SelectedNodeList) {
+			if (v.size && !popping) {
 				const paths = v.map(v => v.path.segments);
 				const hash = paths.map(encodePath).join("|")
 				history.pushState(paths, "", "#" + hash);
@@ -92,7 +92,7 @@ async function run() {
 			chrome.runtime.sendMessage({ type: "requestInfo" }, v => model.requestInfo = v);
 
 			if (prefs.getValue("useHistory"))
-				model.state.props.selected.subscribe(pushHistory);
+				model.selected.subscribe(pushHistory);
 
 			prefs.onChange(v => {
 				if ("indentCount" in v || "indentChar" in v)

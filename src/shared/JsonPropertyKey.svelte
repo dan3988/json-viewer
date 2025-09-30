@@ -8,13 +8,12 @@
 
 	export let model: ViewerModel;
 	export let node: json.Node;
+	export let selected: boolean;
 	export let readonly = false;
 	export let editing: boolean;
 
 	$: isNumber = typeof key === 'number';
-	$: ({ isSelectedStore } = node);
 	$: key = node.key ?? '$';
-	$: selected = $isSelectedStore;
 	$: onrename = ((node) => {
 		const { parent } = node;
 		if (parent?.isObject()) {
@@ -72,7 +71,7 @@
 		cursor: pointer;
 
 		&.number {
-		color: var(--jv-num-fg);
+			color: var(--jv-num-fg);
 		}
 
 		&.selected {
