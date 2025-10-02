@@ -105,10 +105,8 @@ async function run() {
 		}
 
 		function expandParents(p: json.Node) {
-			while (p.parent) {
-				p = p.parent;
-				p.isExpanded = true;
-			}
+			for (let c = p.parent; c; c = c.parent)
+				c.isExpanded = true;
 		}
 
 		function goTo(state: (number | string)[][]) {

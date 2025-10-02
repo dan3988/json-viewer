@@ -94,12 +94,7 @@
 	}
 
 	function onExpanderClicked() {
-		if (node.isExpanded) {
-			node.isExpanded = false;
-			model.selected.reset(node);
-		} else {
-			node.isExpanded = true;
-		}
+		node.toggleExpanded();
 	}
 
 	function onGutterClicked() {

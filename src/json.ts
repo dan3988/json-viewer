@@ -35,7 +35,6 @@ export function json(value: any): Node {
 abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 	readonly id = ++id;
 	readonly #isHidden = Store.controller(false);
-	readonly #isExpanded = Store.controller(false);
 	
 	get isHiddenStore() {
 		return this.#isHidden.store;
@@ -43,18 +42,6 @@ abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 
 	get isHidden() {
 		return this.#isHidden.value;
-	}
-
-	get isExpandedStore() {
-		return this.#isExpanded.store;
-	}
-
-	get isExpanded() {
-		return this.#isExpanded.value;
-	}
-
-	set isExpanded(value) {
-		this.#isExpanded.value = value;
 	}
 
 	parent: JContainer<any> | null = null;
@@ -77,6 +64,9 @@ abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 		return this.#path;
 	}
 
+	abstract get isExpandedStore(): Store<boolean>;
+	abstract get isExpanded(): boolean;
+
 	abstract get type(): json.NodeType;
 	abstract get subtype(): json.NodeSubType;
 	abstract get value(): any;
@@ -97,33 +87,7 @@ abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 		return this.value;
 	}
 
-	toggleExpanded(): boolean {
-		const store = this.#isExpanded;
-		return store.value = !store.value;
-	}
-
-	setExpanded(expanded: boolean, recursive?: boolean) {
-		this.#isExpanded.value = expanded;
-		if (!recursive)
-			return;
-
-		const stack: Iterator<Node>[] = [];
-		let cur: Iterator<Node> = this[Symbol.iterator]()
-		while (true) {
-			let r = cur.next();
-			if (r.done) {
-				let last = stack.pop();
-				if (last == null)
-					return;
-
-				cur = last;
-			} else {
-				r.value.isExpanded = expanded && r.value.count > 0;
-				const it = r.value[Symbol.iterator]();
-				stack.push(it);
-			}
-		}
-	}
+	abstract toggleExpanded(): undefined | boolean;
 
 	filter(filter: string, filterMode: json.FilterFlags, isAppend: boolean) {
 		if (isAppend && this.isHidden)
@@ -225,11 +189,24 @@ const nodeClass = Node;
 
 abstract class JContainer<C extends json.Key = json.Key> extends Node<C> implements json.Container<C> {
 	readonly #onChanged = new EventHandlers<any, []>();
+	readonly #isExpanded = Store.controller(false);
 
 	readonly type = 'container';
 
 	get onChanged() {
 		return this.#onChanged.event;
+	}
+
+	get isExpandedStore() {
+		return this.#isExpanded.store;
+	}
+
+	get isExpanded() {
+		return this.#isExpanded.value;
+	}
+
+	set isExpanded(value) {
+		this.#isExpanded.value = value;
 	}
 
 	abstract get subtype(): json.ContainerType;
@@ -323,6 +300,34 @@ abstract class JContainer<C extends json.Key = json.Key> extends Node<C> impleme
 		}
 
 		existing._removed();
+	}
+
+	toggleExpanded(): boolean {
+		const store = this.#isExpanded;
+		return store.value = !store.value;
+	}
+
+	setExpanded(expanded: boolean, recursive?: boolean) {
+		this.#isExpanded.value = expanded;
+		if (!recursive)
+			return;
+
+		const stack: Iterator<Node>[] = [];
+		let cur: Iterator<Node> = this[Symbol.iterator]()
+		while (true) {
+			let r = cur.next();
+			if (r.done) {
+				let last = stack.pop();
+				if (last == null)
+					return;
+
+				cur = last;
+			} else if (r.value.isContainer()) {
+				r.value.isExpanded = expanded && r.value.count > 0;
+				const it = r.value[Symbol.iterator]();
+				stack.push(it);
+			}
+		}
 	}
 
 	getKeys(): IterableIterator<C> {
@@ -772,12 +777,22 @@ class JArray extends JContainer<number> implements json.Array {
 
 type ValueChangedEventArg = [oldValue: json.ValueType, newValue: json.ValueType];
 
+const falseStore = Store.const(false);
+
 class JValue extends Node<never> implements json.Value {
 	readonly #onChanged = new EventHandlers<this, ValueChangedEventArg>();
 	#value: json.ValueType;
 	#valueType: json.ValueTypeOf;
 
 	readonly type = 'value';
+
+	get isExpandedStore() {
+		return falseStore;
+	}
+
+	get isExpanded() {
+		return false;
+	}
 
 	get onChanged() {
 		return this.#onChanged.event;
@@ -835,6 +850,10 @@ class JValue extends Node<never> implements json.Value {
 
 		const str = this.#value === null ? "null" :  String.prototype.toLowerCase.call(this.#value);
 		return str.includes(filter);
+	}
+
+	toggleExpanded(): undefined {
+		return undefined;
 	}
 
 	getKeys(): IterableIterator<never> {
@@ -936,7 +955,7 @@ export namespace json {
 		readonly id: number;
 		readonly key: Key | null;
 		readonly path: JsonPath;
-		readonly parent: Node | null;
+		readonly parent: Container | null;
 		readonly next: Node | null;
 		readonly previous: Node | null;
 		readonly first: Node | null;
@@ -950,10 +969,10 @@ export namespace json {
 		readonly isHidden: boolean;
 
 		readonly isExpandedStore: Store<boolean>;
-		isExpanded: boolean;
+		readonly isExpanded: boolean;
 
-		toggleExpanded(): boolean;
-		setExpanded(expanded: boolean, recursive?: boolean): void;
+		toggleExpanded(): undefined | boolean;
+
 		filter(filter: string, filterMode: FilterFlags, isAppend: boolean): boolean;
 
 		isContainer(): this is Container;
@@ -987,6 +1006,8 @@ export namespace json {
 		readonly type: 'value';
 		readonly subtype: ValueTypeOf;
 
+		toggleExpanded(): undefined;
+
 		toRaw(): ValueType;
 		toJSON(): ValueType;
 		deepClone(): Value;
@@ -1004,6 +1025,10 @@ export namespace json {
 		readonly onChanged: IEvent<this, []>;
 		readonly type: 'container';
 		readonly subtype: ContainerType;
+		isExpanded: boolean;
+
+		toggleExpanded(): boolean;
+		setExpanded(expanded: boolean, recursive?: boolean): void;
 
 		deepClone(): Container<C>;
 		removeAll(): boolean;
