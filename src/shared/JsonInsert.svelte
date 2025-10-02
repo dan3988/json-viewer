@@ -214,6 +214,7 @@
 	$left: 1em;
 
 	.root {
+		pointer-events: none;
 		opacity: 0;
 		--btn-scale: 0.6;
 
@@ -222,6 +223,7 @@
 		}
 
 		&.active {
+			pointer-events: auto;
 			opacity: 1;
 		}
 	}
