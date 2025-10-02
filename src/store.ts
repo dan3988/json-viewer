@@ -104,8 +104,17 @@ export class StoreListeners<T> {
 	fire(value: T) {
 		// put the entries in a list before firing in case listeners are added/removed while firing them
 		const listeners: Subscriber<T>[] = [];
-		for (let e = this.#first; e; e = e.next)
+		let invalidators: undefined | Invalidator<T>[];
+		for (let e = this.#first; e; e = e.next) {
 			listeners.push(e.listener);
+			if (e.invalidate) {
+				invalidators ??= [];
+				invalidators.push(e.invalidate);
+			}
+		}
+
+		for (const i of invalidators ?? Array.prototype)
+			i(value);
 
 		for (const l of listeners)
 			l(value);
@@ -130,7 +139,6 @@ export class StoreListeners<T> {
 		entry.next = undefined;
 		entry.previous = undefined;
 		entry.removed = true;
-		entry.invalidate?.call(undefined);
 	}
 
 	listen(listener: Subscriber<T>, invalidate?: Invalidator<T> | undefined) {
