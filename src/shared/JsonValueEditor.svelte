@@ -132,7 +132,7 @@
 		<div class="editor" role="textbox" tabindex="-1" contenteditable="plaintext-only" use:renderEditor={value} />
 	{:else}
 		{#if typeof value === 'boolean'}
-			<input type="checkbox" {readonly} use:blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
+			<input type="checkbox" class:readonly use:blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
 		{/if}
 		<span class="preview" use:renderer={value}></span>
 		{#if typeof value === 'number' && !readonly}
@@ -179,7 +179,7 @@
 		width: 1.2em;
 		margin: 0;
 
-		&:read-only {
+		&.readonly {
 			pointer-events: none;
 		}
 	}
