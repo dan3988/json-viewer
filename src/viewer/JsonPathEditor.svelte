@@ -8,15 +8,14 @@
 </script>
 <script lang="ts">
 	import type { ViewerModel } from "../viewer-model";
-	import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
-	import { writable } from "svelte/store";
+	import { createEventDispatcher, onMount, tick } from "svelte";
 	import dom from "./dom-helper";
 	import AutocompleteHelper from "./autocomplete-helper";
 	import JsonPath from "../json-path";
 
 	export let model: ViewerModel;
 
-	$: ({ lastSelected: selected } = model.state.props);
+	$: selectedNodes = model.selected;
 
 	let acWrapper: HTMLElement;
 	let acHelper: undefined | AutocompleteHelper;
@@ -27,10 +26,10 @@
 	let x: number;
 	let ignoreSelectionEvents = 0;
 
-	const node = writable<json.Node>();
-	$: $node = $selected ?? model.root;
-	onDestroy(node.subscribe(update));
-	onMount(() => update($node));
+	$: node = $selectedNodes.last ?? model.root;
+	$: update(node);
+
+	onMount(() => update(node));
 
 	export function focus() {
 		tick().then(() => dom.setCaret(target, 0, true));
@@ -38,7 +37,7 @@
 
 	function unfocus() {
 		getSelection()?.removeAllRanges();
-		update($node);
+		update(node);
 	}
 
 	function update(node: json.Node) {
@@ -72,7 +71,7 @@
 	}
 
 	function onFocusOut() {
-		update($node);
+		update(node);
 		destroyAutoComplete();
 		dispatcher("cancelled");
 	}
