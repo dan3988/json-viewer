@@ -1,10 +1,15 @@
 # Changelog
 
-## [1.0.3]
+## [1.1.0]
+- UI improvements to color scheme editor
+- Performance improvements
+- Added inline value and property key editing
+- Added font family and size in settings
+- Improved array/object item insertion
+- Improved context menu
 - Fixed error when deleting a custom scheme in the settings page
 - Fixed auto-complete list not rendering properly when typing uppercase text
 - Fixed auto-complete filter not clearing when un-focusing
-- UI improvements to color scheme editor
 
 ## [1.0.2]
 
