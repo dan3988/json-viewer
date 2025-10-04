@@ -80,8 +80,10 @@ abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 
 	abstract [Symbol.iterator](): IterableIterator<Node>;
 
-	abstract deepClone(): Node<C>;
+	abstract clone(): Node<C>;
 	abstract toRaw(): any;
+
+	abstract equals(other: json.Node): boolean;
 
 	toJSON() {
 		return this.value;
@@ -214,14 +216,14 @@ abstract class JContainer<C extends json.Key = json.Key> extends Node<C> impleme
 	first: null | Node = null;
 	last: null | Node = null;
 
-	abstract deepClone(): JContainer<C>;
+	abstract clone(): JContainer<C>;
 	abstract removeAll(): boolean;
 
 	/** @internal */
 	_takeOwnership(node: json.Node, key: C): Node {
 		let n = node as Node;
 		if (n.parent)
-			n = n.deepClone();
+			n = n.clone();
 	
 		n._setParent(this, key);
 		return n;
@@ -336,6 +338,37 @@ abstract class JContainer<C extends json.Key = json.Key> extends Node<C> impleme
 
 	[Symbol.iterator](): IterableIterator<Node> {
 		return new NodeIterator(this, 1);
+	}
+
+	protected abstract _sameType(other: json.Node): other is JContainer;
+
+	equals(other: json.Node): boolean {
+		if (this === other)
+			return true;
+
+		if (this.subtype !== other.subtype)
+			return false;
+
+		if (!this._sameType(other))
+			return false;
+
+		const x = new NodeIterator(this, 1);
+		const y = new NodeIterator(other, 1);
+		
+		while (true) {
+			const xr = x.next();
+			const yr = y.next();
+			if (xr.done || yr.done)
+				break;
+
+			if (xr.value.key !== yr.value.key)
+				return false;
+
+			if (!xr.value.equals(yr.value))
+				return false;
+		}
+
+		return true;
 	}
 
 	isContainer(): this is json.Container<C> {
@@ -465,6 +498,10 @@ class JObject extends JContainer<string> implements json.Object {
 		return changed;
 	}
 
+	protected _sameType(other: json.Node): other is JObject {
+		return other.isObject();
+	}
+
 	_delete(key: string): void {
 		this.#map.delete(key);
 	}
@@ -481,7 +518,7 @@ class JObject extends JContainer<string> implements json.Object {
 		return result;
 	}
 
-	deepClone(): JObject {
+	clone(): JObject {
 		const clone = new JObject();
 		clone.#setAll(this.#map.entries());
 		return clone;
@@ -686,6 +723,10 @@ class JArray extends JContainer<number> implements json.Array {
 		return true;
 	}
 
+	protected _sameType(other: json.Node): other is JArray {
+		return other.isArray();
+	}
+
 	_delete(key: number): void {
 		const list = this.#list;
 		list.splice(key, 1);
@@ -711,7 +752,7 @@ class JArray extends JContainer<number> implements json.Array {
 		return result;
 	}
 
-	deepClone(): JArray {
+	clone(): JArray {
 		const clone = new JArray();
 		clone.#setAll(this.#list);
 		return clone;
@@ -852,6 +893,10 @@ class JValue extends Node<never> implements json.Value {
 		return str.includes(filter);
 	}
 
+	equals(other: json.Node): boolean {
+		return other.isValue() && this.#value === other.value;
+	}
+
 	toggleExpanded(): undefined {
 		return undefined;
 	}
@@ -876,7 +921,7 @@ class JValue extends Node<never> implements json.Value {
 		return this.#value;
 	}
 
-	deepClone(): JValue {
+	clone(): JValue {
 		return new JValue(this.#value, this.#valueType);
 	}
 }
@@ -935,8 +980,13 @@ export namespace json {
 		'null': null;
 	}
 
-	export type NodeType = 'container' | 'value';
-	export type NodeSubType = ContainerType | ValueTypeOf;
+	export interface NodeTypeMap {
+		'container': ContainerType;
+		'value': ValueTypeOf;
+	}
+
+	export type NodeType = keyof NodeTypeMap;
+	export type NodeSubType = NodeTypeMap[NodeType];
 	
 	export type ContainerType = 'array' | 'object';
 
@@ -963,7 +1013,7 @@ export namespace json {
 		readonly count: number;
 		readonly type: NodeType;
 		readonly subtype: NodeSubType;
-		readonly value: any;
+		readonly value: unknown;
 
 		readonly isHiddenStore: Store<boolean>;
 		readonly isHidden: boolean;
@@ -990,7 +1040,9 @@ export namespace json {
 		remove(): boolean;
 		replace(node: Node): boolean;
 
-		deepClone(): Node<C>;
+		clone(): Node<C>;
+
+		equals(other: Node): boolean;
 	}
 
 	interface ValueConstructor extends NodeConstructor {
@@ -1010,7 +1062,7 @@ export namespace json {
 
 		toRaw(): ValueType;
 		toJSON(): ValueType;
-		deepClone(): Value;
+		clone(): Value;
 
 		get(): null;
 	}
@@ -1030,7 +1082,7 @@ export namespace json {
 		toggleExpanded(): boolean;
 		setExpanded(expanded: boolean, recursive?: boolean): void;
 
-		deepClone(): Container<C>;
+		clone(): Container<C>;
 		removeAll(): boolean;
 	}
 
@@ -1048,7 +1100,7 @@ export namespace json {
 		toMap(): Map<string, Node>;
 		toRaw(): Dict;
 		toJSON(): ReadOnlyDict;
-		deepClone(): Object;
+		clone(): Object;
 
 		setAll(nodes: ReadonlyMap<string, Node>): void;
 		sort(compare?: (a: string, b: string) => number): void;
@@ -1072,7 +1124,7 @@ export namespace json {
 		toArray(): Node[];
 		toRaw(): any[];
 		toJSON(): ReadOnlyArrayLike<any>;
-		deepClone(): Array;
+		clone(): Array;
 
 		setAll(nodes: Iterable<Node>): void;
 		add(node: Node, index?: number): void;

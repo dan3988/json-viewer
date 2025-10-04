@@ -34,7 +34,7 @@ export namespace debug {
 
 	export function register(...values: DebugRenderer[]) {
 		if (!registered) {
-			((window as any).devtoolsFormatters ??= []).push(formatter);
+			((globalThis as any).devtoolsFormatters ??= []).push(formatter);
 			registered = true;
 		}
 

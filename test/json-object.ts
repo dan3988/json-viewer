@@ -13,137 +13,137 @@ describe("JObject", () => {
 		};
 
 		const prop = json(og);
-		s.conversionTestContainer(prop.value, json.JObject, "object", og);
-		s.testProp(prop.value, "number", v => s.conversionTestValue(v, "number", 5));
-		s.testProp(prop.value, "string", v => s.conversionTestValue(v, "string", "text"));
-		s.testProp(prop.value, "boolean", v => s.conversionTestValue(v, "boolean", true));
-		s.testProp(prop.value, "null", v => s.conversionTestValue(v, "null", null));
+		s.conversionTestObject(prop, og);
+		s.testProp(prop, "number", v => s.conversionTestValue(v, "number", 5));
+		s.testProp(prop, "string", v => s.conversionTestValue(v, "string", "text"));
+		s.testProp(prop, "boolean", v => s.conversionTestValue(v, "boolean", true));
+		s.testProp(prop, "null", v => s.conversionTestValue(v, "null", null));
 	});
 	
-	describe("empty object", () => s.conversionTestContainer(json({}).value, json.JObject, "object", {}));
+	describe("empty object", () => s.conversionTestObject(json({}), {}));
 
 	describe("adding", () => {
-		const root = new json.JObject();
-		const jValue = root.add("jValue", "value");
-		const jArray = root.add("jArray", "array");
-		const jObject = root.add("jObject", "object");
+		const root = new json.Object();
+		const jValue = helpers.object.add(root, "jValue", null);
+		const jArray = helpers.object.add(root, "jArray", []);
+		const jObject = helpers.object.add(root, "jObject", {});
 
 		s.testLinks(root);
 		s.testProp(root, "jValue", v => {
-			it("Is the same as the value returned by add()", () => expect(v.owner).eq(jValue));
-			s.conversionTestCommon(v, json.JValue, "value", "null");
+			it("Is the same as the value passed to add()", () => expect(v).eq(jValue));
+			s.conversionTestValue(v, 'null', null);
 		});
 
 		s.testProp(root, "jArray", v => {
-			it("Is the same as the value returned by add()", () => expect(v.owner).eq(jArray));
-			s.conversionTestCommon(v, json.JArray, "container", "array");
+			it("Is the same as the value passed to add()", () => expect(v).eq(jArray));
+			s.conversionTestArray(v, []);
 		});
 
 		s.testProp(root, "jObject", v => {
-			it("Is the same as the value returned by add()", () => expect(v.owner).eq(jObject));
-			s.conversionTestCommon(v, json.JObject, "container", "object");
+			it("Is the same as the value passed to add()", () => expect(v).eq(jObject));
+			s.conversionTestObject(v, {});
 		});
 	});
 
 	describe("insertBefore", () => {
-		let obj: json.JObject;
+		let obj: json.Object;
 
 		beforeEach(() => {
 			const object = { a: 1, b: 2, c: 3 };
-			const root = json(object);
+			const root = new json.Object(object);
 	
-			obj = root.value;
+			obj = root;
 		});
 
 		it("Should insert before the first property", () => {
-			const sibling = obj.getProperty("a");
-			const prop = json("value", "new");
+			const sibling = obj.get("a");
+			const node = json("value");
 
-			obj.insertBefore(prop, sibling);
+			obj.insertBefore("new", node, sibling);
 
 			s.validateLinks(obj);
-			expect(sibling.previous).to.be.eq(prop);
-			expect(prop.next).to.be.eq(sibling);
-			expect(obj.first).to.eq(prop);
-			expect(obj.getProperty("new")).to.be.eq(prop);
-			expect([...obj.keys()]).to.be.deep.eq(["new", "a", "b", "c"]);
+			expect(sibling.previous).to.be.eq(node);
+			expect(node.next).to.be.eq(sibling);
+			expect(obj.first).to.eq(node);
+			expect(obj.get("new")).to.be.eq(node);
+			expect([...obj.getKeys()]).to.be.deep.eq(["new", "a", "b", "c"]);
 		});
 
 		it("Should insert before the second property", () => {
-			const sibling = obj.getProperty("b");
-			const prop = json("value", "new");
+			const sibling = obj.get("b");
+			const prop = json("value");
 
-			obj.insertBefore(prop, sibling);
+			obj.insertBefore('new', prop, sibling);
 
 			s.validateLinks(obj);
 			expect(sibling.previous).to.be.eq(prop);
 			expect(prop.next).to.be.eq(sibling);
-			expect(obj.getProperty("new")).to.be.eq(prop);
-			expect([...obj.keys()]).to.be.deep.eq(["a", "new", "b", "c"]);
+			expect(obj.get("new")).to.be.eq(prop);
+			expect([...obj.getKeys()]).to.be.deep.eq(["a", "new", "b", "c"]);
 		});
 
 		it("Should insert before the last property", () => {
-			const sibling = obj.getProperty("c");
-			const prop = json("value", "new");
+			const sibling = obj.get("c");
+			const prop = json("value");
 
-			obj.insertBefore(prop, sibling);
+			obj.insertBefore("new", prop, sibling);
 
 			s.validateLinks(obj);
 			expect(sibling.previous).to.be.eq(prop);
 			expect(prop.next).to.be.eq(sibling);
-			expect(obj.getProperty("new")).to.be.eq(prop);
-			expect([...obj.keys()]).to.be.deep.eq(["a", "b", "new", "c"]);
+			expect(obj.get("new")).to.be.eq(prop);
+			expect([...obj.getKeys()]).to.be.deep.eq(["a", "b", "new", "c"]);
 		});
 	})
 
 	describe("insertAfter", () => {
-		let obj: json.JObject;
+		let obj: json.Object;
 
 		beforeEach(() => {
 			const object = { a: 1, b: 2, c: 3 };
-			const root = json(object);
+			const root = new json.Object(object);
 	
-			obj = root.value;
+			obj = root;
 		});
 
 		it("Should insert after the first property", () => {
-			const sibling = obj.getProperty("a");
-			const prop = json("value", "new");
+			const sibling = obj.get("a");
+			const prop = json("value");
 
-			obj.insertAfter(prop, sibling);
+			obj.insertAfter("new", prop, sibling);
 
 			s.validateLinks(obj);
 			expect(sibling.next).to.be.eq(prop);
 			expect(prop.previous).to.be.eq(sibling);
-			expect(obj.getProperty("new")).to.be.eq(prop);
-			expect([...obj.keys()]).to.be.deep.eq(["a", "new", "b", "c"]);
+			expect(obj.get("new")).to.be.eq(prop);
+			expect([...obj.getKeys()]).to.be.deep.eq(["a", "new", "b", "c"]);
 		});
 
 		it("Should insert after the second property", () => {
-			const sibling = obj.getProperty("b");
-			const prop = json("value", "new");
+			const sibling = obj.get("b");
+			const prop = json("value");
 
-			obj.insertAfter(prop, sibling);
+			obj.insertAfter("new", prop, sibling);
 
 			s.validateLinks(obj);
 			expect(sibling.next).to.be.eq(prop);
 			expect(prop.previous).to.be.eq(sibling);
-			expect(obj.getProperty("new")).to.be.eq(prop);
-			expect([...obj.keys()]).to.be.deep.eq(["a", "b", "new", "c"]);
+			expect(obj.get("new")).to.be.eq(prop);
+			expect([...obj.getKeys()]).to.be.deep.eq(["a", "b", "new", "c"]);
 		});
 
 		it("Should insert after the last property", () => {
-			const sibling = obj.getProperty("c");
-			const prop = json("value", "new");
+			const sibling = obj.get("c");
+			const prop = json("value");
 
-			obj.insertAfter(prop, sibling);
+			obj.insertAfter("new", prop, sibling);
 
 			s.validateLinks(obj);
 			expect(sibling.next).to.be.eq(prop);
 			expect(prop.previous).to.be.eq(sibling);
 			expect(obj.last).to.eq(prop);
-			expect(obj.getProperty("new")).to.be.eq(prop);
-			expect([...obj.keys()]).to.be.deep.eq(["a", "b", "c", "new"]);
+			expect(obj.get("new")).to.be.eq(prop);
+			expect([...obj.getKeys()]).to.be.deep.eq(["a", "b", "c", "new"]);
 		});
 	})
 
@@ -152,17 +152,17 @@ describe("JObject", () => {
 
 		function testReplace(key: string, value: any) {
 			describe("Replace property " + JSON.stringify(key), () => {
-				const { value: tkn } = json(object);
-				const old = tkn.getProperty(key);
-				const val = tkn.add(key, "value");
-				val.value.value = value;
+				const node = new json.Object(object);
+				const old = node.get(key);
+				const val = json(value);
+				node.set(key, val);
 
 				const expected = { ...object };
 				expected[key] = value;
 
 				it("has removed the parent of the old property", () => expect(old.parent).to.be.null);
-				s.testLinks(tkn);
-				it("returns the updated value when calling toJSON()", () => expect(tkn.toJSON()).to.be.deep.equal(expected));
+				s.testLinks(node);
+				it("returns the updated value when calling toJSON()", () => expect(node.toJSON()).to.be.deep.equal(expected));
 			});
 		}
 		
@@ -176,7 +176,7 @@ describe("JObject", () => {
 		sample.object = { ...sample };
 		sample.array = Linq.range(1, 10).toArray();
 
-		function add(obj: json.JObject) {
+		function add(obj: json.Object) {
 			helpers.object.addValue(obj, "string", "text");
 			helpers.object.addValue(obj, "number", 5);
 			helpers.object.addValue(obj, "boolean", true);
@@ -185,21 +185,21 @@ describe("JObject", () => {
 
 		function create() {
 			const prop = json(sample);
-			const manual = new json.JObject();
+			const manual = new json.Object();
 
 			add(manual);
-			const nested = manual.add("object", "object");
-			add(nested.value);
-			const arr = manual.add("array", "array");
+			const nested = helpers.object.addObject(manual, 'object');
+			add(nested);
+			const arr = helpers.object.addArray(manual, 'array');
 			for (let i = 0; i < 10; )
-				helpers.array.addValue(arr.value, ++i);
+				helpers.array.addValue(arr, ++i);
 		
-			return [prop.value, manual] as const;
+			return [prop, manual] as const;
 		}
 
 		it("returns true when calling equal() with the same instance", () => {
-			const { value } = json(sample);
-			expect(value.equals(value)).to.be.true;
+			const node = json(sample);
+			expect(node.equals(node)).to.be.true;
 		});
 
 		it("returns true when calling equal() with an identical value", () => {
@@ -215,14 +215,14 @@ describe("JObject", () => {
 	});
 
 	describe("clone", () => {
-		const prop = json(sample);
-		const copy = prop.clone();
+		const node = json(sample);
+		const copy = node.clone();
 
-		const x = prop.value.toJSON();
-		const y = copy.value.toJSON();
+		const x = node.toJSON();
+		const y = copy.toJSON();
 
 		it("Copies the object exactly", () => expect(x).to.be.deep.equal(y));
-		it("Doesn't break the structure of the original object", () => s.validateLinks(prop.value));
-		s.testLinks(copy.value);
+		s.testLinks(copy);
+		it("Doesn't break the structure of the original object", () => s.validateLinks(node));
 	});
 });

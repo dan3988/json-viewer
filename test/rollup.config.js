@@ -20,7 +20,6 @@ export default defineConfig({
 	external: [
 		"@daniel.pickett/linq-js",
 		"chai",
-		"espree"
 	],
 	onwarn,
 	plugins: [
@@ -29,7 +28,8 @@ export default defineConfig({
 		}),
 		json(),
 		resolve({
-			browser: false
+			browser: false,
+			extensions: ['.ts', '.js']
 		}),
 		commonjs({
 			include: "./node_modules/",
