@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type Indent from "../indent.js";
-	import type ViewerModel from "../viewer-model.js";
-	import { onDestroy } from "svelte";
+	import type { ViewerModel, SelectedNodeList } from "../viewer-model.js";
+	import { onDestroy, onMount } from "svelte";
 	import JsonActions from "./JsonActions.svelte";
 	import JsonPropertyKey from "./JsonPropertyKey.svelte";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
@@ -20,6 +20,22 @@
 
 	$: selectedNodes = model.selected;
 	$: selected = $selectedNodes.has(node);
+
+	function focusCheck(list: SelectedNodeList) {
+		if (list.last === node) {
+			menuFocus.focus();
+		}
+	}
+
+	let unsub: VoidFunction;
+
+	onDestroy(() => {
+		unsub?.();
+	})
+
+	onMount(() => {
+		unsub = selectedNodes.subscribe(focusCheck);
+	});
 
 	$: ({ isExpandedStore, isHiddenStore } = node);
 	$: hidden = $isHiddenStore;
