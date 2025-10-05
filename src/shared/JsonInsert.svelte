@@ -214,7 +214,6 @@
 	$left: 1em;
 
 	.root {
-		pointer-events: none;
 		opacity: 0;
 		--btn-scale: 0.6;
 
@@ -223,7 +222,8 @@
 		}
 
 		&.active {
-			pointer-events: auto;
+			--btn-visibility: visible;
+			--btn-pointer-events: auto;
 			opacity: 1;
 		}
 	}
@@ -252,6 +252,7 @@
 	}
 
 	.expander {
+		visibility: var(--btn-visibility, hidden);
 		display: flex;
 		gap: #{$pad-med};
 		z-index: 3;
