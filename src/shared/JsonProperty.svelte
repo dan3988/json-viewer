@@ -56,6 +56,11 @@
 		}
 	}
 
+	function onMouseDown(evt: MouseEvent) {
+		// prevent text selection
+		evt.shiftKey && evt.preventDefault();
+	}
+
 	function onClick(evt: MouseEvent) {
 		evt.preventDefault();
 		evt.stopPropagation();
@@ -65,8 +70,6 @@
 		} else {
 			model.selected[evt.ctrlKey ? "toggle" : "reset"](node);
 		}
-
-		window.getSelection()?.removeAllRanges();
 	}
 
 	function startEditing() {
@@ -348,7 +351,8 @@
 	data-indent={indent.indent}
 	class="json-prop for-{node.type} for-{node.subtype} json-indent"
 	class:expanded
-	on:click={onClick}>
+	on:click={onClick}
+	on:mousedown={onMouseDown}>
 	<span class="json-key" class:json-selected={selected} on:contextmenu={openMenu}>
 		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
 			<JsonPropertyKey {model} {node} {readonly} {selected} bind:editing={editingName}>
