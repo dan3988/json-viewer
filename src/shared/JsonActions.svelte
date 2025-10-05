@@ -14,6 +14,7 @@
 	export let rename: CallbackArg = undefined;
 	export let edit: CallbackArg = undefined;
 	export let remove: CallbackArg = undefined;
+	export let clear: CallbackArg = undefined;
 	export let sort: CallbackArg<[desc: boolean]> = undefined;
 	export let close: VoidFunction;
 
@@ -64,6 +65,9 @@
 		{#if remove}
 			<Button text="Delete" icon="trash-fill" action={wrap(remove)} />
 		{/if}
+		{#if clear}
+			<Button text="Clear" icon="ban-fill" action={wrap(clear)} />
+		{/if}
 		{#if edit}
 			<Button text="Edit Value" icon="pencil-fill" action={wrap(edit)} />
 		{/if}
@@ -73,8 +77,8 @@
 					<Icon icon="sort-down" />
 					Sort
 				</span>
-				<Button title="Sort (A-Z)" icon="sort-alpha-down" action={() => sort(false)} />
-				<Button title="Sort (Z-A)" icon="sort-alpha-up" action={() => sort(true)} />
+				<Button title="Sort (A-Z)" icon="sort-alpha-down" action={wrap(sort, false)} />
+				<Button title="Sort (Z-A)" icon="sort-alpha-up" action={wrap(sort, true)} />
 			</div>
 		{/if}
 	</Button.Theme>

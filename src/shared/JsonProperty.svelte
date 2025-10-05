@@ -365,6 +365,7 @@
 							edit={node.isValue() && startEditing}
 							rename={node.parent?.isObject() && (() => editingName = true)}
 							{remove}
+							clear={node.isContainer() && (() => model.edits.push(edits.clear(node)))}
 							sort={node.isObject() && ((desc) => model.edits.push(edits.sort(node, desc)))}
 						/>
 					{/if}

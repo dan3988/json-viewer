@@ -13,10 +13,6 @@
 	let jpath: HTMLInputElement;
 	let jpathResults: json.Node[] = [];
 
-	function setExpanded(expanded: boolean) {
-		model.root.setExpanded(expanded, true);
-	}
-
 	function onJpathKeyPress(evt: KeyboardEvent) {
 		if (evt.key === "Enter")
 			evaluateJpath();
@@ -42,7 +38,7 @@
 		}
 
 		try {
-			const values = JSONPath({ json: model.root.value, path, resultType: "all" });
+			const values = JSONPath({ json: model.root.value as any, path, resultType: "all" });
 			for (let i = 0; i < values.length; i++)
 				values[i] = unwrapValue(values[i]);
 

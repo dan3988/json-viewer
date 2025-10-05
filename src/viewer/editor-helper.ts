@@ -4,7 +4,7 @@ import Linq from "@daniel.pickett/linq-js";
 import { noop } from "../util.js";
 
 export namespace edits {
-	export function clearProp(node: json.Container): EditAction {
+	export function clear(node: json.Container): EditAction {
 		const empty = new (node.isObject() ? json.Object : json.Array);
 		return new EditAction(commit, revert, node);
 

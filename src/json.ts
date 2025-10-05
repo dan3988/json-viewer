@@ -89,6 +89,7 @@ abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 		return this.value;
 	}
 
+	abstract setExpanded(expanded: boolean, recursive?: boolean): void;
 	abstract toggleExpanded(): undefined | boolean;
 
 	filter(filter: string, filterMode: json.FilterFlags, isAppend: boolean) {
@@ -897,6 +898,9 @@ class JValue extends Node<never> implements json.Value {
 		return other.isValue() && this.#value === other.value;
 	}
 
+	setExpanded(): void {
+	}
+
 	toggleExpanded(): undefined {
 		return undefined;
 	}
@@ -1022,6 +1026,7 @@ export namespace json {
 		readonly isExpanded: boolean;
 
 		toggleExpanded(): undefined | boolean;
+		setExpanded(expanded: boolean, recursive?: boolean): void;
 
 		filter(filter: string, filterMode: FilterFlags, isAppend: boolean): boolean;
 
@@ -1080,7 +1085,6 @@ export namespace json {
 		isExpanded: boolean;
 
 		toggleExpanded(): boolean;
-		setExpanded(expanded: boolean, recursive?: boolean): void;
 
 		clone(): Container<C>;
 		removeAll(): boolean;
