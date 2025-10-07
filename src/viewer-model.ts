@@ -21,8 +21,6 @@ export interface SelectedNodeList extends Iterable<json.Node>, ReadonlySetLike<j
 }
 
 interface ChangeProps {
-	filterText: string;
-	filterFlags: json.FilterFlags;
 	requestInfo: undefined | null | DocumentRequestInfo
 	useWebRequest: boolean;
 	formatIndent: string;
@@ -96,14 +94,6 @@ export class ViewerModel {
 		return this.#command.event;
 	}
 
-	get filterText() {
-		return this.#state.getValue("filterText");
-	}
-
-	get filterFlags() {
-		return this.#state.getValue("filterFlags");
-	}
-
 	get edits() {
 		return this.#edits;
 	}
@@ -111,8 +101,6 @@ export class ViewerModel {
 	constructor(root: json.Node) {
 		this.#root = root;
 		this.#state = new StateController<ChangeProps>({
-			filterFlags: json.FilterFlags.Both,
-			filterText: "",
 			requestInfo: undefined,
 			useWebRequest: false,
 			formatIndent: ""
@@ -148,27 +136,6 @@ export class ViewerModel {
 		return Linq(values)
 			.select(p => serializeForCopy(p, indent, true))
 			.joinText(minify ? "," : ",\r\n");
-	}
-	
-
-	filter(text: string, flags?: json.FilterFlags) {
-		text = text.toLowerCase();
-		const oldText = this.#state.getValue("filterText");
-		const oldFlags = this.#state.getValue("filterFlags");
-		const flagsChanged = flags != null && flags !== oldFlags;
-		flags ??= oldFlags;
-
-		let append = text.includes(oldText);
-		let textChanged = !append || oldText.length !== text.length;
-		if (!textChanged && !flagsChanged)
-			return;
-
-		if (append && flagsChanged)
-			append = (oldFlags & flags) === flags;
-
-		this.#state.setValue("filterText", text);
-		this.#state.setValue("filterFlags", flags);
-		this.#root.filter(text, flags, append);
 	}
 
 	resolve(path: PathInit): json.Node | undefined {

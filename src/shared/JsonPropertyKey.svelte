@@ -38,7 +38,7 @@
 		if (arg0 === node) {
 			switch (command) {
 				case "scrollTo":
-					element.scrollIntoView({ block: 'nearest' });
+					//element.scrollIntoView({ block: 'nearest' });
 					break;
 				case "rename":
 					editing = true;

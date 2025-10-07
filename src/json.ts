@@ -34,15 +34,6 @@ export function json(value: any): Node {
 
 abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 	readonly id = ++id;
-	readonly #isHidden = Store.controller(false);
-	
-	get isHiddenStore() {
-		return this.#isHidden.store;
-	}
-
-	get isHidden() {
-		return this.#isHidden.value;
-	}
 
 	parent: JContainer<any> | null = null;
 	key: json.Key | null = null;
@@ -92,23 +83,9 @@ abstract class Node<C extends json.Key = json.Key> implements json.Node<C> {
 	abstract setExpanded(expanded: boolean, recursive?: boolean): void;
 	abstract toggleExpanded(): undefined | boolean;
 
-	filter(filter: string, filterMode: json.FilterFlags, isAppend: boolean) {
-		if (isAppend && this.isHidden)
-			return false;
-
-		const showKey = Boolean(filterMode & json.FilterFlags.Keys) && this.key && String.prototype.toLowerCase.call(this.key).includes(filter);
-		const showValue = this._applyFilter(filter, filterMode, isAppend);
-		const show = showKey || showValue;
-		this.#isHidden.value = !show;
-		return show;
-	}
-
 	toString(indent?: string): string {
 		return JSON.stringify(this, undefined, indent);
 	}
-
-	/** @internal */
-	abstract _applyFilter(filter: string, filterMode: json.FilterFlags, isAppend: boolean): boolean;
 
 	/** @internal */
 	_removed() {
@@ -252,16 +229,6 @@ abstract class JContainer<C extends json.Key = json.Key> extends Node<C> impleme
 	}
 
 	abstract _delete(key: C): void;
-
-	_applyFilter(filter: string, filterMode: json.FilterFlags, isAppend: boolean): boolean {
-		let show = false;
-
-		for (const node of this)
-			if (node.filter(filter, filterMode, isAppend))
-				show = true;
-
-		return show;
-	}
 
 	/** @internal */
 	_fireChanged() {
@@ -886,14 +853,6 @@ class JValue extends Node<never> implements json.Value {
 		this.#valueType = valueType ?? (value === null ? 'null' : <any>typeof value);
 	}
 
-	_applyFilter(filter: string, filterMode: json.FilterFlags): boolean {
-		if ((filterMode & json.FilterFlags.Values) === 0) 
-			return false;
-
-		const str = this.#value === null ? "null" :  String.prototype.toLowerCase.call(this.#value);
-		return str.includes(filter);
-	}
-
 	equals(other: json.Node): boolean {
 		return other.isValue() && this.#value === other.value;
 	}
@@ -970,13 +929,6 @@ export namespace json {
 		return Reflect.get(value, unproxyKey);
 	}
 
-	export enum FilterFlags {
-		None,
-		Keys = 1,
-		Values = 2,
-		Both = Keys | Values
-	}
-
 	export interface ValueMap {
 		'string': string;
 		'number': number;
@@ -1019,16 +971,11 @@ export namespace json {
 		readonly subtype: NodeSubType;
 		readonly value: unknown;
 
-		readonly isHiddenStore: Store<boolean>;
-		readonly isHidden: boolean;
-
 		readonly isExpandedStore: Store<boolean>;
 		readonly isExpanded: boolean;
 
 		toggleExpanded(): undefined | boolean;
 		setExpanded(expanded: boolean, recursive?: boolean): void;
-
-		filter(filter: string, filterMode: FilterFlags, isAppend: boolean): boolean;
 
 		isContainer(): this is Container;
 		isObject(): this is Object;

@@ -37,8 +37,7 @@
 		unsub = selectedNodes.subscribe(focusCheck);
 	});
 
-	$: ({ isExpandedStore, isHiddenStore } = node);
-	$: hidden = $isHiddenStore;
+	$: ({ isExpandedStore } = node);
 	$: expanded = $isExpandedStore;
 	$: canEdit = !readonly && !(editingName || editingValue || menuOpen);
 	
@@ -207,10 +206,6 @@
 			--selection-visibility: visible;
 		}
 
-		&[hidden] {
-			display: none !important;
-		}
-
 		&.for-container {
 			&:before,
 			&:after {
@@ -347,7 +342,6 @@
 	}
 </style>
 <div
-	{hidden}
 	data-indent={indent.indent}
 	class="json-prop for-{node.type} for-{node.subtype} json-indent"
 	class:expanded

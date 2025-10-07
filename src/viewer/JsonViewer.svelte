@@ -24,7 +24,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import { KeyBindingListener } from "../keyboard";
 	import { commands } from "../commands";
-	import json from "../json";
+	import JsonSearch from "../search";
 	import ThemeTracker from "../theme-tracker.js";
 	import Linq from "@daniel.pickett/linq-js";
 	import fs from "../fs";
@@ -50,7 +50,6 @@
 	$: ({ requestInfo } = model.state.props);
 	$: ({ canUndo, canRedo } = model.edits.state.props);
 	$: tracker.preferDark = darkMode;
-	$: model.filter(filter, filterMode);
 	$: scheme = $tracker ? schemeDark : schemeLight;
 	$: currentScheme = customSchemes[scheme] ?? schemes.presets[scheme];
 	$: rootIndent = new Indent(currentScheme.indents.length);
@@ -62,7 +61,13 @@
 
 	let filterInput: HTMLInputElement;
 	let filter = "";
-	let filterMode = json.FilterFlags.Both;
+	let filterMode = JsonSearch.Mode.Both;
+
+	$: search = filter ? JsonSearch.run(model.root, filter, filterMode, false) : null;
+	$: searchResults = search ? [...search] : [];
+	$: searchResults, searchIndex = 0;
+
+	let searchIndex = 0;
 
 	type PopupInfo<C extends SvelteComponent<any, PopupCustomEvents<R>> = any, R = any> = [clazz: PopupConstructor<C, R>, props: ComponentProps<C>, completion: (result: CustomEvent<R | void> ) => void];
 
@@ -129,6 +134,19 @@
 		filterInput.focus();
 	}
 
+	function setSearchIndex(index: number) {
+		searchIndex = index;
+		model.setSelected(searchResults[index], true, true);
+	}
+
+	function prevSearch() {
+		setSearchIndex((searchIndex ? searchIndex : searchResults.length) - 1);
+	}
+
+	async function nextSearch() {
+		setSearchIndex((searchIndex + 1) % searchResults.length);
+	}
+
 	function setExpanded(expanded: boolean) {
 		model.root.setExpanded(expanded, true);
 	}
@@ -192,11 +210,6 @@
 	.w-bar {
 		display: flex;
 		grid-area: bar;
-
-		&::after {
-			content: "";
-			flex: 1 1 0px;
-		}
 	}
 
 	.w-path {
@@ -236,11 +249,35 @@
 	}
 
 	.search {
-		width: max-content;
+		flex: 1 1 0;
+		max-width: 30rem;
+		width: unset;
 
 		> select {
 			flex: 0 0 7em !important;
 		}
+	}
+	
+	.filter-wrapper {
+		flex: 1 1 0;
+		position: relative;
+	}
+
+	.filter-overlay {
+		position: absolute;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		display: flex;
+		gap: 0.25em;
+		margin: $pad-med;
+		align-items: center;
+
+		> :global(.btn) {
+			--bs-btn-padding-x: 0.25em;
+			--bs-btn-padding-y: 0.25em;
+		}
+
 	}
 </style>
 <svelte:window on:beforeunload={onUnload} />
@@ -262,14 +299,23 @@
 				<Button title="Request Info" icon="activity" action={$requestInfo && showRequestInfo} />
 			{/if}
 		</div>
-		<div class="input-group search flex-fit">
-			<span class="input-group-text flex-fit">Filter</span>
-			<input class="filter-input form-control" type="text" bind:value={filter} bind:this={filterInput}/>
+		<div class="input-group search">
+			<span class="input-group-text flex-fit">Search</span>
+			<div class="filter-wrapper">
+				<input class="filter-input form-control rounded-0" type="text" bind:value={filter} bind:this={filterInput}/>
+				{#if search}
+					<div class="filter-overlay">
+						<span class="filter-count">{searchResults.length && searchIndex + 1} / {searchResults.length}</span>
+						<Button title="Clear" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
+						<Button title="Clear" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
+					</div>
+				{/if}
+			</div>
 			<Button title="Clear" icon="x-lg" action={clearFilter} />
 			<select class="filter-type form-select flex-fit" bind:value={filterMode}>
-				<option value={json.FilterFlags.Both}>All</option>
-				<option value={json.FilterFlags.Keys}>Keys</option>
-				<option value={json.FilterFlags.Values}>Values</option>
+				<option value={JsonSearch.Mode.Both}>All</option>
+				<option value={JsonSearch.Mode.Keys}>Keys</option>
+				<option value={JsonSearch.Mode.Values}>Values</option>
 			</select>
 		</div>
 		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
