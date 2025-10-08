@@ -138,4 +138,5 @@ The build will output the extension to `./out/<browser>`.
 - [x] Inline value editing
 - [x] Improve object/array manipulation
 - [ ] Allow modified JSON to be used in POST/PUT requests
+- [ ] Editable key bindings
 - [ ] Upgrade to svelte 5
