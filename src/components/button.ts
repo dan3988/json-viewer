@@ -1,6 +1,7 @@
 import { getContext, setContext } from "svelte";
 import Store, { StoreController } from "../store";
 import ButtonComponent from "./Button.svelte";
+import ToggleButton from "./ToggleButton.svelte";
 import ButtonTheme from "./ButtonTheme.svelte";
 
 const themeKey = Symbol('ButtonStyle');
@@ -12,6 +13,10 @@ export namespace Button {
 	export type Style =  'base' | 'primary' | 'faded';
 
 	export const Theme = ButtonTheme;
+	export type Theme = ButtonTheme;
+
+	export const Toggle = ToggleButton;
+	export type Toggle = ToggleButton;
 
 	export class ThemeData {
 		static readonly #default = new this('base');

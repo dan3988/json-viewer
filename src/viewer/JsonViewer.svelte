@@ -59,12 +59,12 @@
 
 	let jpathOpen = false;
 
-	let filterInput: HTMLInputElement;
-	let filter = "";
-	let filterMode = JsonSearch.Mode.Both;
+	let searchInput: HTMLInputElement;
+	let searchOpen = false;
 
-	$: search = filter ? JsonSearch.run(model.root, filter, filterMode, false) : null;
-	$: searchResults = search ? [...search] : [];
+	$: search = new JsonSearch(model.root);
+
+	$: searchResults = [...$search];
 	$: searchResults, searchIndex = 0;
 
 	let searchIndex = 0;
@@ -108,7 +108,7 @@
 	function onModelCommand(evt: ViewerCommandEvent) {
 		switch (evt.command) {
 			case "focusSearch":
-				filterInput.focus();
+				searchInput.focus();
 				break;
 			case "saveAs":
 				saveAs();
@@ -130,8 +130,8 @@
 	}
 
 	function clearFilter() {
-		filter = "";
-		filterInput.focus();
+		search.text = '';
+		searchInput.focus();
 	}
 
 	function setSearchIndex(index: number) {
@@ -143,8 +143,30 @@
 		setSearchIndex((searchIndex ? searchIndex : searchResults.length) - 1);
 	}
 
-	async function nextSearch() {
+	function onSearchFocusIn(evt: FocusEvent) {
+		if (!(evt.target as HTMLElement).parentElement?.classList.contains('search-overlay'))
+			searchOpen = true;
+	}
+
+	function onSearchFocusOut(evt: FocusEvent & { currentTarget: HTMLElement }) {
+		if (!evt.currentTarget.contains(evt.relatedTarget as Node | null))
+			searchOpen = false;
+	}
+
+	function nextSearch() {
 		setSearchIndex((searchIndex + 1) % searchResults.length);
+	}
+
+	function toggleFilterMode(mode: JsonSearch.Mode, value: boolean) {
+		if (value) {
+			search.mode |= mode;
+		} else {
+			let base = search.mode;
+			if (base === mode)
+				base = JsonSearch.Mode.Both;
+
+			search.mode = base & ~mode;
+		}
 	}
 
 	function setExpanded(expanded: boolean) {
@@ -250,20 +272,45 @@
 
 	.search {
 		flex: 1 1 0;
-		max-width: 30rem;
+		position: relative;
+		max-width: 24rem;
 		width: unset;
 
-		> select {
-			flex: 0 0 7em !important;
+		&.open {
+			--search-visbility: visible;
+
+			> .input-group {
+				> :first-child {
+					border-bottom-left-radius: 0;
+				}
+
+				> :global(:last-child) {
+					border-bottom-right-radius: 0;
+				}
+			}
 		}
 	}
+
+	.search-options {
+		visibility: var(--search-visbility, collapse);
+		margin-top: -1px;
+		z-index: 2;
+		position: absolute;
+		display: flex;
+		gap: $pad-med;
+		top: 100%;
+		left: 0;
+		right: 0;
+		padding: $pad-med;
+	}
 	
-	.filter-wrapper {
+	.search-wrapper {
 		flex: 1 1 0;
+		z-index: 3;
 		position: relative;
 	}
 
-	.filter-overlay {
+	.search-overlay {
 		position: absolute;
 		right: 0;
 		top: 0;
@@ -277,7 +324,6 @@
 			--bs-btn-padding-x: 0.25em;
 			--bs-btn-padding-y: 0.25em;
 		}
-
 	}
 </style>
 <svelte:window on:beforeunload={onUnload} />
@@ -299,24 +345,35 @@
 				<Button title="Request Info" icon="activity" action={$requestInfo && showRequestInfo} />
 			{/if}
 		</div>
-		<div class="input-group search">
-			<span class="input-group-text flex-fit">Search</span>
-			<div class="filter-wrapper">
-				<input class="filter-input form-control rounded-0" type="text" bind:value={filter} bind:this={filterInput}/>
-				{#if search}
-					<div class="filter-overlay">
-						<span class="filter-count">{searchResults.length && searchIndex + 1} / {searchResults.length}</span>
-						<Button title="Clear" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
-						<Button title="Clear" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
-					</div>
-				{/if}
+		<div class="search" class:open={searchOpen} on:focusin={onSearchFocusIn} on:focusout={onSearchFocusOut}>
+			<div class="input-group">
+				<span class="input-group-text flex-fit">Search</span>
+				<div class="search-wrapper">
+					<input
+						class="search-input form-control rounded-0"
+						type="text"
+						bind:value={search.text}
+						bind:this={searchInput}/>
+					{#if $search.text}
+						<div class="search-overlay">
+							<span class="search-count">{searchResults.length && searchIndex + 1} / {searchResults.length}</span>
+							<Button title="Clear" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
+							<Button title="Clear" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
+						</div>
+					{/if}
+				</div>
+				<Button title="Clear" icon="x-lg" action={clearFilter} />
 			</div>
-			<Button title="Clear" icon="x-lg" action={clearFilter} />
-			<select class="filter-type form-select flex-fit" bind:value={filterMode}>
-				<option value={JsonSearch.Mode.Both}>All</option>
-				<option value={JsonSearch.Mode.Keys}>Keys</option>
-				<option value={JsonSearch.Mode.Values}>Values</option>
-			</select>
+			<div class="search-options border rounded-bottom bg-body">
+				<div class="btn-group">
+					<Button.Toggle text="Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
+					<Button.Toggle text="Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+				</div>
+				<label class="input-group-text align-items-start gap-1" tabindex="0">
+					<input type="checkbox" class="form-check-input" bind:checked={$search.caseSensitive} />
+					Match Case
+				</label>
+			</div>
 		</div>
 		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
 		<label class="btn btn-base" for="chk-jpath">JPath</label>
