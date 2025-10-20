@@ -271,37 +271,33 @@
 	}
 
 	.search {
-		flex: 1 1 0;
+		font-size: small;
+		flex: 0 0 calc(var(--bs-border-width) * 8 + 30.65rem);
 		position: relative;
-		max-width: 24rem;
 		width: unset;
+
+		> .input-group {
+			> :global(:first-child) {
+				border-bottom-left-radius: var(--border-bottom-radius, var(--bs-border-radius));
+			}
+
+			> :global(:last-child) {
+				border-bottom-right-radius: var(--border-bottom-radius, var(--bs-border-radius));
+			}
+		}
 
 		&.open {
 			--search-visbility: visible;
-
-			> .input-group {
-				> :first-child {
-					border-bottom-left-radius: 0;
-				}
-
-				> :global(:last-child) {
-					border-bottom-right-radius: 0;
-				}
-			}
+			--border-bottom-radius: 0;
 		}
 	}
 
 	.search-options {
-		visibility: var(--search-visbility, collapse);
+		visibility: var(--search-visbility, hidden);
 		margin-top: -1px;
 		z-index: 2;
 		position: absolute;
-		display: flex;
-		gap: $pad-med;
 		top: 100%;
-		left: 0;
-		right: 0;
-		padding: $pad-med;
 	}
 	
 	.search-wrapper {
@@ -316,6 +312,7 @@
 		top: 0;
 		bottom: 0;
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.25em;
 		margin: $pad-med;
 		align-items: center;
@@ -357,22 +354,35 @@
 					{#if $search.text}
 						<div class="search-overlay">
 							<span class="search-count">{searchResults.length && searchIndex + 1} / {searchResults.length}</span>
-							<Button title="Clear" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
-							<Button title="Clear" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
+							<Button title="Previous" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
+							<Button title="Next" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
 						</div>
 					{/if}
 				</div>
 				<Button title="Clear" icon="x-lg" action={clearFilter} />
 			</div>
-			<div class="search-options border rounded-bottom bg-body">
-				<div class="btn-group">
-					<Button.Toggle text="Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
-					<Button.Toggle text="Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+			<div class="search-options p-1 gap-1 d-flex flex-column border rounded-bottom bg-body">
+				<div class="d-flex gap-1">
+					<div class="btn-group">
+						<Button.Toggle text="Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
+						<Button.Toggle text="Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+					</div>
+					<label class="input-group-text align-items-start gap-1" tabindex="0">
+						<input type="checkbox" class="form-check-input" bind:checked={search.isCaseSensitive} />
+						Match Case
+					</label>
+					<label class="input-group-text align-items-start gap-1" tabindex="0">
+						<input type="checkbox" class="form-check-input" bind:checked={search.isExactMatch} />
+						Exact Match
+					</label>
+					<label class="input-group-text align-items-start gap-1" tabindex="0">
+						<input type="checkbox" class="form-check-input" bind:checked={search.isRegex} />
+						Regex
+					</label>
 				</div>
-				<label class="input-group-text align-items-start gap-1" tabindex="0">
-					<input type="checkbox" class="form-check-input" bind:checked={$search.caseSensitive} />
-					Match Case
-				</label>
+				{#if $search.error}
+					<span class="text-danger">Invalid Regex: {$search.error}</span>
+				{/if}
 			</div>
 		</div>
 		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
