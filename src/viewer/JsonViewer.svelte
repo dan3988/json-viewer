@@ -272,7 +272,8 @@
 
 	.search {
 		font-size: small;
-		flex: 0 0 calc(var(--bs-border-width) * 8 + 30.65rem);
+		flex: 1 1 0;
+		max-width: 30rem;
 		position: relative;
 		width: unset;
 
@@ -298,12 +299,21 @@
 		z-index: 2;
 		position: absolute;
 		top: 100%;
+
+		:global(.btn) {
+			--bs-btn-padding-x: #{$pad-med};
+			--bs-btn-padding-y: #{$pad-med};
+		}
 	}
 	
 	.search-wrapper {
 		flex: 1 1 0;
 		z-index: 3;
 		position: relative;
+	}
+
+	.search-input {
+		padding-right: calc(5rem + 20px);
 	}
 
 	.search-overlay {
@@ -313,9 +323,10 @@
 		bottom: 0;
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.25em;
+		gap: $pad-med;
 		margin: $pad-med;
 		align-items: center;
+		background-color: var(--bs-body-bg);
 
 		> :global(.btn) {
 			--bs-btn-padding-x: 0.25em;
@@ -358,31 +369,22 @@
 							<Button title="Next" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
 						</div>
 					{/if}
+					<div class="search-options p-1 gap-1 d-flex flex-column border rounded-bottom bg-body">
+						<div class="d-flex gap-1">
+							<div class="btn-group">
+								<Button.Toggle icon="key-fill" title="Search Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
+								<Button.Toggle icon="braces" title="Search Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+							</div>
+							<Button.Toggle icon="type" title="Match Case" bind:checked={search.isCaseSensitive}/>
+							<Button.Toggle icon="quote" title="Exact Match" bind:checked={search.isExactMatch}/>
+							<Button.Toggle icon="regex" title="Regex" bind:checked={search.isRegex}/>
+						</div>
+						{#if $search.error}
+							<span class="text-danger">Invalid Regex: {$search.error}</span>
+						{/if}
+					</div>
 				</div>
 				<Button title="Clear" icon="x-lg" action={clearFilter} />
-			</div>
-			<div class="search-options p-1 gap-1 d-flex flex-column border rounded-bottom bg-body">
-				<div class="d-flex gap-1">
-					<div class="btn-group">
-						<Button.Toggle text="Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
-						<Button.Toggle text="Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
-					</div>
-					<label class="input-group-text align-items-start gap-1" tabindex="0">
-						<input type="checkbox" class="form-check-input" bind:checked={search.isCaseSensitive} />
-						Match Case
-					</label>
-					<label class="input-group-text align-items-start gap-1" tabindex="0">
-						<input type="checkbox" class="form-check-input" bind:checked={search.isExactMatch} />
-						Exact Match
-					</label>
-					<label class="input-group-text align-items-start gap-1" tabindex="0">
-						<input type="checkbox" class="form-check-input" bind:checked={search.isRegex} />
-						Regex
-					</label>
-				</div>
-				{#if $search.error}
-					<span class="text-danger">Invalid Regex: {$search.error}</span>
-				{/if}
 			</div>
 		</div>
 		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
