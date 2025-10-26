@@ -405,7 +405,7 @@
 					<div class="editor-bg h-100 w-100"></div>
 					<div class="prop-scroll overflow-scroll h-100 w-100">
 						<div class="prop-panel">
-							<JsonProperty {model} node={model.root} indent={rootIndent} />
+							<JsonProperty {model} {search} node={model.root} indent={rootIndent} />
 						</div>
 					</div>
 				</div>

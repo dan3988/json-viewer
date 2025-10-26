@@ -24,6 +24,7 @@
 	}
 </script>
 <script lang="ts">
+	import type JsonSearch from "../search.js";
 	import type { ViewerModel } from "../viewer-model.js";
 	import type { EditAction } from "../edit-stack.js";
 	import { renderValue } from "../renderer.js";
@@ -32,6 +33,7 @@
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	export let model: ViewerModel;
+	export let search: JsonSearch;
 	export let node: json.Value;
 	export let readonly = false;
 	export let editing = false;
@@ -72,7 +74,7 @@
 	}
 </script>
 <div class="root json-{subtype}" class:editing>
-	<JsonValueEditor {value} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} bind:editing onfinish={update} />
+	<JsonValueEditor {value} {search} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} bind:editing onfinish={update} />
 </div>
 <style lang="scss">
 	@use "../core.scss" as *;

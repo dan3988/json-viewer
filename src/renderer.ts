@@ -1,41 +1,49 @@
+import type json from "./json.js";
+import type { Subscriber } from "svelte/store";
+import type JsonSearch from "./search.js";
 import { isIdentifier } from "./util.js";
 
-export function renderKey(target: HTMLElement, key: string | number): Renderer<string | number> {
-	return new JsonKeyRenderer(target, key);
-}
-
-export function renderValue(target: HTMLElement, value: any): Renderer {
-	return new JsonValueRenderer(target, value);
-}
-
-export function renderText(target: HTMLElement, value: any): Renderer {
-	return new PlainTextValueRenderer(target, value);
-}
+export type RendererFunction<T = any> = (target: HTMLElement, value: T) => Renderer<T>;
 
 export interface Renderer<T = any> {
 	update(value: T): void;
 	destroy?(): void;
 }
 
-export abstract class AbstractRenderer<T> implements Renderer<T> {
-	#target: null | HTMLElement;
-	#value: any;
+type RendererParameter<T extends Renderer> = T extends Renderer<infer V> ? V : never;
 
-	constructor(target: HTMLElement, value: T) {
+export abstract class AbstractRenderer<T> implements Renderer<T> {
+	static create<T extends AbstractRenderer<any>>(this: new(target: HTMLElement, param: RendererParameter<T>) => T, target: HTMLElement, param: RendererParameter<T>): T {
+		const instance = Reflect.construct(this, [target, param]);
+		instance.onUpdate(target, param);
+		return instance;
+	}
+
+	#target: null | HTMLElement;
+	#param: any;
+
+	constructor(target: HTMLElement, param: T) {
 		this.#target = target;
-		this.#value = value;
-		this.onUpdate(target, value);
+		this.#param = param;
+		//this.onUpdate(target, param);
 		this.update = this.update.bind(this);
 		this.destroy = this.destroy.bind(this);
 	}
 
-	protected abstract onUpdate(target: HTMLElement, value: T): void;
+	protected abstract onUpdate(target: HTMLElement, param: T): void;
 
-	update(value: any): void {
-		if (this.#value !== value && this.#target != null) {
-			this.#value = value;
+	protected invalidate(): void {
+		if (this.#target) {
+			this.#target.innerHTML = '';
+			this.onUpdate(this.#target, this.#param);
+		}
+	}
+
+	update(param: any): void {
+		if (this.#param !== param && this.#target != null) {
+			this.#param = param;
 			this.#target.innerHTML = "";
-			this.onUpdate(this.#target, value);
+			this.onUpdate(this.#target, param);
 		}
 	}
 
@@ -47,76 +55,197 @@ export abstract class AbstractRenderer<T> implements Renderer<T> {
 	}
 }
 
-export class PlainTextValueRenderer extends AbstractRenderer<any> {
-	protected onUpdate(target: HTMLElement, value: any): void {
+export class PlainTextValueRenderer extends AbstractRenderer<JsonRendererParam> {
+	protected onUpdate(target: HTMLElement, { value }: JsonRendererParam): void {
 		target.innerText = String(value);
 	}
 }
 
-export class JsonValueRenderer extends AbstractRenderer<any> {
-	protected onUpdate(target: HTMLElement, value: any): void {
-		if (value === null || typeof value !== "string") {
-			target.innerText = String(value);
+export interface JsonRendererParam<T = any> {
+	value: T;
+	search?: JsonSearch;
+}
+
+type JsonRendererFn<T = any> = RendererFunction<JsonRendererParam<T>>;
+
+export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRendererParam<T>> {
+	#value: any;
+	#searchResult: null | string[] = null;
+	#search?: JsonSearch;
+	#unsub?: VoidFunction;
+	#boundOnSearch: Subscriber<JsonSearch>;
+	
+	constructor(target: HTMLElement, param: JsonRendererParam<T>) {
+		super(target, param);
+		this.#boundOnSearch = this.#onSearch.bind(this);
+	}
+
+	#onSearch(search: JsonSearch) {
+		const result = search.filter?.split(this.#value) ?? null;
+		if (this.#searchResult === result)
+			return;
+
+		if (!arrayEqual(result, this.#searchResult)) {
+			this.#searchResult = result;
+			this.invalidate();
+		}
+	}
+
+	destroy(): void {
+		super.destroy();
+		this.#unsub?.();
+	}
+
+	protected onUpdate(target: HTMLElement, { value, search }: JsonRendererParam<T>): void {
+		this.#value = value;
+
+		if (this.#search != search) {
+			this.#unsub?.();
+			this.#search = search;
+			this.#unsub = search?.listen(this.#boundOnSearch);
+			this.#searchResult = search?.filter?.split(value) ?? null;
+		}
+
+		this.renderText(target, value, this.#searchResult);
+	}
+
+	protected abstract wrapString(target: HTMLElement, text: string): HTMLElement;
+
+	protected renderText(target: HTMLElement, value: T, filter: null | string[]) {
+		let render: (target: HTMLElement, value: string) => void;
+		if (typeof value === 'string') {
+			target = this.wrapString(target, value);
+			render = renderEscapedString;
 		} else {
-			if (value.startsWith("http://") || value.startsWith("https://")) {
-				const a = document.createElement("a");
-				const text = JSON.stringify(value).slice(1, -1);
-				a.href = value;
-				a.textContent = text;
-				a.target = "_blank";
-				target.append(a);
+			render = appendSpanIf;
+		}
+
+		if (filter) {
+			if (filter.length === 1) {
+				const mark = append('mark', target);
+				render(mark, filter[0]);
 			} else {
-				renderEscapedText(target, value);
+				let i = 0;
+				while (true) {
+					render(target, filter[i]);
+					if (++i == filter.length)
+						break;
+
+					const mark = append('mark', target);
+					render(mark, filter[i++]);
+				}
 			}
-		}
-	}
-}
-
-export class JsonKeyRenderer extends AbstractRenderer<string | number> {
-	protected onUpdate(target: HTMLElement, value: string | number): void {
-		if (typeof value !== "string" || isIdentifier(value)) {
-			target.textContent = value.toString();
 		} else {
-			renderEscapedText(target, value);
+			render(target, String(value));
 		}
 	}
 }
 
-function appendSpan(parent: HTMLElement, className: string, text: string, start?: number, end?: number) {
-	const span = document.createElement("span");
-	span.textContent = start == null ? text : text.slice(start, end);
-	span.className = className;
-	parent.appendChild(span);
-	return span;
+export class JsonValueRenderer extends AbstractJsonRenderer<json.ValueType> {
+	protected wrapString(target: HTMLElement, text: string): HTMLElement {
+		target = append('span', target, 'quote');
+		if (text.startsWith('http://') || text.startsWith('https://')) {
+			const a = append('a', target);
+			a.href = text;
+			a.target = "_blank";
+			target = a;
+		}
+
+		return target;
+	}
 }
 
-function renderEscapedText(target: HTMLElement, value: string) {
-	const json = JSON.stringify(value);
+export class JsonKeyRenderer extends AbstractJsonRenderer<string | number> {
+	protected wrapString(target: HTMLElement, text: string): HTMLElement {
+		return isIdentifier(text) ? target : append('span', target, 'quote');
+	}
+}
 
-	let last = 1;
-	let i = 1;
+export const renderKey: JsonRendererFn<number | string> = AbstractRenderer.create.bind(JsonKeyRenderer);
+export const renderValue: JsonRendererFn<number | string> = AbstractRenderer.create.bind(JsonValueRenderer);
+export const renderText: JsonRendererFn = AbstractRenderer.create.bind(PlainTextValueRenderer);
 
-	appendSpan(target, "quot", "\"");
+function appendSpanIf(parent: HTMLElement, text: string, start?: number, end?: number) {
+	if ((text = text.slice(start, end)))
+		append('span', parent, '', text);
+}
 
-	while (true) {
-		let next = json.indexOf("\\", i);
-		if (next < 0) {
-			appendSpan(target, "", json, last, -1);
-			appendSpan(target, "quot", "\"");
-			break;
+function append<E extends keyof HTMLElementTagNameMap>(tag: E, parent: HTMLElement, className: string = '', text?: string): HTMLElementTagNameMap[E] {
+	const element = document.createElement(tag);
+	if (text != null)
+		element.textContent = text;
+
+	if (className)
+		element.className = className;
+
+	parent.appendChild(element);
+	return element;
+}
+
+const replacements = Object.setPrototypeOf({
+	'"': '\\"',
+	'\\': '\\\\',
+	'\b': '\\b',
+	'\f': '\\f',
+	'\n': '\\n',
+	'\r': '\\r',
+	'\t': '\\t',
+	'\v': '\\v',
+	'\0': '\\0',
+}, null);
+
+function* range(start: number, end: number) {
+	yield start;
+	while (++start <= end)
+		yield start;
+}
+
+for (const code of [
+	...range(0, 0x07),
+	...range(0x000e, 0x001f),
+	...range(0x007f, 0x009f),
+	...range(0x2000, 0x200f),
+	...range(0x2028, 0x202f),
+	...range(0x205f, 0x206f),
+	0x3000,
+	0xFEFF,
+]) {
+	const str = String.fromCharCode(code);
+	replacements[str] = '\\u' + code.toString(16).padStart(4, '0');
+}
+
+function renderEscapedString(target: HTMLElement, text: string) {
+	let last = 0;
+	let i = 0;
+
+	while (i < text.length) {
+		const c = text[i];
+		const replacement = replacements[c];
+		if (replacement !== undefined) {
+			appendSpanIf(target, text, last, i);
+			append('span', target, 'esc', replacement);
+			last = ++i;
 		} else {
-			if (last < next)
-				appendSpan(target, "", json, last, last = next);
-
-			let char = json.charAt(++last);
-			if (char !== "u") {
-				appendSpan(target, "esc", "\\" + char);
-				last++;
-			} else {
-				appendSpan(target, "esc", json, next, last += 5);
-			}
-
-			i = last;
+			i++;
 		}
 	}
+
+	appendSpanIf(target, text, last);
+}
+
+function arrayEqual(x: Opt<any[]>, y: Opt<any[]>) {
+	if (x === y)
+		return true;
+
+	if (x == null)
+		return y == null;
+
+	if (y == null || x.length != y.length)
+		return false;
+
+	for (let i = 0; i < x.length; i++)
+		if (x[i] !== y[i])
+			return false;
+
+	return true;
 }

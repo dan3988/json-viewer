@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ViewerModel, ViewerCommandEvent } from "../viewer-model";
+	import type JsonSearch from "../search";
 	import type json from "../json";
 	import edits from "../viewer/editor-helper.js";
 	import { onDestroy } from "svelte";
@@ -7,6 +8,7 @@
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	export let model: ViewerModel;
+	export let search: undefined | JsonSearch = undefined;
 	export let node: json.Node;
 	export let selected: boolean;
 	export let readonly = false;
@@ -48,13 +50,13 @@
 	}
 </script>
 <div bind:this={element} class="root" class:number={isNumber} class:selected>
-	<span class="key-text">
-		{#if typeof key === 'number'}
-			{key}
-		{:else}
-			<JsonValueEditor value={key} parse={String} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
-		{/if}
-	</span>
+	{#if typeof key === 'number'}
+		<span class="key-text" use:renderKey={{ value: key, search }} />
+	{:else}
+		<span class="key-text">
+			<JsonValueEditor value={key} parse={String} {search} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
+		</span>
+	{/if}
 	<slot />
 </div>
 <style lang="scss">

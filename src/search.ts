@@ -83,6 +83,14 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 		}
 	}
 
+	get searchKeys() {
+		return !!(this.#mode & JsonSearch.Mode.Keys);
+	}
+
+	get searchValues() {
+		return !!(this.#mode & JsonSearch.Mode.Values);
+	}
+
 	#filterOrError: JsonSearch.Filter | string = '';
 	get filter(): JsonSearch.Filter | null {
 		const v = this.#filterOrError;
@@ -96,6 +104,10 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 
 	constructor(root: json.Node) {
 		this.#root = root;
+	}
+
+	listen(run: Subscriber<JsonSearch>) {
+		return this.#listeners.listen(run);
 	}
 
 	subscribe(run: Subscriber<JsonSearch>, invalidate?: Invalidator<JsonSearch> | undefined): Unsubscriber {
@@ -117,20 +129,23 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 
 		let f = this.#filterOrError;
 		if (recompile) {
+			f = '';
 			let text = this.#text;
-			if (this.#isRegex) {
-				if (this.#isExactMatch)
-					text = `^${text}$`;
+			if (text) {
+				if (this.#isRegex) {
+					if (this.#isExactMatch)
+						text = `^${text}$`;
 
-				const flag = this.#isCaseSensitive ? '' : 'i';
-				try {
-					const regex = new RegExp(text, flag);
-					f = new RegexFilter(regex);
-				} catch (error) {
-					f = getRegexError(error, text, flag);
+					const flag = this.#isCaseSensitive ? '' : 'i';
+					try {
+						const regex = new RegExp(text, flag);
+						f = new RegexFilter(regex);
+					} catch (error) {
+						f = getRegexError(error, text, flag);
+					}
+				} else {
+					f = new TextFilter(text, this.#isCaseSensitive, this.#isExactMatch);
 				}
-			} else {
-				f = new TextFilter(text, this.#isCaseSensitive, this.#isExactMatch);
 			}
 
 			this.#filterOrError = f;
@@ -161,24 +176,53 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 
 class TextFilter implements JsonSearch.Filter {
 	readonly #text: string;
-	readonly #compare: (filter: string, value: string) => boolean;
-	readonly #stringify: (value: any) => string;
+	readonly #matchCase: boolean;
+	readonly #exactMatch: boolean;
 
 	constructor(text: string, matchCase: boolean, exactMatch: boolean) {
-		if (matchCase) {
-			this.#text = text;
-			this.#stringify = String;
-		} else {
-			this.#text = text.toLowerCase();
-			this.#stringify = toLowerString;
-		}
-
-		this.#compare = exactMatch ? isEqual : contains;
+		this.#text = matchCase ? text : text.toLowerCase();
+		this.#matchCase = matchCase;
+		this.#exactMatch = exactMatch;
 	}
 
-	check(text: any): boolean {
-		text = this.#stringify(text);
-		return this.#compare(this.#text, text);
+	check(value: any): boolean {
+		let text = String(value);
+		if (!this.#matchCase)
+			text = text.toLowerCase();
+
+		if (this.#exactMatch) {
+			return this.#text === text;
+		} else {
+			return text.includes(this.#text)
+		}
+	}
+
+	split(value: any): null | string[] {
+		const search = this.#text;
+		const text = String(value);
+		const matcher = this.#matchCase ? text : text.toLowerCase();
+		
+		if (this.#exactMatch)
+			return this.#text === matcher ? [text] : null;
+
+		let i = matcher.indexOf(search);
+		if (i < 0)
+			return null;
+		
+		let last = 0;
+		const results: string[] = [];
+		while (true) {
+			const end = i + search.length;
+			const matchText = this.#matchCase ? search : text.slice(i, end);
+			results.push(text.slice(last, i), matchText);
+
+			last = end;
+			i = matcher.indexOf(search, end);
+			if (i < 0) {
+				results.push(text.slice(end));
+				return results;
+			}
+		}
 	}
 }
 
@@ -189,8 +233,44 @@ class RegexFilter implements JsonSearch.Filter {
 		this.#regex = regex;
 	}
 
-	check(text: any): boolean {
-		return this.#regex.test(text);
+	check(value: any): boolean {
+		return this.#regex.test(value);
+	}
+	
+	split(value: any): null | string[] {
+		const regex = this.#regex;
+		let text = String(value);
+		let match = regex.exec(text);
+		if (!match)
+			return null;
+
+		const results: string[] = [];
+		const prefix = text.slice(0, match.index);
+
+		let [lastMatch] = match;
+		results.push(prefix);
+		text = text.slice(match.index + lastMatch.length);
+
+		while (true) {
+			match = regex.exec(text);
+			if (!match)
+				break;
+
+			const [matchText] = match;
+			if (match.index === 0) {
+				lastMatch += matchText;
+				text = text.slice(matchText.length);
+				continue;
+			}
+
+			const prefix = text.slice(0, match.index);
+			results.push(lastMatch, prefix);
+			text = text.slice(match.index + matchText.length);
+			lastMatch = matchText;
+		}
+
+		results.push(lastMatch, text);
+		return results;
 	}
 }
 
@@ -204,6 +284,7 @@ export namespace JsonSearch {
 
 	export interface Filter {
 		check(text: any): boolean;
+		split(text: any): null | string[];
 	}
 }
 

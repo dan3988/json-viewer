@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type Indent from "../indent.js";
+	import type JsonSearch from "../search.js";
+	import type json from "../json.js";
 	import type { ViewerModel, SelectedNodeList } from "../viewer-model.js";
 	import { onDestroy, onMount } from "svelte";
 	import JsonActions from "./JsonActions.svelte";
@@ -7,10 +9,10 @@
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 	import JsonValue from "./JsonValue.svelte";
 	import JsonInsert, { InserterManager } from "./JsonInsert.svelte";
-	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
 
 	export let model: ViewerModel;
+	export let search: JsonSearch;
 	export let node: json.Node;
 	export let indent: Indent;
 	export let readonly = false;
@@ -181,6 +183,17 @@
 		z-index: 5;
 	}
 
+	:global(.quote) {
+		&::before, &::after {
+			content: "\"";
+		}
+	}
+
+	:global(mark) {
+		padding: $pad-small;
+		margin: $pad-small * -1;
+	}
+
 	:global(.esc) {
 		color: var(--jv-num-fg);
 	}
@@ -349,7 +362,7 @@
 	on:mousedown={onMouseDown}>
 	<span class="json-key" class:json-selected={selected} on:contextmenu={openMenu}>
 		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
-			<JsonPropertyKey {model} {node} {readonly} {selected} bind:editing={editingName}>
+			<JsonPropertyKey {model} {search} {node} {readonly} {selected} bind:editing={editingName}>
 				<div class="json-actions-root">
 					{#if menuOpen}
 						<JsonActions
@@ -391,7 +404,7 @@
 							</li>
 						{:else}
 							<li class="json-container-item">
-								<svelte:self {model} {node} {readonly}
+								<svelte:self {model} {node} {readonly} {search}
 									remove={() => model.edits.push(edits.remove(node))}
 									indent={indent.next}
 								/>
@@ -406,7 +419,7 @@
 		{/if}
 	{:else if node.isValue()}
 		<span class="json-value">
-			<JsonValue {model} {node} {readonly} onediting={startEditing} bind:editing={editingValue} />
+			<JsonValue {model} {node} {readonly} {search} onediting={startEditing} bind:editing={editingValue} />
 		</span>
 	{/if}
 </div>

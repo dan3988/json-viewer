@@ -1,15 +1,18 @@
 <script lang="ts">
+	import JsonSearch from "../search";
+	import type { JsonRendererParam, Renderer } from "../renderer";
 	import "../dom-extensions";
 	import Button from "../components/button";
 	import { InserterManager } from "./JsonInsert.svelte";
-	import { renderText, type Renderer } from "../renderer";
+	import { renderText } from "../renderer";
 
 	type T = $$Generic<any>;
 
 	export let value: T;
+	export let search: undefined | JsonSearch = undefined;
 	export let parse: (text: string) => T;
 	export let serialize: (value: T) => string = String;
-	export let renderer: (target: HTMLElement, value: T) => Renderer = renderText;
+	export let renderer: (target: HTMLElement, value: JsonRendererParam<T>) => Renderer = renderText;
 	export let readonly = false;
 	export let editing = false;
 	export let onfinish: ((value: T, group: boolean) => void) | Falsy = undefined;
@@ -134,7 +137,7 @@
 		{#if typeof value === 'boolean'}
 			<input type="checkbox" class:readonly use:blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
 		{/if}
-		<span class="preview" use:renderer={value}></span>
+		<span class="preview" use:renderer={{ value, search }}></span>
 		{#if typeof value === 'number' && !readonly}
 			<div class="btn-grop d-flex number-steps" use:blocker on:click|stopPropagation on:dblclick|stopPropagation>
 				<Button.Theme style="faded">
