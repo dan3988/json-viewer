@@ -391,13 +391,13 @@
 			<span class="gutter" on:click|stopPropagation={onGutterClicked}></span>
 			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 			<ul class="json-container json-{node.subtype} p-0" on:click|stopPropagation>
+				<li class="json-container-gap">
+					<JsonInsert insert={(type) => insert(0, type)} />
+				</li>
 				{#if children.length === 0}
 					<li class="container-empty">empty</li>
 				{:else}
 					{#each children as node, i (node)}
-						<li class="json-container-gap">
-							<JsonInsert insert={(type) => insert(i, type)} />
-						</li>
 						{#if typeof node === 'function'}
 							<li class="json-key-placeholder json-selected">
 								<JsonValueEditor value="" parse={String} editing onfinish={node} oncancel={() => removePendingEdit(i)} />
@@ -410,10 +410,10 @@
 								/>
 							</li>
 						{/if}
+						<li class="json-container-gap">
+							<JsonInsert insert={(type) => insert(i + 1, type)} />
+						</li>
 					{/each}
-					<li class="json-container-gap">
-						<JsonInsert insert={(type) => insert(children.length, type)} />
-					</li>
 				{/if}
 			</ul>
 		{/if}
