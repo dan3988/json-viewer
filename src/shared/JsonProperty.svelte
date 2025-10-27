@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type Indent from "../indent.js";
-	import type JsonSearch from "../search.js";
 	import type json from "../json.js";
 	import type { ViewerModel, SelectedNodeList } from "../viewer-model.js";
 	import { onDestroy, onMount } from "svelte";
@@ -9,6 +8,7 @@
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 	import JsonValue from "./JsonValue.svelte";
 	import JsonInsert, { InserterManager } from "./JsonInsert.svelte";
+	import JsonSearch from "../search.js";
 	import edits from "../viewer/editor-helper.js";
 
 	export let model: ViewerModel;

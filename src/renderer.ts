@@ -1,6 +1,6 @@
 import type json from "./json.js";
 import type { Subscriber } from "svelte/store";
-import type JsonSearch from "./search.js";
+import JsonSearch from "./search.js";
 import { isIdentifier } from "./util.js";
 
 export type RendererFunction<T = any> = (target: HTMLElement, value: T) => Renderer<T>;
@@ -64,12 +64,14 @@ export class PlainTextValueRenderer extends AbstractRenderer<JsonRendererParam> 
 export interface JsonRendererParam<T = any> {
 	value: T;
 	search?: JsonSearch;
+	searchFlag: JsonSearch.Mode;
 }
 
 type JsonRendererFn<T = any> = RendererFunction<JsonRendererParam<T>>;
 
 export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRendererParam<T>> {
 	#value: any;
+	#searchFlag: JsonSearch.Mode = JsonSearch.Mode.None;
 	#searchResult: null | string[] = null;
 	#search?: JsonSearch;
 	#unsub?: VoidFunction;
@@ -81,7 +83,10 @@ export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRende
 	}
 
 	#onSearch(search: JsonSearch) {
-		const result = search.filter?.split(this.#value) ?? null;
+		let result: null | string[] = null;
+		if (search.filter && (search.mode & this.#searchFlag))
+			result = search.filter.split(this.#value);
+
 		if (this.#searchResult === result)
 			return;
 
@@ -96,8 +101,9 @@ export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRende
 		this.#unsub?.();
 	}
 
-	protected onUpdate(target: HTMLElement, { value, search }: JsonRendererParam<T>): void {
+	protected onUpdate(target: HTMLElement, { value, search, searchFlag }: JsonRendererParam<T>): void {
 		this.#value = value;
+		this.#searchFlag = searchFlag;
 
 		if (this.#search != search) {
 			this.#unsub?.();
