@@ -74,7 +74,7 @@
 	}
 </script>
 <div class="root json-{subtype}" class:editing>
-	<JsonValueEditor {value} {search} searchFlag={JsonSearch.Mode.Values} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} bind:editing onfinish={update} />
+	<JsonValueEditor {value} {search} searchType={JsonSearch.Mode.Values} {serialize} {parse} renderer={renderValue} {onediting} autoSelect {readonly} bind:editing onfinish={update} />
 </div>
 <style lang="scss">
 	@use "../core.scss" as *;

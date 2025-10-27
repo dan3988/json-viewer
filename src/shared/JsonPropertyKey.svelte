@@ -7,7 +7,7 @@
 	import { renderKey } from "../renderer";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
-	const searchFlag = JsonSearch.Mode.Keys;
+	const searchType = JsonSearch.Mode.Keys;
 
 	export let model: ViewerModel;
 	export let search: undefined | JsonSearch = undefined;
@@ -53,10 +53,10 @@
 </script>
 <div bind:this={element} class="root" class:number={isNumber} class:selected>
 	{#if typeof key === 'number'}
-		<span class="key-text" use:renderKey={{ value: key, search, searchFlag }} />
+		<span class="key-text" use:renderKey={{ value: key, search, searchType }} />
 	{:else}
 		<span class="key-text">
-			<JsonValueEditor value={key} parse={String} {search} {searchFlag} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
+			<JsonValueEditor value={key} parse={String} {search} {searchType} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
 		</span>
 	{/if}
 	<slot />

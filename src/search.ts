@@ -2,18 +2,6 @@ import type { Invalidator, Readable, Subscriber, Unsubscriber } from "svelte/sto
 import type json from "./json";
 import { StoreListeners } from "./store";
 
-function toLowerString(value: any) {
-	return String.prototype.toLowerCase.call(value);
-}
-
-function isEqual(filter: string, value: string) {
-	return filter === value;
-}
-
-function contains(filter: string, value: string) {
-	return value.includes(filter);
-}
-
 export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 	readonly #listeners = new StoreListeners<JsonSearch>;
 	readonly #results = new Map<number, json.Node>;
@@ -154,23 +142,24 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 		if (typeof f !== 'string') {
 			const keys = !!(this.#mode & JsonSearch.Mode.Keys);
 			const values = !!(this.#mode & JsonSearch.Mode.Values);
-			this.#checkNode(this.#root, f, keys, values);
+			this.#checkNode(this.#root, f, keys, values, false);
 		}
 
 		this.#listeners.fire(this);
 	}
 
-	#checkNode(node: json.Node, filter: JsonSearch.Filter, keys: boolean, values: boolean) {
+	#checkNode(node: json.Node, filter: JsonSearch.Filter, keys: boolean, values: boolean, isObject: boolean) {
 		let match: any = false;
-		match ||= keys && node.key && filter.check(node.key);
+		match ||= keys && isObject && node.key && filter.check(node.key);
 		match ||= values && node.isValue() && filter.check(node.value);
 
 		if (match) {
 			this.#results.set(node.id, node);
 		}
 
+		isObject = node.isObject();
 		for (const child of node)
-			this.#checkNode(child, filter, keys, values);
+			this.#checkNode(child, filter, keys, values, isObject);
 	}
 }
 

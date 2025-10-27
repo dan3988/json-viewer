@@ -64,14 +64,14 @@ export class PlainTextValueRenderer extends AbstractRenderer<JsonRendererParam> 
 export interface JsonRendererParam<T = any> {
 	value: T;
 	search?: JsonSearch;
-	searchFlag: JsonSearch.Mode;
+	searchType: JsonSearch.Mode;
 }
 
 type JsonRendererFn<T = any> = RendererFunction<JsonRendererParam<T>>;
 
 export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRendererParam<T>> {
 	#value: any;
-	#searchFlag: JsonSearch.Mode = JsonSearch.Mode.None;
+	#searchType: JsonSearch.Mode = JsonSearch.Mode.None;
 	#searchResult: null | string[] = null;
 	#search?: JsonSearch;
 	#unsub?: VoidFunction;
@@ -84,7 +84,7 @@ export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRende
 
 	#onSearch(search: JsonSearch) {
 		let result: null | string[] = null;
-		if (search.filter && (search.mode & this.#searchFlag))
+		if (search.filter && (search.mode & this.#searchType) && (this.#searchType !== JsonSearch.Mode.Keys || typeof this.#value === 'string'))
 			result = search.filter.split(this.#value);
 
 		if (this.#searchResult === result)
@@ -101,9 +101,9 @@ export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRende
 		this.#unsub?.();
 	}
 
-	protected onUpdate(target: HTMLElement, { value, search, searchFlag }: JsonRendererParam<T>): void {
+	protected onUpdate(target: HTMLElement, { value, search, searchType }: JsonRendererParam<T>): void {
 		this.#value = value;
-		this.#searchFlag = searchFlag;
+		this.#searchType = searchType;
 
 		if (this.#search != search) {
 			this.#unsub?.();
