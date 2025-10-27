@@ -82,18 +82,21 @@ export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRende
 		this.#boundOnSearch = this.#onSearch.bind(this);
 	}
 
-	#onSearch(search: JsonSearch) {
+	#updateSearch(search: JsonSearch) {
 		let result: null | string[] = null;
 		if (search.filter && (search.mode & this.#searchType) && (this.#searchType !== JsonSearch.Mode.Keys || typeof this.#value === 'string'))
 			result = search.filter.split(this.#value);
 
-		if (this.#searchResult === result)
-			return;
+		if (arrayEqual(result, this.#searchResult))
+			return false;
 
-		if (!arrayEqual(result, this.#searchResult)) {
-			this.#searchResult = result;
+		this.#searchResult = result;
+		return true;
+	}
+
+	#onSearch(search: JsonSearch) {
+		if (this.#updateSearch(search))
 			this.invalidate();
-		}
 	}
 
 	destroy(): void {
@@ -108,8 +111,13 @@ export abstract class AbstractJsonRenderer<T> extends AbstractRenderer<JsonRende
 		if (this.#search != search) {
 			this.#unsub?.();
 			this.#search = search;
-			this.#unsub = search?.listen(this.#boundOnSearch);
-			this.#searchResult = search?.filter?.split(value) ?? null;
+			if (search) {
+				this.#unsub = search.listen(this.#boundOnSearch);
+				this.#updateSearch(search);
+			} else {
+				this.#unsub = undefined;
+				this.#searchResult = null;
+			}
 		}
 
 		this.renderText(target, value, this.#searchResult);
