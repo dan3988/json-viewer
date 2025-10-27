@@ -221,7 +221,7 @@ abstract class JContainer<C extends json.Key = json.Key> extends Node<C> impleme
 		if (child.next) {
 			child.next._setPrevious(child.previous);
 		} else {
-			this.last = child.next;
+			this.last = child.previous;
 		}
 
 		child._removed();
