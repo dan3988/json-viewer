@@ -781,6 +781,8 @@ class JArray extends JContainer<number> implements json.Array {
 		} else if (index) {
 			this.#addWithGap(index, node);
 		}
+
+		this._fireChanged();
 	}
 }
 
