@@ -160,12 +160,22 @@ export class JsonValueRenderer extends AbstractJsonRenderer<json.ValueType> {
 		target = append('span', target, 'quote');
 		if (text.startsWith('http://') || text.startsWith('https://')) {
 			const a = append('a', target);
+			a.addEventListener('click', onLinkClick);
+			a.title = 'CTRL + Click to open';
 			a.href = text;
 			a.target = "_blank";
 			target = a;
 		}
 
 		return target;
+	}
+}
+
+function onLinkClick(this: HTMLAnchorElement, e: MouseEvent) {
+	if (e.ctrlKey) {
+		e.stopPropagation();
+		e.preventDefault();
+		open(this.href, this.target)?.focus();
 	}
 }
 
