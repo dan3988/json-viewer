@@ -232,6 +232,18 @@
 	.w-bar {
 		display: flex;
 		grid-area: bar;
+
+
+		:global(.btn) {
+			--bs-btn-font-size: inherit;
+			--bs-btn-padding-x: .5rem;
+			--bs-btn-padding-y: .25rem;
+		}
+
+		.input-group-text, .form-control {
+			font-size: inherit;
+			padding: .25rem .5rem;
+		}
 	}
 
 	.w-path {
@@ -271,9 +283,8 @@
 	}
 
 	.search {
-		font-size: small;
 		flex: 1 1 0;
-		max-width: 30rem;
+		max-width: 30em;
 		position: relative;
 		width: unset;
 
@@ -301,8 +312,8 @@
 		top: 100%;
 
 		:global(.btn) {
-			--bs-btn-padding-x: #{$pad-med};
-			--bs-btn-padding-y: #{$pad-med};
+			--bs-btn-padding-x: .25rem;
+			--bs-btn-padding-y: .25rem;
 		}
 	}
 	
