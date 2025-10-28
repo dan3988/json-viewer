@@ -288,19 +288,8 @@
 		position: relative;
 		width: unset;
 
-		> .input-group {
-			> :global(:first-child) {
-				border-bottom-left-radius: var(--border-bottom-radius, var(--bs-border-radius));
-			}
-
-			> :global(:last-child) {
-				border-bottom-right-radius: var(--border-bottom-radius, var(--bs-border-radius));
-			}
-		}
-
 		&.open {
 			--search-visbility: visible;
-			--border-bottom-radius: 0;
 		}
 	}
 
