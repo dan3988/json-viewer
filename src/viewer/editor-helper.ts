@@ -68,25 +68,22 @@ export namespace edits {
 	export function remove(node: json.Node): EditAction;
 	export function remove(nodes: Iterable<json.Node>): EditAction;
 	export function remove(arg: json.Node | Iterable<json.Node>): EditAction {
-		if (arg instanceof json.Node)
-			arg = Linq.repeat(arg, 1);
+		const nodes = arg instanceof json.Node ? [arg] : [...arg];
+		const actions: VoidFunction[] = [];
 
-		const nodes = Linq(arg)
-			.select(v => [v, createDeleteRevert(v)] as const)
-			.toArray();
-
-		const [last] = nodes.at(-1) ?? [];
+		const last = nodes.at(-1);
 
 		function commit() {
-			for (const [node] of nodes) {
+			for (const node of nodes) {
+				const revert = createDeleteRevert(node);
+				actions.push(revert);
 				node.remove();
 			}
 		}
 
 		function revert() {
-			for (const [, revert] of nodes) {
-				revert();
-			}
+			while (actions.length)
+				actions.pop()!.call(undefined);
 		}
 
 		return new EditAction(commit, revert, {
