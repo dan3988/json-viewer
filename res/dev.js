@@ -22,7 +22,14 @@ function dataUrlToBlob(url, x, y, w, h) {
 	});
 }
 
-const [dw, dh, url, delayVal, update, single, start, frame] = get("dw", "dh", "url", "delay", "btn-go", "btn-single", "btn-start", "view");
+const [res, dw, dh, url, delayVal, update, single, start, frame] = get("resolution", "dw", "dh", "url", "delay", "btn-go", "btn-single", "btn-start", "view");
+
+function updateRes() {
+	[dw.value, dh.value] = res.value.split("x");
+}
+
+res.addEventListener("input", updateRes);
+updateRes();
 
 update.addEventListener("click", () => {
 	const w = dw.valueAsNumber;
@@ -63,73 +70,46 @@ async function takeScreenshots(dir) {
 	}
 
 	async function captureScheme(darkMode, scheme) {
-		let fileName = scheme;
-		if (darkMode != null)
-			fileName += darkMode ? "-dk" : "-lt";
+		let filename = scheme;
+		filename = filename.replace('_light', '-lt');
+		filename = filename.replace('_dark', '-dk');
+		filename += '.png';
 
-		fileName += ".png";
+		const prefs = { darkMode };
 
-		await chrome.storage.local.set({ darkMode, scheme });
+		prefs[darkMode ? 'schemeDark' : 'schemeLight'] = scheme;
+
+		await chrome.storage.local.set(prefs);
 		await delay(600);
 
 		const blob = await capture();
-		await saveBlob(blob, fileName);
+		await saveBlob(blob, filename);
 	}
 
-	for (const [name, { mode }] of Object.entries(schemes)) {
-		if (mode === "auto") {
-			await captureScheme(true, name);
-			await captureScheme(false, name);
-		} else {
-			await captureScheme(null, name);
-		}
-	}
+	for (const scheme of lightSchemes)
+		await captureScheme(false, scheme);
+
+	for (const scheme of darkSchemes)
+		await captureScheme(true, scheme);
 }
 
-var schemes = {
-	"default": {
-		"name": "Visual Studio",
-		"indents": 3,
-		"mode": "auto"
-	},
-	"dracula": {
-		"name": "Dracula",
-		"indents": 6,
-		"mode": "auto"
-	},
-	"abyss": {
-		"name": "Abyss",
-		"indents": 3,
-		"mode": "dark"
-	},
-	"mat": {
-		"name": "Material",
-		"indents": 6,
-		"mode": "auto"
-	},
-	"monokai": {
-		"name": "Monokai",
-		"indents": 3,
-		"mode": "auto"
-	},
-	"github": {
-		"name": "GitHub",
-		"indents": 3,
-		"mode": "auto"
-	},
-	"cyberpunk": {
-		"name": "Cyberpunk",
-		"indents": 3,
-		"mode": "dark"
-	},
-	"terminal": {
-		"name": "Matrix",
-		"indents": 3,
-		"mode": "dark"
-	},
-	"solarized": {
-		"name": "Solarized",
-		"indents": 3,
-		"mode": "auto"
-	}
-}
+var lightSchemes = [
+	'default_light',
+	'dracula_light',
+	'mat_light',
+	'monokai_light',
+	'github_light',
+	'solarized_light',
+];
+
+var darkSchemes = [
+	'abyss',
+	'default_dark',
+	'dracula_dark',
+	'mat_dark',
+	'monokai_dark',
+	'github_dark',
+	'cyberpunk',
+	'terminal',
+	'solarized_dark',
+];

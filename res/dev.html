@@ -9,8 +9,8 @@
 				position: absolute;
 				inset: 0;
 				display: grid;
-				grid-template-columns: 1fr 5rem 20rem 1fr;
-				grid-template-rows: repeat(5, auto) 1fr;
+				grid-template-columns: 1fr 7rem 20rem 1fr;
+				grid-template-rows: repeat(6, auto) 1fr;
 				margin: 5px auto;
 				row-gap: 5px;
 			}
@@ -43,6 +43,13 @@
 		<script type="module" src="theme-lite.js"></script>
 	</head>
 	<body>
+		<div class="input-group">
+			<span class="input-group-text">Resolution</span>
+			<select id="resolution">
+				<option>800x520</option>
+				<option>1280x800</option>
+			</select>
+		</div>
 		<div class="input-group">
 			<span class="input-group-text">Width</span>
 			<input id="dw" type="number" class="form-control" value="1280"/>
