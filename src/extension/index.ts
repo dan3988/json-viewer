@@ -116,12 +116,12 @@ class ExtensionListener {
 		switch (message.type) {
 			case "remember":
 				if (sender.url) {
-					const url = new URL(sender.url);
+					const { host } = new URL(sender.url);
 					const [key, set] = message.autoload ? ["whitelist", this.#whitelist] as const : ["blacklist", this.#blacklist] as const;
 					return this.#withPrefs(prefs => {
-						if (!set.has(url.host)) {
+						if (host && !set.has(host)) {
 							const list = prefs.getValue(key)
-							const updated = ImmutableArray.append(list, url.host);
+							const updated = ImmutableArray.append(list, host);
 							preferences.lite.manager.set(key, updated);
 							return true;
 						}
