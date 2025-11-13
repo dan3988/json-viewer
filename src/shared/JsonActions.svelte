@@ -92,21 +92,27 @@
 		display: flex;
 
 		> :global(.btn) {
+			gap: 0.5em !important;
 			--bs-btn-padding-x: #{$pad-med};
-			--bs-btn-padding-y: #{$pad-med};
+			--bs-btn-padding-y: #{$pad-small};
 			font-size: inherit;
 		}
 	}
 
-	.menu-choice > :global(.btn) {
-		--bs-btn-padding-x: calc(#{$pad-med} + 0.25em);
+	.menu-choice {
+		padding: 0 $pad-med;
+
+		> :global(.btn) {
+			--bs-btn-padding-x: #{$pad-med};
+			--bs-btn-padding-y: #{$pad-med};
+		}
 	}
 
 	.menu-root {
+		width: 15em;
 		outline: none;
 		transform-origin: top left;
 		--bs-bg-opacity: 0.5;
-		font-size: 0.85em;
 		padding: $pad-small;
 		flex-direction: column;
 		backdrop-filter: blur(5px);
@@ -129,7 +135,6 @@
 	.row-text {
 		color: rgba(var(--bs-tertiary-color-rgb), 0.75);
 		gap: .5em;
-		padding: $pad-med;
 		border: 1px solid transparent;
 		flex: 1 1 0;
 		align-items: center;
