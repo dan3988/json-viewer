@@ -109,7 +109,6 @@ class ExtensionListener {
 	}
 
 	handleMessage(message: WorkerMessage, sender: chrome.runtime.MessageSender) {
-		console.log(message);
 		const tabId = sender.tab?.id;
 		if (tabId == null)
 			return;
