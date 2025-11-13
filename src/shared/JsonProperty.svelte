@@ -12,7 +12,7 @@
 	import edits from "../viewer/editor-helper.js";
 
 	export let model: ViewerModel;
-	export let search: JsonSearch;
+	export let search: JsonSearch | undefined = undefined;
 	export let node: json.Node;
 	export let indent: Indent;
 	export let readonly = false;
