@@ -112,7 +112,8 @@ A modern browser extension to visualise, traverse and search JSON. Made with [Sv
 * Navigate to previously selected properties using your browser history
 * Search for text in keys, values or both
 * Evaluate JPath expressions
-* Dark and light mode
+* Edit data and undo/redo changes
+* Dark and light mode support
 * Multiple customisable colour schemes
 
 ## Building
