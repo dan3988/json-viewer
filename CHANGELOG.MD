@@ -1,6 +1,7 @@
 # Changelog
 
 ## [1.1.0]
+
 - UI improvements to color scheme editor
 - Performance improvements
 - Added inline value and property key editing
