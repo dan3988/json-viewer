@@ -27,6 +27,8 @@ jobs:
         browser: [chrome, firefox]
     steps:
     - uses: actions/checkout@v3
+    - name: Set Version
+      run: echo "EXT_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
     - name: Use Node.js 18
       uses: actions/setup-node@v3
       with:
@@ -39,5 +41,5 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.browser }}
+        name: "json-viewer-${{ matrix.browser }}-${{ env.EXT_VERSION }}"
         path: ./out/${{ matrix.browser }}
