@@ -7,12 +7,12 @@
 
 @font-face {
 	font-family: "IBM Plex Mono";
-	src: url("chrome-extension://__MSG_@@extension_id__/res/fonts/IBMPlexMono-Regular.woff2");
+	src: ext-url("res/fonts/IBMPlexMono-Regular.woff2");
 }
 
 @font-face {
 	font-family: "JetBrains Mono";
-	src: url("chrome-extension://__MSG_@@extension_id__/res/fonts/JetBrainsMono-Regular.woff2");
+	src: ext-url("res/fonts/JetBrainsMono-Regular.woff2");
 }
 
 :root {
