@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1]
+
+- Fixed font files not loading in firefox
+- Fixed infinite loop when using match all regex filter
+
 ## [1.1.0]
 
 - Added inline value and property key editing
