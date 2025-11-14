@@ -237,6 +237,9 @@ class RegexFilter implements JsonSearch.Filter {
 		const prefix = text.slice(0, match.index);
 
 		let [lastMatch] = match;
+		if (!lastMatch)
+			return [text];
+
 		results.push(prefix);
 		text = text.slice(match.index + lastMatch.length);
 
