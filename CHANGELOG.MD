@@ -2,13 +2,13 @@
 
 ## [1.1.0]
 
-- UI improvements to color scheme editor
-- Performance improvements
 - Added inline value and property key editing
 - Added font family and size settings
 - Improved array/object item insertion
 - Improved context menu
 - Improved JSON search
+- UI improvements to color scheme editor
+- Performance improvements
 - Fixed error when deleting a custom scheme in the settings page
 - Fixed auto-complete list not rendering properly when typing uppercase text
 - Fixed auto-complete filter not clearing when un-focusing
