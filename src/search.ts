@@ -240,7 +240,7 @@ class RegexFilter implements JsonSearch.Filter {
 		results.push(prefix);
 		text = text.slice(match.index + lastMatch.length);
 
-		while (true) {
+		while (text) {
 			match = regex.exec(text);
 			if (!match)
 				break;
