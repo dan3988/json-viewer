@@ -3,8 +3,9 @@
 	const repeatInterval = 100;
 </script>
 <script lang="ts">
-	import Button from "./button";
-	import Icon from "./Icon.svelte";
+	import type Button from "../button.js";
+	import ButtonThemeData from "./theme";
+	import Icon from "../Icon.svelte";
 	import { onDestroy } from "svelte";
 
 	export let style: Button.Style | undefined = undefined;
@@ -14,7 +15,7 @@
 	export let action: EventHandler<void, MouseEvent> | Falsy = undefined;
 	export let text: string | undefined = undefined;
 
-	const theme = Button.ThemeData.current;
+	const theme = ButtonThemeData.current;
 
 	let timeout = 0;
 	let isClick = true;
