@@ -3,15 +3,15 @@
 
 	export let scheme: schemes.ColorScheme;
 	export let darkMode: boolean;
-	export let fontSize: number;
-	export let fontFamily: string;
+	export let fontSize: number | undefined = undefined;
+	export let fontFamily: string | undefined = undefined;
 
 	let schemeStyle: undefined | HTMLStyleElement;
 	let fontStyle: undefined | HTMLStyleElement;
 
 	$: schemeStyle && (schemeStyle.textContent = schemes.compileCss(scheme));
 
-	$: fontCss = `.jv-font {font-size:${fontSize}pt;font-family:${fontFamily},monospace}`;
+	$: fontCss = ['.jv-font {', (fontSize && `font-size:${fontSize}pt;`) || '', (fontFamily && `font-family:${fontFamily},monospace;`) || '', '}'].join('');
 	$: fontStyle && (fontStyle.textContent = fontCss);
 
 	$: document.documentElement.dataset.bsTheme = darkMode ? 'dark' : 'light';
