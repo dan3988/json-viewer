@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type Button from "../button.js";
+	import type { ButtonStyle } from "../button.js";
 	import ButtonThemeData from "./theme";
 	import Icon from "../Icon.svelte";
 
-	export let style: Button.Style | undefined = undefined;
+	export let style: ButtonStyle | undefined = undefined;
 	export let icon: BootstrapIconKey | "" = "";
 	export let title: boolean | string = true;
 	export let checked = false;

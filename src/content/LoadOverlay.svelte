@@ -9,7 +9,7 @@
 	let tracker: ThemeTracker;
 	let remember = false;
 
-	const self: SvelteComponent = arguments[0];
+	export let destroy: VoidFunction;
 
 	onMount(() => tracker = new ThemeTracker());
 	onDestroy(() => tracker.dispose());
@@ -21,7 +21,7 @@
 		if (load)
 			await chrome.runtime.sendMessage<WorkerMessage>({ type: "loadme" });
 
-		self.$destroy();
+		destroy();
 	}
 </script>
 <svelte:head>

@@ -55,7 +55,7 @@
 	let unsub: undefined | Unsubscriber;
 
 	function updateSchemeEditor(scheme: string) {
-		schemeEditor = new CustomScheme($customSchemes[scheme] ?? schemes.presets[scheme]);
+		schemeEditor = new CustomScheme($customSchemes[scheme] ?? schemes.presets[scheme as keyof typeof schemes.presets]);
 	}
 
 	function onSchemeEditorChanged() {

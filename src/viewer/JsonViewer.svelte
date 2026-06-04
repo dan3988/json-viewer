@@ -12,7 +12,7 @@
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
 	import type { PopupCustomEvents } from "../types";
 	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
-	import Button from "../components/button";
+	import Button, { ToggleButton } from "../components/button";
 	import JsonProperty from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import MenuView, { MenuAlign } from "./MenuView.svelte";
@@ -372,12 +372,12 @@
 					<div class="search-options p-1 gap-1 d-flex flex-column border rounded-bottom bg-body">
 						<div class="d-flex gap-1">
 							<div class="btn-group">
-								<Button.Toggle icon="key-fill" title="Search Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
-								<Button.Toggle icon="braces" title="Search Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+								<ToggleButton icon="key-fill" title="Search Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
+								<ToggleButton icon="braces" title="Search Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
 							</div>
-							<Button.Toggle icon="type" title="Match Case" bind:checked={search.isCaseSensitive}/>
-							<Button.Toggle icon="quote" title="Exact Match" bind:checked={search.isExactMatch}/>
-							<Button.Toggle icon="regex" title="Regex" bind:checked={search.isRegex}/>
+							<ToggleButton icon="type" title="Match Case" bind:checked={search.isCaseSensitive}/>
+							<ToggleButton icon="quote" title="Exact Match" bind:checked={search.isExactMatch}/>
+							<ToggleButton icon="regex" title="Regex" bind:checked={search.isRegex}/>
 						</div>
 						{#if $search.error}
 							<span class="text-danger">Invalid Regex: {$search.error}</span>

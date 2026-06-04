@@ -2,7 +2,7 @@
 	import type { JsonRendererParam, Renderer } from "../renderer";
 	import "../dom-extensions";
 	import JsonSearch from "../search";
-	import Button from "../components/button";
+	import Button, { ButtonTheme } from "../components/button";
 	import { InserterManager } from "./JsonInsert.svelte";
 	import { renderText } from "../renderer";
 
@@ -141,10 +141,10 @@
 		<span class="preview" use:renderer={{ value, search, searchType }}></span>
 		{#if typeof value === 'number' && !readonly}
 			<div class="btn-grop d-flex number-steps" use:blocker on:click|stopPropagation on:dblclick|stopPropagation>
-				<Button.Theme style="faded">
+				<ButtonTheme style="faded">
 					<Button icon="dash" title="Decrement" repeat action={decrement} />
 					<Button icon="plus" title="Increment" repeat action={increment} />
-				</Button.Theme>
+				</ButtonTheme>
 			</div>
 		{/if}
 	{/if}

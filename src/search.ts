@@ -1,4 +1,4 @@
-import type { Invalidator, Readable, Subscriber, Unsubscriber } from "svelte/store";
+import type { Readable, Subscriber, Unsubscriber } from "svelte/store";
 import type json from "./json";
 import { StoreListeners } from "./store";
 
@@ -98,7 +98,7 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 		return this.#listeners.listen(run);
 	}
 
-	subscribe(run: Subscriber<JsonSearch>, invalidate?: Invalidator<JsonSearch> | undefined): Unsubscriber {
+	subscribe(run: Subscriber<JsonSearch>, invalidate?: VoidFunction | undefined): Unsubscriber {
 		const unsub = this.#listeners.listen(run, invalidate);
 		run(this);
 		return unsub;

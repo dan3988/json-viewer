@@ -13,7 +13,7 @@ $anim-durations: ("short": 100ms, "medium": 250ms, "long": 500ms);
 	$ease: map-get($anim-easing, $ease);
 	$rule: null;
 	@each $prop in $props {
-		$prefix: if($rule == null, "", $rule + ", ");
+		$prefix: if(sass($rule == null): ""; else: $rule + ", ");
 		$rule: #{$prefix} #{$prop} #{$dur} #{$ease};
 	}
 	@return $rule;

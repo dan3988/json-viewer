@@ -1,4 +1,4 @@
-import type { ComponentConstructorOptions, SvelteComponent } from "svelte";
+import { mount, type ComponentConstructorOptions, type SvelteComponent } from "svelte";
 import type { State } from "./state.js";
 
 type ComponentClass<T, P extends Dict> = new (options: ComponentConstructorOptions<P>) => T;
@@ -28,7 +28,7 @@ export function createComponent(clazz: ComponentClass<any, any>, target: HTMLEle
 		for (const [key, value] of Object.entries(initial))
 			props[key] = value;
 
-	const component = new clazz({
+	const component = mount(clazz, {
 		target,
 		props
 	});

@@ -1,4 +1,4 @@
-import type { Invalidator, Readable, Subscriber, Unsubscriber, Updater, Writable } from 'svelte/store';
+import type { Readable, Subscriber, Unsubscriber, Updater, Writable } from 'svelte/store';
 
 export function bulkListen<K extends string, V>(stores: { [P in K]: Store<V> }, handler: (key: K, value: V) => void) {
 	for (const [prop, store] of Object.entries(stores))
@@ -13,7 +13,7 @@ export function bulkSubscribe<K extends string, V>(stores: { [P in K]: Store<V> 
 export interface IStore<T> extends Readable<T> {
 	readonly value: T;
 
-	listen(listener: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	listen(listener: Subscriber<T>, invalidate?: VoidFunction): Unsubscriber;
 }
 
 export interface IStoreController<T> extends WritableStore<T> {
@@ -60,9 +60,9 @@ export abstract class Store<T> implements IStore<T> {
 		this.subscribe = this.subscribe.bind(this);
 	}
 
-	abstract listen(listener: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	abstract listen(listener: Subscriber<T>, invalidate?: VoidFunction): Unsubscriber;
 
-	subscribe(run: Subscriber<T>, invalidate?: Invalidator<T> | undefined): Unsubscriber {
+	subscribe(run: Subscriber<T>, invalidate?: VoidFunction | undefined): Unsubscriber {
 		run(this.value);
 		return this.listen(run, invalidate);
 	}
@@ -89,7 +89,7 @@ class ListenerEntry<T> {
 	removed = false;
 	next?: ListenerEntry<T>;
 
-	constructor(readonly listener: Subscriber<T>, readonly invalidate?: Invalidator<T>, public previous?: ListenerEntry<T>) {
+	constructor(readonly listener: Subscriber<T>, readonly invalidate?: VoidFunction, public previous?: ListenerEntry<T>) {
 		previous && (previous.next = this);
 	}
 }
@@ -104,17 +104,10 @@ export class StoreListeners<T> {
 	fire(value: T) {
 		// put the entries in a list before firing in case listeners are added/removed while firing them
 		const listeners: Subscriber<T>[] = [];
-		let invalidators: undefined | Invalidator<T>[];
 		for (let e = this.#first; e; e = e.next) {
 			listeners.push(e.listener);
-			if (e.invalidate) {
-				invalidators ??= [];
-				invalidators.push(e.invalidate);
-			}
+			e.invalidate?.();
 		}
-
-		for (const i of invalidators ?? Array.prototype)
-			i(value);
 
 		for (const l of listeners)
 			l(value);
@@ -141,7 +134,7 @@ export class StoreListeners<T> {
 		entry.removed = true;
 	}
 
-	listen(listener: Subscriber<T>, invalidate?: Invalidator<T> | undefined) {
+	listen(listener: Subscriber<T>, invalidate?: VoidFunction | undefined) {
 		const entry = new ListenerEntry(listener, invalidate, this.#last);
 		if (!entry.previous) {
 			this.#first = entry;
@@ -199,7 +192,7 @@ class RewritableStore<T> extends WritableStore<T> {
 		return true;
 	}
 
-	listen(listener: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber {
+	listen(listener: Subscriber<T>, invalidate?: VoidFunction): Unsubscriber {
 		return this.#listeners.listen(listener, invalidate);
 	}
 }
@@ -242,7 +235,7 @@ export class WritableStoreImpl<T> extends WritableStore<T> {
 		return true;
 	}
 
-	listen(listener: Subscriber<T>, invalidate?: Invalidator<T> | undefined) {
+	listen(listener: Subscriber<T>, invalidate?: VoidFunction | undefined) {
 		return this.#listeners.listen(listener, invalidate);
 	}
 
@@ -277,11 +270,11 @@ export class StoreController<T> extends WritableStoreImpl<T> implements IStoreCo
 			this.#owner = owner;
 		}
 
-		listen(run: Subscriber<any>, invalidate?: Invalidator<T>): Unsubscriber {
+		listen(run: Subscriber<any>, invalidate?: VoidFunction): Unsubscriber {
 			return this.#owner.listen(run, invalidate);
 		}
 
-		subscribe(run: Subscriber<T>, invalidate?: Invalidator<T> | undefined): Unsubscriber {
+		subscribe(run: Subscriber<T>, invalidate?: VoidFunction | undefined): Unsubscriber {
 			return this.#owner.subscribe(run, invalidate);
 		}
 	}
@@ -326,7 +319,7 @@ class ConvertStore<T, V> extends Store<V> implements DisposableStore<V> {
 		this.#dispose = store.subscribe(subscriber);
 	}
 
-	listen(run: Subscriber<any>, invalidate?: Invalidator<V>): Unsubscriber {
+	listen(run: Subscriber<any>, invalidate?: VoidFunction): Unsubscriber {
 		return this.#listeners.listen(run, invalidate);
 	}
 
@@ -369,7 +362,7 @@ class DerivedStore extends Store<any> implements DisposableStore<any> {
 		this.#listeners = new StoreListeners<any>();
 	}
 
-	listen(run: Subscriber<any>, invalidate?: Invalidator<any>): Unsubscriber {
+	listen(run: Subscriber<any>, invalidate?: VoidFunction): Unsubscriber {
 		return this.#listeners.listen(run, invalidate);
 	}
 

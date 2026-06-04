@@ -6,7 +6,7 @@
 	import type json from "../json";
 	import type ViewerModel from "../viewer-model";
 	import { scale } from "svelte/transition";
-	import Button from "../components/button";
+	import Button, { ButtonTheme } from "../components/button";
 	import Icon from "../components/Icon.svelte";
 
 	export let model: ViewerModel;
@@ -40,7 +40,7 @@
 	}
 </script>
 <div class="menu-root border rounded bg-body-tertiary" transition:scale={{ duration: 150 }}>
-	<Button.Theme style="faded">
+	<ButtonTheme style="faded">
 		{#if node.isContainer()}
 			<Button text="Expand All" icon="node-plus-fill" action={wrap(() => node.setExpanded(true, true))} />
 		{/if}
@@ -81,7 +81,7 @@
 				<Button title="Sort (Z-A)" icon="sort-alpha-up" action={wrap(sort, true)} />
 			</div>
 		{/if}
-	</Button.Theme>
+	</ButtonTheme>
 </div>
 <style lang="scss">
 	@use "src/core.scss" as *;

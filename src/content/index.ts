@@ -1,9 +1,15 @@
+import { mount, unmount } from "svelte";
 import LoadOverlay from "./LoadOverlay.svelte";
 
 function run() {
 	try {
 		const target = document.body;
-		const overlay = new LoadOverlay({ target });
+		const overlay = mount(LoadOverlay, { 
+			target,
+			props: {
+				destroy: () => unmount(overlay)
+			}
+		});
 	} catch (e) {
 		console.error("JSON Viewer load overlay failed to load: ", e);
 		const msg = e instanceof Error ? `${e.name}: ${e.message}` : e;

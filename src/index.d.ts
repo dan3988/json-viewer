@@ -72,10 +72,6 @@ declare namespace chrome {
 	}
 }
 
-declare module "*.svelte" {
-	export default import("svelte").SvelteComponentTyped;
-}
-
 declare module "jsonpath-plus" {
 	export interface JSONPathAllResult {
 		path: string,

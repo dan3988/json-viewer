@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type Button from "../button.js";
+	import type { ButtonStyle } from "../button.js";
 	import ButtonThemeData from './theme';
 
-	export let style: Button.Style;
+	export let style: ButtonStyle;
 
 	const store = ButtonThemeData.createContext();
 

@@ -1,4 +1,4 @@
-import type { Invalidator, Readable, Subscriber, Unsubscriber } from "svelte/store";
+import type { Readable, Subscriber, Unsubscriber } from "svelte/store";
 import type { DocumentRequestInfo } from "./types.js";
 import { EditAction, EditStack } from "./edit-stack.js";
 import { EventHandlers } from "./evt.js";
@@ -218,7 +218,7 @@ class _SelectedNodeList implements SelectedNodeList {
 	constructor() {
 	}
 
-	subscribe(run: Subscriber<SelectedNodeList>, invalidate?: Invalidator<SelectedNodeList> | undefined): Unsubscriber {
+	subscribe(run: Subscriber<SelectedNodeList>, invalidate?: VoidFunction | undefined): Unsubscriber {
 		const unsub = this.#listeners.listen(run, invalidate);
 		run(this);
 		return unsub;

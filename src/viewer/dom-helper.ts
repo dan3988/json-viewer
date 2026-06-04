@@ -214,7 +214,7 @@ export namespace dom {
 			}
 		}
 
-		target.addEventListener("keydown", handler, opts);
+		target.addEventListener("keydown", <any>handler, opts);
 		return delegate(ac, "abort");
 	}
 }

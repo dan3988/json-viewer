@@ -1,5 +1,6 @@
 import Popup from "./Popup.svelte";
 import { WritableStore, WritableStoreImpl } from "../store";
+import { mount } from "svelte";
 
 async function watch<T extends Dict>(defaults: T): Promise<{ [P in keyof T]: WritableStore<T[P]> }> {
 	const values = await chrome.storage.local.get(defaults);
@@ -21,7 +22,7 @@ const { schemeLight, schemeDark, darkMode, enabled, customSchemes } = await watc
 	customSchemes: {},
 });
 
-new Popup({
+mount(Popup, {
 	target: document.body,
 	props: {
 		schemeLight,

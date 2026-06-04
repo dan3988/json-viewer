@@ -1,4 +1,4 @@
-import type Button from "../button.js";
+import type { ButtonTheme, ButtonStyle } from "../button.js";
 import { getContext, setContext } from "svelte";
 import Store, { StoreController } from "../../store";
 
@@ -14,11 +14,11 @@ export class ButtonThemeData {
 		return store;
 	}
 
-	static get current(): Store<Button.Theme> {
+	static get current(): Store<ButtonTheme> {
 		return getContext(themeKey) ?? this.#defaultStore;
 	}
 
-	constructor(readonly style: Button.Style) {
+	constructor(readonly style: ButtonStyle) {
 	}
 }
 
