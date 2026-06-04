@@ -22,7 +22,7 @@
 		"@rollup/pluginutils": "^5.1.4",
 		"@tsconfig/svelte": "^4.0.1",
 		"@types/chai": "^4.3.20",
-		"@types/chrome": "^0.0.265",
+		"@types/chrome": "^0.1.42",
 		"@types/color": "^4.2.0",
 		"@types/cookies": "^0.7.10",
 		"@types/esprima": "^4.0.6",

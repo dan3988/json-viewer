@@ -5,6 +5,10 @@
 			"DOM",
 			"DOM.Iterable"
 		],
+		"types": [
+			"chrome",
+			"wicg-file-system-access"
+		],
 		"target": "ESNext",
 		"module": "ESNext",
 		"esModuleInterop": true,

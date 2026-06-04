@@ -169,7 +169,7 @@ class RequestListener {
 	constructor(blacklist: Set<string>) {
 		this._onTabRemoved = this._onTabRemoved.bind(this);
 		this.#interceptor = WebRequestInterceptor.builder()
-			.addFilterTypes("main_frame", "sub_frame")
+			.addFilterTypes(chrome.webRequest.ResourceType.MAIN_FRAME, chrome.webRequest.ResourceType.SUB_FRAME)
 			.onBeforeRequest(det => {
 				if (det.type === "main_frame")
 					this.#requestInfoMap.delete(det.tabId);
