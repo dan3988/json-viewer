@@ -33,11 +33,7 @@ export interface DocumentRequestInfo {
 
 export type WorkerMessage = LoadMessage | CheckMessage | RememberMessage | RequestInfoMessage;
 
-type ToCustom<T> = { [P in keyof T]: CustomEvent<T[P]> };
-
-export interface PopupEvents<T> {
-	canceled: void;
-	confirmed: T;
+export interface PopupProps<T = unknown> {
+	oncancel?: Action;
+	onconfirm?: Consumer<T>;
 }
-
-export type PopupCustomEvents<T> = ToCustom<PopupEvents<T>>

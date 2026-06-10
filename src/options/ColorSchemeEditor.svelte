@@ -4,10 +4,13 @@
 	import ColorEditor from "./ColorEditor.svelte";
 	import ColorSetEditor from "./ColorSetEditor.svelte";
 
-	export let scheme: CustomScheme;
-	export let remove: Action;
+	interface Props {
+		scheme: CustomScheme;
+		remove: Action;
+	}
 
-	$: ({ name, key, keyword, str, num, text, background, indents, primary, tertiary } = scheme);
+	const { scheme, remove }: Props = $props();
+	const { name, key, keyword, str, num, text, background, indents, primary, tertiary } = $derived(scheme);
 
 	function addIndent() {
 		scheme.indents.update(v => {
@@ -34,7 +37,7 @@
 	<div class="input-group">
 		<span class="input-group-text">Name</span>
 		<input type="text" class="form-control" bind:value={$name} />
-		<button class="btn btn-base bi-trash-fill" title="Delete" on:click={remove}></button>
+		<button class="btn btn-base bi-trash-fill" title="Delete" onclick={remove}></button>
 	</div>
 	<div class="main-colors">
 		<div class="input-group">
@@ -70,14 +73,14 @@
 	</div>
 	<div class="input-group indents-title">
 		<span class="input-group-text">Indents</span>
-		<button class="btn btn-base bi-dash-lg" class:disabled={$indents.length <= 1} title="Remove Indent" on:click={() => removeIndent()}></button>
+		<button class="btn btn-base bi-dash-lg" class:disabled={$indents.length <= 1} title="Remove Indent" onclick={() => removeIndent()}></button>
 		<input class="form-control" readonly value={$indents.length} />
-		<button class="btn btn-base bi-plus-lg" class:disabled={$indents.length >= 10} title="Add Indent" on:click={() => addIndent()}></button>
+		<button class="btn btn-base bi-plus-lg" class:disabled={$indents.length >= 10} title="Add Indent" onclick={() => addIndent()}></button>
 		</div>
 	<ul class="indents-list btn-group">
 		{#each $indents as value, i}
 			<li class="indent-color btn btn-base" style:background={value.toString()}>
-				<input type="color" value={value.hex()} on:input={(e) => setIndent(i, Color(e.currentTarget.value))} />
+				<input type="color" value={value.hex()} oninput={(e) => setIndent(i, Color(e.currentTarget.value))} />
 			</li>
 		{/each}
 	</ul>

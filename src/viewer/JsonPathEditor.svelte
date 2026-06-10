@@ -1,33 +1,35 @@
-<script lang="ts" context="module">
-	import json from "../json";
-
-	export interface EventMap {
-		finished: json.Node | null;
-		cancelled: void;
-	}
-</script>
 <script lang="ts">
 	import type { ViewerModel } from "../viewer-model";
-	import { createEventDispatcher, onMount, tick } from "svelte";
+	import { onMount, tick } from "svelte";
+	import json from "../json";
 	import dom from "./dom-helper";
 	import AutocompleteHelper from "./autocomplete-helper";
 	import JsonPath from "../json-path";
 
-	export let model: ViewerModel;
+	interface Props {
+		model: ViewerModel;
+		onfinished?: (node: json.Node | null) => void | boolean;
+		oncancel?: () => void | boolean;
+	}
 
-	$: selectedNodes = model.selected;
+	const {
+		model,
+		onfinished,
+		oncancel
+	}: Props = $props();
+
+	const selectedNodes = $derived(model.selected);
 
 	let acWrapper: HTMLElement;
 	let acHelper: undefined | AutocompleteHelper;
 
-	const dispatcher = createEventDispatcher<EventMap>();
-
 	let target: HTMLElement;
-	let x: number;
+	let x = $state(0);
 	let ignoreSelectionEvents = 0;
 
-	$: node = $selectedNodes.last ?? model.root;
-	$: update(node);
+	const node = $derived($selectedNodes.last ?? model.root);
+
+	$effect(() => update(node));
 
 	onMount(() => update(node));
 
@@ -73,11 +75,11 @@
 	function onFocusOut() {
 		update(node);
 		destroyAutoComplete();
-		dispatcher("cancelled");
+		oncancel?.();
 	}
 
-	function tryEnd<K extends keyof EventMap>(key: K, parameter?: EventMap[K]) {
-		dispatcher(key as any, parameter, { cancelable: true }) && unfocus();
+	function tryEnd<A extends any[]>(fn: undefined | ((...args: A) => void | boolean), ...args: A) {
+		(fn && fn.apply(undefined, args)) && unfocus();
 	}
 
 	function onAutoCompleteFinish(value?: string) {
@@ -156,12 +158,12 @@
 		}
 
 		if (evt.key === "Escape") {
-			tryEnd("cancelled");
+			tryEnd(oncancel);
 		} else if (evt.key === "Enter") {
 			evt.preventDefault();
 			const path = target.innerText;
-			const resolved = model.resolve(path);
-			tryEnd("finished", resolved);
+			const resolved = model.resolve(path) ?? null;
+			tryEnd(onfinished, resolved);
 		} else if (evt.key === " " && evt.ctrlKey && acHelper == null) {
 			const selection = getSelection();
 			selection && updateAutoComplete(selection);
@@ -215,18 +217,20 @@
 		bottom: 100%;
 	}
 </style>
-<svelte:document on:selectionchange={onSelectionChange} />
+<svelte:document onselectionchange={onSelectionChange} />
 <div class="root">
 	<span
 		class="path-text"
 		tabindex="-1"
 		role="textbox"
 		contenteditable="plaintext-only"
-		on:input={onInput}
-		on:focusin={onFocusIn}
-		on:focusout={onFocusOut}
-		on:keydown={onKeyDown}
-		on:keypress={onKeyPress}
-		bind:this={target}/>
-	<div class="ac-wrapper" style:left={x && (x + "px")} bind:this={acWrapper}/>
+		oninput={onInput}
+		onfocusin={onFocusIn}
+		onfocusout={onFocusOut}
+		onkeydown={onKeyDown}
+		onkeypress={onKeyPress}
+		bind:this={target}>
+	</span>
+	<div class="ac-wrapper" style:left={x && (x + "px")} bind:this={acWrapper}>
+	</div>
 </div>

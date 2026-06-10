@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	const css = chrome.runtime.getURL("/lib/content.css");
 </script>
 <script lang="ts" >
@@ -7,9 +7,9 @@
 	import ThemeTracker from "../theme-tracker";
 
 	let tracker: ThemeTracker;
-	let remember = false;
+	let remember = $state(false);
 
-	export let destroy: VoidFunction;
+	const { destroy }: { destroy: VoidFunction } = $props();
 
 	onMount(() => tracker = new ThemeTracker());
 	onDestroy(() => tracker.dispose());
@@ -35,8 +35,8 @@
 				<input type="checkbox" class="form-check-input" bind:checked={remember}/>
 				Remember for this host
 			</label>
-			<button class="btn btn-success" on:click={() => action(true)}>Yes</button>
-			<button class="btn btn-danger" on:click={() => action(false)}>No</button>
+			<button class="btn btn-success" onclick={() => action(true)}>Yes</button>
+			<button class="btn btn-danger" onclick={() => action(false)}>No</button>
 		</div>
 	</div>
 </template>

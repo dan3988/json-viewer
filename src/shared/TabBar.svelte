@@ -1,11 +1,22 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
+
 	type T = $$Generic;
 
-	export let selected: T;
-	export let tabs: readonly T[];
+	interface Props {
+		selected: T;
+		tabs: readonly T[];
+		tab: Snippet<[tab: T, active: boolean, select: Action]>
+	}
+
+	let {
+		selected = $bindable(),
+		tabs,
+		tab: tabSnippet
+	}: Props = $props();
 </script>
 {#each tabs as tab}
-{@const active = tab === selected}
-{@const select = () => selected = tab}
-	<slot name="tab" {tab} {active} {select} />
+	{@const active = tab === selected}
+	{@const select = () => selected = tab}
+	{@render tabSnippet(tab, active, select)}
 {/each}

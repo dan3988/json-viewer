@@ -1,6 +1,10 @@
 declare type Fn<TArgs extends any[] = any[], TRet = any, TThis = any> = (this: TThis, ...args: TArgs) => TRet;
-declare type Action<T1 = never, T2 = never, T3 = never, T4 = never, T5 = never> = (...args: UntilNever<[T1, T2, T3, T4, T5]>) => void;
-declare type Func<TResult, T1 = never, T2 = never, T3 = never, T4 = never, T5 = never> = (...args: UntilNever<[T1, T2, T3, T4, T5]>) => TResult;
+declare type Action = () => void;
+declare type Func<R = any> = () => R;
+declare type ValueChanged<T> = (oldValue: T, newValue: T) => void;
+declare type Consumer<T = any> = (value: T) => void;
+declare type Converter<T = any, R = any> = (value: T) => R;
+
 declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 	readonly prototype: TValue;
 	new(...args: TArgs): TValue;
@@ -9,8 +13,6 @@ declare interface Constructor<TValue, TArgs extends any[] = any[]> {
 declare type Opt<T> = T | undefined | null;
 
 declare type Falsy = false | undefined | null | 0 | 0n | '';
-
-type UntilNever<T extends any[], Prev extends any[] = []> = T extends [never, ...any[]] ? Prev : (T extends [infer Start, ...infer Rest] ? UntilNever<Rest, [...Prev, Start]> : Prev);
 
 declare type Expand<T> = { [P in keyof T]: T[P] };
 declare type Except<T, P extends keyof T> = { [K in keyof T as K extends P ? never : K]: T[K] };

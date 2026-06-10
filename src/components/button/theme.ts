@@ -14,7 +14,7 @@ export class ButtonThemeData {
 		return store;
 	}
 
-	static get current(): Store<ButtonTheme> {
+	static get current(): Store<ButtonThemeData> {
 		return getContext(themeKey) ?? this.#defaultStore;
 	}
 

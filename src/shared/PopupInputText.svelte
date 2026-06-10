@@ -1,27 +1,29 @@
 <script lang="ts">
-	import type { PopupEvents } from "../types";
-	import { createEventDispatcher, onMount } from "svelte";
+	import type { PopupProps } from "../types";
+	import { onMount } from "svelte";
 	import Popup from "./Popup.svelte";
 
-	export let value: string = "";
-	export let title: string = "";
-	export let multiLine = false;
-	export let width: undefined | number = undefined;
-	export let height: undefined | number = undefined;
+	interface Props extends PopupProps<string> {
+		value?: string;
+		title?: string;
+		multiLine?: boolean;
+		width?: number;
+		height?: number;
+	}
+
+	let {
+		value = $bindable(""),
+		title = "",
+		multiLine = false,
+		width,
+		height,
+		oncancel,
+		onconfirm,
+	}: Props = $props();
 
 	let field: HTMLInputElement | HTMLTextAreaElement;
 
-	const dispatcher = createEventDispatcher<PopupEvents<string>>();
-
 	onMount(() => field.focus());
-
-	function onCancel() {
-		dispatcher("canceled");
-	}
-
-	function onConfirm() {
-		dispatcher("confirmed", value);
-	}
 </script>
 <style lang="scss">
 	#value {
@@ -30,9 +32,9 @@
 		grid-area: text;
 	}
 </style>
-<Popup {title} {width} {height} on:canceled={onCancel} on:confirmed={onConfirm}>
+<Popup {title} {width} {height} {oncancel} {onconfirm}>
 	{#if multiLine}
-		<textarea id="value" class="form-control" bind:value={value} bind:this={field}/>
+		<textarea id="value" class="form-control" bind:value={value} bind:this={field}></textarea>
 	{:else}
 		<input id="value" class="form-control" bind:value={value} bind:this={field}/>
 	{/if}

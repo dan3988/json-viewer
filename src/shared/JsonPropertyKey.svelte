@@ -3,22 +3,35 @@
 	import type json from "../json";
 	import JsonSearch from "../search";
 	import edits from "../viewer/editor-helper.js";
-	import { onDestroy } from "svelte";
+	import { onDestroy, type Snippet } from "svelte";
 	import { renderKey } from "../renderer";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	const searchType = JsonSearch.Mode.Keys;
 
-	export let model: ViewerModel;
-	export let search: undefined | JsonSearch = undefined;
-	export let node: json.Node;
-	export let selected: boolean;
-	export let readonly = false;
-	export let editing: boolean;
+	interface Props {
+		model: ViewerModel;
+		search?: JsonSearch;
+		node: json.Node;
+		selected: boolean;
+		readonly?: boolean;
+		editing: boolean;
+		children?: Snippet;
+	}
 
-	$: isNumber = typeof key === 'number';
-	$: key = node.key ?? '$';
-	$: onrename = ((node) => {
+	let {
+		model,
+		search,
+		node,
+		selected,
+		readonly = false,
+		editing = $bindable(),
+		children,
+	}: Props = $props();
+
+	const key = $derived(node.key ?? '$');
+	const isNumber = $derived(typeof key === 'number');
+	const onrename = $derived(((node) => {
 		const { parent } = node;
 		if (parent?.isObject()) {
 			return (name: string) => {
@@ -26,7 +39,7 @@
 				model.execute('scrollTo', node);
 			}
 		}
-	})(node);
+	})(node));
 
 	let element: HTMLElement;
 
@@ -53,13 +66,13 @@
 </script>
 <div bind:this={element} class="root" class:number={isNumber} class:selected>
 	{#if typeof key === 'number'}
-		<span class="key-text" use:renderKey={{ value: key, search, searchType }} />
+		<span class="key-text" use:renderKey={{ value: key, search, searchType }}></span>
 	{:else}
 		<span class="key-text">
 			<JsonValueEditor value={key} parse={String} {search} {searchType} {readonly} autoSelect bind:editing renderer={renderKey} onfinish={onrename} onclose={focus} />
 		</span>
 	{/if}
-	<slot />
+	{@render children?.()}
 </div>
 <style lang="scss">
 	@use "src/core.scss" as *;

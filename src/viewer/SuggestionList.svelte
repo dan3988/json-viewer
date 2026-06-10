@@ -1,72 +1,18 @@
-<script lang="ts" context="module">
-	export interface ClickEventDetail {
-		suggestion: string;
-		index: number;
-	}
-
-	export interface Events {
-		click: ClickEventDetail;
-	}
-</script>
-<script lang="ts">
-	import Linq from "@daniel.pickett/linq-js";
-	import { createEventDispatcher } from "svelte";
-
-	export let source: Iterable<number | string> = Linq.empty();
-	export let filter: string = "";
-	export let index = 0;
-
-	let filterLw: string;
-	let results: string[];
-
-	$: {
-		filterLw = filter?.toLowerCase();
-		results = source ? Linq(source).where((v) => String(v).toLowerCase().includes(filterLw)).toArray() : Array.prototype;
-	}
-	
-	let list: HTMLUListElement;
-
-	export function getSelected() {
-		return results[index];
-	}
-
-	export function next() {
-		var next = index + 1;
-		if (next >= results.length)
-			next = 0;
-
-		index = next;
-		list.children[next]?.scrollIntoView({ block: 'nearest' });
-	}
-
-	export function prev() {
-		var prev = index - 1;
-		if (prev < 0)
-			prev = results.length - 1;
-
-		index = prev;
-		list.children[prev]?.scrollIntoView({ block: 'nearest' });
-	}
-
-	function appendE<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, className: string, content: string): HTMLElementTagNameMap[K] {
-		const e = document.createElement(tag);
-		e.className = className;
-		e.textContent = content;
-		parent.append(e);
-		return e;
-	}
-
-	const dispatch = createEventDispatcher<Events>();
-
+<script lang="ts" module>
 	interface RenderArg {
-		suggestion: string;
+		suggestion: string | number;
 		filter: string;
 		index: number;
-	};
+		onselection?: (suggestion: string | number, index: number) => void;
+	}
 
 	function renderListItem(target: HTMLElement, arg: RenderArg) {
+		let { suggestion, filter, index, onselection } = arg;
+
 		function update(a: RenderArg) {
-			let { suggestion, filter } = arg = a;
+			({ suggestion, filter, index, onselection } = a);
+			suggestion = String(suggestion);
+
 			if (!filter) {
 				target.innerText = suggestion;
 				return;
@@ -92,14 +38,13 @@
 				ix = lw.indexOf(filter, last = ix + filter.length);
 			}
 		}
-		
+
 		update(arg);
 
 		const unsub = target.subscribe({
 			mousedown: 'preventDefault',
 			click() {
-				const { suggestion, index } = arg;
-				dispatch("click", { suggestion, index });
+				onselection?.(suggestion, index);
 			}
 		})
 
@@ -110,6 +55,56 @@
 				target.innerHTML = "";
 			}
 		}
+	}
+
+	function appendE<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, className: string, content: string): HTMLElementTagNameMap[K] {
+		const e = document.createElement(tag);
+		e.className = className;
+		e.textContent = content;
+		parent.append(e);
+		return e;
+	}
+</script>
+<script lang="ts">
+	import Linq from "@daniel.pickett/linq-js";
+
+	interface Props {
+		source?: Iterable<number | string>;
+		filter?: string;
+		index?: number;
+	}
+
+	let {
+		source = Linq.empty(),
+		filter = $bindable(""),
+		index = $bindable(0),
+	}: Props = $props();
+
+	const filterLw = $derived(filter?.toLowerCase());
+	const results = $derived(Linq(source).where((v) => String(v).toLowerCase().includes(filterLw)).toArray());
+	
+	let list: HTMLUListElement;
+
+	export function getSelected() {
+		return results[index];
+	}
+
+	export function next() {
+		var next = index + 1;
+		if (next >= results.length)
+			next = 0;
+
+		index = next;
+		list.children[next]?.scrollIntoView({ block: 'nearest' });
+	}
+
+	export function prev() {
+		var prev = index - 1;
+		if (prev < 0)
+			prev = results.length - 1;
+
+		index = prev;
+		list.children[prev]?.scrollIntoView({ block: 'nearest' });
 	}
 </script>
 <style lang="scss">

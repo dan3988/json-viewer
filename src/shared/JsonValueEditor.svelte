@@ -1,3 +1,8 @@
+<script lang="ts" module>
+	function stopPropagation(evt: Event) {
+		evt.stopPropagation();
+	}
+</script>
 <script lang="ts">
 	import type { JsonRendererParam, Renderer } from "../renderer";
 	import "../dom-extensions";
@@ -8,20 +13,39 @@
 
 	type T = $$Generic<any>;
 
-	export let value: T;
-	export let search: undefined | JsonSearch = undefined;
-	export let searchType: JsonSearch.Mode = JsonSearch.Mode.None;
-	export let parse: (text: string) => T;
-	export let serialize: (value: T) => string = String;
-	export let renderer: (target: HTMLElement, value: JsonRendererParam<T>) => Renderer = renderText;
-	export let readonly = false;
-	export let editing = false;
-	export let onfinish: ((value: T, group: boolean) => void) | Falsy = undefined;
-	export let oncancel: VoidFunction | Falsy = undefined;
-	export let onclose: VoidFunction | Falsy = undefined;
-	export let onediting: VoidFunction | Falsy = undefined;
-	export let allowUnchanged = false;
-	export let autoSelect = false;
+	interface Props {
+		value: T;
+		search?: undefined | JsonSearch;
+		searchType?: JsonSearch.Mode;
+		parse: (text: string) => T;
+		serialize?: (value: T) => string;
+		renderer?: (target: HTMLElement, value: JsonRendererParam<T>) => Renderer;
+		readonly?: boolean;
+		editing?: boolean;
+		onfinish?: ((value: T, group: boolean) => void) | Falsy;
+		oncancel?: VoidFunction | Falsy;
+		onclose?: VoidFunction | Falsy;
+		onediting?: VoidFunction | Falsy;
+		allowUnchanged?: boolean;
+		autoSelect?: boolean;
+	}
+
+	let {
+		value,
+		search,
+		searchType = JsonSearch.Mode.None,
+		parse,
+		serialize = String,
+		renderer = renderText,
+		readonly = false,
+		editing = $bindable(false),
+		onfinish,
+		oncancel,
+		onclose,
+		onediting,
+		allowUnchanged = false,
+		autoSelect = false,
+	}: Props = $props();
 
 	const { blocker } = InserterManager.current;
 
@@ -131,16 +155,16 @@
 		onfinish && onfinish((+value - mod) as any, true);
 	}
 </script>
-<span class="root gap-1" on:dblclick={() => editing = !readonly}>
+<span class="root gap-1" ondblclick={() => editing = !readonly}>
 	{#if editing}
-		<div class="editor" role="textbox" tabindex="-1" contenteditable="plaintext-only" use:renderEditor={value} />
+		<div class="editor" role="textbox" tabindex="-1" contenteditable="plaintext-only" use:renderEditor={value}></div>
 	{:else}
 		{#if typeof value === 'boolean'}
-			<input type="checkbox" class:readonly use:blocker class="bool-editor form-check-input" checked={value} on:click|stopPropagation on:dblclick|stopPropagation on:change={onCheckboxInput} />
+			<input type="checkbox" class:readonly use:blocker class="bool-editor form-check-input" checked={value} onclick={stopPropagation} ondblclick={stopPropagation} onchange={onCheckboxInput} />
 		{/if}
 		<span class="preview" use:renderer={{ value, search, searchType }}></span>
 		{#if typeof value === 'number' && !readonly}
-			<div class="btn-grop d-flex number-steps" use:blocker on:click|stopPropagation on:dblclick|stopPropagation>
+			<div class="btn-grop d-flex number-steps" use:blocker onclick={stopPropagation} ondblclick={stopPropagation}>
 				<ButtonTheme style="faded">
 					<Button icon="dash" title="Decrement" repeat action={decrement} />
 					<Button icon="plus" title="Increment" repeat action={increment} />

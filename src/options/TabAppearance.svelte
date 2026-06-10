@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	type NamedRadioItem<T> = [value: T, text: string];
 
 	const radioMenuAlign: NamedRadioItem<"l" | "r">[] = [["l", "Left"], ["r", "Right"]];
@@ -14,13 +14,21 @@
 	import ViewerPreview from "./ViewerPreview.svelte";
 	import ColorSchemeEditor from "./ColorSchemeEditor.svelte";
 
-	export let model: EditorModel<preferences.lite.Bag>;
-	export let tracker: ThemeTracker;
-	export let maxIndentClass: number;
-	export let schemeEditor: CustomScheme;
+	interface Props {
+		model: EditorModel<preferences.lite.Bag>;
+		tracker: ThemeTracker;
+		maxIndentClass: number;
+		schemeEditor: CustomScheme;
+	}
 
-	
-	$: ({
+	let {
+		model,
+		tracker,
+		maxIndentClass,
+		schemeEditor = $bindable(),
+	}: Props = $props();
+
+	const {
 		changed,
 		props: {
 			darkMode,
@@ -32,11 +40,11 @@
 			fontSize,
 			fontFamily,
 		},
-	} = model);
+	} = $derived(model);
 
-	$: [presets, scheme] = $tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight];
-	$: customSchemeList = schemes.getCustomEntries($customSchemes, $tracker);
-	$: isCustomScheme = $scheme in $customSchemes;
+	const [presets, scheme] = $derived($tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight]);
+	const customSchemeList = $derived(schemes.getCustomEntries($customSchemes, $tracker));
+	const isCustomScheme = $derived($scheme in $customSchemes);
 
 	function copyScheme() {
 		const suffix = isCustomScheme ? 'Copy' : 'Custom';
@@ -66,13 +74,17 @@
 		<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$changed.includes('menuAlign')}>
 			<span class="input-group-text">Menu Alignment</span>
 			<Radio converter={v => v[0]} items={radioMenuAlign} bind:value={$menuAlign}>
-				<label slot="label" let:id let:item={[_, text]} for={id} class="flex-fill btn btn-base">{text}</label>
+				{#snippet label([_, text], id)}
+					<label for={id} class="flex-fill btn btn-base">{text}</label>
+				{/snippet}
 			</Radio>
 		</div>
 		<div class="input-group hoverable-radio grp-theme" role="group" class:dirty={$changed.includes('darkMode')}>
 			<span class="input-group-text">Theme</span>
 			<Radio converter={v => v[0]} items={radioTheme} bind:value={$darkMode}>
-				<label slot="label" let:id let:item={[_, text]} for={id} class="flex-fill btn btn-base">{text}</label>
+				{#snippet label([_, text], id)}
+					<label for={id} class="flex-fill btn btn-base">{text}</label>
+				{/snippet}
 			</Radio>
 		</div>
 		<div class="input-group grp-font">
@@ -116,7 +128,7 @@
 					</optgroup>
 				{/if}
 			</select>
-			<button class="btn btn-base copy-button" on:click={copyScheme}>
+			<button class="btn btn-base copy-button" onclick={copyScheme}>
 				{#if isCustomScheme}
 					Copy
 				{:else}

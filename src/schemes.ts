@@ -1,4 +1,4 @@
-import type preferences from './preferences-lite';
+import preferences from './preferences-lite';
 import json from './schemes.json' with { type: 'json' };
 import Color from 'color';
 
@@ -11,6 +11,19 @@ export namespace schemes {
 	export type ColorSchemeSetColors = preferences.lite.CustomColorSchemeSetColors;
 
 	export const presets = json satisfies Dict<ColorScheme>;
+
+	export type PresetScheme = keyof typeof presets;
+
+	export function loadPreset(key: string) {
+		if (!isPreset(key))
+			throw new TypeError('Unknown scheme: ' + JSON.stringify(key));
+
+		return presets[key];
+	}
+
+	export function isPreset(key: string): key is PresetScheme {
+		return key in presets;
+	}
 
 	type PresetId = keyof typeof presets;
 

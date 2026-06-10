@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	type ThemeInfo = [label: string, className: string, value: boolean | null];
 
 	const themeModes: ThemeInfo[] = [
@@ -16,16 +16,27 @@
 
 	const tracker = new ThemeTracker();
 
-	export let schemeLight: Writable<string>;
-	export let schemeDark: Writable<string>;
-	export let darkMode: Writable<boolean | null>;
-	export let enabled: Writable<boolean>;
-	export let customSchemes: Writable<Dict<schemes.ColorScheme>>;
+	interface Props {
+		schemeLight: Writable<string>;
+		schemeDark: Writable<string>;
+		darkMode: Writable<boolean | null>;
+		enabled: Writable<boolean>;
+		customSchemes: Writable<Dict<schemes.ColorScheme>>;
+	}
 
-	$: tracker.preferDark = $darkMode;
-	$: [presets, scheme] = $tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight];
-	$: customSchemeList = schemes.getCustomEntries($customSchemes, $tracker);
-	$: currentScheme = $customSchemes[$scheme] ?? schemes.presets[$scheme];
+	const {
+		schemeLight,
+		schemeDark,
+		darkMode,
+		enabled,
+		customSchemes,
+	}: Props = $props();
+
+	$effect.pre(() => void (tracker.preferDark = $darkMode));
+
+	const [presets, scheme] = $derived($tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight]);
+	const customSchemeList = $derived(schemes.getCustomEntries($customSchemes, $tracker));
+	const currentScheme = $derived($customSchemes[$scheme] ?? schemes.presets[$scheme]);
 </script>
 <SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} />
 <div class="root scheme bg-body d-flex flex-column justify-items-center p-1 gap-1">
@@ -40,7 +51,9 @@
 	<div class="input-group hoverable-radio grp-theme" role="group">
 		<span class="input-group-text">Theme</span>
 		<Radio items={themeModes} converter={i => i[2]} bind:value={$darkMode}>
-			<label slot="label" let:id let:item={[title, clazz]} for={id} class="flex-fill btn btn-base {clazz}" {title}></label>
+			{#snippet label([title, clazz], id)}
+				<label for={id} class="flex-fill btn btn-base {clazz}" {title}></label>
+			{/snippet}
 		</Radio>
 	</div>
 	<div class="input-group grp-json-style">

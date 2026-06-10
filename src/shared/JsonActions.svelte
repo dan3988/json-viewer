@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	type Callback<A extends any[]> = (...args: A) => void;
 	type CallbackArg<A extends any[] = []> = Callback<A> | Falsy;
 </script>
@@ -9,14 +9,27 @@
 	import Button, { ButtonTheme } from "../components/button";
 	import Icon from "../components/Icon.svelte";
 
-	export let model: ViewerModel;
-	export let node: json.Node;
-	export let rename: CallbackArg = undefined;
-	export let edit: CallbackArg = undefined;
-	export let remove: CallbackArg = undefined;
-	export let clear: CallbackArg = undefined;
-	export let sort: CallbackArg<[desc: boolean]> = undefined;
-	export let close: VoidFunction;
+	interface Props {
+		model: ViewerModel;
+		node: json.Node;
+		rename?: CallbackArg;
+		edit?: CallbackArg;
+		remove?: CallbackArg;
+		clear?: CallbackArg;
+		sort?: CallbackArg<[desc: boolean]>;
+		close: VoidFunction;
+	}
+
+	const {
+		model,
+		node,
+		rename,
+		edit,
+		remove,
+		clear,
+		sort,
+		close,
+	}: Props = $props();
 
 	function wrap<A extends any[]>(fn: (...args: A) => void, ...args: A): VoidFunction {
 		return () => {

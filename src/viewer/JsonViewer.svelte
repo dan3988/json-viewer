@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	import lib from "../lib.json";
 
 	const css = [
@@ -9,13 +9,13 @@
 	];
 </script>
 <script lang="ts">
+	import type * as svelte from "svelte";
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
-	import type { PopupCustomEvents } from "../types";
-	import type { ComponentConstructorOptions, ComponentProps, SvelteComponent } from "svelte";
+	import type { PopupProps } from "../types";
 	import Button, { ToggleButton } from "../components/button";
 	import JsonProperty from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
-	import MenuView, { MenuAlign } from "./MenuView.svelte";
+	import MenuView from "./MenuView.svelte";
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
 	import PopupPanel from "../shared/PopupPanel.svelte";
 	import { InserterManager } from "../shared/JsonInsert.svelte";
@@ -31,48 +31,70 @@
 	import schemes from "../schemes.js";
 	import Indent from "../indent";
 
-	export let model: ViewerModel;
-	export let menuAlign: string;
-	export let customSchemes: Dict<schemes.ColorScheme>;
-	export let schemeDark: string;
-	export let schemeLight: string;
-	export let background: string;
-	export let fontSize: number;
-	export let fontFamily: string;
-	export let darkMode: null | boolean;
+	interface Props {
+		model: ViewerModel;
+		menuAlign: string;
+		customSchemes: Dict<schemes.ColorScheme>;
+		schemeDark: string;
+		schemeLight: string;
+		background: string;
+		fontSize: number;
+		fontFamily: string;
+		darkMode: null | boolean;
+	}
 
-	const tracker = new ThemeTracker(darkMode);
+	const {
+		model,
+		menuAlign,
+		customSchemes,
+		schemeDark,
+		schemeLight,
+		background,
+		fontSize,
+		fontFamily,
+		darkMode,
+	}: Props = $props();
+
+	const tracker = new ThemeTracker(false);
 
 	InserterManager.createScope();
 
 	model.command.addListener(onModelCommand);
 
-	$: ({ requestInfo } = model.state.props);
-	$: ({ canUndo, canRedo } = model.edits.state.props);
-	$: tracker.preferDark = darkMode;
-	$: scheme = $tracker ? schemeDark : schemeLight;
-	$: currentScheme = customSchemes[scheme] ?? schemes.presets[scheme];
-	$: rootIndent = new Indent(currentScheme.indents.length);
+	$effect.pre(() => void (tracker.preferDark = darkMode));
+
+	const { requestInfo } = $derived(model.state.props);
+	const { canUndo, canRedo } = $derived(model.edits.state.props);
+	const scheme = $derived($tracker ? schemeDark : schemeLight);
+	const currentScheme = $derived(customSchemes[scheme] ?? schemes.loadPreset(scheme));
+	const rootIndent = $derived(new Indent(currentScheme.indents.length));
 
 	let bindings: KeyBindingListener;
 	let prop: HTMLElement;
 
-	let jpathOpen = false;
+	let jpathOpen = $state(false);
 
 	let searchInput: HTMLInputElement;
-	let searchOpen = false;
+	let searchOpen = $state(false);
 
-	$: search = new JsonSearch(model.root);
+	const search = $derived(new JsonSearch(model.root));
+	const searchResults = $derived([...$search]);
 
-	$: searchResults = [...$search];
-	$: searchResults, searchIndex = 0;
+	let searchIndex = $state(0);
 
-	let searchIndex = 0;
+	$effect.pre(() => void (searchResults, searchIndex = 0));
 
-	type PopupInfo<C extends SvelteComponent<any, PopupCustomEvents<R>> = any, R = any> = [clazz: PopupConstructor<C, R>, props: ComponentProps<C>, completion: (result: CustomEvent<R | void> ) => void];
+	type PopupInfo<C extends svelte.Component<PopupProps<R>> = any, R = any> = [
+		clazz: C,
+		props: svelte.ComponentProps<C>,
+		completion: Consumer<R>,
+		cancel: Action
+	];
 
 	const popupStack: PopupInfo[] = [];
-	let popup: undefined | PopupInfo;
+	let popup: undefined | PopupInfo = $state();
+
+	import PopupInputText from "../shared/PopupInputText.svelte";
 
 	function showRequestInfo() {
 		showPopup(PopupPanel, {
@@ -84,24 +106,24 @@
 		});
 	}
 
-	type PopupConstructor<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult> = new(props: ComponentConstructorOptions<ComponentProps<TComp>>) => SvelteComponent<ComponentProps<TComp>, PopupCustomEvents<TResult>>;
-
-	function showPopup<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult>(comp: PopupConstructor<TComp, TResult>, props: ComponentProps<TComp>): Promise<TResult>
-	function showPopup<TComp extends SvelteComponent<any, PopupCustomEvents<TResult>>, TResult>(comp: PopupConstructor<TComp, TResult>, props: ComponentProps<TComp>, confirm: (result: TResult) => boolean): Promise<void>
-	function showPopup<TResult>(comp: PopupConstructor<any, any>, props: Dict, confirm?: (result: TResult) => boolean) {
+	function showPopup<TComp extends svelte.Component<PopupProps<TResult>>, TResult>(comp: TComp, props: svelte.ComponentProps<TComp>): Promise<TResult>
+	function showPopup<TComp extends svelte.Component<PopupProps<TResult>>, TResult>(comp: TComp, props: svelte.ComponentProps<TComp>, confirm: (result: TResult) => boolean): Promise<void>
+	function showPopup<TResult>(comp: svelte.Component, props: Dict, confirm?: (result: TResult) => boolean) {
 		return new Promise<TResult | void>(resolve => {
-			function complete(result: NamedCustomEvent<"confirmed", TResult> | NamedCustomEvent<"canceled", void>) {
-				if (result.type === "canceled" || confirm == null) {
-					popup = popupStack.pop();
-					resolve(result.detail);
-				} else if (confirm(result.detail)) {
-					popup = popupStack.pop();
-					resolve();
-				}
+			let complete: Consumer<TResult>;
+			if (confirm) {
+				complete = (result) => confirm(result) && close();
+			} else {
+				complete = close;
+			}
+
+			function close(result?: TResult) {
+				popup = popupStack.pop();
+				resolve(result);
 			}
 
 			popup && popupStack.push(popup);
-			popup = [comp, props, complete];
+			popup = [comp, props, complete, close];
 		});
 	}
 
@@ -375,9 +397,9 @@
 								<ToggleButton icon="key-fill" title="Search Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
 								<ToggleButton icon="braces" title="Search Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
 							</div>
-							<ToggleButton icon="type" title="Match Case" bind:checked={search.isCaseSensitive}/>
-							<ToggleButton icon="quote" title="Exact Match" bind:checked={search.isExactMatch}/>
-							<ToggleButton icon="regex" title="Regex" bind:checked={search.isRegex}/>
+							<ToggleButton icon="type" title="Match Case" bind:checked={$search.isCaseSensitive}/>
+							<ToggleButton icon="quote" title="Exact Match" bind:checked={$search.isExactMatch}/>
+							<ToggleButton icon="regex" title="Regex" bind:checked={$search.isRegex}/>
 						</div>
 						{#if $search.error}
 							<span class="text-danger">Invalid Regex: {$search.error}</span>
@@ -396,10 +418,12 @@
 			minMenuSize={["450px", "300px"]}
 			maxMenuSize={["80vw", "80vh"]}
 			initialMenuSize="30rem"
-			alignment={menuAlign === "l" ? MenuAlign.Left : MenuAlign.Right}>
-			<div slot="menu" class="slot">
-				<JsonMenu {model} />
-			</div>
+			alignment={menuAlign === "l" ? 'left' : 'right'}>
+			{#snippet menu()}
+				<div class="slot">
+					<JsonMenu {model} />
+				</div>
+			{/snippet}
 			<div class="slot">
 				<div class="jv-font w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
 					<div class="editor-bg h-100 w-100"></div>
@@ -416,7 +440,7 @@
 		<JsonPathViewer {model}/>
 	</div>
 	{#if popup}
-		{@const [comp, props, evt] = popup}
-		<svelte:component this={comp} {...props} on:confirmed={evt} on:canceled={evt} />
+		{@const [Popup, props, onconfirm, oncancel] = popup}
+		<Popup {...props} {onconfirm} {oncancel} />
 	{/if}
 </div>

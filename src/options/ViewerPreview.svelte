@@ -5,9 +5,12 @@
 	import json from "../json.js";
 	import Indent from "../indent";
 
-	export let maxIndentClass: number;
+	interface Props {
+		maxIndentClass: number;
+	}
 
-	$: indent = new Indent(maxIndentClass);
+	const { maxIndentClass }: Props = $props();
+	const indent = $derived(new Indent(maxIndentClass));
 
 	InserterManager.createScope();
 

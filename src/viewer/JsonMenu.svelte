@@ -4,14 +4,18 @@
 	import edits from "./editor-helper";
 	import { JSONPath, type JSONPathAllResult } from "jsonpath-plus";
 
-	export let model: ViewerModel;
+	interface Props {
+		model: ViewerModel;
+	}
+
+	const { model }: Props = $props();
 
 	export function focusJPath() {
 		jpath.focus();
 	}
 
 	let jpath: HTMLInputElement;
-	let jpathResults: json.Node[] = [];
+	let jpathResults: json.Node[] = $state([]);
 
 	function onJpathKeyPress(evt: KeyboardEvent) {
 		if (evt.key === "Enter")
@@ -33,7 +37,7 @@
 	function evaluateJpath() {
 		const path = jpath.value;
 		if (!path) {
-			jpathResults = [];
+			jpathResults.length = 0;
 			return;
 		}
 
@@ -47,7 +51,7 @@
 			jpath.setCustomValidity(e.message);
 			jpath.reportValidity();
 			jpath.once("input", clearValidation);
-			jpathResults = [];
+			jpathResults.length = 0;
 			console.error(e);
 		}
 	}
@@ -138,20 +142,20 @@
 	<div class="input-group field">
 		<span class="input-group-text">Path</span>
 		<a class="btn btn-base bi bi-question-circle-fill" href="https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html" title="Syntax" target="_blank"></a>
-		<input class="jpath-input form-control" type="text" bind:this={jpath} on:keypress={onJpathKeyPress}/>
-		<button type="button" class="btn btn-base bi bi-x-lg" on:click={clearJpath}></button>
-		<button type="button" class="btn btn-primary btn-eval" on:click={evaluateJpath}>Evaluate</button>
+		<input class="jpath-input form-control" type="text" bind:this={jpath} onkeypress={onJpathKeyPress}/>
+		<button type="button" class="btn btn-base bi bi-x-lg" onclick={clearJpath}></button>
+		<button type="button" class="btn btn-primary btn-eval" onclick={evaluateJpath}>Evaluate</button>
 	</div>
 	<div class="jpath-matches input-group">
 		<span class="flex-fill0 input-group-text">{jpathResults.length} {jpathResults.length == 1 ? "Match" : "Matches"}</span>
 		{#if jpathResults.length}
-			<button class="flex-fill0 btn btn-base" on:click={jpathResultsExpand}>Expand Matches</button>
-			<button class="flex-fill0 btn btn-base" on:click={jpathResultsDelete}>Delete Matches</button>
+			<button class="flex-fill0 btn btn-base" onclick={jpathResultsExpand}>Expand Matches</button>
+			<button class="flex-fill0 btn btn-base" onclick={jpathResultsDelete}>Delete Matches</button>
 		{/if}
 	</div>
 	<ul class="jpath-results list-group list-group-flush overflow-y-scroll overflow-x-hidden border rounded">
 		{#each jpathResults as item}
-			<li tabindex="0" role="button" class="list-group-item list-group-item-action " on:keypress={e => jpathItemEvent(item, e)} on:click={e => jpathItemEvent(item, e)}>
+			<li tabindex="0" role="button" class="list-group-item list-group-item-action " onkeypress={e => jpathItemEvent(item, e)} onclick={e => jpathItemEvent(item, e)}>
 				<div class="text-truncate">{item.path}</div>
 			</li>
 		{/each}

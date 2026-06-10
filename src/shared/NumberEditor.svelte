@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	interface InputMode {
 		preventInput(char: string, text: string, start: number, end: number): boolean;
 		validate(value: string): undefined | string | number;
@@ -34,15 +34,23 @@
 	export type InputType = keyof typeof inputModesRaw;
 </script>
 <script lang="ts">
-	export let type: InputType;
-	export let value: number;
-	export let min: number | undefined = undefined;
-	export let max: number | undefined = undefined;
-	export { klass as class };
+	interface Props {
+		type: InputType;
+		value: number;
+		min?: number;
+		max?: number;
+		class?: string;
+	}
 
-	$: mode = inputModes[type];
+	let {
+		type,
+		value = $bindable(),
+		min,
+		max,
+		class: klass
+	}: Props = $props();
 
-	let klass: string;
+	const mode = $derived(inputModes[type]);
 
 	function onKeyDown(this: HTMLInputElement, evt: KeyboardEvent) {
 		if (evt.code === "Escape") {
@@ -86,4 +94,4 @@
 <style lang="scss">
 
 </style>
-<input class={klass} {min} {max} type="number" inputmode="numeric" {value} on:keyup={onKeyDown} on:keypress={onKeyPress} on:input={onInput} on:focusout={onFocusOut} />
+<input class={klass} {min} {max} type="number" inputmode="numeric" {value} onkeyup={onKeyDown} onkeypress={onKeyPress} oninput={onInput} onfocusout={onFocusOut} />

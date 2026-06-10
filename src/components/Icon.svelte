@@ -1,6 +1,13 @@
 <script lang="ts">
-	export let icon: BootstrapIconKey;
+	import type { Snippet } from "svelte";
+
+	interface Props {
+		icon: BootstrapIconKey;
+		children?: Snippet;
+	}
+
+	const { icon, children }: Props = $props();
 </script>
 <i class="bi bi-{icon}">
-	<slot />
+	{@render children?.()}
 </i>

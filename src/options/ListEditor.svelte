@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	export interface ListValidator {
 		validate(items: ImmutableArray<string>, index: number, item: string): undefined | string;
 	}
@@ -6,10 +6,19 @@
 <script lang="ts">
 	import ImmutableArray from "../immutable-array";
 
-	export let title: string;
-	export let items: ImmutableArray<string>;
-	export let help: string = "";
-	export let validator: null | ListValidator = null;
+	interface Props {
+		title: string;
+		items: ImmutableArray<string>;
+		help?: string;
+		validator?: null | ListValidator;
+	}
+
+	let {
+		title,
+		items = $bindable(),
+		help = '',
+		validator = null,
+	}: Props = $props();
 
 	function onPlaceholderFocusOut(target: HTMLInputElement) {
 		const text = target.value;
@@ -172,12 +181,12 @@
 	<ul class="list list-group list-group-flush flex-fill overflow-y-scroll">
 		{#each items as item, i}
 			<li class="list-group-item">
-				<input class="value" type="text" placeholder="Empty" on:focusout={evt => tryEdit(evt.currentTarget, i)} on:keydown={e => onKeyDown(e.currentTarget, e, i)} value={item}/>
-				<span class="button btn-rm bi bi-trash-fill" role="button" title="Delete" on:click={() => deleteAt(i)}></span>
+				<input class="value" type="text" placeholder="Empty" onfocusout={evt => tryEdit(evt.currentTarget, i)} onkeydown={e => onKeyDown(e.currentTarget, e, i)} value={item}/>
+				<span class="button btn-rm bi bi-trash-fill" role="button" title="Delete" onclick={() => deleteAt(i)}></span>
 			</li>
 		{/each}
 		<li class="list-group-item pc">
-			<input class="value" type="text" placeholder="Add" on:focusout={evt => onPlaceholderFocusOut(evt.currentTarget)} on:keydown={onPlaceholderKeyDown}/>
+			<input class="value" type="text" placeholder="Add" onfocusout={evt => onPlaceholderFocusOut(evt.currentTarget)} onkeydown={onPlaceholderKeyDown}/>
 		</li>
 	</ul>
 </div>

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	const indents = [
 		["Tab", "\t"],
 		["Space", " "]
@@ -9,9 +9,12 @@
 	import type EditorModel from "./editor";
 	import NumberEditor from "../shared/NumberEditor.svelte";
 
-	export let model: EditorModel<preferences.lite.Bag>;
+	interface Props {
+		model: EditorModel<preferences.lite.Bag>;
+	}
 
-	$: ({ changed, props: { enabled, indentChar, indentCount, useHistory, useWebRequest } } = model);
+	const { model }: Props = $props();
+	const { changed, props: { enabled, indentChar, indentCount, useHistory, useWebRequest } } = $derived(model);
 </script>
 <div class="root">
 	<div class="input-group" class:dirty={$changed.includes('enabled')}>

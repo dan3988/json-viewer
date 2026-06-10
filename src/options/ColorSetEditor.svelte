@@ -2,14 +2,22 @@
 	import type { CustomSchemeColorSet } from "./custom-scheme";
 	import ColorEditor from "./ColorEditor.svelte";
 
-	export let title: string;
-	export let value: CustomSchemeColorSet;
-	export let previewClass: string;
+	interface Props {
+		title: string;
+		value: CustomSchemeColorSet;
+		previewClass: string;
+	}
 
-	$: ({ background, border, text } = value);
-	$: ({ def: bgDef, hov: bgHov, act: bgAct  } = background);
-	$: ({ def: txtDef, hov: txtHov, act: txtAct, active: txtEnabled } = text);
-	$: ({ def: bdDef, hov: bdHov, act: bdAct, active: bdEnabled } = border);
+	const {
+		title,
+		value,
+		previewClass,
+	}: Props = $props();
+
+	const { background, border, text } = $derived(value);
+	const { def: bgDef, hov: bgHov, act: bgAct  } = $derived(background);
+	const { def: txtDef, hov: txtHov, act: txtAct, active: txtEnabled } = $derived(text);
+	const { def: bdDef, hov: bdHov, act: bdAct, active: bdEnabled } = $derived(border);
 </script>
 <div class="root gap-1">
 	<span class="title">{title}</span>

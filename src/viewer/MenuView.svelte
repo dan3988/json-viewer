@@ -1,8 +1,5 @@
-<script lang="ts" context="module">
-	export enum MenuAlign {
-		Left,
-		Right
-	}
+<script lang="ts" module>
+	export type MenuAlign = 'left' | 'right';
 
 	export type SizeValue = undefined | string;
 	export type Size = SizeValue | [width: SizeValue, height: SizeValue];
@@ -18,25 +15,42 @@
 	}
 </script>
 <script lang="ts">
-	export let alignment: MenuAlign = MenuAlign.Left;
-	export let initialMenuSize: undefined | Size = undefined;
-	export let menuShown = false;
-	export let minMenuSize: undefined | Size = undefined;
-	export let maxMenuSize: undefined | Size = undefined;
-	export let menuCollapseWidth = 150;
+	import type { Snippet } from "svelte";
 
-	$: [initialMenuWidth, initialMenuHeight] = unwrapSize(initialMenuSize);
-	$: [minMenuWidth, minMenuHeight] = unwrapSize(minMenuSize);
-	$: [maxMenuWidth, maxMenuHeight] = unwrapSize(maxMenuSize);
-	$: align = MenuAlign[alignment].toLowerCase() as "left" | "right";
+	interface Props {
+		alignment?: MenuAlign;
+		initialMenuSize?: Size;
+		menuShown?: boolean;
+		minMenuSize?: Size;
+		maxMenuSize?: Size;
+		menuCollapseWidth?: number;
+		children: Snippet;
+		menu: Snippet;
+	}
 
-	let menu: HTMLElement;
+	let {
+		alignment = 'left',
+		initialMenuSize,
+		menuShown = $bindable(false),
+		minMenuSize,
+		maxMenuSize,
+		menuCollapseWidth = 150,
+		children,
+		menu,
+	}: Props = $props();
+
+	const [initialMenuWidth, initialMenuHeight] = $derived(unwrapSize(initialMenuSize));
+	const [minMenuWidth, minMenuHeight] = $derived(unwrapSize(minMenuSize));
+	const [maxMenuWidth, maxMenuHeight] = $derived(unwrapSize(maxMenuSize));
+	const resizeDirection = $derived(alignment === 'right' ? 1 : -1);
+
+	let menuElement: HTMLElement;
 
 	function resizeBegin(startPos: number, startSize: number, evtProp: "x" | "y", styleProp: "width" | "height", direction: number = 1) {
 		function onMove(evt: MouseEvent) {
 			const pos = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
 			menuShown = pos >= menuCollapseWidth;
-			menu.style[styleProp] = pos + "px";
+			menuElement.style[styleProp] = pos + "px";
 		}
 
 		function onEnd(evt: MouseEvent) {
@@ -44,12 +58,12 @@
 
 			let size: string | number = Math.max(0, startSize + (startPos - evt[evtProp]) * -direction);
 			if (size < menuCollapseWidth) {
-				const v = menu.getAttribute("data-remember-" + evtProp);
+				const v = menuElement.getAttribute("data-remember-" + evtProp);
 				if (v != null)
 					menu.style[styleProp] = v + "px";
 			} else {
-				menu.setAttribute("data-remember-" + evtProp, String(size));
-				menu.style[styleProp] = size + "px";
+				menuElement.setAttribute("data-remember-" + evtProp, String(size));
+				menuElement.style[styleProp] = size + "px";
 			}
 		}
 
@@ -58,11 +72,11 @@
 	}
 
 	function onGrabberHMouseDown(evt: MouseEvent) {
-		resizeBegin(evt.x, menu.clientWidth, "x", "width", ((alignment * -2) + 1));
+		resizeBegin(evt.x, menuElement.clientWidth, "x", "width", resizeDirection);
 	}
 
 	function onGrabberVMouseDown(evt: MouseEvent) {
-		resizeBegin(evt.y, menu.clientHeight, "y", "height");
+		resizeBegin(evt.y, menuElement.clientHeight, "y", "height");
 	}
 </script>
 <style lang="scss">
@@ -160,7 +174,7 @@
 </style>
 <div
 	class="root"
-	data-menu-align={align}
+	data-menu-align={alignment}
 	data-menu-shown={menuShown}
 	style:--menu-min-height={minMenuHeight}
 	style:--menu-max-height={maxMenuHeight}
@@ -169,11 +183,11 @@
 	style:--menu-init-height={initialMenuHeight}
 	style:--menu-init-width={initialMenuWidth}>
 	<div class="slot-wrapper p-content">
-		<slot/>
+		{@render children()};
 	</div>
-	<div class="slot-wrapper p-menu" bind:this={menu}>
-		<slot name="menu"/>
+	<div class="slot-wrapper p-menu" bind:this={menuElement}>
+		{@render menu()};
 	</div>
-	<div class="gripper gripper-h" on:mousedown={onGrabberHMouseDown}/>
-	<div class="gripper gripper-v" on:mousedown={onGrabberVMouseDown}/>
+	<div class="gripper gripper-h" onmousedown={onGrabberHMouseDown}></div>
+	<div class="gripper gripper-v" onmousedown={onGrabberVMouseDown}></div>
 </div>

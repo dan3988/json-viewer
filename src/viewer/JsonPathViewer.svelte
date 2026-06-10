@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	import type json from "../json";
 
 	function expandPath(model: ViewerModel, value: undefined | null | json.Node): readonly json.Node[] {
@@ -17,12 +17,16 @@
 <script lang="ts">
 	import type ViewerModel from "../viewer-model";
 	import { toPointer } from "../util";
-	import JsonPathEditor, { type EventMap } from "./JsonPathEditor.svelte";
+	import JsonPathEditor from "./JsonPathEditor.svelte";
 
-	export let model: ViewerModel;
+	interface Props {
+		model: ViewerModel;
+	}
 
-	$: set = model.selected;
-	$: path = expandPath(model, $set.last);
+	const { model }: Props = $props();
+
+	const set = $derived(model.selected);
+	const path = $derived(expandPath(model, $set.last));
 
 	let editing = false;
 	let editor: JsonPathEditor;
@@ -32,17 +36,22 @@
 		editor.focus();
 	}
 
-	function cancelEditing(evt: CustomEvent) {
+	function cancelEditing() {
 		editing = false;
 	}
 
-	function endEditing(evt: CustomEvent<EventMap["finished"]>) {
-		if (evt.detail == null) {
-			evt.preventDefault()
+	function endEditing(node: json.Node | null) {
+		if (node == null) {
+			return true;
 		} else {
-			model.setSelected(evt.detail, true, true);
+			model.setSelected(node, true, true);
 			editing = false;
 		}
+	}
+
+	function onNodeClicked(evt: Event, node: json.Node) {
+		evt.preventDefault();
+		model.setSelected(node, true, true);
 	}
 </script>
 <style lang="scss">
@@ -112,18 +121,18 @@
 	}
 </style>
 <div class="root border rounded p-1" class:editing>
-	<ul class="list" role="textbox" on:click={beginEditing}>
+	<ul class="list" role="textbox" onclick={beginEditing}>
 		{#each path as node}
 		{@const key = node.key ? toPointer(node.key) : '$'}
 			<li>
 				{#if node.parent != null}
 					<span>/</span>
 				{/if}
-				<span class="content rounded" on:click|stopPropagation={() => model.setSelected(node, true, true)}>{key}</span>
+				<span class="content rounded" onclick={e => onNodeClicked(e, node)}>{key}</span>
 			</li>
 		{/each}
 	</ul>
 	<div class="editor">
-		<JsonPathEditor bind:this={editor} {model} on:cancelled={cancelEditing} on:finished={endEditing}/>
+		<JsonPathEditor bind:this={editor} {model} oncancel={cancelEditing} onfinished={endEditing}/>
 	</div>
 </div>

@@ -1,10 +1,21 @@
 <script lang="ts">
-	export let min = 0;
-	export let max = 100;
-	export let value: number;
-	export let readonly = false;
-	export let disabled = false;
-	export let onchange: undefined | ((value: number) => void) = undefined;
+	interface Props {
+		min?: number;
+		max?: number;
+		value: number;
+		readonly?: false;
+		disabled?: false;
+		onchange?: Consumer<number>;
+	}
+
+	let {
+		min = 0,
+		max = 100,
+		value = $bindable(),
+		readonly = false,
+		disabled = false,
+		onchange
+	}: Props = $props();
 
 	function onRangeInput(this: HTMLInputElement) {
 		value = this.valueAsNumber;
@@ -24,8 +35,8 @@
 		onchange?.(value);
 	}
 </script>
-<input type="range" class="form-control" class:readonly {disabled} {min} {max} {value} on:input={onRangeInput} />
-<input type="number" class="form-control" class:readonly {disabled} {min} {max} value={Math.round(value)} on:change={onNumberInput} />
+<input type="range" class="form-control" class:readonly {disabled} {min} {max} {value} oninput={onRangeInput} />
+<input type="number" class="form-control" class:readonly {disabled} {min} {max} value={Math.round(value)} onchange={onNumberInput} />
 <style lang="scss">
 	input[type="range"].readonly {
 		pointer-events: none;

@@ -1,25 +1,39 @@
 <script lang="ts">
 	import type { ButtonStyle } from "../button.js";
+	import type { Snippet } from "svelte";
 	import ButtonThemeData from "./theme";
 	import Icon from "../Icon.svelte";
 
-	export let style: ButtonStyle | undefined = undefined;
-	export let icon: BootstrapIconKey | "" = "";
-	export let title: boolean | string = true;
-	export let checked = false;
-	export let disabled = false;
-	export let text: string | undefined = undefined;
-	export let onchange: ((value: boolean) => void) | undefined = undefined;
+	interface Props {
+		style?: ButtonStyle | undefined;
+		icon?: BootstrapIconKey | "";
+		title?: boolean | string
+		checked?: boolean;
+		disabled?: boolean;
+		text?: string;
+		onchange?: Consumer<boolean>;
+		children?: Snippet;
+	}
+
+	let {
+		style,
+		icon = '',
+		title = true,
+		checked = $bindable(false),
+		disabled = false,
+		text,
+		onchange,
+		children,
+	}: Props = $props();
 
 	const theme = ButtonThemeData.current;
+	const tooltip = $derived((typeof title === "boolean" ? (title ? text : undefined) : title) ?? "");
+	const clazz = $derived(style ?? $theme.style);
 
 	function onClick() {
 		checked = !checked;
 		onchange?.(checked);
 	}
-
-	$: tooltip = (typeof title === "boolean" ? (title ? text : undefined) : title) ?? "";
-	$: clazz = style ?? $theme.style;
 </script>
 <button
 	class="btn btn-{clazz} d-flex gap-2"
@@ -27,9 +41,13 @@
 	class:active={checked}
 	title={tooltip}
 	aria-label={tooltip}
-	on:click={onClick}>
+	onclick={onClick}>
 	{#if icon}
 		<Icon {icon} />
 	{/if}
-	<slot>{text ?? ""}</slot>
+	{#if children}
+		{@render children()}
+	{:else if text}
+		{text}
+	{/if}
 </button>

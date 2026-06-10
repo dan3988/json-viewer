@@ -108,7 +108,7 @@ export class EditorModel<T extends Dict = Dict> {
 			return this.#current;
 		}
 	
-		constructor(owner: EditorModel, preference: preferences.core.Preference<V, K>, value: V) {
+		constructor(owner: EditorModel<any>, preference: preferences.core.Preference<V, K>, value: V) {
 			this.#owner = owner;
 			this.#preference = preference;
 			this.#original = value;

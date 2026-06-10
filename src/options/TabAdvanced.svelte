@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	import type { ListValidator } from "./ListEditor.svelte";
 	import type ImmutableArray from "../immutable-array";
 
@@ -33,9 +33,12 @@
 	import type EditorModel from "./editor";
 	import ListEditor from "./ListEditor.svelte";
 
-	export let model: EditorModel<preferences.lite.Bag>;
+	interface Props {
+		model: EditorModel<preferences.lite.Bag>;
+	}
 
-	$: ({ changed, props: { mimes, whitelist, blacklist } } = model);
+	const { model }: Props = $props();
+	const { changed, props: { mimes, whitelist, blacklist } } = $derived(model);
 </script>
 <div class="root">
 	<div class="layout">

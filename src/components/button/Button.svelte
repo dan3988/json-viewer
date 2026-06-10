@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	const repeatDelay = 500;
 	const repeatInterval = 100;
 </script>
@@ -6,16 +6,31 @@
 	import type { ButtonStyle } from "../button.js";
 	import ButtonThemeData from "./theme";
 	import Icon from "../Icon.svelte";
-	import { onDestroy } from "svelte";
+	import { onDestroy, type Snippet } from "svelte";
 
-	export let style: ButtonStyle | undefined = undefined;
-	export let icon: BootstrapIconKey | "" = "";
-	export let title: boolean | string = true;
-	export let repeat = false;
-	export let action: EventHandler<void, MouseEvent> | Falsy = undefined;
-	export let text: string | undefined = undefined;
+	interface Props {
+		style?: ButtonStyle | undefined;
+		icon?: BootstrapIconKey | "";
+		title?: boolean | string;
+		repeat?: boolean;
+		action?: EventHandler<void, MouseEvent> | Falsy;
+		text?: string;
+		children?: Snippet;
+	}
+
+	const {
+		style,
+		icon = '',
+		title = true,
+		repeat = false,
+		action,
+		text,
+		children,
+	}: Props = $props();
 
 	const theme = ButtonThemeData.current;
+	const tooltip = $derived((typeof title === "boolean" ? (title ? text : undefined) : title) ?? "");
+	const clazz = $derived(style ?? $theme.style);
 
 	let timeout = 0;
 	let isClick = true;
@@ -46,21 +61,22 @@
 	}
 
 	onDestroy(() => cancel?.());
-
-	$: tooltip = (typeof title === "boolean" ? (title ? text : undefined) : title) ?? "";
-	$: clazz = style ?? $theme.style;
 </script>
 <button
 	class="btn btn-{clazz} d-flex gap-2"
 	class:disabled={!action}
 	title={tooltip}
 	aria-label={tooltip}
-	on:click={onClick}
-	on:mousedown={onMouseDown}
-	on:mouseup={cancel}
-	on:mouseleave={cancel}>
+	onclick={onClick}
+	onmousedown={onMouseDown}
+	onmouseup={cancel}
+	onmouseleave={cancel}>
 	{#if icon}
 		<Icon {icon} />
 	{/if}
-	<slot>{text ?? ""}</slot>
+	{#if children}
+		{@render children()}
+	{:else if text}
+		{text}
+	{/if}
 </button>

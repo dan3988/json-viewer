@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	import type { DocumentRequestInfo, DocumentHeader } from "../types.d.ts"
 
 	function wrapHeaders(info: undefined | DocumentRequestInfo): [title: string, headers: DocumentHeader[]][] {
@@ -13,9 +13,8 @@
 	import type ViewerModel from "../viewer-model";
 	import time from "../time";
 
-	export let model: ViewerModel;
-
-	$: info = model.requestInfo;
+	const { model }: { model: ViewerModel } = $props();
+	const info = $derived(model.requestInfo);
 </script>
 <style lang="scss">
 	@use "src/core.scss" as *;

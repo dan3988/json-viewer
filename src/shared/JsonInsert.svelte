@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	import { noop } from "../util";
 	import * as svelte from "svelte";
 
@@ -146,7 +146,11 @@
 	import Button from "../components/button";
 	import { slide } from "svelte/transition";
 
-	export let insert: (value: any) => void;
+	interface Props {
+		insert: Consumer;
+	}
+
+	const { insert }: Props = $props();
 
 	const manager = InserterManager.current;
 	const reg = manager.register();
@@ -194,7 +198,7 @@
 <div class="root" class:active class:open>
 	<div class="hitbox" use:reg.hitbox></div>
 	<div class="separator"></div>
-	<div class="expander" tabindex="0" on:focusout={onFocusOut} bind:this={focusTarget}>
+	<div class="expander" tabindex="0" onfocusout={onFocusOut} bind:this={focusTarget}>
 		<Button icon="plus-lg" title="Insert" action={open ? collapse : expand}></Button>
 		{#if open}
 			<div class="menu-wrapper" transition:slide={{ axis: 'x', duration: 150 }}>

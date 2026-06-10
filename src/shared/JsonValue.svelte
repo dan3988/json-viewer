@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	function shouldQuote(value: string) {
 		try {
 			JSON5.parse(value);
@@ -32,17 +32,28 @@
 	import edits from "../viewer/editor-helper.js";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
-	export let model: ViewerModel;
-	export let search: JsonSearch;
-	export let node: json.Value;
-	export let readonly = false;
-	export let editing = false;
-	export let onediting: VoidFunction | Falsy = undefined;
+	interface Props {
+		model: ViewerModel;
+		search: JsonSearch;
+		node: json.Value;
+		readonly?: boolean;
+		editing?: boolean;
+		onediting?: VoidFunction | Falsy;
+	}
 
-	let value: any;
-	let subtype: "string" | "number" | "boolean" | "null";
+	let {
+		model,
+		search,
+		node,
+		readonly,
+		editing,
+		onediting,
+	}: Props = $props();
 
-	$: setValue(node);
+	let value: any = $state();
+	let subtype: "string" | "number" | "boolean" | "null" = $state(undefined!);
+
+	$effect.pre(() => setValue(node));
 
 	let lastId = 0;
 

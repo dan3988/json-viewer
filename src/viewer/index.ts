@@ -1,10 +1,12 @@
 /// <reference path="../../node_modules/json5/lib/index.d.ts" />
 import "../dom-extensions";
 import preferences from "../preferences-lite";
-import createComponent from "../component-tracker";
 import JsonViewer from "./JsonViewer.svelte";
 import { ViewerModel, type SelectedNodeList } from "../viewer-model";
 import json from "../json";
+import { mount } from "svelte";
+import { fromStore } from "svelte/store";
+import toRune from "../state-store.svelte";
 
 console.time('JSON Viewer Load');
 
@@ -75,10 +77,7 @@ async function run() {
 
 		async function loadAsync() {
 			const prefs = await preferences.lite.manager.watch();
-			const mapped = prefs
-				.bind()
-				.map(['menuAlign', 'customSchemes', 'darkMode', 'schemeDark', 'schemeLight', 'background', 'fontSize', 'fontFamily'])
-				.build();
+			const props = toRune(prefs, 'menuAlign', 'customSchemes', 'darkMode', 'schemeDark', 'schemeLight', 'background', 'fontSize', 'fontFamily');
 
 			function updateIndent() {
 				const { indentChar, indentCount } = prefs.getValues(["indentChar", "indentCount"]);
@@ -99,7 +98,10 @@ async function run() {
 					updateIndent();
 			});
 
-			createComponent(JsonViewer, document.body, mapped, { model });
+			mount(JsonViewer, {
+				target: document.body,
+				props: { model, ...props },
+			})
 
 			console.log("JSON Viewer loaded successfully. The original parsed JSON value can be accessed using the global variable \"json\"");
 		}

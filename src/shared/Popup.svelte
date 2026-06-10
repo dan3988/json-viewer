@@ -1,14 +1,22 @@
 <script lang="ts">
-	import type { PopupEvents } from "../types";
-	import { createEventDispatcher } from "svelte";
+	import type { PopupProps } from "../types";
 	import { fade } from "svelte/transition";
 
-	export let title: string = "";
-	export let confirmText = "OK";
-	export let width: undefined | number = undefined;
-	export let height: undefined | number = undefined;
+	interface Props extends PopupProps<void> {
+		title?: string;
+		confirmText?: string;
+		width?: number;
+		height?: number;
+	}
 
-	const dispatcher = createEventDispatcher<PopupEvents<void>>();
+	const {
+		title = "",
+		confirmText = "OK",
+		width,
+		height,
+		oncancel,
+		onconfirm,
+	}: Props = $props();
 
 	function onBgClick(evt: MouseEvent) {
 		if (evt.target === evt.currentTarget)
@@ -16,11 +24,11 @@
 	}
 
 	function confirm() {
-		dispatcher("confirmed");
+		onconfirm?.();
 	}
 
 	function cancel() {
-		dispatcher("canceled");
+		oncancel?.();
 	}
 </script>
 <style lang="scss">
@@ -66,18 +74,18 @@
 	}
 </style>
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<div class="modal" transition:fade tabindex="-1" role="dialog" on:mousedown={onBgClick}>
+<div class="modal" transition:fade tabindex="-1" role="dialog" onmousedown={onBgClick}>
 	<div class="modal-dialog" role="document" style:width={width && width + "vw"} style:height={height && height + "vh"}>
 		<div class="modal-content">
 			<div class="modal-header">
 				<span id="title" class="h4 modal-title">{title}</span>
-				<span role="button" class="close btn-danger bi" data-dismiss="modal" aria-label="Close" on:click={cancel}></span>
+				<span role="button" class="close btn-danger bi" data-dismiss="modal" aria-label="Close" onclick={cancel}></span>
 			</div>
 			<div class="modal-body overflow-y-auto">
 				<slot/>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-success" on:click={confirm}>{confirmText}</button>
+				<button type="button" class="btn btn-success" onclick={confirm}>{confirmText}</button>
 			</div>
 		</div>
 	</div>

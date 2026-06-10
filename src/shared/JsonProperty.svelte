@@ -10,18 +10,29 @@
 	import JsonInsert, { InserterManager } from "./JsonInsert.svelte";
 	import JsonSearch from "../search.js";
 	import edits from "../viewer/editor-helper.js";
+    import { stopPropagation } from "svelte/legacy";
 
-	export let model: ViewerModel;
-	export let search: JsonSearch | undefined = undefined;
-	export let node: json.Node;
-	export let indent: Indent;
-	export let readonly = false;
-	export let remove: (() => void) | undefined = undefined;
+	interface Props {
+		model: ViewerModel;
+		search?: JsonSearch;
+		node: json.Node;
+		indent: Indent;
+		readonly?: boolean;
+		remove?: () => void;
+	}
+
+	const {
+		model,
+		search,
+		node,
+		indent,
+		readonly = false,
+		remove
+	}: Props = $props();
 
 	const inserterManager = InserterManager.current;
-
-	$: selectedNodes = model.selected;
-	$: selected = $selectedNodes.has(node);
+	const selectedNodes = $derived(model.selected);
+	const selected = $derived($selectedNodes.has(node));
 
 	function focusCheck(list: SelectedNodeList) {
 		if (list.last === node) {
@@ -33,22 +44,25 @@
 
 	onDestroy(() => {
 		unsub?.();
+		removeListener?.();
 	})
 
 	onMount(() => {
 		unsub = selectedNodes.subscribe(focusCheck);
 	});
 
-	$: ({ isExpandedStore } = node);
-	$: expanded = $isExpandedStore;
-	$: canEdit = !readonly && !(editingName || editingValue || menuOpen);
+	let editingValue = $state(false);
+	let editingName = $state(false);
+	let locked = $state(false);
+	let menuFocus: HTMLElement;
+	let menuOpen = $state(false);
+	let children: (json.Node | CommitObject)[] = $state([]);
+
+	const { isExpandedStore } = $derived(node);
+	const expanded = $derived($isExpandedStore);
+	const canEdit = $derived(!readonly && !(editingName || editingValue || menuOpen));
 	
-	let editingValue = false;
-	let editingName = false;
-
-	let locked = false;
-
-	$: setLocked(!canEdit);
+	$effect.pre(() => setLocked(!canEdit));
 
 	function setLocked(value: boolean) {
 		if (locked !== value) {
@@ -101,28 +115,31 @@
 
 	type CommitObject = (name: string) => void;
 
-	let children: (json.Node | CommitObject)[] = [];
-
 	function update() {
 		children = [...node];
 	}
 
-	if (node.isContainer()) {
-		update();
-		node.onChanged.addListener(update);
-		onDestroy(() => node.onChanged.removeListener(update));
-	}
+	let removeListener: Action | undefined;
+
+	$effect.pre(() => {
+		removeListener?.();
+
+		if (node.isContainer()) {
+			update();
+			removeListener = () => node.onChanged.addListener(update);
+		} else {
+			removeListener = undefined;
+		}
+	});
 
 	function onExpanderClicked() {
 		node.toggleExpanded();
 	}
 
-	function onGutterClicked() {
+	function onGutterClicked(evt: Event) {
+		evt.stopPropagation();
 		model.setSelected(node, false, true);
 	}
-
-	let menuFocus: HTMLElement;
-	let menuOpen = false;
 
 	function onMenuFocusLost(evt: FocusEvent) {
 		if (!menuFocus.contains(evt.relatedTarget as Node | null)) {
@@ -354,14 +371,15 @@
 		flex-direction: column;
 	}
 </style>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
 	data-indent={indent.indent}
 	class="json-prop for-{node.type} for-{node.subtype} json-indent"
 	class:expanded
-	on:click={onClick}
-	on:mousedown={onMouseDown}>
-	<span class="json-key" class:json-selected={selected} on:contextmenu={openMenu}>
-		<span class="json-key-container" tabindex="0" bind:this={menuFocus} on:focusout={onMenuFocusLost}>
+	onclick={onClick}
+	onmousedown={onMouseDown}>
+	<span class="json-key" class:json-selected={selected} oncontextmenu={openMenu}>
+		<span class="json-key-container" tabindex="0" bind:this={menuFocus} onfocusout={onMenuFocusLost}>
 			<JsonPropertyKey {model} {search} {node} {readonly} {selected} bind:editing={editingName}>
 				<div class="json-actions-root">
 					{#if menuOpen}
@@ -381,16 +399,16 @@
 		</span>
 	</span>
 	{#if node.isContainer()}
-		<span class="expander bi bi-caret-right-fill" on:click={onExpanderClicked} title={(expanded ? "Collapse" : "Expand")}></span>
+		<span class="expander bi bi-caret-right-fill" onclick={onExpanderClicked} title={(expanded ? "Collapse" : "Expand")}></span>
 		{#if children.length}
 			<span class="container-summary container-count">{children.length}</span>
 		{:else}
 			<span class="container-summary container-empty">empty</span>
 		{/if}
 		{#if expanded}
-			<span class="gutter" on:click|stopPropagation={onGutterClicked}></span>
+			<span class="gutter" onclick={onGutterClicked}></span>
 			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-			<ul class="json-container json-{node.subtype} p-0" on:click|stopPropagation>
+			<ul class="json-container json-{node.subtype} p-0" onclick={stopPropagation()}>
 				<li class="json-container-gap">
 					<JsonInsert insert={(type) => insert(0, type)} />
 				</li>

@@ -299,7 +299,7 @@ class State<Props extends Dict = Dict> implements IState<Props> {
 				transformer = transformMany.bind(key, transform);
 			} else {
 				const [arg0, arg1] = args;
-				let transform: Func<any, any> | undefined;
+				let transform: Func | undefined;
 				if (typeof arg0 === "string") {
 					[outKey, transform] = [arg0, arg1];
 				} else {
@@ -423,7 +423,7 @@ function transformMany<T extends Dict>(this: string[], transform: Fn, src: IStat
 	return transform.apply(undefined, args);
 };
 
-function transformSingle<T extends Dict>(key: string, transform: Func<any, any>, state: IState<T>) {
+function transformSingle<T extends Dict>(key: string, transform: Converter, state: IState<T>) {
 	const v = state.getValue(key);
 	return transform(v);
 }

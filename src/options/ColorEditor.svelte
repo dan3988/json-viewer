@@ -1,16 +1,24 @@
 <script lang="ts">
 	import Color from "color";
 
-	export let value: null | Color = null;
-	export let onchange: undefined | ((value: Color) => void) = undefined;
-	export let readonly = false;
-	export let disabled = false;
+	interface Props {
+		value?: null | Color;
+		onchange?: Consumer<Color>;
+		readonly?: boolean;
+		disabled?: boolean;
+	}
 
-	$: hex = value && value.hex();
+	let {
+		value = $bindable(null),
+		onchange,
+		readonly = false,
+		disabled = false,
+	}: Props = $props();
+
+	const hex = $derived(value?.hex())
 
 	function onColorInput(this: HTMLInputElement) {
 		value = Color(this.value);
-		hex = value.hex();
 		onchange?.(value);
 	}
 
@@ -24,8 +32,8 @@
 		onchange?.(value);
 	}
 </script>
-<input type="color" class="form-control" class:empty={!value} class:readonly {disabled} value={hex} on:input={onColorInput} />
-<input type="text" class="form-control" value={hex ?? ''} {readonly} {disabled} on:focusout={onTextFocusOut} />
+<input type="color" class="form-control" class:empty={!value} class:readonly {disabled} value={hex} oninput={onColorInput} />
+<input type="text" class="form-control" value={hex ?? ''} {readonly} {disabled} onfocusout={onTextFocusOut} />
 <style lang="scss">
 	input {
 		height: calc(2.25rem + (var(--bs-border-width) * 2));
