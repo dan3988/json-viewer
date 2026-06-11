@@ -38,17 +38,17 @@
 	}
 
 	const { model }: Props = $props();
-	const { changed, props: { mimes, whitelist, blacklist } } = $derived(model);
+	const { mimes, whitelist, blacklist } = $derived(model.props);
 </script>
 <div class="root">
 	<div class="layout">
-		<div class="input-group grp-mimes list" class:dirty={$changed.includes('mimes')}>
+		<div class="input-group grp-mimes list">
 			<ListEditor title="MIME Types" help="A list of mime types that the extension will try to parse as JSON." validator={mimeValidator} bind:items={$mimes}/>
 		</div>
-		<div class="input-group grp-whitelist list" class:dirty={$changed.includes('whitelist')}>
+		<div class="input-group grp-whitelist list">
 			<ListEditor title="Whitelist" help="A list of hosts to automatically load the extension for." validator={hostValidator} bind:items={$whitelist}/>
 		</div>
-		<div class="input-group grp-whitelist list" class:dirty={$changed.includes('blacklist')}>
+		<div class="input-group grp-whitelist list">
 			<ListEditor title="Blacklist" help="A list of hosts to not load the extension for." validator={hostValidator} bind:items={$blacklist}/>
 		</div>
 	</div>

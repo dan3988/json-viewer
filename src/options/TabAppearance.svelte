@@ -29,18 +29,15 @@
 	}: Props = $props();
 
 	const {
-		changed,
-		props: {
-			darkMode,
-			schemeDark,
-			schemeLight,
-			menuAlign,
-			background,
-			customSchemes,
-			fontSize,
-			fontFamily,
-		},
-	} = $derived(model);
+		darkMode,
+		schemeDark,
+		schemeLight,
+		menuAlign,
+		background,
+		customSchemes,
+		fontSize,
+		fontFamily,
+	} = $derived(model.props);
 
 	const [presets, scheme] = $derived($tracker ? [schemes.entries.dark, schemeDark] : [schemes.entries.light, schemeLight]);
 	const customSchemeList = $derived(schemes.getCustomEntries($customSchemes, $tracker));
@@ -71,7 +68,7 @@
 </script>
 <div class="root">
 	<div class="options">
-		<div class="input-group hoverable-radio grp-menu-align" role="group" class:dirty={$changed.includes('menuAlign')}>
+		<div class="input-group hoverable-radio grp-menu-align" role="group">
 			<span class="input-group-text">Menu Alignment</span>
 			<Radio converter={v => v[0]} items={radioMenuAlign} bind:value={$menuAlign}>
 				{#snippet label([_, text], id)}
@@ -79,7 +76,7 @@
 				{/snippet}
 			</Radio>
 		</div>
-		<div class="input-group hoverable-radio grp-theme" role="group" class:dirty={$changed.includes('darkMode')}>
+		<div class="input-group hoverable-radio grp-theme" role="group">
 			<span class="input-group-text">Theme</span>
 			<Radio converter={v => v[0]} items={radioTheme} bind:value={$darkMode}>
 				{#snippet label([_, text], id)}
@@ -100,7 +97,7 @@
 		</div>
 		<div class="input-group grp-json-bg">
 			<span class="input-group-text">Background</span>
-			<select class="form-select flex-fill" class:dirty={$changed.includes('background')} bind:value={$background}>
+			<select class="form-select flex-fill" bind:value={$background}>
 				<option value="">None</option>
 				<option value="bricks">Bricks</option>
 				<option value="cubes">Cubes</option>

@@ -14,22 +14,22 @@
 	}
 
 	const { model }: Props = $props();
-	const { changed, props: { enabled, indentChar, indentCount, useHistory, useWebRequest } } = $derived(model);
+	const { enabled, indentChar, indentCount, useHistory, useWebRequest } = $derived(model.props);
 </script>
 <div class="root">
-	<div class="input-group" class:dirty={$changed.includes('enabled')}>
+	<div class="input-group">
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$enabled}/>
 			Enabled
 		</label>
 	</div>
-	<div class="input-group" class:dirty={$changed.includes('useHistory')}>
+	<div class="input-group">
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$useHistory}/>
 			Use History
 		</label>
 	</div>
-	<div class="input-group" class:dirty={$changed.includes('useWebRequest')}>
+	<div class="input-group">
 		<label class="input-group-text flex-fill align-items-start gap-1">
 			<input class="form-check-input" type="checkbox" bind:checked={$useWebRequest}/>
 			Show Request Headers
@@ -37,8 +37,8 @@
 	</div>
 	<div class="input-group grp-indent">
 		<span class="input-group-text">Clipboard Indent</span>
-		<NumberEditor class="form-control {$changed.includes('indentCount') ? "dirty" : ""}" bind:value={$indentCount} type="integer" min={1} max={10}/>
-		<select class="form-select" class:dirty={$changed.includes('indentChar')} bind:value={$indentChar}>
+		<NumberEditor class="form-control" bind:value={$indentCount} type="integer" min={1} max={10}/>
+		<select class="form-select" bind:value={$indentChar}>
 			{#each indents as [key, value]}
 				<option value={value}>{key}</option>
 			{/each}
