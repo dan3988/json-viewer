@@ -351,7 +351,7 @@
 						<input
 							class="search-input form-control rounded-0"
 							type="text"
-							bind:value={search.text}
+							bind:value={$search.text}
 							bind:this={searchInput}/>
 						{#if $search.text}
 							<div class="search-overlay">
