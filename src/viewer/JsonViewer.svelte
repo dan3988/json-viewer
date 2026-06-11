@@ -9,15 +9,14 @@
 	];
 </script>
 <script lang="ts">
-	import type * as svelte from "svelte";
 	import type { ViewerCommandEvent, ViewerModel } from "../viewer-model.js";
-	import type { PopupProps } from "../types";
 	import Button, { ToggleButton } from "../components/button";
 	import JsonProperty from "../shared/JsonProperty.svelte";
 	import JsonPathViewer from "./JsonPathViewer.svelte";
 	import MenuView from "./MenuView.svelte";
 	import SchemeStyleSheet from "../shared/SchemeStyleSheet.svelte";
-	import PopupPanel from "../shared/PopupPanel.svelte";
+	import Overlay, { OverlayController } from "../components/Overlay.svelte";
+	import PopupPanel from "../components/PopupPanel.svelte";
 	import { InserterManager } from "../shared/JsonInsert.svelte";
 	import RequestInfo from "./RequestInfo.svelte";
 	import JsonMenu from "./JsonMenu.svelte";
@@ -84,46 +83,15 @@
 
 	$effect.pre(() => void (searchResults, searchIndex = 0));
 
-	type PopupInfo<C extends svelte.Component<PopupProps<R>> = any, R = any> = [
-		clazz: C,
-		props: svelte.ComponentProps<C>,
-		completion: Consumer<R>,
-		cancel: Action
-	];
-
-	const popupStack: PopupInfo[] = [];
-	let popup: undefined | PopupInfo = $state();
-
-	import PopupInputText from "../shared/PopupInputText.svelte";
+	const overlay = new OverlayController();
 
 	function showRequestInfo() {
-		showPopup(PopupPanel, {
+		overlay.show(PopupPanel, {
 			component: RequestInfo,
 			title: "HTTP Request Details",
 			height: 80,
 			width: 80,
 			props: { model }
-		});
-	}
-
-	function showPopup<TComp extends svelte.Component<PopupProps<TResult>>, TResult>(comp: TComp, props: svelte.ComponentProps<TComp>): Promise<TResult>
-	function showPopup<TComp extends svelte.Component<PopupProps<TResult>>, TResult>(comp: TComp, props: svelte.ComponentProps<TComp>, confirm: (result: TResult) => boolean): Promise<void>
-	function showPopup<TResult>(comp: svelte.Component, props: Dict, confirm?: (result: TResult) => boolean) {
-		return new Promise<TResult | void>(resolve => {
-			let complete: Consumer<TResult>;
-			if (confirm) {
-				complete = (result) => confirm(result) && close();
-			} else {
-				complete = close;
-			}
-
-			function close(result?: TResult) {
-				popup = popupStack.pop();
-				resolve(result);
-			}
-
-			popup && popupStack.push(popup);
-			popup = [comp, props, complete, close];
 		});
 	}
 
@@ -359,88 +327,86 @@
 <svelte:window on:beforeunload={onUnload} />
 <svelte:head>
 	{#each css as href}
-		<link rel="stylesheet" {href} on:load={onStyleLoaded} />
+		<link rel="stylesheet" {href} onload={onStyleLoaded} />
 	{/each}
 </svelte:head>
 <SchemeStyleSheet scheme={currentScheme} darkMode={$tracker} {fontSize} {fontFamily} />
-<div class="root bg-body p-1 scheme" data-editor-bg={background}>
-	<div class="w-bar pb-1 gap-1">
-		<div class="btn-group">
-			<Button title="Save" icon="floppy" action={saveAs} />
-			<Button title="Expand All" icon="arrows-expand" action={() => setExpanded(true)} />
-			<Button title="Collapse All" icon="arrows-collapse" action={() => setExpanded(false)} />
-			<Button title="Undo" icon="arrow-counterclockwise" action={$canUndo && (() => model.edits.undo())} />
-			<Button title="Redo" icon="arrow-clockwise" action={$canRedo && (() => model.edits.redo())} />
-			{#if model.useWebRequest}
-				<Button title="Request Info" icon="activity" action={$requestInfo && showRequestInfo} />
-			{/if}
-		</div>
-		<div class="search" class:open={searchOpen} on:focusin={onSearchFocusIn} on:focusout={onSearchFocusOut}>
-			<div class="input-group">
-				<span class="input-group-text flex-fit">Search</span>
-				<div class="search-wrapper">
-					<input
-						class="search-input form-control rounded-0"
-						type="text"
-						bind:value={search.text}
-						bind:this={searchInput}/>
-					{#if $search.text}
-						<div class="search-overlay">
-							<span class="search-count">{searchResults.length && searchIndex + 1} / {searchResults.length}</span>
-							<Button title="Previous" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
-							<Button title="Next" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
-						</div>
-					{/if}
-					<div class="search-options p-1 gap-1 d-flex flex-column border rounded-bottom bg-body">
-						<div class="d-flex gap-1">
-							<div class="btn-group">
-								<ToggleButton icon="key-fill" title="Search Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
-								<ToggleButton icon="braces" title="Search Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+<Overlay controller={overlay}>
+	<div class="root bg-body p-1 scheme" data-editor-bg={background}>
+		<div class="w-bar pb-1 gap-1">
+			<div class="btn-group">
+				<Button title="Save" icon="floppy" action={saveAs} />
+				<Button title="Expand All" icon="arrows-expand" action={() => setExpanded(true)} />
+				<Button title="Collapse All" icon="arrows-collapse" action={() => setExpanded(false)} />
+				<Button title="Undo" icon="arrow-counterclockwise" action={$canUndo && (() => model.edits.undo())} />
+				<Button title="Redo" icon="arrow-clockwise" action={$canRedo && (() => model.edits.redo())} />
+				{#if model.useWebRequest}
+					<Button title="Request Info" icon="activity" action={$requestInfo && showRequestInfo} />
+				{/if}
+			</div>
+			<div class="search" class:open={searchOpen} onfocusin={onSearchFocusIn} onfocusout={onSearchFocusOut}>
+				<div class="input-group">
+					<span class="input-group-text flex-fit">Search</span>
+					<div class="search-wrapper">
+						<input
+							class="search-input form-control rounded-0"
+							type="text"
+							bind:value={search.text}
+							bind:this={searchInput}/>
+						{#if $search.text}
+							<div class="search-overlay">
+								<span class="search-count">{searchResults.length && searchIndex + 1} / {searchResults.length}</span>
+								<Button title="Previous" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
+								<Button title="Next" style="faded" icon="chevron-down" action={searchResults.length && nextSearch} />
 							</div>
-							<ToggleButton icon="type" title="Match Case" bind:checked={$search.isCaseSensitive}/>
-							<ToggleButton icon="quote" title="Exact Match" bind:checked={$search.isExactMatch}/>
-							<ToggleButton icon="regex" title="Regex" bind:checked={$search.isRegex}/>
-						</div>
-						{#if $search.error}
-							<span class="text-danger">Invalid Regex: {$search.error}</span>
 						{/if}
+						<div class="search-options p-1 gap-1 d-flex flex-column border rounded-bottom bg-body">
+							<div class="d-flex gap-1">
+								<div class="btn-group">
+									<ToggleButton icon="key-fill" title="Search Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
+									<ToggleButton icon="braces" title="Search Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+								</div>
+								<ToggleButton icon="type" title="Match Case" bind:checked={$search.isCaseSensitive}/>
+								<ToggleButton icon="quote" title="Exact Match" bind:checked={$search.isExactMatch}/>
+								<ToggleButton icon="regex" title="Regex" bind:checked={$search.isRegex}/>
+							</div>
+							{#if $search.error}
+								<span class="text-danger">Invalid Regex: {$search.error}</span>
+							{/if}
+						</div>
 					</div>
+					<Button title="Clear" icon="x-lg" action={clearFilter} />
 				</div>
-				<Button title="Clear" icon="x-lg" action={clearFilter} />
 			</div>
+			<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
+			<label class="btn btn-base" for="chk-jpath">JPath</label>
 		</div>
-		<input type="checkbox" class="btn-check" id="chk-jpath" bind:checked={jpathOpen} autocomplete="off" />
-		<label class="btn btn-base" for="chk-jpath">JPath</label>
-	</div>
-	<div class="w-menu">
-		<MenuView
-			bind:menuShown={jpathOpen}
-			minMenuSize={["450px", "300px"]}
-			maxMenuSize={["80vw", "80vh"]}
-			initialMenuSize="30rem"
-			alignment={menuAlign === "l" ? 'left' : 'right'}>
-			{#snippet menu()}
+		<div class="w-menu">
+			<MenuView
+				bind:menuShown={jpathOpen}
+				minMenuSize={["450px", "300px"]}
+				maxMenuSize={["80vw", "80vh"]}
+				initialMenuSize="30rem"
+				alignment={menuAlign === "l" ? 'left' : 'right'}>
+				{#snippet menu()}
+					<div class="slot">
+						<JsonMenu {model} />
+					</div>
+				{/snippet}
 				<div class="slot">
-					<JsonMenu {model} />
-				</div>
-			{/snippet}
-			<div class="slot">
-				<div class="jv-font w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
-					<div class="editor-bg h-100 w-100"></div>
-					<div class="prop-scroll overflow-scroll h-100 w-100">
-						<div class="prop-panel">
-							<JsonProperty {model} {search} node={model.root} indent={rootIndent} />
+					<div class="jv-font w-prop border rounded overflow-hidden" tabindex="0" bind:this={prop} use:keyMappings>
+						<div class="editor-bg h-100 w-100"></div>
+						<div class="prop-scroll overflow-scroll h-100 w-100">
+							<div class="prop-panel">
+								<JsonProperty {model} {search} node={model.root} indent={rootIndent} />
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-		</MenuView>
+			</MenuView>
+		</div>
+		<div class="jv-font w-path pt-1">
+			<JsonPathViewer {model}/>
+		</div>
 	</div>
-	<div class="jv-font w-path pt-1">
-		<JsonPathViewer {model}/>
-	</div>
-	{#if popup}
-		{@const [Popup, props, onconfirm, oncancel] = popup}
-		<Popup {...props} {onconfirm} {oncancel} />
-	{/if}
-</div>
+</Overlay>
