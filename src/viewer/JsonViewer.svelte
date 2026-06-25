@@ -23,7 +23,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import { KeyBindingListener } from "../keyboard";
 	import { commands } from "../commands";
-	import JsonSearch from "../search";
+	import JsonSearch from "../search.svelte";
 	import ThemeTracker from "../theme-tracker.js";
 	import Linq from "@daniel.pickett/linq-js";
 	import fs from "../fs";
@@ -351,9 +351,9 @@
 						<input
 							class="search-input form-control rounded-0"
 							type="text"
-							bind:value={$search.text}
+							bind:value={search.text}
 							bind:this={searchInput}/>
-						{#if $search.text}
+						{#if search.text}
 							<div class="search-overlay">
 								<span class="search-count">{searchResults.length && searchIndex + 1} / {searchResults.length}</span>
 								<Button title="Previous" style="faded" icon="chevron-up" action={searchResults.length && prevSearch} />
@@ -363,15 +363,25 @@
 						<div class="search-options p-1 gap-1 d-flex flex-column border rounded-bottom bg-body">
 							<div class="d-flex gap-1">
 								<div class="btn-group">
-									<ToggleButton icon="key-fill" title="Search Keys" checked={!!($search.mode & JsonSearch.Mode.Keys)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}/>
-									<ToggleButton icon="braces" title="Search Values" checked={!!($search.mode & JsonSearch.Mode.Values)} onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}/>
+									<ToggleButton
+										icon="key-fill"
+										title="Search Keys"
+										checked={!!(search.mode & JsonSearch.Mode.Keys)}
+										onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Keys)}
+									/>
+									<ToggleButton
+										icon="braces"
+										title="Search Values"
+										checked={!!(search.mode & JsonSearch.Mode.Values)}
+										onchange={toggleFilterMode.bind(undefined, JsonSearch.Mode.Values)}
+									/>
 								</div>
-								<ToggleButton icon="type" title="Match Case" bind:checked={$search.isCaseSensitive}/>
-								<ToggleButton icon="quote" title="Exact Match" bind:checked={$search.isExactMatch}/>
-								<ToggleButton icon="regex" title="Regex" bind:checked={$search.isRegex}/>
+								<ToggleButton icon="type" title="Match Case" bind:checked={search.isCaseSensitive}/>
+								<ToggleButton icon="quote" title="Exact Match" bind:checked={search.isExactMatch}/>
+								<ToggleButton icon="regex" title="Regex" bind:checked={search.isRegex}/>
 							</div>
-							{#if $search.error}
-								<span class="text-danger">Invalid Regex: {$search.error}</span>
+							{#if search.error}
+								<span class="text-danger">Invalid Regex: {search.error}</span>
 							{/if}
 						</div>
 					</div>

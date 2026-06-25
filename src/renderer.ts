@@ -1,6 +1,6 @@
 import type json from "./json.js";
 import type { Subscriber } from "svelte/store";
-import JsonSearch from "./search.js";
+import JsonSearch from "./search.svelte.js";
 import { isIdentifier } from "./util.js";
 
 export type RendererFunction<T = any> = (target: HTMLElement, value: T) => Renderer<T>;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ViewerModel, ViewerCommandEvent } from "../viewer-model";
 	import type json from "../json";
-	import JsonSearch from "../search";
+	import JsonSearch from "../search.svelte";
 	import edits from "../viewer/editor-helper.js";
 	import { onDestroy, type Snippet } from "svelte";
 	import { renderKey } from "../renderer";

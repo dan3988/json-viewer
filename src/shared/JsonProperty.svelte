@@ -8,9 +8,8 @@
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 	import JsonValue from "./JsonValue.svelte";
 	import JsonInsert, { InserterManager } from "./JsonInsert.svelte";
-	import JsonSearch from "../search.js";
+	import JsonSearch from "../search.svelte.js";
 	import edits from "../viewer/editor-helper.js";
-    import { stopPropagation } from "svelte/legacy";
 
 	interface Props {
 		model: ViewerModel;
@@ -408,7 +407,7 @@
 		{#if expanded}
 			<span class="gutter" onclick={onGutterClicked}></span>
 			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-			<ul class="json-container json-{node.subtype} p-0" onclick={stopPropagation()}>
+			<ul class="json-container json-{node.subtype} p-0" onclick={e => e.stopPropagation()}>
 				<li class="json-container-gap">
 					<JsonInsert insert={(type) => insert(0, type)} />
 				</li>

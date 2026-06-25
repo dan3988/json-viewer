@@ -27,14 +27,14 @@
 	import type { ViewerModel } from "../viewer-model.js";
 	import type { EditAction } from "../edit-stack.js";
 	import { renderValue } from "../renderer.js";
-	import JsonSearch from "../search.js";
+	import JsonSearch from "../search.svelte.js";
 	import json from "../json.js";
 	import edits from "../viewer/editor-helper.js";
 	import JsonValueEditor from "./JsonValueEditor.svelte";
 
 	interface Props {
 		model: ViewerModel;
-		search: JsonSearch;
+		search?: JsonSearch;
 		node: json.Value;
 		readonly?: boolean;
 		editing?: boolean;

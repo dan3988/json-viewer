@@ -1,85 +1,28 @@
-import type { Readable, Subscriber, Unsubscriber } from "svelte/store";
 import type json from "./json";
+import { Readable, Subscriber, Unsubscriber } from "svelte/store";
 import { StoreListeners } from "./store";
+import { untrack } from "svelte";
 
 export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 	readonly #listeners = new StoreListeners<JsonSearch>;
 	readonly #results = new Map<number, json.Node>;
 	readonly #root: json.Node;
 
-	#text: string = '';
-	get text() {
-		return this.#text;
-	}
-
-	set text(value) {
-		if (this.#text !== value) {
-			this.#text = value;
-			this.#update(true);
-		}
-	}
-
-	#isRegex = false;
-	get isRegex() {
-		return this.#isRegex;
-	}
-
-	set isRegex(value) {
-		value = !!value;
-		if (this.#isRegex !== value) {
-			this.#isRegex = value;
-			this.#update(true);
-		}
-	}
-
-	#isCaseSensitive = false;
-	get isCaseSensitive() {
-		return this.#isCaseSensitive;
-	}
-
-	set isCaseSensitive(value) {
-		value = !!value;
-		if (this.#isCaseSensitive !== value) {
-			this.#isCaseSensitive = value;
-			this.#update(true);
-		}
-	}
-
-	#isExactMatch = false;
-	get isExactMatch() {
-		return this.#isExactMatch;
-	}
-
-	set isExactMatch(value) {
-		value = !!value;
-		if (this.#isExactMatch !== value) {
-			this.#isExactMatch = value;
-			this.#update(true);
-		}
-	}
-
-	#mode = JsonSearch.Mode.Both;
-	get mode() {
-		return this.#mode;
-	}
-
-	set mode(value) {
-		value &= JsonSearch.Mode.Both;
-		if (this.#mode !== value) {
-			this.#mode = value;
-			this.#update();
-		}
-	}
+	text = $state('');
+	isRegex = $state(false);
+	isCaseSensitive = $state(false);
+	isExactMatch = $state(false);
+	mode = $state(JsonSearch.Mode.Both);
 
 	get searchKeys() {
-		return !!(this.#mode & JsonSearch.Mode.Keys);
+		return !!(this.mode & JsonSearch.Mode.Keys);
 	}
 
 	get searchValues() {
-		return !!(this.#mode & JsonSearch.Mode.Values);
+		return !!(this.mode & JsonSearch.Mode.Values);
 	}
 
-	#filterOrError: JsonSearch.Filter | string = '';
+	readonly #filterOrError = $derived(this.#getErrorOrFilter());
 	get filter(): JsonSearch.Filter | null {
 		const v = this.#filterOrError;
 		return typeof v === 'string' ? null : v;
@@ -92,16 +35,18 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 
 	constructor(root: json.Node) {
 		this.#root = root;
+		this.subscribe = this.subscribe.bind(this);
+		$effect(() => this.#update());
 	}
 
-	listen(run: Subscriber<JsonSearch>) {
-		return this.#listeners.listen(run);
-	}
-
-	subscribe(run: Subscriber<JsonSearch>, invalidate?: VoidFunction | undefined): Unsubscriber {
-		const unsub = this.#listeners.listen(run, invalidate);
+	subscribe(run: Subscriber<JsonSearch>, invalidate?: () => void): Unsubscriber {
+		const unsub = this.listen(run, invalidate);
 		run(this);
 		return unsub;
+	}
+
+	listen(listener: Subscriber<JsonSearch>, invalidate?: VoidFunction): Unsubscriber {
+		return this.#listeners.listen(listener, invalidate);
 	}
 
 	[Symbol.iterator](): IterableIterator<json.Node> {
@@ -112,37 +57,38 @@ export class JsonSearch implements Iterable<json.Node>, Readable<JsonSearch> {
 		return this.#results.has(id);
 	}
 
-	#update(recompile: boolean = false) {
+	#getErrorOrFilter() {
+		let result: JsonSearch.Filter | string = '';
+		let text = this.text;
+		if (text) {
+			if (this.isRegex) {
+				if (this.isExactMatch)
+					text = `^${text}$`;
+
+				const flag = this.isCaseSensitive ? '' : 'i';
+				try {
+					const regex = new RegExp(text, flag);
+					result = new RegexFilter(regex);
+				} catch (error) {
+					result = getRegexError(error, text, flag);
+				}
+			} else {
+				result = new TextFilter(text, this.isCaseSensitive, this.isExactMatch);
+			}
+		}
+
+		return result;
+	}
+
+	#update() {
 		this.#results.clear();
 
 		let f = this.#filterOrError;
-		if (recompile) {
-			f = '';
-			let text = this.#text;
-			if (text) {
-				if (this.#isRegex) {
-					if (this.#isExactMatch)
-						text = `^${text}$`;
-
-					const flag = this.#isCaseSensitive ? '' : 'i';
-					try {
-						const regex = new RegExp(text, flag);
-						f = new RegexFilter(regex);
-					} catch (error) {
-						f = getRegexError(error, text, flag);
-					}
-				} else {
-					f = new TextFilter(text, this.#isCaseSensitive, this.#isExactMatch);
-				}
-			}
-
-			this.#filterOrError = f;
-		}
 
 		if (typeof f !== 'string') {
-			const keys = !!(this.#mode & JsonSearch.Mode.Keys);
-			const values = !!(this.#mode & JsonSearch.Mode.Values);
-			this.#checkNode(this.#root, f, keys, values, false);
+			const keys = !!(this.mode & JsonSearch.Mode.Keys);
+			const values = !!(this.mode & JsonSearch.Mode.Values);
+			untrack(() => this.#checkNode(this.#root, f, keys, values, false));
 		}
 
 		this.#listeners.fire(this);

@@ -6,7 +6,7 @@
 <script lang="ts">
 	import type { JsonRendererParam, Renderer } from "../renderer";
 	import "../dom-extensions";
-	import JsonSearch from "../search";
+	import JsonSearch from "../search.svelte";
 	import Button, { ButtonTheme } from "../components/button";
 	import { InserterManager } from "./JsonInsert.svelte";
 	import { renderText } from "../renderer";
